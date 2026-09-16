@@ -90,7 +90,7 @@ create or replace function public.get_user_role() returns public.user_role langu
 create or replace function public.is_staff() returns boolean language sql stable security definer set search_path = public as $$ select coalesce(public.get_user_role() in ('moderator', 'editor', 'admin'), false) $$;
 create or replace function public.is_editor_or_admin() returns boolean language sql stable security definer set search_path = public as $$ select coalesce(public.get_user_role() in ('editor', 'admin'), false) $$;
 create or replace function public.is_admin() returns boolean language sql stable security definer set search_path = public as $$ select coalesce(public.get_user_role() = 'admin', false) $$;
-create or replace function public.prevent_role_escalation() returns trigger language plpgsql security definer set search_path = public as $$ begin if new.role is distinct from old.role and not public.is_admin() then raise exception 'Only an admin can change roles'; end if; return new; end $$;
+create or replace function public.prevent_role_escalation() returns trigger language plpgsql security definer set search_path = public as $$ begin if new.role is distinct from old.role and auth.uid() is not null and not public.is_admin() then raise exception 'Only an admin can change roles'; end if; return new; end $$;
 create or replace function public.generate_booking_reference() returns trigger language plpgsql set search_path = public as $$ begin new.reference_code := 'SIT-' || to_char(current_date, 'YYYY') || '-' || lpad(nextval('public.booking_reference_seq')::text, 7, '0'); new.status := 'PENDING'; return new; end $$;
 
 create trigger on_auth_user_created after insert on auth.users for each row execute procedure public.handle_new_user();

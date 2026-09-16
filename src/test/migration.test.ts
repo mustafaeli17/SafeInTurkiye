@@ -12,7 +12,7 @@ describe('initial Supabase migration', () => {
   })
 
   it('keeps role changes database-side and never exposes draft tariffs or sources publicly', () => {
-    expect(migration).toContain("Only an admin can change roles")
+    expect(migration).toContain("auth.uid() is not null and not public.is_admin()")
     expect(migration).toContain("verification_status = 'VERIFIED' and effective_from <= current_date")
     expect(migration).toContain("status = 'PUBLISHED' and verification_status = 'VERIFIED'")
     expect(migration).not.toContain('using (true)')
