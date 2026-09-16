@@ -40,7 +40,6 @@ import {
   Droplets,
   AlertTriangle,
   Clock,
-  ExternalLink,
   Lock,
   SlidersHorizontal,
   DollarSign,
@@ -106,6 +105,8 @@ interface CityInfo {
   name: string;
   tagline: string;
   coverImage: string;
+  lat: number;
+  lng: number;
   temp: string;
   weatherDesc: string;
   humidity: string;
@@ -113,6 +114,29 @@ interface CityInfo {
   trafficIndex: string;
   trafficStatus: 'Low' | 'Moderate' | 'Heavy';
   localTip: string;
+  highlights: { name: string; detail: string }[];
+}
+
+interface LiveWeather {
+  temp: string;
+  description: string;
+  humidity: string;
+  wind: string;
+}
+
+interface ExchangeQuote {
+  pair: string;
+  rate: number;
+}
+
+interface NearbyPlace {
+  id: string;
+  name: string;
+  dist: string;
+  addr: string;
+  cat: string;
+  phone: string;
+  website?: string;
 }
 
 interface TaxiTariff {
@@ -264,69 +288,78 @@ const dict: Record<SupportedLang, Record<string, string>> = {
 // ============================================================================
 // 2. RESMİ TARİFELER & DÖVİZ
 // ============================================================================
-const liveExchangeQuotes = [
-  { pair: 'EUR / TRY', rate: 55.90, change: '+0.42%', isUp: true, buy: 55.70, sell: 56.10 },
-  { pair: 'USD / TRY', rate: 48.25, change: '+0.15%', isUp: true, buy: 48.10, sell: 48.40 },
-  { pair: 'GBP / TRY', rate: 65.00, change: '-0.08%', isUp: false, buy: 64.75, sell: 65.25 },
-  { pair: 'CHF / TRY', rate: 57.20, change: '+0.30%', isUp: true, buy: 56.90, sell: 57.50 },
-  { pair: 'SAR / TRY', rate: 12.85, change: '0.00%', isUp: true, buy: 12.75, sell: 12.95 }
-];
-
-const nearbyBureausList = [
-  { id: 'b1', name: 'Sembol Döviz & Altın (Grand Bazaar)', dist: '240m away', spread: '0.3% (Best Rate)', addr: 'Kapalıçarşı Kalpakçılar No:14', verified: true },
-  { id: 'b2', name: 'Tahtakale Merkez Döviz', dist: '350m away', spread: '0.4% (Zero Commission)', addr: 'Tahtakale Cad. No:8', verified: true },
-  { id: 'b3', name: 'Taksim Meydan Exchange Desk', dist: '1.2km away', spread: '0.8%', addr: 'Sıraselviler Cad. No:4', verified: true },
-  { id: 'b4', name: 'Kadıköy Rıhtım Döviz', dist: '4.8km away', spread: '0.6%', addr: 'Rıhtım Cad. Kadıköy', verified: true }
-];
-
 const citiesDetailedData: Record<string, CityInfo> = {
   'İstanbul': {
     name: 'İstanbul',
     tagline: 'Bridging continents with vibrant history, ferries and culture',
     coverImage: 'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?auto=format&fit=crop&w=1200&q=80',
+    lat: 41.0082, lng: 28.9784,
     temp: '25°C',
     weatherDesc: 'Sunny & Pleasant',
     humidity: '58%',
     wind: '18 km/h NE',
     trafficIndex: '68% (Heavy on Bridges)',
     trafficStatus: 'Heavy',
-    localTip: 'During 17:30 - 20:00, prefer Marmaray or Bosphorus ferries to avoid bridge gridlock.'
+    localTip: 'During 17:30 - 20:00, prefer Marmaray or Bosphorus ferries to avoid bridge gridlock.',
+    highlights: [
+      { name: 'Hagia Sophia & Sultanahmet', detail: 'Historic peninsula essentials; arrive early for shorter queues.' },
+      { name: 'Topkapı Palace', detail: 'Allow a half day for the palace, gardens and museum collections.' },
+      { name: 'Bosphorus ferries', detail: 'A practical and scenic way to cross between the European and Asian sides.' }
+    ]
   },
   'Cappadocia': {
     name: 'Cappadocia (Kapadokya)',
     tagline: 'Fairy chimneys, volcanic valleys and sunrise balloon corridors',
     coverImage: 'https://images.unsplash.com/photo-1608755728617-aefab37d45f6?auto=format&fit=crop&w=1200&q=80',
+    lat: 38.6431, lng: 34.8289,
     temp: '22°C',
     weatherDesc: 'Clear Sky & Calm',
     humidity: '34%',
     wind: '7 km/h SW',
     trafficIndex: '12% (Smooth Open Roads)',
     trafficStatus: 'Low',
-    localTip: 'Early dawn balloon flights depend on Civil Aviation wind approval checked at 05:00.'
+    localTip: 'Early dawn balloon flights depend on Civil Aviation wind approval checked at 05:00.',
+    highlights: [
+      { name: 'Göreme Open-Air Museum', detail: 'Rock-cut churches and frescoes; go first thing in the morning.' },
+      { name: 'Love & Rose Valleys', detail: 'Plan the walk before the midday sun and take water.' },
+      { name: 'Uçhisar Castle', detail: 'Wide valley views from the highest point in the area.' }
+    ]
   },
   'Antalya': {
     name: 'Antalya',
     tagline: 'Turquoise Mediterranean shores, waterfalls and Roman ruins',
     coverImage: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=1200&q=80',
+    lat: 36.8969, lng: 30.7133,
     temp: '30°C',
     weatherDesc: 'Warm & Sunny',
     humidity: '64%',
     wind: '12 km/h S',
     trafficIndex: '35% (Moderate Coastal Flow)',
     trafficStatus: 'Moderate',
-    localTip: 'Use AntRay tramway from the airport directly to Hadrian Gate in Kaleiçi.'
+    localTip: 'Use AntRay tramway from the airport directly to Hadrian Gate in Kaleiçi.',
+    highlights: [
+      { name: 'Antalya Museum', detail: 'One of Türkiye’s strongest archaeology collections.' },
+      { name: 'Kaleiçi & Hadrian’s Gate', detail: 'Walkable old town lanes, harbour views and Roman history.' },
+      { name: 'Düden Waterfalls', detail: 'A short excursion with sea-cliff viewpoints.' }
+    ]
   },
   'İzmir': {
     name: 'İzmir',
     tagline: 'Aegean breeze, Kordon promenade, and lively bazaar alleys',
     coverImage: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80',
+    lat: 38.4237, lng: 27.1428,
     temp: '28°C',
     weatherDesc: 'Breezy & Sunny',
     humidity: '50%',
     wind: '22 km/h W',
     trafficIndex: '42% (Normal Flow)',
     trafficStatus: 'Moderate',
-    localTip: 'Enjoy the sunset ferry from Alsancak to Karşıyaka with contactless credit card tap.'
+    localTip: 'Enjoy the sunset ferry from Alsancak to Karşıyaka with contactless credit card tap.',
+    highlights: [
+      { name: 'Agora Open Air Museum', detail: 'Roman-era remains beside the historic market district.' },
+      { name: 'Kemeraltı Bazaar', detail: 'A lively maze for food, crafts and local shopping.' },
+      { name: 'Kordon & ferry line', detail: 'An easy waterfront walk and a useful cross-bay connection.' }
+    ]
   }
 };
 
@@ -454,7 +487,7 @@ function SafeRouteMap({
 export default function App() {
   const { session, isStaff, role, signIn, signOut } = useSupabaseAuth();
   const mockDataEnabled = import.meta.env.VITE_ENABLE_MOCK_DATA === 'true';
-  const [activeTab, setActiveTab] = useState<'home' | 'city' | 'taxi' | 'transit' | 'currency' | 'nearme' | 'stay' | 'food' | 'experiences' | 'admin' | 'assistant'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'city' | 'taxi' | 'transit' | 'currency' | 'nearme' | 'safety' | 'stay' | 'food' | 'experiences' | 'admin' | 'assistant'>('home');
   const [selectedCityName, setSelectedCityName] = useState<string>('İstanbul');
   const [lang, setLang] = useState<SupportedLang>('en');
   const [searchQuery, setSearchQuery] = useState('');
@@ -472,6 +505,117 @@ export default function App() {
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [authError, setAuthError] = useState<string | null>(null);
+  const [exchangeQuotes, setExchangeQuotes] = useState<ExchangeQuote[]>([]);
+  const [exchangeUpdatedAt, setExchangeUpdatedAt] = useState<string | null>(null);
+  const [exchangeError, setExchangeError] = useState<string | null>(null);
+  const [nearbyBureaus, setNearbyBureaus] = useState<NearbyPlace[]>([]);
+  const [nearbyExchangeStatus, setNearbyExchangeStatus] = useState<string | null>(null);
+  const [nearbyLivePlaces, setNearbyLivePlaces] = useState<NearbyPlace[]>([]);
+  const [nearbySearchStatus, setNearbySearchStatus] = useState<string | null>(null);
+  const [liveWeather, setLiveWeather] = useState<LiveWeather | null>(null);
+
+  const weatherDescription = (code: number) => {
+    if (code === 0) return 'Clear sky';
+    if ([1, 2, 3].includes(code)) return 'Partly cloudy';
+    if ([45, 48].includes(code)) return 'Foggy';
+    if ([51, 53, 55, 56, 57].includes(code)) return 'Drizzle';
+    if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return 'Rain showers';
+    if ([71, 73, 75, 77, 85, 86].includes(code)) return 'Snow';
+    return 'Thunderstorms possible';
+  };
+
+  const distanceLabel = (from: Coordinates, lat: number, lng: number) => {
+    const radiusKm = 6371;
+    const dLat = ((lat - from.lat) * Math.PI) / 180;
+    const dLng = ((lng - from.lng) * Math.PI) / 180;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos((from.lat * Math.PI) / 180) * Math.cos((lat * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+    const km = radiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return km < 1 ? `${Math.max(1, Math.round(km * 1000))} m` : `${km.toFixed(1)} km`;
+  };
+
+  const findNearby = (kind: 'exchange' | 'essential') => {
+    if (!navigator.geolocation) {
+      const message = 'This browser does not support location search.';
+      if (kind === 'exchange') setNearbyExchangeStatus(message); else setNearbySearchStatus(message);
+      return;
+    }
+
+    const setStatus = kind === 'exchange' ? setNearbyExchangeStatus : setNearbySearchStatus;
+    setStatus('Requesting your location…');
+    navigator.geolocation.getCurrentPosition(async (position) => {
+      const origin = { lat: position.coords.latitude, lng: position.coords.longitude };
+      const filters = kind === 'exchange'
+        ? '["amenity"="bureau_de_change"]'
+        : '["amenity"~"pharmacy|police|atm|taxi"]';
+      const query = `[out:json][timeout:20];(node(around:3500,${origin.lat},${origin.lng})${filters};way(around:3500,${origin.lat},${origin.lng})${filters};);out center tags;`;
+      try {
+        const response = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
+        if (!response.ok) throw new Error('Place service unavailable');
+        const data = await response.json();
+        const places: NearbyPlace[] = (data.elements || []).map((item: any) => {
+          const tags = item.tags || {};
+          const lat = item.lat ?? item.center?.lat;
+          const lng = item.lon ?? item.center?.lon;
+          const address = [tags['addr:street'], tags['addr:housenumber'], tags['addr:district'], tags['addr:city']].filter(Boolean).join(', ');
+          return {
+            id: `${item.type}-${item.id}`,
+            name: tags.name || (kind === 'exchange' ? 'Exchange bureau' : tags.amenity || 'Local service'),
+            dist: typeof lat === 'number' && typeof lng === 'number' ? distanceLabel(origin, lat, lng) : 'Distance unavailable',
+            addr: address || 'Address not published in OpenStreetMap',
+            cat: kind === 'exchange' ? 'Exchange bureau' : (tags.amenity || 'Service'),
+            phone: tags.phone || tags['contact:phone'] || 'Phone not published',
+            website: tags.website || tags['contact:website']
+          };
+        }).sort((a: NearbyPlace, b: NearbyPlace) => parseFloat(a.dist) - parseFloat(b.dist)).slice(0, 8);
+        if (kind === 'exchange') setNearbyBureaus(places); else setNearbyLivePlaces(places);
+        setStatus(places.length ? `Showing ${places.length} places from OpenStreetMap near your location.` : 'No matching places were published within 3.5 km of your location.');
+      } catch {
+        setStatus('Could not reach the place directory. Please try again in a moment.');
+      }
+    }, () => setStatus('Location permission was not granted. No location was stored.'), { enableHighAccuracy: false, timeout: 12000, maximumAge: 300000 });
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadQuotes = async () => {
+      try {
+        setExchangeError(null);
+        const response = await fetch('https://api.frankfurter.app/latest?from=EUR&to=TRY,USD,GBP,CHF');
+        if (!response.ok) throw new Error('Quote service unavailable');
+        const data = await response.json();
+        const eurTry = data.rates?.TRY;
+        if (!eurTry) throw new Error('TRY reference unavailable');
+        const makeQuote = (currency: string) => currency === 'EUR' ? eurTry : eurTry / data.rates[currency];
+        if (!cancelled) {
+          setExchangeQuotes(['EUR', 'USD', 'GBP', 'CHF'].map(currency => ({ pair: `${currency} / TRY`, rate: makeQuote(currency) })));
+          setExchangeUpdatedAt(data.date || new Date().toISOString().slice(0, 10));
+        }
+      } catch {
+        if (!cancelled) setExchangeError('Live reference rates are temporarily unavailable. No estimated rate is shown.');
+      }
+    };
+    loadQuotes();
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const city = citiesDetailedData[selectedCityName] || citiesDetailedData['İstanbul'];
+    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lng}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto`)
+      .then(response => response.ok ? response.json() : Promise.reject())
+      .then(data => {
+        if (!cancelled && data.current) {
+          setLiveWeather({
+            temp: `${Math.round(data.current.temperature_2m)}°C`,
+            description: weatherDescription(data.current.weather_code),
+            humidity: `${data.current.relative_humidity_2m}%`,
+            wind: `${Math.round(data.current.wind_speed_10m)} km/h`
+          });
+        }
+      })
+      .catch(() => { if (!cancelled) setLiveWeather(null); });
+    return () => { cancelled = true; };
+  }, [selectedCityName]);
 
   // Soru Listesi Yatay Kaydırma
   const questionsScrollRef = useRef<HTMLDivElement>(null);
@@ -1026,7 +1170,7 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
                 <button
                   onClick={() => setMoreDropdownOpen(!moreDropdownOpen)}
                   className={`flex items-center gap-1 px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
-                    ['stay', 'food', 'experiences', 'nearme'].includes(activeTab) ? 'text-[#00A3E0] bg-sky-50 font-extrabold' : 'hover:text-[#00A3E0] hover:bg-slate-50'
+                    ['stay', 'food', 'experiences', 'nearme', 'safety'].includes(activeTab) ? 'text-[#00A3E0] bg-sky-50 font-extrabold' : 'hover:text-[#00A3E0] hover:bg-slate-50'
                   }`}
                 >
                   <span>More</span>
@@ -1046,6 +1190,9 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
                     </button>
                     <button onClick={() => { setActiveTab('nearme'); setMoreDropdownOpen(false); }} className="w-full text-left px-3 py-2 rounded-xl hover:bg-sky-50 text-slate-700 font-bold flex items-center gap-2">
                       <Navigation2 className="w-4 h-4 text-[#00A3E0]" /> {tr('nearMe')}
+                    </button>
+                    <button onClick={() => { setActiveTab('safety'); setMoreDropdownOpen(false); }} className="w-full text-left px-3 py-2 rounded-xl hover:bg-sky-50 text-slate-700 font-bold flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-[#00A3E0]" /> Safety guide
                     </button>
                   </div>
                 )}
@@ -1139,7 +1286,7 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
                   { name: tr('taxi'), sub: 'Live Map & UKOME', icon: Car, action: () => setActiveTab('taxi') },
                   { name: tr('transit'), sub: 'Metro & Ferry Routes', icon: Train, action: () => setActiveTab('transit') },
                   { name: tr('currency'), sub: 'TCMB & Best Bureaus', icon: Coins, action: () => setActiveTab('currency') },
-                  { name: tr('cityWeather'), sub: 'Live City Traffic', icon: Compass, action: () => setActiveTab('city') },
+                  { name: tr('cityWeather'), sub: 'Weather, museums & city tips', icon: Compass, action: () => setActiveTab('city') },
                   { name: tr('hotels'), sub: 'Verified Stays', icon: Building2, action: () => setActiveTab('stay') },
                   { name: tr('dining'), sub: 'Historic Kitchens', icon: Utensils, action: () => setActiveTab('food') },
                   { name: tr('nearMe'), sub: 'Pharmacy, Police, ATM', icon: Navigation2, action: () => setActiveTab('nearme') }
@@ -1412,30 +1559,6 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
                   {isTaxiRouting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Calculate Route & Fare'}
                 </button>
 
-                {taxiOriginCoords && taxiDestCoords && (
-                  <div className="pt-2 border-t border-slate-100 space-y-1.5">
-                    <span className="text-[11px] font-bold text-slate-500 block">External Live Navigation:</span>
-                    <div className="grid grid-cols-2 gap-2">
-                      <a
-                        href={`https://www.google.com/maps/dir/?api=1&origin=${taxiOriginCoords.lat},${taxiOriginCoords.lng}&destination=${taxiDestCoords.lat},${taxiDestCoords.lng}&travelmode=driving`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="p-2.5 bg-slate-50 hover:bg-sky-50 text-slate-800 rounded-xl border border-slate-200 text-center font-bold text-[11px] flex items-center justify-center gap-1.5"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5 text-[#00A3E0]" /> Google Maps
-                      </a>
-                      <a
-                        href={`https://maps.apple.com/?saddr=${taxiOriginCoords.lat},${taxiOriginCoords.lng}&daddr=${taxiDestCoords.lat},${taxiDestCoords.lng}&dirflg=d`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="p-2.5 bg-slate-50 hover:bg-sky-50 text-slate-800 rounded-xl border border-slate-200 text-center font-bold text-[11px] flex items-center justify-center gap-1.5"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5 text-[#00A3E0]" /> Apple Maps
-                      </a>
-                    </div>
-                  </div>
-                )}
-
                 {taxiRouteResult && fareCalculation && (
                   <div className="pt-3 border-t border-slate-100 space-y-3">
                     <div className="p-4 bg-sky-50 rounded-2xl border border-sky-100 space-y-2">
@@ -1593,36 +1716,45 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
           <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
             <div>
               <h1 className="text-3xl font-extrabold text-slate-900">Exchange (Currency & Nearby Desks)</h1>
-              <p className="text-[13px] text-slate-500">Official Central Bank of Türkiye (TCMB) indicative quotes & zero-commission Grand Bazaar desks.</p>
+              <p className="text-[13px] text-slate-500">Live EUR-based reference rates. Cash buy/sell prices and commissions are set by each bureau.</p>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-              {liveExchangeQuotes.map((q, i) => (
-                <div key={i} className="p-4 bg-white rounded-2xl border border-sky-100 shadow-sm space-y-1">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {exchangeQuotes.map((q) => (
+                <div key={q.pair} className="p-4 bg-white rounded-2xl border border-sky-100 shadow-sm space-y-1">
                   <span className="text-[11px] font-bold text-slate-500 block">{q.pair}</span>
                   <strong className="text-[20px] font-black text-slate-900 block">{q.rate.toFixed(2)} ₺</strong>
-                  <span className={`text-[11px] font-bold ${q.isUp ? 'text-emerald-600' : 'text-red-500'}`}>{q.change}</span>
+                  <span className="text-[11px] font-bold text-[#00A3E0]">Reference rate</span>
                 </div>
               ))}
             </div>
+            {exchangeQuotes.length === 0 && !exchangeError && <div className="p-4 bg-white rounded-2xl border border-sky-100 text-[13px] text-slate-500">Loading live reference rates…</div>}
+            {exchangeUpdatedAt && <p className="text-[11px] text-slate-500">Latest published reference date: {exchangeUpdatedAt}. This is not a cash exchange offer.</p>}
+            {exchangeError && <p className="text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-3">{exchangeError}</p>}
 
             {/* YAKINLARDAKİ DÖVİZCİLER BÖLÜMÜ */}
             <div className="bg-white p-5 rounded-2xl border border-sky-100 shadow-sm space-y-3">
-              <h3 className="font-extrabold text-[15px] text-slate-900 flex items-center gap-2">
-                <Coins className="w-5 h-5 text-[#00A3E0]" />
-                Lowest-Spread Exchange Bureaus Near You (En Yakın Komisyonsuz Bürolar)
-              </h3>
+              <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+                <h3 className="font-extrabold text-[15px] text-slate-900 flex items-center gap-2">
+                  <Coins className="w-5 h-5 text-[#00A3E0]" /> Nearby exchange bureaux
+                </h3>
+                <button onClick={() => findNearby('exchange')} className="px-4 py-2 rounded-xl bg-[#00A3E0] hover:bg-[#0284C7] text-white text-[12px] font-bold cursor-pointer flex items-center justify-center gap-2">
+                  <Navigation2 className="w-4 h-4" /> Find near me
+                </button>
+              </div>
+              <p className="text-[11px] text-slate-500">Uses your location only for this search and shows contact details published in OpenStreetMap. Rates, commission and ratings are not guessed.</p>
+              {nearbyExchangeStatus && <p className="text-[11px] text-slate-500">{nearbyExchangeStatus}</p>}
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {nearbyBureausList.map(b => (
+                {nearbyBureaus.map(b => (
                   <div key={b.id} className="p-3.5 bg-sky-50/50 rounded-xl border border-sky-100 flex items-start justify-between">
                     <div>
                       <div className="flex items-center gap-1.5">
                         <strong className="text-[13px] text-slate-900">{b.name}</strong>
-                        {b.verified && <CheckCircle2 className="w-3.5 h-3.5 text-[#00A3E0]" />}
                       </div>
                       <p className="text-[11px] text-slate-500 mt-0.5">{b.addr}</p>
-                      <span className="text-[11px] font-bold text-emerald-700 mt-1 block">Spread: {b.spread}</span>
+                      <span className="text-[11px] text-slate-600 mt-1 block">{b.phone}</span>
+                      {b.website && <a href={b.website} target="_blank" rel="noreferrer" className="text-[11px] font-bold text-[#00A3E0] mt-1 inline-block">Website</a>}
                     </div>
                     <span className="text-[12px] font-bold text-[#00A3E0]">{b.dist}</span>
                   </div>
@@ -1666,31 +1798,46 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
                 <div className="flex items-center gap-3">
                   <Sun className="w-10 h-10 text-amber-500" />
                   <div>
-                    <span className="text-3xl font-black text-slate-900">{currentCityInfo.temp}</span>
-                    <span className="text-[12px] text-slate-500 block">{currentCityInfo.weatherDesc}</span>
+                    <span className="text-3xl font-black text-slate-900">{liveWeather?.temp || currentCityInfo.temp}</span>
+                    <span className="text-[12px] text-slate-500 block">{liveWeather?.description || currentCityInfo.weatherDesc}</span>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 text-[12px]">
-                  <div className="flex items-center gap-1.5 text-slate-600"><Droplets className="w-4 h-4 text-sky-500" /> Humidity: {currentCityInfo.humidity}</div>
-                  <div className="flex items-center gap-1.5 text-slate-600"><Wind className="w-4 h-4 text-teal-500" /> Wind: {currentCityInfo.wind}</div>
+                  <div className="flex items-center gap-1.5 text-slate-600"><Droplets className="w-4 h-4 text-sky-500" /> Humidity: {liveWeather?.humidity || currentCityInfo.humidity}</div>
+                  <div className="flex items-center gap-1.5 text-slate-600"><Wind className="w-4 h-4 text-teal-500" /> Wind: {liveWeather?.wind || currentCityInfo.wind}</div>
                 </div>
               </div>
 
               <div className="p-5 bg-white rounded-2xl border border-sky-100 shadow-sm space-y-3">
-                <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider block">Live Traffic Index</span>
+                <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider block">Traffic planning</span>
                 <div className="flex items-center justify-between">
                   <strong className="text-2xl font-black text-slate-900">{currentCityInfo.trafficIndex}</strong>
                   <span className={`px-2.5 py-1 rounded-lg text-[11px] font-bold ${
                     currentCityInfo.trafficStatus === 'Heavy' ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'
                   }`}>
-                    {currentCityInfo.trafficStatus} Congestion
+                    Typical {currentCityInfo.trafficStatus} period
                   </span>
                 </div>
                 <div className="p-2.5 bg-amber-50 border border-amber-200/60 rounded-xl text-[11px] text-amber-900">
-                  <strong>Local Tip:</strong> {currentCityInfo.localTip}
+                  <strong>Local Tip:</strong> {currentCityInfo.localTip} Traffic numbers are not presented as live without a verified city traffic provider.
                 </div>
               </div>
             </div>
+
+            <section className="bg-white p-5 rounded-2xl border border-sky-100 shadow-sm">
+              <div className="flex items-center gap-2 mb-4">
+                <Building2 className="w-5 h-5 text-[#00A3E0]" />
+                <h2 className="font-extrabold text-[16px] text-slate-900">Don’t miss in {currentCityInfo.name}</h2>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {currentCityInfo.highlights.map((highlight) => (
+                  <article key={highlight.name} className="p-3.5 rounded-xl bg-sky-50/60 border border-sky-100">
+                    <h3 className="text-[13px] font-extrabold text-slate-900">{highlight.name}</h3>
+                    <p className="text-[11px] leading-relaxed text-slate-600 mt-1">{highlight.detail}</p>
+                  </article>
+                ))}
+              </div>
+            </section>
           </main>
         )}
 
@@ -1798,18 +1945,55 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
         ==================================================================== */}
         {activeTab === 'nearme' && (
           <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
-            <h1 className="text-3xl font-extrabold text-slate-900">Near Me (Vital Assistance)</h1>
+            <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+              <div>
+                <h1 className="text-3xl font-extrabold text-slate-900">Near Me (Vital Assistance)</h1>
+                <p className="text-[12px] text-slate-500 mt-1">Find published pharmacies, police desks, ATMs and taxi ranks around you.</p>
+              </div>
+              <button onClick={() => findNearby('essential')} className="px-4 py-2 rounded-xl bg-[#00A3E0] hover:bg-[#0284C7] text-white text-[12px] font-bold cursor-pointer flex items-center justify-center gap-2">
+                <Navigation2 className="w-4 h-4" /> Use my location
+              </button>
+            </div>
+            {nearbySearchStatus && <p className="text-[12px] text-slate-500 bg-sky-50 border border-sky-100 rounded-xl p-3">{nearbySearchStatus}</p>}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {nearbyPlacesList.map(p => (
+              {nearbyLivePlaces.map(p => (
                 <div key={p.id} className="p-4 bg-white rounded-2xl border border-sky-100 shadow-sm flex items-start justify-between">
                   <div>
                     <span className="text-[10px] font-bold text-[#00A3E0] uppercase">{p.cat}</span>
                     <strong className="text-[14px] text-slate-900 block mt-0.5">{p.name}</strong>
                     <span className="text-[11px] text-slate-500 block">{p.addr}</span>
                     <span className="text-[11px] font-bold text-slate-700 mt-1 block">Tel: {p.phone}</span>
+                    {p.website && <a href={p.website} target="_blank" rel="noreferrer" className="text-[11px] font-bold text-[#00A3E0] mt-1 inline-block">Website</a>}
                   </div>
                   <span className="text-[12px] font-bold text-[#00A3E0]">{p.dist}</span>
                 </div>
+              ))}
+            </div>
+            {nearbyLivePlaces.length === 0 && !nearbySearchStatus && <div className="p-5 bg-white rounded-2xl border border-sky-100 text-[13px] text-slate-500">Tap “Use my location” to load real nearby contacts. Your location is not saved.</div>}
+          </main>
+        )}
+
+        {/* ====================================================================
+            PAGE 10B: SAFETY — SEPARATE FROM STAY / ACTIVITIES
+        ==================================================================== */}
+        {activeTab === 'safety' && (
+          <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-5 pb-24">
+            <div>
+              <h1 className="text-3xl font-extrabold text-slate-900">Safety guide</h1>
+              <p className="text-[13px] text-slate-500">Practical basics for a calmer trip — separate from stays and activities.</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {[
+                { title: 'Emergency', detail: 'Call 112 for ambulance, fire and police emergencies in Türkiye.', action: 'Call 112', href: 'tel:112' },
+                { title: 'Taxi', detail: 'Ask for the meter to be used. Keep the receipt if you need to report a problem.', action: 'Check taxi fare', tab: 'taxi' },
+                { title: 'Useful places', detail: 'Use your location to find published pharmacies, police desks, ATMs and taxi ranks.', action: 'Find nearby', tab: 'nearme' }
+              ].map((item) => (
+                <article key={item.title} className="p-5 bg-white border border-sky-100 rounded-2xl shadow-sm space-y-3">
+                  <ShieldCheck className="w-7 h-7 text-[#00A3E0]" />
+                  <h2 className="font-extrabold text-slate-900">{item.title}</h2>
+                  <p className="text-[12px] leading-relaxed text-slate-600">{item.detail}</p>
+                  {item.href ? <a href={item.href} className="inline-flex px-3 py-2 rounded-xl bg-red-600 text-white text-[12px] font-bold">{item.action}</a> : <button onClick={() => setActiveTab(item.tab as 'taxi' | 'nearme')} className="px-3 py-2 rounded-xl bg-[#00A3E0] text-white text-[12px] font-bold cursor-pointer">{item.action}</button>}
+                </article>
               ))}
             </div>
           </main>
