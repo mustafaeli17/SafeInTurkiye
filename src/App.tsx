@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Search,
   MapPin,
@@ -54,12 +54,15 @@ import {
   ChevronRight,
   ChevronDown
 } from 'lucide-react';
+import { useSupabaseAuth } from './hooks/useSupabaseAuth';
+import { createBooking } from './repositories/bookingRepository';
+import { getCurrentTaxiTariffs } from './repositories/tariffRepository';
+import { supabaseConfigured } from './lib/supabase';
 
 // ============================================================================
 // 1. TİP TANIMLARI & 6 DİLLİ SÖZLÜK SİSTEMİ
 // ============================================================================
 type SupportedLang = 'en' | 'tr' | 'de' | 'fr' | 'ar' | 'ru';
-type SupportedCurrency = 'EUR' | 'USD' | 'GBP' | 'TRY';
 
 interface Coordinates {
   lat: number;
@@ -261,45 +264,6 @@ const dict: Record<SupportedLang, Record<string, string>> = {
 // ============================================================================
 // 2. RESMİ TARİFELER & DÖVİZ
 // ============================================================================
-const officialCityTariffs: Record<string, TaxiTariff> = {
-  'İstanbul': {
-    city: 'İstanbul',
-    openingFare: 71.94,
-    pricePerKm: 47.92,
-    minimumFare: 230.0,
-    waitingFarePerHour: 345.0,
-    source: 'İstanbul Büyükşehir Belediyesi UKOME Kararı',
-    lastUpdated: '2026 UKOME'
-  },
-  'Ankara': {
-    city: 'Ankara',
-    openingFare: 65.0,
-    pricePerKm: 40.0,
-    minimumFare: 200.0,
-    waitingFarePerHour: 300.0,
-    source: 'Ankara Büyükşehir Belediyesi UKOME Kararı',
-    lastUpdated: '2026 UKOME'
-  },
-  'İzmir': {
-    city: 'İzmir',
-    openingFare: 60.0,
-    pricePerKm: 38.0,
-    minimumFare: 190.0,
-    waitingFarePerHour: 280.0,
-    source: 'İzmir UKOME Kararı',
-    lastUpdated: '2026 UKOME'
-  },
-  'Antalya': {
-    city: 'Antalya',
-    openingFare: 55.0,
-    pricePerKm: 36.0,
-    minimumFare: 180.0,
-    waitingFarePerHour: 260.0,
-    source: 'Antalya UKOME Kararı',
-    lastUpdated: '2026 UKOME'
-  }
-};
-
 const liveExchangeQuotes = [
   { pair: 'EUR / TRY', rate: 55.90, change: '+0.42%', isUp: true, buy: 55.70, sell: 56.10 },
   { pair: 'USD / TRY', rate: 48.25, change: '+0.15%', isUp: true, buy: 48.10, sell: 48.40 },
@@ -488,6 +452,8 @@ function SafeRouteMap({
 // 4. ANA BİLEŞEN
 // ============================================================================
 export default function App() {
+  const { session, isStaff, role, signIn, signOut } = useSupabaseAuth();
+  const mockDataEnabled = import.meta.env.VITE_ENABLE_MOCK_DATA === 'true';
   const [activeTab, setActiveTab] = useState<'home' | 'city' | 'taxi' | 'transit' | 'currency' | 'nearme' | 'stay' | 'food' | 'experiences' | 'admin' | 'assistant'>('home');
   const [selectedCityName, setSelectedCityName] = useState<string>('İstanbul');
   const [lang, setLang] = useState<SupportedLang>('en');
@@ -502,10 +468,10 @@ export default function App() {
     document.documentElement.lang = lang;
   }, [lang]);
 
-  // Gizli Admin State
-  const [adminUnlocked, setAdminUnlocked] = useState(false);
-  const [adminAuthModal, setAdminAuthModal] = useState(false);
-  const [adminPinInput, setAdminPinInput] = useState('');
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authError, setAuthError] = useState<string | null>(null);
 
   // Soru Listesi Yatay Kaydırma
   const questionsScrollRef = useRef<HTMLDivElement>(null);
@@ -515,18 +481,6 @@ export default function App() {
       questionsScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
     }
   };
-
-  // Ctrl + Shift + A Kısayolu
-  useEffect(() => {
-    const handleSecretKey = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'a') {
-        e.preventDefault();
-        setAdminAuthModal(true);
-      }
-    };
-    window.addEventListener('keydown', handleSecretKey);
-    return () => window.removeEventListener('keydown', handleSecretKey);
-  }, []);
 
   // AI Asistan State
   const [aiLoading, setAiLoading] = useState(false);
@@ -588,7 +542,7 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
   const [guestFullName, setGuestFullName] = useState('');
   const [bookingDate, setBookingDate] = useState('2026-09-12');
   const [bookingErrorMsg, setBookingErrorMsg] = useState<string | null>(null);
-  const [bookingConfirmedVoucher, setBookingConfirmedVoucher] = useState<{
+  const [bookingRequest, setBookingRequest] = useState<{
     code: string;
     itemTitle: string;
     city: string;
@@ -599,27 +553,26 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
 
   const handleOpenBooking = (item: any) => {
     setSelectedBookingItem(item);
-    setBookingConfirmedVoucher(null);
+    setBookingRequest(null);
     setGuestFullName('');
     setBookingErrorMsg(null);
     setReservationModalOpen(true);
   };
 
-  const handleConfirmReservation = () => {
+  const handleConfirmReservation = async () => {
     setBookingErrorMsg(null);
     if (!guestFullName.trim()) {
-      setBookingErrorMsg('Please enter lead guest full name to generate your verified pass.');
+      setBookingErrorMsg('Please enter the lead guest name.');
       return;
     }
-    const refCode = `TR-2026-${Math.floor(1000 + Math.random() * 9000)}`;
-    setBookingConfirmedVoucher({
-      code: refCode,
-      itemTitle: selectedBookingItem.title || selectedBookingItem.name,
-      city: selectedBookingItem.city,
-      price: selectedBookingItem.price || selectedBookingItem.avgPrice,
-      guest: guestFullName,
-      date: bookingDate
-    });
+    if (!session?.user) { setBookingErrorMsg('Please sign in before submitting a booking request.'); return; }
+    try {
+      const booking = await createBooking({
+        listingType: 'activity', listingName: selectedBookingItem.title || selectedBookingItem.name,
+        guestName: guestFullName, guestEmail: session.user.email ?? '', visitDate: bookingDate, guestCount: 1,
+      });
+      setBookingRequest({ code: booking.reference_code, itemTitle: selectedBookingItem.title || selectedBookingItem.name, city: selectedBookingItem.city, price: selectedBookingItem.price || selectedBookingItem.avgPrice, guest: guestFullName, date: bookingDate });
+    } catch (error) { setBookingErrorMsg(error instanceof Error ? error.message : 'Could not submit the booking request.'); }
   };
 
   // Taksi Durumları
@@ -635,6 +588,16 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
   const [isTaxiLocating, setIsTaxiLocating] = useState(false);
   const [isTaxiRouting, setIsTaxiRouting] = useState(false);
   const [taxiRouteError, setTaxiRouteError] = useState<string | null>(null);
+  const [taxiTariffs, setTaxiTariffs] = useState<Record<string, TaxiTariff>>({});
+
+  useEffect(() => {
+    if (!supabaseConfigured) return;
+    void getCurrentTaxiTariffs(detectedTaxiCity).then((tariffs) => {
+      const next: Record<string, TaxiTariff> = {};
+      for (const tariff of tariffs) next[tariff.vehicleClass] = { city: tariff.city, openingFare: tariff.openingFare, pricePerKm: tariff.perKm, minimumFare: tariff.minimumFare, waitingFarePerHour: tariff.waitingFare, source: 'Verified SafeInTürkiye data source', lastUpdated: tariff.effectiveFrom };
+      setTaxiTariffs(next);
+    }).catch(() => setTaxiTariffs({}));
+  }, [detectedTaxiCity]);
 
   const [taxiRouteResult, setTaxiRouteResult] = useState<{
     distanceKm: number;
@@ -781,7 +744,12 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
         source: 'OpenStreetMap / OSRM Driving Engine'
       });
 
-      const tariff = officialCityTariffs[detectedTaxiCity] || officialCityTariffs['İstanbul'];
+      const tariff = taxiTariffs[taxiClass.toUpperCase()];
+      if (!tariff) {
+        setTaxiRouteError('Verified taxi tariffs are unavailable for this city. Configure Supabase and publish a current tariff before showing an estimate.');
+        setIsTaxiRouting(false);
+        return;
+      }
       const classMult = taxiClass === 'Yellow' ? 1.0 : taxiClass === 'Turquoise' ? 1.15 : 1.70;
 
       const opening = tariff.openingFare * classMult;
@@ -962,6 +930,18 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
 
   const currentCityInfo = citiesDetailedData[selectedCityName] || citiesDetailedData['İstanbul'];
 
+  if (!supabaseConfigured && !mockDataEnabled) {
+    return (
+      <main className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+        <section className="max-w-md bg-white border border-slate-200 rounded-3xl p-8 text-center shadow-sm">
+          <ShieldCheck className="w-10 h-10 text-[#00A3E0] mx-auto mb-4" />
+          <h1 className="text-xl font-extrabold text-slate-900">SafeInTürkiye is not configured</h1>
+          <p className="mt-3 text-sm text-slate-600">Set the public Supabase URL and anon key to show verified content. Demo data is disabled by default.</p>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#F0F7FB] text-[#0A2540] font-['Plus_Jakarta_Sans',sans-serif] flex flex-col justify-between">
       
@@ -1071,7 +1051,7 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
                 )}
               </div>
 
-              {adminUnlocked && (
+              {isStaff && (
                 <button onClick={() => setActiveTab('admin')} className="px-3 py-1.5 rounded-xl bg-slate-900 text-white font-bold cursor-pointer hover:bg-slate-800">
                   CMS Studio
                 </button>
@@ -1342,7 +1322,7 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
                     <span className="text-[12px] text-slate-600">Active Tariff:</span>
                   </div>
                   <span className="font-extrabold text-[12px] text-[#00A3E0] bg-white px-2 py-0.5 rounded-md border border-sky-200">
-                    {detectedTaxiCity} ({officialCityTariffs[detectedTaxiCity]?.source})
+                    {detectedTaxiCity} ({supabaseConfigured ? 'verified database tariff required' : 'database not configured'})
                   </span>
                 </div>
 
@@ -1836,9 +1816,9 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
         )}
 
         {/* ====================================================================
-            PAGE 11: GİZLİ VE GELİŞMİŞ ADMIN CMS (PIN: safe2026)
+            PAGE 11: ROLE-PROTECTED ADMIN CMS
         ==================================================================== */}
-        {activeTab === 'admin' && adminUnlocked && (
+        {activeTab === 'admin' && isStaff && (
           <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
             <div className="flex justify-between items-center bg-slate-900 text-white p-5 rounded-2xl shadow-md">
               <div>
@@ -1848,7 +1828,7 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
                 <p className="text-[12px] text-slate-400">In-place live editor. Edit photos, titles and rates on the fly.</p>
               </div>
               <button 
-                onClick={() => { setAdminUnlocked(false); setActiveTab('home'); }} 
+                onClick={() => { void signOut(); setActiveTab('home'); }}
                 className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[12px] font-bold rounded-xl flex items-center gap-1.5 cursor-pointer"
               >
                 <Lock className="w-3.5 h-3.5 text-red-400" /> Lock & Exit
@@ -2019,7 +1999,7 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
                   <ShieldCheck className="w-4 h-4" /> SafeInTürkiye Verified Pass
                 </span>
                 <h3 className="text-xl font-extrabold mt-1">
-                  {bookingConfirmedVoucher ? 'Official Digital Voucher' : 'Reserve Spot (No Advance Fee)'}
+                  {bookingRequest ? 'Booking request submitted' : 'Request a booking (No Advance Fee)'}
                 </h3>
               </div>
               <button onClick={() => setReservationModalOpen(false)} className="p-1 rounded-full bg-white/20 hover:bg-white/30 text-white cursor-pointer">
@@ -2028,7 +2008,7 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
             </div>
 
             <div className="p-6 space-y-4">
-              {!bookingConfirmedVoucher ? (
+              {!bookingRequest ? (
                 <div className="space-y-3">
                   <div className="p-3.5 bg-sky-50/70 border border-sky-100 rounded-2xl flex items-center gap-3">
                     <img src={selectedBookingItem.img} alt="" className="w-14 h-14 object-cover rounded-xl shadow-sm" />
@@ -2077,7 +2057,7 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
                     onClick={handleConfirmReservation}
                     className="w-full h-12 bg-[#00A3E0] hover:bg-[#0284C7] text-white font-extrabold rounded-xl text-[13px] shadow-md shadow-sky-400/20 cursor-pointer"
                   >
-                    Confirm & Issue Voucher
+                    Submit booking request
                   </button>
                 </div>
               ) : (
@@ -2087,32 +2067,32 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
                     <div className="flex justify-between items-start border-b border-sky-200/60 pb-3">
                       <div>
                         <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">Reference Code</span>
-                        <span className="text-xl font-black text-[#00A3E0] tracking-wider">{bookingConfirmedVoucher.code}</span>
+                        <span className="text-xl font-black text-[#00A3E0] tracking-wider">{bookingRequest.code}</span>
                       </div>
                       <span className="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase flex items-center gap-1">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Confirmed Pass
+                        <Clock className="w-3.5 h-3.5" /> Pending confirmation
                       </span>
                     </div>
 
                     <div className="space-y-2 text-[12px]">
                       <div>
                         <span className="text-slate-400 text-[10px] block">Venue / Experience:</span>
-                        <strong className="text-slate-900 font-bold text-[14px]">{bookingConfirmedVoucher.itemTitle}</strong>
+                        <strong className="text-slate-900 font-bold text-[14px]">{bookingRequest.itemTitle}</strong>
                       </div>
                       <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-100">
                         <div>
                           <span className="text-slate-400 text-[10px] block">Primary Guest:</span>
-                          <strong className="text-slate-800">{bookingConfirmedVoucher.guest}</strong>
+                          <strong className="text-slate-800">{bookingRequest.guest}</strong>
                         </div>
                         <div>
                           <span className="text-slate-400 text-[10px] block">Scheduled Date:</span>
-                          <strong className="text-slate-800">{bookingConfirmedVoucher.date}</strong>
+                          <strong className="text-slate-800">{bookingRequest.date}</strong>
                         </div>
                       </div>
                       <div className="pt-1 border-t border-slate-100 flex items-center justify-between">
                         <div>
                           <span className="text-slate-400 text-[10px] block">Total Due on Site:</span>
-                          <strong className="text-lg font-black text-[#00A3E0]">{bookingConfirmedVoucher.price}</strong>
+                          <strong className="text-lg font-black text-[#00A3E0]">{bookingRequest.price}</strong>
                         </div>
                         <div className="w-16 h-8 bg-slate-900 rounded flex items-center justify-center text-[8px] text-white font-mono tracking-tighter">
                           ||||| | ||||
@@ -2141,52 +2121,34 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
         </div>
       )}
 
-      {/* ====================================================================
-          GİZLİ ADMIN AUTHENTICATION MODAL (PIN: safe2026)
-      ==================================================================== */}
-      {adminAuthModal && (
+      {authModalOpen && (
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-4 text-center">
             <div className="w-12 h-12 rounded-2xl bg-sky-50 text-[#00A3E0] flex items-center justify-center mx-auto">
               <Lock className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="font-extrabold text-[17px] text-slate-900">Administrator Passkey</h3>
-              <p className="text-[12px] text-slate-500">Only authorized creators can access the SafeInTürkiye CMS studio.</p>
+              <h3 className="font-extrabold text-[17px] text-slate-900">Sign in</h3>
+              <p className="text-[12px] text-slate-500">CMS access is granted only by your Supabase role.</p>
             </div>
             <input
-              type="password"
-              value={adminPinInput}
-              onChange={(e) => setAdminPinInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  if (adminPinInput === 'safe2026') {
-                    setAdminUnlocked(true);
-                    setAdminAuthModal(false);
-                    setActiveTab('admin');
-                  } else {
-                    alert('Invalid passcode. Access denied.');
-                  }
-                }
-              }}
-              placeholder="Enter PIN (safe2026)..."
-              className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] text-center font-bold tracking-widest focus:outline-none focus:border-[#00A3E0]"
+              type="email" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} placeholder="Email"
+              className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] focus:outline-none focus:border-[#00A3E0]"
             />
+            <input type="password" value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} placeholder="Password" className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] focus:outline-none focus:border-[#00A3E0]" />
+            {authError && <p className="text-[12px] text-red-600">{authError}</p>}
             <div className="flex gap-2">
-              <button onClick={() => setAdminAuthModal(false)} className="flex-1 h-10 bg-slate-100 text-slate-600 font-bold rounded-xl text-[12px]">Cancel</button>
+              <button onClick={() => setAuthModalOpen(false)} className="flex-1 h-10 bg-slate-100 text-slate-600 font-bold rounded-xl text-[12px]">Cancel</button>
               <button
-                onClick={() => {
-                  if (adminPinInput === 'safe2026') {
-                    setAdminUnlocked(true);
-                    setAdminAuthModal(false);
-                    setActiveTab('admin');
-                  } else {
-                    alert('Invalid passcode. Access denied.');
-                  }
+                onClick={async () => {
+                  if (!signIn) { setAuthError('Supabase is not configured.'); return; }
+                  const result = await signIn(authEmail, authPassword);
+                  if (result?.error) { setAuthError(result.error.message); return; }
+                  setAuthModalOpen(false); setAuthError(null);
                 }}
                 className="flex-1 h-10 bg-[#00A3E0] hover:bg-[#0284C7] text-white font-bold rounded-xl text-[12px]"
               >
-                Enter Studio
+                Sign in
               </button>
             </div>
           </div>
@@ -2199,7 +2161,7 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
           <div className="space-y-0.5 text-center sm:text-left">
             <div className="font-bold text-[#0A2540] flex items-center gap-1.5 justify-center sm:justify-start">
               SafeInTürkiye 2026 Platform
-              <button onClick={() => setAdminAuthModal(true)} title="Admin Studio" className="text-slate-300 hover:text-[#00A3E0] cursor-pointer">
+              <button onClick={() => setAuthModalOpen(true)} title="Sign in" className="text-slate-300 hover:text-[#00A3E0] cursor-pointer">
                 <Lock className="w-3 h-3" />
               </button>
             </div>
