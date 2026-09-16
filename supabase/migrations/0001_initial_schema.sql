@@ -38,11 +38,11 @@ create table public.activities (like public.hotels including defaults including 
 create table public.museums (like public.hotels including defaults including constraints including indexes);
 create table public.attractions (like public.hotels including defaults including constraints including indexes);
 create table public.exchange_offices (like public.hotels including defaults including constraints including indexes);
-alter table public.restaurants add primary key (id), add foreign key (city_id) references public.cities(id) on delete set null, add foreign key (source_id) references public.data_sources(id) on delete set null;
-alter table public.activities add primary key (id), add foreign key (city_id) references public.cities(id) on delete set null, add foreign key (source_id) references public.data_sources(id) on delete set null;
-alter table public.museums add primary key (id), add foreign key (city_id) references public.cities(id) on delete set null, add foreign key (source_id) references public.data_sources(id) on delete set null;
-alter table public.attractions add primary key (id), add foreign key (city_id) references public.cities(id) on delete set null, add foreign key (source_id) references public.data_sources(id) on delete set null;
-alter table public.exchange_offices add primary key (id), add foreign key (city_id) references public.cities(id) on delete set null, add foreign key (source_id) references public.data_sources(id) on delete set null;
+alter table public.restaurants add foreign key (city_id) references public.cities(id) on delete set null, add foreign key (source_id) references public.data_sources(id) on delete set null;
+alter table public.activities add foreign key (city_id) references public.cities(id) on delete set null, add foreign key (source_id) references public.data_sources(id) on delete set null;
+alter table public.museums add foreign key (city_id) references public.cities(id) on delete set null, add foreign key (source_id) references public.data_sources(id) on delete set null;
+alter table public.attractions add foreign key (city_id) references public.cities(id) on delete set null, add foreign key (source_id) references public.data_sources(id) on delete set null;
+alter table public.exchange_offices add foreign key (city_id) references public.cities(id) on delete set null, add foreign key (source_id) references public.data_sources(id) on delete set null;
 create table public.scams (
   id uuid primary key default gen_random_uuid(), city_id uuid references public.cities(id) on delete set null,
   source_id uuid references public.data_sources(id) on delete set null, title text not null, description text not null,
