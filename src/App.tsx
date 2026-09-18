@@ -452,8 +452,10 @@ function SafeRouteMap({
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const [leafletReady, setLeafletReady] = useState(false);
+  const googleBrowserKey = import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY?.trim();
 
   useEffect(() => {
+    if (googleBrowserKey) return;
     if ((window as any).L) {
       setLeafletReady(true);
       return;
@@ -473,9 +475,10 @@ function SafeRouteMap({
       script.onload = () => setLeafletReady(true);
       document.body.appendChild(script);
     }
-  }, []);
+  }, [googleBrowserKey]);
 
   useEffect(() => {
+    if (googleBrowserKey) return;
     const L = (window as any).L;
     if (!leafletReady || !L || !mapContainerRef.current) return;
 
@@ -539,7 +542,23 @@ function SafeRouteMap({
         mapInstanceRef.current = null;
       }
     };
-  }, [leafletReady, originCoords, destCoords, geometry, color]);
+  }, [leafletReady, originCoords, destCoords, geometry, color, googleBrowserKey]);
+
+  if (googleBrowserKey && originCoords && destCoords) {
+    const mapParams = new URLSearchParams({
+      key: googleBrowserKey,
+      origin: `${originCoords.lat},${originCoords.lng}`,
+      destination: `${destCoords.lat},${destCoords.lng}`,
+      mode: 'driving',
+      language: document.documentElement.lang || 'en',
+      region: 'TR'
+    });
+    return (
+      <div className="w-full h-full min-h-[360px] rounded-2xl overflow-hidden border border-sky-100 shadow-sm bg-slate-100">
+        <iframe title="Google Maps taxi route" src={`https://www.google.com/maps/embed/v1/directions?${mapParams.toString()}`} className="w-full h-full min-h-[360px] sm:min-h-[480px]" loading="lazy" referrerPolicy="no-referrer-when-downgrade" allowFullScreen />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full h-full min-h-[360px] rounded-2xl overflow-hidden border border-sky-100 shadow-sm relative z-0 bg-slate-100 flex items-center justify-center">
@@ -1057,10 +1076,19 @@ export default function App() {
   ]);
 
   const [activitiesList, setActivitiesList] = useState([
-    { id: 'a1', title: 'Sunrise Hot Air Balloon Flight', city: 'Cappadocia', category: 'Aviation', duration: '3.5 Hours', price: '₺7,500', guideLang: 'English & Turkish', rating: '5.0', img: 'https://images.unsplash.com/photo-1557972359-152b6ebd3eb3?auto=format&fit=crop&w=600&q=80' },
-    { id: 'a2', title: 'Private Sunset Bosphorus Yacht Cruise', city: 'İstanbul', category: 'Marine', duration: '2.0 Hours', price: '₺1,950', guideLang: 'Audio Guide & Captain', rating: '4.9', img: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=600&q=80' },
-    { id: 'a3', title: 'Kaş Sunken City Sea Kayaking', city: 'Antalya', category: 'Water Sports', duration: '4.0 Hours', price: '₺2,400', guideLang: 'English Instructor', rating: '4.9', img: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=600&q=80' }
+    { id: 'a1', title: 'Göreme Open-Air Museum', city: 'Cappadocia', category: 'Museum & Culture', duration: '2–3 Hours', price: 'Check official ticket', guideLang: 'Audio guide options', rating: '—', description: 'Rock-cut churches and frescoes; morning visits are usually calmer.', img: 'https://images.unsplash.com/photo-1641128324972-af3212f0f6bd?auto=format&fit=crop&w=900&q=80' },
+    { id: 'a2', title: 'Museum of Anatolian Civilizations', city: 'Ankara', category: 'Museum & Culture', duration: '2–3 Hours', price: 'Check official ticket', guideLang: 'Museum information', rating: '—', description: 'A practical introduction to Anatolia before exploring Ankara Castle.', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Anadolu_Medeniyetleri_M%C3%BCzesi.jpg/960px-Anadolu_Medeniyetleri_M%C3%BCzesi.jpg' },
+    { id: 'a3', title: 'Topkapı Palace & Historic Peninsula', city: 'İstanbul', category: 'Museum & Culture', duration: 'Half day', price: 'Check official ticket', guideLang: 'Audio guide options', rating: '—', description: 'Allow extra time for security queues and separate ticketed sections.', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Topkapi_Palace%2C_Istanbul.jpg/960px-Topkapi_Palace%2C_Istanbul.jpg' },
+    { id: 'a4', title: 'Cinema Night in Beyoğlu', city: 'İstanbul', category: 'Cinema', duration: 'Film schedule', price: 'Check programme', guideLang: 'Original/subtitled varies', rating: '—', description: 'Compare nearby cinema programmes and check the film language and subtitles before buying.', img: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=900&q=80' },
+    { id: 'a5', title: 'Independent Cinema Evening', city: 'Ankara', category: 'Cinema', duration: '2–3 Hours', price: 'Check programme', guideLang: 'Varies by screening', rating: '—', description: 'Compare the current programme and subtitle language before travelling.', img: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=900&q=80' },
+    { id: 'a6', title: 'Bosphorus Public Ferry Sunset', city: 'İstanbul', category: 'Entertainment', duration: '1.5–2 Hours', price: 'Transit fare applies', guideLang: 'Self-guided', rating: '—', description: 'A useful low-cost alternative to an unverified private cruise offer.', img: 'https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?auto=format&fit=crop&w=900&q=80' },
+    { id: 'a7', title: 'Kaleiçi Evening Walk', city: 'Antalya', category: 'Entertainment', duration: '2 Hours', price: 'Free', guideLang: 'Self-guided', rating: '—', description: 'Harbour views, old streets and restaurants; confirm venue closing times.', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Kalei%C3%A7i.jpg/960px-Kalei%C3%A7i.jpg' },
+    { id: 'a8', title: 'Kaş Sea Kayaking', city: 'Antalya', category: 'Summer', duration: 'Half day', price: 'Request current quote', guideLang: 'Operator dependent', rating: '—', description: 'Seasonal and weather-dependent. Confirm insurance, equipment and cancellation terms.', img: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=900&q=80' },
+    { id: 'a9', title: 'Cappadocia Sunrise Viewpoints', city: 'Cappadocia', category: 'Summer', duration: '2–3 Hours', price: 'Viewpoints vary', guideLang: 'Self-guided', rating: '—', description: 'Balloon flights are weather-dependent; viewpoints do not guarantee a launch.', img: 'https://images.unsplash.com/photo-1557972359-152b6ebd3eb3?auto=format&fit=crop&w=900&q=80' },
+    { id: 'a10', title: 'Erciyes Ski Day', city: 'Kayseri', category: 'Winter', duration: 'Full day', price: 'Seasonal', guideLang: 'Operator dependent', rating: '—', description: 'Check snow, lift status, equipment rental and return transport before leaving.', img: 'https://images.unsplash.com/photo-1486911278844-a81c5267e227?auto=format&fit=crop&w=900&q=80' },
+    { id: 'a11', title: 'Uludağ Winter Day Trip', city: 'Bursa', category: 'Winter', duration: 'Full day', price: 'Seasonal', guideLang: 'Self-guided/operator', rating: '—', description: 'Cable-car and road access can change with weather; verify on the travel day.', img: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/3/30/Uluda%C4%9F_Kayak_Merkezi-_Uludag_Ski_Center.jpg/960px-Uluda%C4%9F_Kayak_Merkezi-_Uludag_Ski_Center.jpg' }
   ]);
+  const [activityCategory, setActivityCategory] = useState('All');
 
   const [nearbyPlacesList, setNearbyPlacesList] = useState([
     { id: 'n1', name: 'Nöbetçi Eczane (24/7 Duty Pharmacy)', dist: '180m', addr: 'Sıraselviler Cad. No:24, Taksim', cat: 'Pharmacy', phone: '+90 212 244 10 10', is247: true },
@@ -1636,9 +1664,12 @@ export default function App() {
         ==================================================================== */}
         {activeTab === 'experiences' && (
           <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
-            <h1 className="text-3xl font-extrabold text-slate-900">Verified Activities & Excursions</h1>
+            <div><h1 className="text-3xl font-extrabold text-slate-900">{lang === 'tr' ? 'Aktiviteler ve mevsimlik deneyimler' : 'Activities and seasonal experiences'}</h1><p className="mt-1 text-sm text-slate-600">{lang === 'tr' ? 'Müze, sinema, eğlence, yaz ve kış seçeneklerini ayrı incele. Tarihsiz fiyat veya doğrulanmamış puan gösterilmez.' : 'Browse museums, cinema, entertainment, summer and winter ideas separately. Undated prices and unverified ratings are not shown.'}</p></div>
+            <div className="flex gap-2 overflow-x-auto pb-1" aria-label={lang === 'tr' ? 'Aktivite kategorisi' : 'Activity category'}>
+              {['All', 'Museum & Culture', 'Cinema', 'Entertainment', 'Summer', 'Winter'].map(category => <button type="button" key={category} aria-pressed={activityCategory === category} onClick={() => setActivityCategory(category)} className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs font-bold ${activityCategory === category ? 'border-[#00A3E0] bg-[#00A3E0] text-white' : 'border-sky-100 bg-white text-slate-700 hover:bg-sky-50'}`}>{lang === 'tr' ? ({ All: 'Tümü', 'Museum & Culture': 'Müze & Kültür', Cinema: 'Sinema', Entertainment: 'Eğlence', Summer: 'Yaz', Winter: 'Kış' } as Record<string, string>)[category] : category}</button>)}
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-              {activitiesList.map(a => (
+              {activitiesList.filter(activity => activityCategory === 'All' || activity.category === activityCategory).map(a => (
                 <div key={a.id} className="bg-white rounded-2xl border border-sky-100 overflow-hidden shadow-sm flex flex-col justify-between">
                   <div className="h-44 w-full relative">
                     <img src={a.img} alt={a.title} className="w-full h-full object-cover" />
@@ -1647,14 +1678,15 @@ export default function App() {
                   <div className="p-4 space-y-1">
                     <strong className="text-[14px] text-slate-900 block">{a.title}</strong>
                     <span className="text-[11px] text-slate-400">Duration: {a.duration} | Guide: {a.guideLang}</span>
+                    <p className="pt-2 text-[12px] leading-relaxed text-slate-600">{a.description}</p>
                   </div>
                   <div className="p-4 border-t border-slate-100 flex items-center justify-between">
-                    <strong className="text-[15px] font-black text-[#00A3E0]">{a.price}</strong>
+                    <strong className="text-[12px] font-bold text-[#007EAD]">{a.price}</strong>
                     <button 
                       onClick={() => handleOpenBooking(a, 'activity')}
                       className="px-4 py-1.5 bg-[#00A3E0] hover:bg-[#0284C7] text-white rounded-xl text-[12px] font-bold cursor-pointer"
                     >
-                      Reserve Spot
+                      {lang === 'tr' ? 'Bilgi / talep' : 'Details / request'}
                     </button>
                   </div>
                 </div>
@@ -1696,6 +1728,10 @@ export default function App() {
                 </article>
               ))}
             </div>
+            <p className="text-[10px] text-slate-400">
+              Photo credits: <a className="underline" href="https://commons.wikimedia.org/wiki/File:Anadolu_Medeniyetleri_M%C3%BCzesi.jpg" target="_blank" rel="noreferrer">José Luis Filpo Cabana / CC BY 3.0</a>{' · '}
+              <a className="underline" href="https://commons.wikimedia.org/wiki/File:Topkapi_Palace,_Istanbul.jpg" target="_blank" rel="noreferrer">Rraj89 / CC BY-SA 4.0</a>. Other editorial images are from Unsplash; CC0/public-domain images are identified at their source.
+            </p>
           </main>
         )}
 

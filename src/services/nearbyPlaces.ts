@@ -30,7 +30,7 @@ type OsmElement = {
 }
 
 const categories: NearbyCategory[] = ['bureau_de_change', 'pharmacy', 'hospital', 'police', 'atm', 'taxi', 'restaurant', 'cafe']
-const endpoints = [
+const developmentEndpoints = [
   'https://overpass.private.coffee/api/interpreter',
   'https://overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
@@ -148,9 +148,12 @@ export async function fetchNearbyPlaces(center: NearbyCenter, kind: NearbyKind, 
   const query = `[out:json][timeout:20];nwr(around:2500,${center.lat.toFixed(6)},${center.lng.toFixed(6)})["amenity"~"^(${amenities})$"]["access"!="private"]["access"!="no"];out center tags;`
   try {
     let lastError: unknown = null
-    for (const endpoint of endpoints) {
+    const requests = import.meta.env.DEV
+      ? developmentEndpoints.map(endpoint => ({ url: endpoint, init: { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded;charset=UTF-8' }, body: new URLSearchParams({ data: query }) } as RequestInit }))
+      : [{ url: `/api/nearby?lat=${center.lat.toFixed(6)}&lng=${center.lng.toFixed(6)}&kind=${kind}`, init: {} as RequestInit }]
+    for (const request of requests) {
       try {
-        const response = await fetch(`${endpoint}?data=${encodeURIComponent(query)}`, { signal: controller.signal, credentials: 'omit' })
+        const response = await fetch(request.url, { ...request.init, signal: controller.signal, credentials: 'omit', headers: { Accept: 'application/json', ...(request.init.headers ?? {}) } })
         if (response.status === 429 || response.status === 406) { lastError = new NearbyError('busy'); continue }
         if (!response.ok) { lastError = new NearbyError('unavailable'); continue }
         const result = parseNearbyResponse(await response.json(), center, kind)
