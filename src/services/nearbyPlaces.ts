@@ -153,7 +153,15 @@ export async function fetchNearbyPlaces(center: NearbyCenter, kind: NearbyKind, 
       : [{ url: `/api/nearby?lat=${center.lat.toFixed(6)}&lng=${center.lng.toFixed(6)}&kind=${kind}`, init: {} as RequestInit }]
     for (const request of requests) {
       try {
-        const response = await fetch(request.url, { ...request.init, signal: controller.signal, credentials: 'omit', headers: { Accept: 'application/json', ...(request.init.headers ?? {}) } })
+        const response = await fetch(request.url, {
+          ...request.init,
+          signal: controller.signal,
+          // Preview deployments can be protected by Vercel. Keep the preview
+          // session cookie for our own API, but never send credentials to the
+          // third-party Overpass development endpoints.
+          credentials: import.meta.env.DEV ? 'omit' : 'same-origin',
+          headers: { Accept: 'application/json', ...(request.init.headers ?? {}) },
+        })
         if (response.status === 429 || response.status === 406) { lastError = new NearbyError('busy'); continue }
         if (!response.ok) { lastError = new NearbyError('unavailable'); continue }
         const result = parseNearbyResponse(await response.json(), center, kind)
