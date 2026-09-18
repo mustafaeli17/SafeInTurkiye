@@ -51,17 +51,25 @@ import {
   RefreshCw,
   ChevronLeft,
   ChevronRight,
-  ChevronDown
+  ChevronDown,
+  Menu
 } from 'lucide-react';
 import { useSupabaseAuth } from './hooks/useSupabaseAuth';
 import { createBooking } from './repositories/bookingRepository';
 import { getCurrentTaxiTariffs } from './repositories/tariffRepository';
+import { getAssistantReply } from './services/travelDataService';
 import { supabaseConfigured } from './lib/supabase';
+import { WeatherCard } from './components/WeatherCard';
+import CurrencyRates from './components/CurrencyRates';
+import NearbyPlaces from './components/NearbyPlaces';
+import TransitPlanner from './components/TransitPlanner';
+import TravelFaq, { TransportCardGuide } from './components/TravelFaq';
+import ContentAdmin from './components/ContentAdmin';
 
 // ============================================================================
 // 1. TİP TANIMLARI & 6 DİLLİ SÖZLÜK SİSTEMİ
 // ============================================================================
-type SupportedLang = 'en' | 'tr' | 'de' | 'fr' | 'ar' | 'ru';
+type SupportedLang = 'en' | 'tr' | 'de' | 'fr' | 'ar' | 'ru' | 'zh';
 
 interface Coordinates {
   lat: number;
@@ -149,11 +157,24 @@ interface TaxiTariff {
   lastUpdated: string;
 }
 
+// Used only when the public tariff table is empty or the preview is running
+// without Supabase. The figures are labelled as a dated reference estimate in
+// the UI; a newer verified database row always takes precedence.
+const istanbulReferenceTariff: TaxiTariff = {
+  city: 'İstanbul',
+  openingFare: 71.94,
+  pricePerKm: 47.92,
+  minimumFare: 230,
+  waitingFarePerHour: 598.90,
+  source: 'İBB/UKOME reference tariff · 20 Jul 2026',
+  lastUpdated: '2026-07-20',
+};
+
 // Tam Çalışan Çeviri Sözlüğü
 const dict: Record<SupportedLang, Record<string, string>> = {
   en: {
     heroTitle: 'Explore Türkiye with confidence',
-    heroSub: 'Real-time UKOME taxi meters, transit navigation, currency exchange, and 24/7 tourist assistance.',
+    heroSub: 'Verified taxi tariffs, station guides, dated reference rates, and practical city information.',
     searchPlaceholder: 'What do you need help with? (e.g. Taksim taxi, M11 Metro, pharmacy)',
     popCities: 'Popular Cities',
     popCitiesSub: "Explore Türkiye's most visited destinations",
@@ -282,13 +303,64 @@ const dict: Record<SupportedLang, Record<string, string>> = {
     activities: 'Активный отдых',
     nearMe: 'Рядом со мной',
     emergency: '112 Экстренно'
+  },
+  zh: {
+    heroTitle: '放心探索土耳其',
+    heroSub: '带来源标注的出租车参考价、交通指南、汇率和实用城市信息。',
+    searchPlaceholder: '你需要什么帮助？（例如：出租车、地铁、药房）',
+    popCities: '热门城市', popCitiesSub: '探索土耳其最受欢迎的目的地', viewAll: '查看全部',
+    aiHelpTitle: '需要即时帮助？', aiHelpSub: '询问旅行助手，获取有来源的旅行信息。', startChat: '开始聊天',
+    explore: '探索', assistant: '旅行助手', taxi: '出租车费用', transit: '公共交通', currency: '汇率', cityWeather: '城市与天气',
+    hotels: '酒店', dining: '餐饮', activities: '活动', nearMe: '附近', emergency: '112 紧急电话'
   }
 };
+
+function offlineAssistantReply(prompt: string, language: SupportedLang): string {
+  const low = prompt.toLowerCase();
+  if (language === 'tr') {
+    if (low.includes('taksi') || low.includes('ücret')) return 'Taksi Ücreti sayfasında başlangıç ve varış noktalarını seçip yol mesafesine göre tahmini aralığı görebilirsin. Son tutar taksimetre ve trafiğe göre değişebilir.';
+    if (low.includes('metro') || low.includes('ulaşım') || low.includes('vapur')) return 'Toplu Taşıma sayfasında desteklenen istasyonlar için F1 ve T1 bağlantısını görebilirsin. Canlı sefer ve arıza bilgisi için henüz bir ulaşım veri kaynağı bağlı değil.';
+    if (low.includes('döviz') || low.includes('euro') || low.includes('kur')) return 'Exchange sayfasında tarihli referans kurları ve çevirici var. Döviz bürosu alış/satış kuru yalnızca kaynak sağlanırsa gösterilir.';
+    if (low.includes('yakın') || low.includes('eczane') || low.includes('restoran') || low.includes('otel')) return 'Yakınımda sayfasında şehir merkezini veya konumunu seçerek adres, telefon ve yayımlanmış çalışma saatlerini arayabilirsin.';
+    if (low.includes('hava') || low.includes('istanbul') || low.includes('antalya') || low.includes('kapadokya') || low.includes('izmir')) return 'Cities & Weather sayfasında seçtiğin şehir için güncel hava, şehir notları ve görülmesi gereken yerler bulunur.';
+    if (low.includes('güven') || low.includes('acil')) return 'Safety sayfasında 112 ve temel güvenlik önerileri var. Acil durumda doğrudan 112’yi ara.';
+    if (low.includes('aktiv') || low.includes('müze') || low.includes('gez')) return 'Activities ve şehir sayfalarında etkinlik ve müze önerilerini inceleyebilirsin; rezervasyon için işletmenin kendi onayı gerekir.';
+    return 'Bu konuda şehir, taksi, toplu taşıma, hava durumu veya döviz sayfalarındaki kaynaklı bilgileri kontrol edebilirim.';
+  }
+  const replies: Record<SupportedLang, string> = {
+    en: 'I can help with the Taxi Fare, Transit Navigator, Exchange and Cities & Weather pages. Live departures, traffic percentages and bureau quotes are shown only when a connected source provides them.',
+    tr: 'Taksi Ücreti, Toplu Taşıma, Döviz ve Şehirler & Hava sayfalarında yardımcı olabilirim. Canlı sefer, trafik ve büro kurları yalnızca bağlı bir kaynak varsa gösterilir.',
+    de: 'Ich helfe bei Taxi, öffentlichem Verkehr, Wechselkursen und Städten. Live-Daten werden nur angezeigt, wenn eine Quelle verbunden ist.',
+    fr: 'Je peux aider avec les pages taxi, transports, change et villes. Les données en direct ne sont affichées que lorsqu’une source est connectée.',
+    ar: 'يمكنني المساعدة في صفحات سيارات الأجرة والمواصلات والصرافة والمدن. لا تظهر البيانات المباشرة إلا عند توفر مصدر متصل.',
+    ru: 'Я помогу со страницами такси, транспорта, обмена валют и городов. Данные в реальном времени показываются только при подключённом источнике.',
+    zh: '我可以帮助你使用出租车、公共交通、汇率和城市页面。只有连接了数据源，才会显示实时信息。',
+  };
+  if (language === 'en') {
+    if (low.includes('taxi') || low.includes('fare') || low.includes('price')) return 'Open Taxi Fare, choose both places from the address suggestions, then calculate. The estimate uses the dated Istanbul reference tariff and road distance; the meter can differ.';
+    if (low.includes('metro') || low.includes('train') || low.includes('bus') || low.includes('transit') || low.includes('route')) return 'Open Transit Navigator and choose different stations. The guide changes its F1/T1 connection for the selected pair. Live departures, bus times and fares need a connected municipal feed and are not invented.';
+    if (low.includes('near') || low.includes('pharmacy') || low.includes('restaurant') || low.includes('hotel')) return 'Open Near Me, choose city centre or your location, then wait for the published place directory. Cards show only sourced address, phone and hours.';
+    if (low.includes('weather') || low.includes('istanbul') || low.includes('antalya') || low.includes('cappadocia') || low.includes('izmir')) return 'Open Cities & Weather and select a city for current weather, practical city notes and places worth seeing.';
+    if (low.includes('activity') || low.includes('museum') || low.includes('visit')) return 'Open Activities or a city page for suggestions. A booking is only confirmed after the business or booking provider accepts it.';
+  }
+  return replies[language];
+}
 
 // ============================================================================
 // 2. RESMİ TARİFELER & DÖVİZ
 // ============================================================================
 const citiesDetailedData: Record<string, CityInfo> = {
+  'Ankara': {
+    name: 'Ankara', tagline: 'Türkiye’s capital: museums, historic streets and parks',
+    coverImage: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Anitkabir_Ankara.jpg/1280px-Anitkabir_Ankara.jpg', lat: 39.9334, lng: 32.8597,
+    temp: '', weatherDesc: '', humidity: '', wind: '', trafficIndex: '', trafficStatus: 'Low',
+    localTip: 'Use Başkent Kart Ulaşım for urban transport. Check EGO for routes and departure times.',
+    highlights: [
+      { name: 'Anıtkabir', detail: 'Memorial grounds and museum; check visiting hours before travel.' },
+      { name: 'Museum of Anatolian Civilizations', detail: 'Archaeological collections near Ankara Castle.' },
+      { name: 'Ankara Castle & Hamamönü', detail: 'Historic streets and city views.' },
+    ],
+  },
   'İstanbul': {
     name: 'İstanbul',
     tagline: 'Bridging continents with vibrant history, ferries and culture',
@@ -310,7 +382,7 @@ const citiesDetailedData: Record<string, CityInfo> = {
   'Cappadocia': {
     name: 'Cappadocia (Kapadokya)',
     tagline: 'Fairy chimneys, volcanic valleys and sunrise balloon corridors',
-    coverImage: 'https://images.unsplash.com/photo-1608755728617-aefab37d45f6?auto=format&fit=crop&w=1200&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1557972359-152b6ebd3eb3?auto=format&fit=crop&w=1200&q=80',
     lat: 38.6431, lng: 34.8289,
     temp: '22°C',
     weatherDesc: 'Clear Sky & Calm',
@@ -328,7 +400,7 @@ const citiesDetailedData: Record<string, CityInfo> = {
   'Antalya': {
     name: 'Antalya',
     tagline: 'Turquoise Mediterranean shores, waterfalls and Roman ruins',
-    coverImage: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=1200&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1657873882134-75e359b54a3b?auto=format&fit=crop&w=1200&q=80',
     lat: 36.8969, lng: 30.7133,
     temp: '30°C',
     weatherDesc: 'Warm & Sunny',
@@ -346,7 +418,7 @@ const citiesDetailedData: Record<string, CityInfo> = {
   'İzmir': {
     name: 'İzmir',
     tagline: 'Aegean breeze, Kordon promenade, and lively bazaar alleys',
-    coverImage: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80',
+    coverImage: 'https://image.arrivalguides.com/x/06/6f835a77a5b6bf807ad30ce5489da764.jpg',
     lat: 38.4237, lng: 27.1428,
     temp: '28°C',
     weatherDesc: 'Breezy & Sunny',
@@ -492,9 +564,10 @@ export default function App() {
   const [lang, setLang] = useState<SupportedLang>('en');
   const [searchQuery, setSearchQuery] = useState('');
   const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Dil Metinleri Helper Fonksiyonu
-  const tr = useCallback((k: string) => dict[lang]?.[k] || dict.en[k] || k, [lang]);
+  const tr = useCallback((k: string) => k === 'assistant' ? ({ en: 'Travel FAQ', tr: 'Sık Sorulan Sorular', de: 'Reisefragen', fr: 'Questions fréquentes', ar: 'الأسئلة الشائعة', zh: '常见问题', ru: 'Частые вопросы' }[lang]) : dict[lang]?.[k] || dict.en[k] || k, [lang]);
 
   useEffect(() => {
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
@@ -505,6 +578,18 @@ export default function App() {
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [authError, setAuthError] = useState<string | null>(null);
+  const [authBusy, setAuthBusy] = useState(false);
+  useEffect(() => {
+    const openAdmin = () => {
+      if (window.location.hash === '#admin') {
+        setActiveTab('admin');
+        if (!session) setAuthModalOpen(true);
+      }
+    };
+    openAdmin();
+    window.addEventListener('hashchange', openAdmin);
+    return () => window.removeEventListener('hashchange', openAdmin);
+  }, [session]);
   const [exchangeQuotes, setExchangeQuotes] = useState<ExchangeQuote[]>([]);
   const [exchangeUpdatedAt, setExchangeUpdatedAt] = useState<string | null>(null);
   const [exchangeError, setExchangeError] = useState<string | null>(null);
@@ -626,65 +711,32 @@ export default function App() {
     }
   };
 
-  // AI Asistan State
-  const [aiLoading, setAiLoading] = useState(false);
-  const [chatLog, setChatLog] = useState([
-    {
-      sender: 'bot',
-      text: 'Hello! I am your SafeInTürkiye Personal Travel Assistant. I am connected directly to official UKOME taxi tariffs, M11 airport metros, Marmaray schedules, TCMB exchange rates, and verified safe venues. How can I assist your trip today?',
-      time: '12:00'
+
+  const handleGlobalSearch = () => {
+    const query = searchQuery.trim();
+    if (!query) return;
+    const low = query.toLocaleLowerCase('tr-TR');
+    const cityMatch = Object.keys(citiesDetailedData).find(city => city.toLocaleLowerCase('tr-TR') === low || city.toLowerCase().replace(/i̇/g, 'i') === query.toLowerCase());
+    if (cityMatch) { setSelectedCityName(cityMatch); setActiveTab('city'); return; }
+    if (/taksi|taxi|fare|ücret/.test(low)) setActiveTab('taxi');
+    else if (/metro|otobüs|bus|tren|train|vapur|ferry|marmaray|ulaşım|transit|route|rota/.test(low)) setActiveTab('transit');
+    else if (/döviz|kur|exchange|currency|euro|usd/.test(low)) setActiveTab('currency');
+    else if (/yakın|near|eczane|pharmacy|hastane|hospital|atm|polis|police/.test(low)) setActiveTab('nearme');
+    else if (/otel|hotel|konak|stay/.test(low)) setActiveTab('stay');
+    else if (/restoran|restaurant|yemek|food|cafe|kafe/.test(low)) setActiveTab('food');
+    else if (/aktiv|activity|etkinlik|museum|müze|gez/.test(low)) setActiveTab('experiences');
+    else if (/güven|safety|acil|emergency/.test(low)) setActiveTab('safety');
+    else {
+      setActiveTab('assistant');
     }
-  ]);
-  const [aiInputText, setAiInputText] = useState('');
-  const chatBottomRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chatLog, aiLoading]);
-
-  const handleAiSend = (customPrompt?: string) => {
-    const promptToSend = customPrompt || aiInputText;
-    if (!promptToSend.trim() || aiLoading) return;
-
-    const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    setChatLog(prev => [...prev, { sender: 'user', text: promptToSend, time: currentTime }]);
-    if (!customPrompt) setAiInputText('');
-    setAiLoading(true);
-
-    setTimeout(() => {
-      const low = promptToSend.toLowerCase();
-      let ans = '';
-
-      if (low.includes('taxi') || low.includes('taksi') || low.includes('airport') || low.includes('havalimanı') || low.includes('ücret')) {
-        ans = `According to official 2026 UKOME regulations in Istanbul:
-• Opening flagfall: ₺71.94
-• Rate per km: ₺47.92
-• Short distance minimum: ₺230.00
-Estimated ride from Istanbul Airport (IST) to Taksim (~41 km) is between ₺1,950 and ₺2,400 depending on bridge tolls and traffic.
-By law, every taxi must run on the digital meter. Report violations to 153.`;
-      } else if (low.includes('transit') || low.includes('metro') || low.includes('ferry') || low.includes('vapur') || low.includes('marmaray')) {
-        ans = `Official Public Transit Guide for 2026:
-1. No Istanbulkart Required: Foreign contactless bank cards (Visa/Mastercard) and Apple Pay tap directly at turnstiles (₺65 flat).
-2. Istanbul Airport (IST): Take the M11 Express Metro to Gayrettepe in 29 mins (₺46.20), then transfer to M2 into Taksim.
-3. Crossing Continents: The fastest way is Marmaray (8 mins under the Bosphorus from Sirkeci to Kadıköy).`;
-      } else if (low.includes('money') || low.includes('exchange') || low.includes('döviz') || low.includes('euro')) {
-        ans = `TCMB Reference Rates:
-• 1 EUR ≈ 55.90 TRY | 1 USD ≈ 48.25 TRY
-Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport kiosks.`;
-      } else {
-        ans = `Regarding "${promptToSend}": SafeInTürkiye recommends checking our live UKOME taxi rates, transit step-by-step connections, and current exchange desks across the platform.`;
-      }
-
-      setChatLog(prev => [...prev, { sender: 'bot', text: ans, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
-      setAiLoading(false);
-    }, 450);
   };
 
   // Rezervasyon Modal State & İsim Girmeme Hata Kontrolü
   const [reservationModalOpen, setReservationModalOpen] = useState(false);
   const [selectedBookingItem, setSelectedBookingItem] = useState<any>(null);
+  const [selectedBookingType, setSelectedBookingType] = useState<'hotel' | 'restaurant' | 'activity'>('activity');
   const [guestFullName, setGuestFullName] = useState('');
-  const [bookingDate, setBookingDate] = useState('2026-09-12');
+  const [bookingDate, setBookingDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [bookingErrorMsg, setBookingErrorMsg] = useState<string | null>(null);
   const [bookingRequest, setBookingRequest] = useState<{
     code: string;
@@ -695,8 +747,9 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
     date: string;
   } | null>(null);
 
-  const handleOpenBooking = (item: any) => {
+  const handleOpenBooking = (item: any, listingType: 'hotel' | 'restaurant' | 'activity') => {
     setSelectedBookingItem(item);
+    setSelectedBookingType(listingType);
     setBookingRequest(null);
     setGuestFullName('');
     setBookingErrorMsg(null);
@@ -709,10 +762,11 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
       setBookingErrorMsg('Please enter the lead guest name.');
       return;
     }
-    if (!session?.user) { setBookingErrorMsg('Please sign in before submitting a booking request.'); return; }
+    if (!supabaseConfigured) { setBookingErrorMsg('Bu önizleme hesap hizmetine bağlı değil. Rezervasyon talebi şu anda gönderilemiyor.'); return; }
+    if (!session?.user) { setBookingErrorMsg('Talebinizi göndermek için giriş yapın; sonra bu forma dönebilirsiniz.'); setAuthModalOpen(true); return; }
     try {
       const booking = await createBooking({
-        listingType: 'activity', listingName: selectedBookingItem.title || selectedBookingItem.name,
+        listingType: selectedBookingType, listingName: selectedBookingItem.title || selectedBookingItem.name,
         guestName: guestFullName, guestEmail: session.user.email ?? '', visitDate: bookingDate, guestCount: 1,
       });
       setBookingRequest({ code: booking.reference_code, itemTitle: selectedBookingItem.title || selectedBookingItem.name, city: selectedBookingItem.city, price: selectedBookingItem.price || selectedBookingItem.avgPrice, guest: guestFullName, date: bookingDate });
@@ -740,7 +794,8 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
       const next: Record<string, TaxiTariff> = {};
       for (const tariff of tariffs) next[tariff.vehicleClass] = { city: tariff.city, openingFare: tariff.openingFare, pricePerKm: tariff.perKm, minimumFare: tariff.minimumFare, waitingFarePerHour: tariff.waitingFare, source: 'Verified SafeInTürkiye data source', lastUpdated: tariff.effectiveFrom };
       setTaxiTariffs(next);
-    }).catch(() => setTaxiTariffs({}));
+      if (Object.keys(next).length === 0 && detectedTaxiCity === 'İstanbul') setTaxiTariffs({ YELLOW: istanbulReferenceTariff });
+    }).catch(() => setTaxiTariffs(detectedTaxiCity === 'İstanbul' ? { YELLOW: istanbulReferenceTariff } : {}));
   }, [detectedTaxiCity]);
 
   const [taxiRouteResult, setTaxiRouteResult] = useState<{
@@ -888,7 +943,7 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
         source: 'OpenStreetMap / OSRM Driving Engine'
       });
 
-      const tariff = taxiTariffs[taxiClass.toUpperCase()];
+      const tariff = taxiTariffs[taxiClass.toUpperCase()] ?? (detectedTaxiCity === 'İstanbul' ? istanbulReferenceTariff : undefined);
       if (!tariff) {
         setTaxiRouteError('Verified taxi tariffs are unavailable for this city. Configure Supabase and publish a current tariff before showing an estimate.');
         setIsTaxiRouting(false);
@@ -1002,7 +1057,7 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
   ]);
 
   const [activitiesList, setActivitiesList] = useState([
-    { id: 'a1', title: 'Sunrise Hot Air Balloon Flight', city: 'Cappadocia', category: 'Aviation', duration: '3.5 Hours', price: '₺7,500', guideLang: 'English & Turkish', rating: '5.0', img: 'https://images.unsplash.com/photo-1608755728617-aefab37d45f6?auto=format&fit=crop&w=600&q=80' },
+    { id: 'a1', title: 'Sunrise Hot Air Balloon Flight', city: 'Cappadocia', category: 'Aviation', duration: '3.5 Hours', price: '₺7,500', guideLang: 'English & Turkish', rating: '5.0', img: 'https://images.unsplash.com/photo-1557972359-152b6ebd3eb3?auto=format&fit=crop&w=600&q=80' },
     { id: 'a2', title: 'Private Sunset Bosphorus Yacht Cruise', city: 'İstanbul', category: 'Marine', duration: '2.0 Hours', price: '₺1,950', guideLang: 'Audio Guide & Captain', rating: '4.9', img: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=600&q=80' },
     { id: 'a3', title: 'Kaş Sunken City Sea Kayaking', city: 'Antalya', category: 'Water Sports', duration: '4.0 Hours', price: '₺2,400', guideLang: 'English Instructor', rating: '4.9', img: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=600&q=80' }
   ]);
@@ -1014,63 +1069,6 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
     { id: 'n4', name: 'Taksim Gümüşsuyu Taxi Stand', dist: '140m', addr: 'Gümüşsuyu Cad. Taksim', cat: 'Taxi', phone: '+90 212 249 05 05', is247: true }
   ]);
 
-  // Admin CMS State & Düzenleme
-  const [adminSection, setAdminSection] = useState<'hotels' | 'restaurants' | 'activities' | 'nearme'>('hotels');
-  const [editingItemId, setEditingItemId] = useState<string | null>(null);
-
-  const [formTitle, setFormTitle] = useState('');
-  const [formCity, setFormCity] = useState('İstanbul');
-  const [formPrice, setFormPrice] = useState('');
-  const [formSub, setFormSub] = useState('');
-  const [formImg, setFormImg] = useState('');
-
-  const handleStartEdit = (item: any, sec: any) => {
-    setEditingItemId(item.id);
-    setFormTitle(item.title || item.name);
-    setFormCity(item.city || 'İstanbul');
-    setFormPrice(item.price || item.avgPrice || '');
-    setFormSub(item.roomType || item.cuisine || item.category || item.cat || '');
-    setFormImg(item.img || '');
-    setAdminSection(sec);
-  };
-
-  const handleSaveItem = () => {
-    if (!formTitle.trim()) return;
-    const defaultImg = formImg || 'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?auto=format&fit=crop&w=600&q=80';
-
-    if (adminSection === 'hotels') {
-      if (editingItemId) {
-        setHotelsList(hotelsList.map(h => h.id === editingItemId ? { ...h, name: formTitle, city: formCity, price: formPrice, roomType: formSub, img: defaultImg } : h));
-      } else {
-        setHotelsList([{ id: Date.now().toString(), name: formTitle, city: formCity, area: 'Central', roomType: formSub || 'Suite', price: formPrice || '₺3,500', rating: '5.0', amenities: 'WiFi, Spa', img: defaultImg }, ...hotelsList]);
-      }
-    } else if (adminSection === 'restaurants') {
-      if (editingItemId) {
-        setRestaurantsList(restaurantsList.map(r => r.id === editingItemId ? { ...r, name: formTitle, city: formCity, avgPrice: formPrice, cuisine: formSub, img: defaultImg } : r));
-      } else {
-        setRestaurantsList([{ id: Date.now().toString(), name: formTitle, city: formCity, cuisine: formSub || 'Authentic', avgPrice: formPrice || '₺400', openHours: '11:00 - 23:00', rating: '4.9', img: defaultImg }, ...restaurantsList]);
-      }
-    } else if (adminSection === 'activities') {
-      if (editingItemId) {
-        setActivitiesList(activitiesList.map(a => a.id === editingItemId ? { ...a, title: formTitle, city: formCity, price: formPrice, category: formSub, img: defaultImg } : a));
-      } else {
-        setActivitiesList([{ id: Date.now().toString(), title: formTitle, city: formCity, category: formSub || 'Tour', duration: '2 Hours', price: formPrice || '₺2,000', guideLang: 'English', rating: '5.0', img: defaultImg }, ...activitiesList]);
-      }
-    } else {
-      if (editingItemId) {
-        setNearbyPlacesList(nearbyPlacesList.map(n => n.id === editingItemId ? { ...n, name: formTitle, cat: formSub } : n));
-      } else {
-        setNearbyPlacesList([{ id: Date.now().toString(), name: formTitle, dist: '120m', addr: formCity + ' Center', cat: formSub || 'Service', phone: '112', is247: true }, ...nearbyPlacesList]);
-      }
-    }
-
-    setEditingItemId(null);
-    setFormTitle('');
-    setFormPrice('');
-    setFormSub('');
-    setFormImg('');
-    alert('Entry saved and published to public view!');
-  };
 
   const currentCityInfo = citiesDetailedData[selectedCityName] || citiesDetailedData['İstanbul'];
 
@@ -1207,6 +1205,9 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
 
             {/* Dil ve SOS (112 Acil Arama Aktif) */}
             <div className="flex items-center gap-2.5 shrink-0">
+              <button type="button" aria-label="Open navigation" onClick={() => setMobileMenuOpen(value => !value)} className="lg:hidden w-9 h-9 rounded-xl bg-sky-50 text-[#00A3E0] flex items-center justify-center">
+                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
               <select
                 value={lang}
                 onChange={(e) => setLang(e.target.value as SupportedLang)}
@@ -1218,6 +1219,7 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
                 <option value="fr">Français (FR)</option>
                 <option value="ar">العربية (AR)</option>
                 <option value="ru">Русский (RU)</option>
+                <option value="zh">中文 (简体)</option>
               </select>
 
               <a
@@ -1229,6 +1231,12 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
               </a>
             </div>
           </div>
+          {mobileMenuOpen && <nav className="lg:hidden border-t border-sky-100 bg-white px-4 py-3 grid grid-cols-2 gap-2 text-[12px] font-bold">
+            {([
+              ['assistant', tr('assistant')], ['taxi', tr('taxi')], ['transit', tr('transit')], ['currency', tr('currency')], ['city', tr('cityWeather')], ['nearme', tr('nearMe')], ['stay', tr('hotels')], ['food', tr('dining')], ['experiences', tr('activities')], ['safety', 'Safety guide'],
+            ] as const).map(([tab, label]) => <button key={tab} type="button" onClick={() => { setActiveTab(tab); setMobileMenuOpen(false); }} className={`rounded-xl px-3 py-2 text-left ${activeTab === tab ? 'bg-sky-50 text-[#00A3E0]' : 'bg-slate-50 text-slate-700'}`}>{label}</button>)}
+            {isStaff && <button type="button" onClick={() => { setActiveTab('admin'); setMobileMenuOpen(false); }} className="rounded-xl px-3 py-2 text-left bg-slate-900 text-white">CMS Studio</button>}
+          </nav>}
         </header>
 
         {/* ====================================================================
@@ -1238,7 +1246,7 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
           <main className="space-y-12 pb-24">
             <section className="relative h-[380px] sm:h-[420px] flex items-center justify-center text-center px-4 overflow-hidden">
               <img 
-                src="https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=1920&q=80" 
+                src="https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?auto=format&fit=crop&w=1920&q=80"
                 alt="Istanbul Ortakoy" 
                 className="absolute inset-0 w-full h-full object-cover"
               />
@@ -1259,16 +1267,11 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder={tr('searchPlaceholder')}
+                      onKeyDown={(event) => { if (event.key === 'Enter') handleGlobalSearch(); }}
                       className="w-full h-11 text-[13px] text-slate-800 placeholder-slate-400 focus:outline-none bg-transparent"
                     />
                     <button 
-                      onClick={() => {
-                        const low = searchQuery.toLowerCase();
-                        if (low.includes('taxi') || low.includes('taksi')) setActiveTab('taxi');
-                        else if (low.includes('transit') || low.includes('metro')) setActiveTab('transit');
-                        else if (low.includes('hotel')) setActiveTab('stay');
-                        else setActiveTab('experiences');
-                      }} 
+                      onClick={handleGlobalSearch}
                       className="text-[#00A3E0] hover:text-[#0284C7] p-1.5 cursor-pointer"
                     >
                       <Search className="w-5 h-5" />
@@ -1280,15 +1283,16 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
 
             {/* 8'li Araç Kutusu */}
             <section className="max-w-6xl mx-auto px-6 -mt-14 relative z-20">
-              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-9 gap-2.5">
                 {[
-                  { name: tr('assistant'), sub: '24/7 Live Advisor', icon: Bot, action: () => setActiveTab('assistant') },
-                  { name: tr('taxi'), sub: 'Live Map & UKOME', icon: Car, action: () => setActiveTab('taxi') },
+                  { name: tr('assistant'), sub: lang === 'tr' ? 'Pratik seyahat rehberi' : 'Practical travel guide', icon: Bot, action: () => setActiveTab('assistant') },
+                  { name: tr('taxi'), sub: 'UKOME tariff & route', icon: Car, action: () => setActiveTab('taxi') },
                   { name: tr('transit'), sub: 'Metro & Ferry Routes', icon: Train, action: () => setActiveTab('transit') },
-                  { name: tr('currency'), sub: 'TCMB & Best Bureaus', icon: Coins, action: () => setActiveTab('currency') },
+                  { name: tr('currency'), sub: 'Reference rates & nearby bureaux', icon: Coins, action: () => setActiveTab('currency') },
                   { name: tr('cityWeather'), sub: 'Weather, museums & city tips', icon: Compass, action: () => setActiveTab('city') },
                   { name: tr('hotels'), sub: 'Verified Stays', icon: Building2, action: () => setActiveTab('stay') },
                   { name: tr('dining'), sub: 'Historic Kitchens', icon: Utensils, action: () => setActiveTab('food') },
+                  { name: ({tr:'Aktiviteler',en:'Activities',de:'Aktivitäten',fr:'Activités',ar:'الأنشطة',zh:'活动',ru:'Развлечения'})[lang], sub: lang === 'tr' ? 'Turlar ve deneyimler' : 'Tours & experiences', icon: Ticket, action: () => setActiveTab('experiences') },
                   { name: tr('nearMe'), sub: 'Pharmacy, Police, ATM', icon: Navigation2, action: () => setActiveTab('nearme') }
                 ].map((tool, idx) => {
                   const Icon = tool.icon;
@@ -1308,140 +1312,32 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
                 })}
               </div>
             </section>
+
+            <section className="max-w-6xl mx-auto px-6 pt-2">
+              <div className="flex items-end justify-between gap-3 mb-4">
+                <div>
+                  <h2 className="text-xl font-black text-slate-900">{tr('popCities')}</h2>
+                  <p className="text-[12px] text-slate-500 mt-1">{tr('popCitiesSub')}</p>
+                </div>
+                <button onClick={() => setActiveTab('city')} className="text-[12px] font-bold text-[#00A3E0] hover:underline">{tr('viewAll')}</button>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {(['İstanbul', 'Ankara', 'Cappadocia', 'Antalya', 'İzmir'] as const).map((cityName) => {
+                  const city = citiesDetailedData[cityName];
+                  return <button key={cityName} onClick={() => { setSelectedCityName(cityName); setActiveTab('city'); }} className="group text-left bg-white rounded-2xl border border-sky-100 overflow-hidden shadow-sm hover:shadow-md hover:border-[#00A3E0] transition-all cursor-pointer">
+                    {city.coverImage ? <img src={city.coverImage} alt={city.name} className="w-full h-28 sm:h-36 object-cover group-hover:scale-[1.02] transition-transform" /> : <div className="h-28 sm:h-36 bg-sky-100 flex items-center justify-center text-sky-800 font-bold">Ankara</div>}
+                    <span className="block px-3 py-2.5 text-[13px] font-extrabold text-slate-900">{city.name}</span>
+                  </button>;
+                })}
+              </div>
+            </section>
           </main>
         )}
 
         {/* ====================================================================
             PAGE 2: AI TRAVEL ASSISTANT
         ==================================================================== */}
-        {activeTab === 'assistant' && (
-          <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-4 pb-24">
-            <div className="bg-white p-5 rounded-3xl border border-sky-100 shadow-sm flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#00A3E0] to-sky-400 text-white flex items-center justify-center shadow-md shadow-sky-400/25 shrink-0">
-                  <Bot className="w-6 h-6" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h1 className="text-[17px] sm:text-[19px] font-black text-slate-900 tracking-tight">
-                      SafeInTürkiye AI Travel Companion
-                    </h1>
-                    <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-extrabold">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live Online
-                    </span>
-                  </div>
-                  <p className="text-[12px] text-slate-500 mt-0.5 font-medium">
-                    Verified guidance on UKOME 2026 taxi fares, TCMB benchmark rates, and municipal transit routes.
-                  </p>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setChatLog([{ sender: 'bot', text: 'Chat reset. How may I help you explore Türkiye today?', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }])}
-                className="p-2.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-all cursor-pointer shrink-0"
-                title="Reset conversation"
-              >
-                <RefreshCw className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* DÜZELTİLMİŞ "TRY ASKING" BÖLÜMÜ */}
-            <div className="relative bg-white/70 p-2 rounded-2xl border border-sky-100/80 shadow-xs flex items-center gap-2">
-              <div className="flex items-center gap-1 text-[11px] font-extrabold text-slate-400 pl-2 shrink-0">
-                <Sparkles className="w-3.5 h-3.5 text-[#00A3E0]" />
-                <span className="hidden sm:inline">Try asking:</span>
-              </div>
-
-              <button
-                onClick={() => scrollQuestions('left')}
-                className="w-7 h-7 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-center text-slate-500 hover:text-[#00A3E0] hover:border-[#00A3E0] shrink-0 cursor-pointer transition-all"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-
-              <div
-                ref={questionsScrollRef}
-                className="flex items-center gap-2 overflow-x-auto scrollbar-none scroll-smooth py-1 px-1 flex-1"
-                style={{ maskImage: 'linear-gradient(to right, transparent, black 15px, black calc(100% - 15px), transparent)' }}
-              >
-                {[
-                  'How much is a taxi from Istanbul Airport to Taksim?',
-                  'How do I use metro without Istanbulkart?',
-                  'Where is the best currency exchange in Istanbul?',
-                  'Are hot air balloons in Cappadocia running today?',
-                  'Find a 24/7 duty pharmacy near Taksim',
-                  'Is water taxi available in Bosphorus?',
-                  'What is the ticket fare for Marmaray?'
-                ].map((q, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handleAiSend(q)}
-                    className="px-3.5 py-1.5 bg-white border border-sky-100 rounded-xl text-[11px] font-semibold text-slate-700 hover:border-[#00A3E0] hover:text-[#00A3E0] hover:bg-sky-50/50 shrink-0 shadow-xs transition-all cursor-pointer whitespace-nowrap"
-                  >
-                    {q}
-                  </button>
-                ))}
-              </div>
-
-              <button
-                onClick={() => scrollQuestions('right')}
-                className="w-7 h-7 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-center text-slate-500 hover:text-[#00A3E0] hover:border-[#00A3E0] shrink-0 cursor-pointer transition-all"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Sohbet Kutusu */}
-            <div className="bg-white rounded-3xl border border-sky-100 shadow-sm flex flex-col h-[520px] overflow-hidden">
-              <div className="flex-1 overflow-y-auto p-5 space-y-4 text-[13px]">
-                {chatLog.map((msg, i) => (
-                  <div
-                    key={i}
-                    className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
-                  >
-                    <div
-                      className={`max-w-[85%] sm:max-w-[75%] p-4 rounded-2xl leading-relaxed whitespace-pre-line shadow-xs ${
-                        msg.sender === 'user'
-                          ? 'bg-[#00A3E0] text-white rounded-tr-none'
-                          : 'bg-sky-50/70 border border-sky-100/70 text-slate-800 rounded-tl-none'
-                      }`}
-                    >
-                      {msg.text}
-                    </div>
-                    <span className="text-[10px] text-slate-400 mt-1 px-1">{msg.time}</span>
-                  </div>
-                ))}
-
-                {aiLoading && (
-                  <div className="flex items-center gap-2 p-3 bg-sky-50 text-slate-500 rounded-2xl w-fit text-[12px] border border-sky-100">
-                    <Loader2 className="w-4 h-4 animate-spin text-[#00A3E0]" />
-                    Analyzing official UKOME & TCMB databases...
-                  </div>
-                )}
-                <div ref={chatBottomRef} />
-              </div>
-
-              <div className="p-3.5 bg-slate-50 border-t border-slate-100 flex items-center gap-2">
-                <input
-                  type="text"
-                  value={aiInputText}
-                  onChange={(e) => setAiInputText(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleAiSend()}
-                  placeholder="Ask anything (e.g. taxi meter rules, airport transfer, currency)..."
-                  className="flex-1 h-12 px-4 bg-white border border-slate-200 rounded-2xl text-[13px] font-medium focus:outline-none focus:border-[#00A3E0] shadow-xs"
-                />
-                <button
-                  onClick={() => handleAiSend()}
-                  disabled={aiLoading}
-                  className="w-12 h-12 bg-[#00A3E0] hover:bg-[#0284C7] text-white rounded-2xl flex items-center justify-center cursor-pointer shadow-md shadow-sky-400/20 disabled:opacity-50 transition-all shrink-0"
-                >
-                  <Send className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-
-          </main>
-        )}
+        {activeTab === 'assistant' && <TravelFaq lang={lang} initialQuery={searchQuery} />}
 
         {/* ====================================================================
             PAGE 3: TAKİ HESAPLAYICI
@@ -1469,7 +1365,7 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
                     <span className="text-[12px] text-slate-600">Active Tariff:</span>
                   </div>
                   <span className="font-extrabold text-[12px] text-[#00A3E0] bg-white px-2 py-0.5 rounded-md border border-sky-200">
-                    {detectedTaxiCity} ({supabaseConfigured ? 'verified database tariff required' : 'database not configured'})
+                    {detectedTaxiCity} ({taxiTariffs[taxiClass.toUpperCase()]?.source ?? (detectedTaxiCity === 'İstanbul' ? istanbulReferenceTariff.source : 'current tariff unavailable')})
                   </span>
                 </div>
 
@@ -1566,6 +1462,7 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
                       <span className="text-3xl font-black text-slate-900">
                         ₺{fareCalculation.minFare} – ₺{fareCalculation.maxFare}
                       </span>
+                      <span className="text-[10px] text-slate-500 block">{taxiTariffs[taxiClass.toUpperCase()]?.source ?? istanbulReferenceTariff.source}. Estimate only; meter and traffic can change the final amount.</span>
                       <div className="grid grid-cols-2 gap-2 pt-2 border-t border-sky-200/60 text-[12px]">
                         <div>
                           <span className="text-slate-400 block text-[10px]">Real Road Distance</span>
@@ -1596,171 +1493,16 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
         {/* ====================================================================
             PAGE 4: TOPLU TAŞIMA (TRANSIT - DÜZELTİLDİ VE AKTİF)
         ==================================================================== */}
-        {activeTab === 'transit' && (
-          <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
-            <div>
-              <h1 className="text-3xl font-extrabold text-slate-900">Public Transit Step-by-Step Navigator</h1>
-              <p className="text-[13px] text-slate-500">Live GPS origin, exact stations, line schedules and official UKOME ticket fares.</p>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              <div className="lg:col-span-5 bg-white p-5 rounded-2xl border border-sky-100 shadow-sm space-y-4">
-                <div className="relative">
-                  <div className="flex justify-between items-center mb-1">
-                    <label className="text-[12px] font-bold text-slate-700">From</label>
-                    <button
-                      type="button"
-                      onClick={handleTransitCurrentLocation}
-                      disabled={isTransitLocating}
-                      className="text-[11px] font-bold text-[#00A3E0] hover:underline flex items-center gap-1 cursor-pointer"
-                    >
-                      {isTransitLocating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Navigation2 className="w-3 h-3" />}
-                      Use Current Location
-                    </button>
-                  </div>
-                  <input
-                    type="text"
-                    value={transitOriginText}
-                    onChange={(e) => {
-                      setTransitOriginText(e.target.value);
-                      setTransitOriginCoords(null);
-                    }}
-                    placeholder="Search origin..."
-                    className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] font-medium"
-                  />
-                </div>
-
-                <div className="relative">
-                  <label className="text-[12px] font-bold text-slate-700 block mb-1">To</label>
-                  <input
-                    type="text"
-                    value={transitDestText}
-                    onChange={(e) => {
-                      setTransitDestText(e.target.value);
-                      setTransitDestCoords(null);
-                    }}
-                    placeholder="Search destination..."
-                    className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] font-medium"
-                  />
-                </div>
-
-                <button
-                  onClick={handleCalculateTransitRoute}
-                  disabled={isTransitRouting}
-                  className="w-full h-11 bg-[#00A3E0] hover:bg-[#0284C7] text-white font-bold rounded-xl text-[13px] shadow-sm cursor-pointer flex items-center justify-center gap-2"
-                >
-                  {isTransitRouting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Train className="w-4 h-4" />}
-                  Find Transit Route & Stations
-                </button>
-              </div>
-
-              <div className="lg:col-span-7 h-[360px] lg:h-auto">
-                <SafeRouteMap
-                  originCoords={transitOriginCoords}
-                  destCoords={transitDestCoords}
-                  geometry={transitRouteResults && transitRouteResults[0] ? transitRouteResults[0].geometry : null}
-                  color="#00A3E0"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-4 pt-2">
-              <h2 className="text-xl font-black text-slate-900">Recommended Route Options</h2>
-              {transitRouteResults && transitRouteResults.map((opt) => (
-                <div key={opt.id} className="bg-white p-5 rounded-2xl border border-sky-100 shadow-sm space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-2">
-                    <div>
-                      <h3 className="font-extrabold text-[16px] text-slate-900">{opt.title}</h3>
-                      <span className="text-[12px] text-slate-500">{opt.transfersCount} Transfer(s) | Real UKOME Tariff Calculation</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl font-black text-[#00A3E0]">~{opt.totalDurationMins} min</span>
-                      <span className="px-3 py-1 bg-emerald-50 text-emerald-700 font-bold text-[13px] rounded-xl border border-emerald-200">
-                        ₺{opt.fareTRY.toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    {opt.steps.map((step, idx) => (
-                      <div key={idx} className="flex items-start gap-3 text-[13px]">
-                        <div className="w-7 h-7 rounded-full bg-sky-50 text-[#00A3E0] font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5 border border-sky-200">
-                          {idx + 1}
-                        </div>
-                        <div className="flex-1 bg-slate-50/70 p-3 rounded-xl border border-slate-100">
-                          <div className="flex items-center justify-between">
-                            <strong className="text-slate-900">{step.lineName}</strong>
-                            <span className="text-[11px] font-semibold text-slate-500">{step.durationMins} mins</span>
-                          </div>
-                          <p className="text-slate-600 text-[12px] mt-1">{step.instruction}</p>
-                          {step.frequency && (
-                            <div className="flex flex-wrap gap-3 text-[11px] text-slate-500 pt-2 mt-2 border-t border-slate-200/60">
-                              <span className="flex items-center gap-1"><Clock className="w-3 h-3 text-[#00A3E0]" /> Frequency: {step.frequency}</span>
-                              {step.firstTrip && <span>First: {step.firstTrip} | Last: {step.lastTrip}</span>}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </main>
-        )}
+        {activeTab === 'transit' && <TransitPlanner lang={lang} />}
 
         {/* ====================================================================
             PAGE 5: EXCHANGE (CANLI KURLAR + YAKINLARDAKİ DÖVİZCİLER - DÜZELTİLDİ)
         ==================================================================== */}
         {activeTab === 'currency' && (
           <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
-            <div>
-              <h1 className="text-3xl font-extrabold text-slate-900">Exchange (Currency & Nearby Desks)</h1>
-              <p className="text-[13px] text-slate-500">Live EUR-based reference rates. Cash buy/sell prices and commissions are set by each bureau.</p>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {exchangeQuotes.map((q) => (
-                <div key={q.pair} className="p-4 bg-white rounded-2xl border border-sky-100 shadow-sm space-y-1">
-                  <span className="text-[11px] font-bold text-slate-500 block">{q.pair}</span>
-                  <strong className="text-[20px] font-black text-slate-900 block">{q.rate.toFixed(2)} ₺</strong>
-                  <span className="text-[11px] font-bold text-[#00A3E0]">Reference rate</span>
-                </div>
-              ))}
-            </div>
-            {exchangeQuotes.length === 0 && !exchangeError && <div className="p-4 bg-white rounded-2xl border border-sky-100 text-[13px] text-slate-500">Loading live reference rates…</div>}
-            {exchangeUpdatedAt && <p className="text-[11px] text-slate-500">Latest published reference date: {exchangeUpdatedAt}. This is not a cash exchange offer.</p>}
-            {exchangeError && <p className="text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-3">{exchangeError}</p>}
-
-            {/* YAKINLARDAKİ DÖVİZCİLER BÖLÜMÜ */}
-            <div className="bg-white p-5 rounded-2xl border border-sky-100 shadow-sm space-y-3">
-              <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-                <h3 className="font-extrabold text-[15px] text-slate-900 flex items-center gap-2">
-                  <Coins className="w-5 h-5 text-[#00A3E0]" /> Nearby exchange bureaux
-                </h3>
-                <button onClick={() => findNearby('exchange')} className="px-4 py-2 rounded-xl bg-[#00A3E0] hover:bg-[#0284C7] text-white text-[12px] font-bold cursor-pointer flex items-center justify-center gap-2">
-                  <Navigation2 className="w-4 h-4" /> Find near me
-                </button>
-              </div>
-              <p className="text-[11px] text-slate-500">Uses your location only for this search and shows contact details published in OpenStreetMap. Rates, commission and ratings are not guessed.</p>
-              {nearbyExchangeStatus && <p className="text-[11px] text-slate-500">{nearbyExchangeStatus}</p>}
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {nearbyBureaus.map(b => (
-                  <div key={b.id} className="p-3.5 bg-sky-50/50 rounded-xl border border-sky-100 flex items-start justify-between">
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <strong className="text-[13px] text-slate-900">{b.name}</strong>
-                      </div>
-                      <p className="text-[11px] text-slate-500 mt-0.5">{b.addr}</p>
-                      <span className="text-[11px] text-slate-600 mt-1 block">{b.phone}</span>
-                      {b.website && <a href={b.website} target="_blank" rel="noreferrer" className="text-[11px] font-bold text-[#00A3E0] mt-1 inline-block">Website</a>}
-                    </div>
-                    <span className="text-[12px] font-bold text-[#00A3E0]">{b.dist}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <h1 className="text-3xl font-extrabold text-slate-900">{({ en: 'Currency and exchange bureaux', tr: 'Döviz ve döviz büroları', de: 'Wechselkurse und Wechselstuben', fr: 'Change et bureaux de change', ar: 'العملات ومكاتب الصرافة', ru: 'Валюта и обменные пункты' } as Record<SupportedLang, string>)[lang]}</h1>
+            <CurrencyRates lang={lang} />
+            <NearbyPlaces kind="exchange" lang={lang} center={{ lat: currentCityInfo.lat, lng: currentCityInfo.lng }} cityName={currentCityInfo.name} />
           </main>
         )}
 
@@ -1770,7 +1512,7 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
         {activeTab === 'city' && (
           <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
             <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-              {['İstanbul', 'Cappadocia', 'Antalya', 'İzmir'].map((cname) => (
+              {['İstanbul', 'Ankara', 'Cappadocia', 'Antalya', 'İzmir'].map((cname) => (
                 <button
                   key={cname}
                   onClick={() => setSelectedCityName(cname)}
@@ -1784,7 +1526,7 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
             </div>
 
             <div className="relative h-64 rounded-3xl overflow-hidden shadow-md flex items-end p-6 text-white">
-              <img src={currentCityInfo.coverImage} alt={currentCityInfo.name} className="absolute inset-0 w-full h-full object-cover" />
+              {currentCityInfo.coverImage && <img src={currentCityInfo.coverImage} alt={currentCityInfo.name} className="absolute inset-0 w-full h-full object-cover" />}
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-transparent" />
               <div className="relative z-10">
                 <h1 className="text-3xl font-black">{currentCityInfo.name}</h1>
@@ -1792,35 +1534,15 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
               </div>
             </div>
 
+            {selectedCityName === 'Ankara' && <p className="text-xs text-slate-500">Anıtkabir: <a className="underline" href="https://commons.wikimedia.org/wiki/File:Anitkabir_Ankara.jpg" target="_blank" rel="noreferrer">Lethiciasouza / Wikimedia Commons</a> · <a className="underline" href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noreferrer">CC BY-SA 4.0</a> · {lang === 'tr' ? 'Görünüm için kırpılmıştır.' : 'Cropped for display.'}</p>}
+            <TransportCardGuide city={selectedCityName} lang={lang} />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <WeatherCard lat={currentCityInfo.lat} lng={currentCityInfo.lng} cityName={currentCityInfo.name} lang={lang} />
               <div className="p-5 bg-white rounded-2xl border border-sky-100 shadow-sm space-y-3">
-                <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider block">Live Weather</span>
-                <div className="flex items-center gap-3">
-                  <Sun className="w-10 h-10 text-amber-500" />
-                  <div>
-                    <span className="text-3xl font-black text-slate-900">{liveWeather?.temp || currentCityInfo.temp}</span>
-                    <span className="text-[12px] text-slate-500 block">{liveWeather?.description || currentCityInfo.weatherDesc}</span>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 text-[12px]">
-                  <div className="flex items-center gap-1.5 text-slate-600"><Droplets className="w-4 h-4 text-sky-500" /> Humidity: {liveWeather?.humidity || currentCityInfo.humidity}</div>
-                  <div className="flex items-center gap-1.5 text-slate-600"><Wind className="w-4 h-4 text-teal-500" /> Wind: {liveWeather?.wind || currentCityInfo.wind}</div>
-                </div>
-              </div>
-
-              <div className="p-5 bg-white rounded-2xl border border-sky-100 shadow-sm space-y-3">
-                <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider block">Traffic planning</span>
-                <div className="flex items-center justify-between">
-                  <strong className="text-2xl font-black text-slate-900">{currentCityInfo.trafficIndex}</strong>
-                  <span className={`px-2.5 py-1 rounded-lg text-[11px] font-bold ${
-                    currentCityInfo.trafficStatus === 'Heavy' ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'
-                  }`}>
-                    Typical {currentCityInfo.trafficStatus} period
-                  </span>
-                </div>
-                <div className="p-2.5 bg-amber-50 border border-amber-200/60 rounded-xl text-[11px] text-amber-900">
-                  <strong>Local Tip:</strong> {currentCityInfo.localTip} Traffic numbers are not presented as live without a verified city traffic provider.
-                </div>
+                <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider block">{lang === 'tr' ? 'Şehir içi ulaşım' : 'Getting around'}</span>
+                <p className="text-sm text-slate-700">{currentCityInfo.localTip}</p>
+                <p className="text-xs text-slate-500">{lang === 'tr' ? 'Canlı trafik verisi şu anda bağlı değil; sabit trafik yüzdesi gösterilmiyor.' : 'Live traffic data is not connected; no fixed traffic percentage is shown.'}</p>
+                <button onClick={() => setActiveTab('transit')} className="px-4 py-2 bg-sky-50 text-sky-800 rounded-xl text-sm font-bold">{tr('transit')}</button>
               </div>
             </div>
 
@@ -1838,6 +1560,7 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
                 ))}
               </div>
             </section>
+
           </main>
         )}
 
@@ -1863,7 +1586,7 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
                   <div className="p-4 border-t border-slate-100 flex items-center justify-between">
                     <span className="font-bold text-[#00A3E0]">{h.price} / night</span>
                     <button 
-                      onClick={() => handleOpenBooking(h)}
+                      onClick={() => handleOpenBooking(h, 'hotel')}
                       className="px-4 py-1.5 bg-[#00A3E0] hover:bg-[#0284C7] text-white rounded-xl text-[12px] font-bold cursor-pointer"
                     >
                       Book Stay
@@ -1896,7 +1619,7 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
                   <div className="p-4 border-t border-slate-100 flex items-center justify-between">
                     <span className="text-[12px] font-bold text-slate-600">Avg: {r.avgPrice}</span>
                     <button 
-                      onClick={() => handleOpenBooking(r)}
+                      onClick={() => handleOpenBooking(r, 'restaurant')}
                       className="px-4 py-1.5 bg-[#00A3E0] hover:bg-[#0284C7] text-white rounded-xl text-[12px] font-bold cursor-pointer"
                     >
                       Reserve Table
@@ -1928,7 +1651,7 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
                   <div className="p-4 border-t border-slate-100 flex items-center justify-between">
                     <strong className="text-[15px] font-black text-[#00A3E0]">{a.price}</strong>
                     <button 
-                      onClick={() => handleOpenBooking(a)}
+                      onClick={() => handleOpenBooking(a, 'activity')}
                       className="px-4 py-1.5 bg-[#00A3E0] hover:bg-[#0284C7] text-white rounded-xl text-[12px] font-bold cursor-pointer"
                     >
                       Reserve Spot
@@ -1944,32 +1667,9 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
             PAGE 10: NEAR ME
         ==================================================================== */}
         {activeTab === 'nearme' && (
-          <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
-            <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-              <div>
-                <h1 className="text-3xl font-extrabold text-slate-900">Near Me (Vital Assistance)</h1>
-                <p className="text-[12px] text-slate-500 mt-1">Find published pharmacies, police desks, ATMs and taxi ranks around you.</p>
-              </div>
-              <button onClick={() => findNearby('essential')} className="px-4 py-2 rounded-xl bg-[#00A3E0] hover:bg-[#0284C7] text-white text-[12px] font-bold cursor-pointer flex items-center justify-center gap-2">
-                <Navigation2 className="w-4 h-4" /> Use my location
-              </button>
-            </div>
-            {nearbySearchStatus && <p className="text-[12px] text-slate-500 bg-sky-50 border border-sky-100 rounded-xl p-3">{nearbySearchStatus}</p>}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {nearbyLivePlaces.map(p => (
-                <div key={p.id} className="p-4 bg-white rounded-2xl border border-sky-100 shadow-sm flex items-start justify-between">
-                  <div>
-                    <span className="text-[10px] font-bold text-[#00A3E0] uppercase">{p.cat}</span>
-                    <strong className="text-[14px] text-slate-900 block mt-0.5">{p.name}</strong>
-                    <span className="text-[11px] text-slate-500 block">{p.addr}</span>
-                    <span className="text-[11px] font-bold text-slate-700 mt-1 block">Tel: {p.phone}</span>
-                    {p.website && <a href={p.website} target="_blank" rel="noreferrer" className="text-[11px] font-bold text-[#00A3E0] mt-1 inline-block">Website</a>}
-                  </div>
-                  <span className="text-[12px] font-bold text-[#00A3E0]">{p.dist}</span>
-                </div>
-              ))}
-            </div>
-            {nearbyLivePlaces.length === 0 && !nearbySearchStatus && <div className="p-5 bg-white rounded-2xl border border-sky-100 text-[13px] text-slate-500">Tap “Use my location” to load real nearby contacts. Your location is not saved.</div>}
+          <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
+            <h1 className="text-3xl font-extrabold text-slate-900">{tr('nearMe')}</h1>
+            <NearbyPlaces kind="essential" lang={lang} center={{ lat: currentCityInfo.lat, lng: currentCityInfo.lng }} cityName={currentCityInfo.name} />
           </main>
         )}
 
@@ -2002,172 +1702,8 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
         {/* ====================================================================
             PAGE 11: ROLE-PROTECTED ADMIN CMS
         ==================================================================== */}
-        {activeTab === 'admin' && isStaff && (
-          <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
-            <div className="flex justify-between items-center bg-slate-900 text-white p-5 rounded-2xl shadow-md">
-              <div>
-                <h1 className="text-2xl font-black flex items-center gap-2">
-                  <ShieldCheck className="w-6 h-6 text-[#00A3E0]" /> SafeInTürkiye Studio CMS (Photo & Content Editor)
-                </h1>
-                <p className="text-[12px] text-slate-400">In-place live editor. Edit photos, titles and rates on the fly.</p>
-              </div>
-              <button 
-                onClick={() => { void signOut(); setActiveTab('home'); }}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[12px] font-bold rounded-xl flex items-center gap-1.5 cursor-pointer"
-              >
-                <Lock className="w-3.5 h-3.5 text-red-400" /> Lock & Exit
-              </button>
-            </div>
-
-            <div className="flex gap-2 border-b border-slate-200 pb-2 overflow-x-auto">
-              {[
-                { id: 'hotels', label: `Hotels (${hotelsList.length})` },
-                { id: 'restaurants', label: `Dining (${restaurantsList.length})` },
-                { id: 'activities', label: `Activities (${activitiesList.length})` },
-                { id: 'nearme', label: `Near Me (${nearbyPlacesList.length})` }
-              ].map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => { setAdminSection(tab.id as any); setEditingItemId(null); }}
-                  className={`px-4 py-2 rounded-xl text-[12px] font-bold transition-all cursor-pointer ${
-                    adminSection === tab.id ? 'bg-[#00A3E0] text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="bg-white p-6 rounded-2xl border border-sky-100 shadow-sm space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="font-extrabold text-[15px] text-slate-900">
-                  {editingItemId ? `✏️ Editing Entry #${editingItemId}` : `➕ Add New ${adminSection.toUpperCase()}`}
-                </h3>
-                {editingItemId && (
-                  <button onClick={() => setEditingItemId(null)} className="text-[11px] text-red-600 hover:underline">
-                    Cancel Editing
-                  </button>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <input
-                  type="text"
-                  value={formTitle}
-                  onChange={(e) => setFormTitle(e.target.value)}
-                  placeholder="Title or Place Name..."
-                  className="h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px]"
-                />
-                <select
-                  value={formCity}
-                  onChange={(e) => setFormCity(e.target.value)}
-                  className="h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] font-bold text-[#00A3E0]"
-                >
-                  <option value="İstanbul">İstanbul</option>
-                  <option value="Cappadocia">Cappadocia</option>
-                  <option value="Antalya">Antalya</option>
-                  <option value="İzmir">İzmir</option>
-                </select>
-                <input
-                  type="text"
-                  value={formPrice}
-                  onChange={(e) => setFormPrice(e.target.value)}
-                  placeholder="Price / Cost (e.g. ₺4,500)..."
-                  className="h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px]"
-                />
-                <input
-                  type="text"
-                  value={formSub}
-                  onChange={(e) => setFormSub(e.target.value)}
-                  placeholder="Subcategory / Room / Cuisine..."
-                  className="h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px]"
-                />
-                <input
-                  type="text"
-                  value={formImg}
-                  onChange={(e) => setFormImg(e.target.value)}
-                  placeholder="Photo URL (Unsplash or direct image link)..."
-                  className="h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] sm:col-span-2"
-                />
-              </div>
-
-              {formImg && (
-                <div className="flex items-center gap-3 p-2 bg-slate-50 rounded-xl border border-slate-200 w-fit">
-                  <span className="text-[11px] font-bold text-slate-500">Image Preview:</span>
-                  <img src={formImg} alt="Preview" className="w-12 h-12 object-cover rounded-lg" />
-                </div>
-              )}
-
-              <button
-                onClick={handleSaveItem}
-                className="px-5 py-2.5 bg-[#00A3E0] hover:bg-[#0284C7] text-white font-bold rounded-xl text-[13px] flex items-center gap-2 cursor-pointer shadow-sm"
-              >
-                <Check className="w-4 h-4" /> {editingItemId ? 'Save Changes & Update Live' : 'Publish to Live Portal'}
-              </button>
-            </div>
-
-            <div className="bg-white p-5 rounded-2xl border border-sky-100 shadow-sm space-y-3">
-              <h3 className="font-extrabold text-[15px] text-slate-900">Current Items in {adminSection.toUpperCase()}</h3>
-              <div className="space-y-2">
-                {adminSection === 'hotels' && hotelsList.map(item => (
-                  <div key={item.id} className="p-3 bg-slate-50 rounded-xl flex items-center justify-between text-[12px] hover:border hover:border-sky-200">
-                    <div className="flex items-center gap-3">
-                      <img src={item.img} alt="" className="w-10 h-10 object-cover rounded-lg" />
-                      <div>
-                        <strong>{item.name}</strong> — {item.city} ({item.price})
-                        <span className="text-slate-400 block text-[11px]">{item.roomType}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => handleStartEdit(item, 'hotels')} className="px-2.5 py-1 bg-sky-100 text-[#00A3E0] font-bold rounded-lg hover:bg-sky-200">Edit Photo/Info</button>
-                      <button onClick={() => setHotelsList(hotelsList.filter(h => h.id !== item.id))} className="text-red-500 p-1"><Trash2 className="w-4 h-4" /></button>
-                    </div>
-                  </div>
-                ))}
-                {adminSection === 'restaurants' && restaurantsList.map(item => (
-                  <div key={item.id} className="p-3 bg-slate-50 rounded-xl flex items-center justify-between text-[12px] hover:border hover:border-sky-200">
-                    <div className="flex items-center gap-3">
-                      <img src={item.img} alt="" className="w-10 h-10 object-cover rounded-lg" />
-                      <div>
-                        <strong>{item.name}</strong> — {item.city} ({item.avgPrice})
-                        <span className="text-slate-400 block text-[11px]">{item.cuisine}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => handleStartEdit(item, 'restaurants')} className="px-2.5 py-1 bg-sky-100 text-[#00A3E0] font-bold rounded-lg hover:bg-sky-200">Edit Photo/Info</button>
-                      <button onClick={() => setRestaurantsList(restaurantsList.filter(r => r.id !== item.id))} className="text-red-500 p-1"><Trash2 className="w-4 h-4" /></button>
-                    </div>
-                  </div>
-                ))}
-                {adminSection === 'activities' && activitiesList.map(item => (
-                  <div key={item.id} className="p-3 bg-slate-50 rounded-xl flex items-center justify-between text-[12px] hover:border hover:border-sky-200">
-                    <div className="flex items-center gap-3">
-                      <img src={item.img} alt="" className="w-10 h-10 object-cover rounded-lg" />
-                      <div>
-                        <strong>{item.title}</strong> — {item.city} ({item.price})
-                        <span className="text-slate-400 block text-[11px]">{item.category}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => handleStartEdit(item, 'activities')} className="px-2.5 py-1 bg-sky-100 text-[#00A3E0] font-bold rounded-lg hover:bg-sky-200">Edit Photo/Info</button>
-                      <button onClick={() => setActivitiesList(activitiesList.filter(a => a.id !== item.id))} className="text-red-500 p-1"><Trash2 className="w-4 h-4" /></button>
-                    </div>
-                  </div>
-                ))}
-                {adminSection === 'nearme' && nearbyPlacesList.map(item => (
-                  <div key={item.id} className="p-3 bg-slate-50 rounded-xl flex items-center justify-between text-[12px]">
-                    <div>
-                      <strong>{item.name}</strong> — {item.cat} ({item.dist})
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => setNearbyPlacesList(nearbyPlacesList.filter(n => n.id !== item.id))} className="text-red-500 p-1"><Trash2 className="w-4 h-4" /></button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </main>
-        )}
+        {activeTab === 'admin' && isStaff && <ContentAdmin role={role} />}
+        {activeTab === 'admin' && !isStaff && <main className="max-w-xl mx-auto p-6 my-8 rounded-2xl bg-white border border-sky-100 space-y-4"><h1 className="text-xl font-bold">Yönetici girişi</h1><p>{session ? 'Hesabınızın içerik yönetimi yetkisi kontrol ediliyor. Yetki verilmemişse bu bölüm açılamaz.' : 'Yönetim panelini açmak için yetkili hesabınızla giriş yapın.'}</p>{!session && <button onClick={() => setAuthModalOpen(true)} className="bg-sky-600 text-white rounded-xl px-5 py-3">Giriş yap</button>}</main>}
 
       </div>
 
@@ -2286,7 +1822,7 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
 
                     <div className="pt-2 border-t border-sky-200/60 text-[10px] text-slate-500 italic flex items-center gap-1">
                       <ShieldCheck className="w-3.5 h-3.5 text-[#00A3E0] shrink-0" />
-                      Show this digital pass upon arrival. Guaranteed booking held.
+                      Request received. Await confirmation from the business before travelling.
                     </div>
                   </div>
 
@@ -2324,15 +1860,28 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
             <div className="flex gap-2">
               <button onClick={() => setAuthModalOpen(false)} className="flex-1 h-10 bg-slate-100 text-slate-600 font-bold rounded-xl text-[12px]">Cancel</button>
               <button
+                disabled={authBusy}
                 onClick={async () => {
-                  if (!signIn) { setAuthError('Supabase is not configured.'); return; }
+                  if (authBusy) return;
+                  if (!supabaseConfigured) { setAuthError('Bu yerel önizleme Supabase hesabına bağlı değil. Giriş için geçerli Publishable/anon anahtarı yerel ortamda yapılandırılmalı.'); return; }
+                  setAuthBusy(true); setAuthError(null);
+                  try {
                   const result = await signIn(authEmail, authPassword);
-                  if (result?.error) { setAuthError(result.error.message); return; }
+                  if (result?.error) {
+                    const raw = result.error.message || '';
+                    setAuthError(/invalid api key|apikey/i.test(raw)
+                      ? 'Supabase bağlantısı geçersiz. Vercel Production ortamındaki URL ve Publishable/anon key aynı Supabase projesine ait olmalı.'
+                      : raw);
+                    return;
+                  }
                   setAuthModalOpen(false); setAuthError(null);
+                  setAuthPassword('');
+                  } catch { setAuthError('Giriş hizmetine ulaşılamadı. Lütfen yeniden deneyin.'); }
+                  finally { setAuthBusy(false); }
                 }}
                 className="flex-1 h-10 bg-[#00A3E0] hover:bg-[#0284C7] text-white font-bold rounded-xl text-[12px]"
               >
-                Sign in
+                {authBusy ? 'Giriş yapılıyor…' : 'Sign in'}
               </button>
             </div>
           </div>
@@ -2349,7 +1898,7 @@ Lowest exchange spreads (<0.4%) are in Grand Bazaar (Tahtakale). Avoid airport k
                 <Lock className="w-3 h-3" />
               </button>
             </div>
-            <p>Official UKOME public transit tariffs, Transit Map Navigator & TCMB rates.</p>
+            <p>Source-labelled taxi tariffs, transit guides, reference rates and city information.</p>
           </div>
           <div className="flex items-center gap-4 text-[11px] font-bold text-[#00A3E0]">
             <a href="#" className="hover:underline">Privacy Policy</a>

@@ -13,13 +13,16 @@ export function useSupabaseAuth() {
     if (!supabase) return
     const client = supabase
     let active = true
+    let generation = 0
+    let deferred: ReturnType<typeof setTimeout> | undefined
     const loadRole = async (userId: string | undefined) => {
+      const request = ++generation
       if (!userId) {
         if (active) setRole('user')
         return
       }
       const { data } = await client.from('profiles').select('role').eq('id', userId).maybeSingle()
-      if (active) setRole((data?.role as AppRole | undefined) ?? 'user')
+      if (active && request === generation) setRole((data?.role as AppRole | undefined) ?? 'user')
     }
     client.auth.getSession().then(({ data }) => {
       if (!active) return
@@ -28,10 +31,15 @@ export function useSupabaseAuth() {
       setLoading(false)
     })
     const { data: listener } = client.auth.onAuthStateChange((_event, nextSession) => {
+      if (!active) return
       setSession(nextSession)
-      void loadRole(nextSession?.user.id)
+      setRole('user')
+      generation += 1
+      clearTimeout(deferred)
+      // Do not query PostgREST while the auth callback holds the session lock.
+      deferred = setTimeout(() => { if (active) void loadRole(nextSession?.user.id) }, 0)
     })
-    return () => { active = false; listener.subscription.unsubscribe() }
+    return () => { active = false; generation += 1; clearTimeout(deferred); listener.subscription.unsubscribe() }
   }, [])
 
   return {
