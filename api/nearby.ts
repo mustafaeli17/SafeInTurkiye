@@ -6,6 +6,7 @@ type Response = {
 }
 
 const endpoints = [
+  'https://overpass.osm.ch/api/interpreter',
   'https://overpass.private.coffee/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
   'https://overpass-api.de/api/interpreter',
@@ -29,7 +30,7 @@ export default async function handler(req: Request, res: Response) {
   limits.set(client, Date.now() + 3000)
 
   const amenities = kind === 'exchange' ? 'bureau_de_change' : 'pharmacy|hospital|police|atm|taxi|restaurant|cafe'
-  const query = `[out:json][timeout:18];nwr(around:2500,${lat.toFixed(6)},${lng.toFixed(6)})["amenity"~"^(${amenities})$"]["access"!="private"]["access"!="no"];out center tags;`
+  const query = `[out:json][timeout:18];nwr(around:2500,${lat.toFixed(6)},${lng.toFixed(6)})["amenity"~"^(${amenities})$"]["access"!="private"]["access"!="no"];out center tags 300;`
   let lastStatus = 502
   for (const endpoint of endpoints) {
     try {

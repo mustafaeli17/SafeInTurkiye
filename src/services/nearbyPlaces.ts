@@ -31,6 +31,7 @@ type OsmElement = {
 
 const categories: NearbyCategory[] = ['bureau_de_change', 'pharmacy', 'hospital', 'police', 'atm', 'taxi', 'restaurant', 'cafe']
 const developmentEndpoints = [
+  'https://overpass.osm.ch/api/interpreter',
   'https://overpass.private.coffee/api/interpreter',
   'https://overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
@@ -145,7 +146,7 @@ export async function fetchNearbyPlaces(center: NearbyCenter, kind: NearbyKind, 
   signal?.addEventListener('abort', abort, { once: true })
   const timeout = setTimeout(() => { timedOut = true; controller.abort() }, 12000)
   const amenities = kind === 'exchange' ? 'bureau_de_change' : 'pharmacy|hospital|police|atm|taxi|restaurant|cafe'
-  const query = `[out:json][timeout:20];nwr(around:2500,${center.lat.toFixed(6)},${center.lng.toFixed(6)})["amenity"~"^(${amenities})$"]["access"!="private"]["access"!="no"];out center tags;`
+  const query = `[out:json][timeout:20];nwr(around:2500,${center.lat.toFixed(6)},${center.lng.toFixed(6)})["amenity"~"^(${amenities})$"]["access"!="private"]["access"!="no"];out center tags 300;`
   try {
     let lastError: unknown = null
     const requests = import.meta.env.DEV
