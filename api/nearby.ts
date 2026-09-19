@@ -6,10 +6,9 @@ type Response = {
 }
 
 const endpoints = [
-  'https://overpass.osm.ch/api/interpreter',
+  'https://overpass-api.de/api/interpreter',
   'https://overpass.private.coffee/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
-  'https://overpass-api.de/api/interpreter',
 ]
 const limits = new Map<string, number>()
 
@@ -29,8 +28,8 @@ export default async function handler(req: Request, res: Response) {
   if (limits.size > 2000) limits.clear()
   limits.set(client, Date.now() + 3000)
 
-  const amenities = kind === 'exchange' ? 'bureau_de_change' : 'pharmacy|hospital|police|atm|taxi|restaurant|cafe'
-  const query = `[out:json][timeout:18];nwr(around:2500,${lat.toFixed(6)},${lng.toFixed(6)})["amenity"~"^(${amenities})$"]["access"!="private"]["access"!="no"];out center tags 300;`
+  const amenities = kind === 'exchange' ? 'bureau_de_change' : 'pharmacy|hospital|police|atm|taxi'
+  const query = `[out:json][timeout:15];nwr(around:2000,${lat.toFixed(6)},${lng.toFixed(6)})["amenity"~"^(${amenities})$"]["access"!="private"]["access"!="no"];out center tags 180;`
   let lastStatus = 502
   for (const endpoint of endpoints) {
     try {
@@ -38,7 +37,7 @@ export default async function handler(req: Request, res: Response) {
         method: 'POST',
         headers: { 'content-type': 'application/x-www-form-urlencoded;charset=UTF-8', accept: 'application/json' },
         body: new URLSearchParams({ data: query }),
-        signal: AbortSignal.timeout(10000),
+        signal: AbortSignal.timeout(7000),
       })
       lastStatus = upstream.status
       if (!upstream.ok) continue
