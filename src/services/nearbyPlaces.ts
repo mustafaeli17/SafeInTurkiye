@@ -31,6 +31,7 @@ type OsmElement = {
 
 const categories: NearbyCategory[] = ['bureau_de_change', 'pharmacy', 'hospital', 'police', 'atm', 'taxi', 'restaurant', 'cafe']
 const developmentEndpoints = [
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
   'https://overpass-api.de/api/interpreter',
   'https://overpass.private.coffee/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
