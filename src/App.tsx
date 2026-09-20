@@ -1139,14 +1139,14 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#F0F7FB] text-[#0A2540] font-['Inter',sans-serif] flex flex-col justify-between">
-      
+
       {/* ====================================================================
           NAVBAR (TAŞMAYI ÖNLEYEN & TÜM SAYFALARI DESTEKLEYEN YAPI)
       ==================================================================== */}
       <div>
         <header className="sticky top-0 z-40 bg-white border-b border-sky-100 shadow-sm">
           <div className="max-w-7xl mx-auto px-3 sm:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4">
-            
+
             {/* Logo */}
             <div onClick={() => setActiveTab('home')} className="flex items-center cursor-pointer shrink-0" aria-label="SafeInTürkiye home">
               <img src={siteLogo} alt="SafeInTürkiye" className="h-7 w-auto max-w-[100px] object-contain sm:h-10 sm:max-w-[185px]" />
@@ -1154,53 +1154,53 @@ export default function App() {
 
             {/* Menü Butonları */}
             <nav className="hidden lg:flex items-center gap-1.5 text-[13px] font-bold text-slate-600">
-              <button 
-                onClick={() => setActiveTab('home')} 
+              <button
+                onClick={() => setActiveTab('home')}
                 className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
                   activeTab === 'home' ? 'text-[#087FFF] bg-sky-50 font-extrabold' : 'hover:text-[#087FFF] hover:bg-slate-50'
                 }`}
               >
                 {tr('explore')}
               </button>
-              
-              <button 
-                onClick={() => setActiveTab('assistant')} 
+
+              <button
+                onClick={() => setActiveTab('assistant')}
                 className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl transition-all cursor-pointer font-extrabold ${
                   activeTab === 'assistant' ? 'bg-[#087FFF] text-white shadow-sm shadow-sky-500/20' : 'bg-sky-50 text-[#087FFF] hover:bg-sky-100'
                 }`}
               >
                 <Bot className="w-4 h-4" /> {tr('assistant')}
               </button>
-              
-              <button 
-                onClick={() => setActiveTab('taxi')} 
+
+              <button
+                onClick={() => setActiveTab('taxi')}
                 className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
                   activeTab === 'taxi' ? 'text-[#087FFF] bg-sky-50 font-extrabold' : 'hover:text-[#087FFF] hover:bg-slate-50'
                 }`}
               >
                 {tr('taxi')}
               </button>
-              
-              <button 
-                onClick={() => setActiveTab('transit')} 
+
+              <button
+                onClick={() => setActiveTab('transit')}
                 className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
                   activeTab === 'transit' ? 'text-[#087FFF] bg-sky-50 font-extrabold' : 'hover:text-[#087FFF] hover:bg-slate-50'
                 }`}
               >
                 {tr('transit')}
               </button>
-              
-              <button 
-                onClick={() => setActiveTab('currency')} 
+
+              <button
+                onClick={() => setActiveTab('currency')}
                 className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
                   activeTab === 'currency' ? 'text-[#087FFF] bg-sky-50 font-extrabold' : 'hover:text-[#087FFF] hover:bg-slate-50'
                 }`}
               >
                 {tr('currency')}
               </button>
-              
-              <button 
-                onClick={() => { setSelectedCityName('İstanbul'); setActiveTab('city'); }} 
+
+              <button
+                onClick={() => { setSelectedCityName('İstanbul'); setActiveTab('city'); }}
                 className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
                   activeTab === 'city' ? 'text-[#087FFF] bg-sky-50 font-extrabold' : 'hover:text-[#087FFF] hover:bg-slate-50'
                 }`}
@@ -1306,7 +1306,7 @@ export default function App() {
             PAGE 3: TAKİ HESAPLAYICI
         ==================================================================== */}
         {activeTab === 'taxi' && (
-          <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
+          <main className="reference-page reference-taxi max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
             <div className="flex items-center gap-2 text-[12px] text-slate-500">
               <button onClick={() => setActiveTab('home')} className="flex items-center gap-1 font-bold text-[#087FFF] hover:underline cursor-pointer">
                 <ArrowLeft className="w-3.5 h-3.5" /> {page('back')}
@@ -1421,7 +1421,7 @@ export default function App() {
                 {taxiRouteResult && fareCalculation && (
                   <div className="pt-3 border-t border-slate-100 space-y-3">
                     <div className="p-4 bg-sky-50 rounded-2xl border border-sky-100 space-y-2">
-                      <span className="text-[11px] text-slate-500 font-semibold block">{page('estimate')}</span>
+                      <div className="reference-estimate-title"><span>{page('estimate')}</span><span aria-hidden="true">🚕</span></div>
                       <span className="text-3xl font-black text-slate-900">
                         ₺{fareCalculation.minFare} – ₺{fareCalculation.maxFare}
                       </span>
@@ -1462,7 +1462,7 @@ export default function App() {
             PAGE 5: EXCHANGE (CANLI KURLAR + YAKINLARDAKİ DÖVİZCİLER - DÜZELTİLDİ)
         ==================================================================== */}
         {activeTab === 'currency' && (
-          <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
+          <main className="reference-page max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
             <h1 className="text-3xl font-extrabold text-slate-900">{({ en: 'Currency and exchange bureaux', tr: 'Döviz ve döviz büroları', de: 'Wechselkurse und Wechselstuben', fr: 'Change et bureaux de change', ar: 'العملات ومكاتب الصرافة', ru: 'Валюта и обменные пункты', zh: '汇率与附近兑换点' } as Record<SupportedLang, string>)[lang]}</h1>
             <CurrencyRates lang={lang} />
             <NearbyPlaces kind="exchange" lang={lang} center={{ lat: currentCityInfo.lat, lng: currentCityInfo.lng }} cityName={currentCityInfo.name} />
@@ -1473,7 +1473,7 @@ export default function App() {
             PAGE 6: CITIES & WEATHER
         ==================================================================== */}
         {activeTab === 'city' && (
-          <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
+          <main className="reference-page reference-city max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
             <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
               {['İstanbul', 'Ankara', 'Cappadocia', 'Antalya', 'İzmir'].map((cname) => (
                 <button
@@ -1497,8 +1497,11 @@ export default function App() {
               </div>
             </div>
 
+            <nav className="reference-city-nav" aria-label={currentCityInfo.name}>
+ {([{tab:'experiences',label:tr('activities'),icon:'🎟️'},{tab:'stay',label:tr('hotels'),icon:'🛏️'},{tab:'food',label:tr('dining'),icon:'🍽️'},{tab:'transit',label:tr('transit'),icon:'🚇'},{tab:'safety',label:page('safety'),icon:'🛡️'}] as const).map(item=><button key={item.tab} onClick={()=>setActiveTab(item.tab)}><span aria-hidden="true">{item.icon}</span>{item.label}</button>)}
+ </nav>
             {selectedCityName === 'Ankara' && <p className="text-xs text-slate-500">Anıtkabir: <a className="underline" href="https://commons.wikimedia.org/wiki/File:Anitkabir_Ankara.jpg" target="_blank" rel="noreferrer">Lethiciasouza / Wikimedia Commons</a> · <a className="underline" href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noreferrer">CC BY-SA 4.0</a> · {lang === 'tr' ? 'Görünüm için kırpılmıştır.' : 'Cropped for display.'}</p>}
-            <TransportCardGuide city={selectedCityName} lang={lang} />
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <WeatherCard lat={currentCityInfo.lat} lng={currentCityInfo.lng} cityName={currentCityInfo.name} lang={lang} />
               <div className="p-5 bg-white rounded-2xl border border-sky-100 shadow-sm space-y-3">
@@ -1524,6 +1527,17 @@ export default function App() {
               </div>
             </section>
 
+            {activitiesList.some(item => item.city === selectedCityName) && <section className="reference-photo-section">
+              <h2>{tr('activities')}</h2>
+              <div className="reference-photo-grid">{activitiesList.filter(item => item.city === selectedCityName).slice(0,4).map(item => { const activity = activityContent(item, lang); return <button key={item.id} onClick={() => handleOpenBooking(activity, 'activity')}><img src={item.img} alt={activity.title} loading="lazy" /><strong>{activity.title}</strong><span>{page('details')} →</span></button>; })}</div>
+            </section>}
+            <section className="reference-photo-section">
+              <h2>{tr('hotels')}</h2>
+              <div className="reference-photo-grid">{hotelsList.filter(item => item.city === selectedCityName).map(item => <button key={item.id} onClick={() => handleOpenBooking(item, 'hotel')}><img src={item.img} alt={item.name} loading="lazy" /><strong>{item.name}</strong><span>{page('book')} →</span></button>)}</div>
+              <button className="reference-outline-action" onClick={() => setActiveTab('stay')}>{page('hotelsTitle')} →</button>
+            </section>
+            <TransportCardGuide city={selectedCityName} lang={lang} />
+
           </main>
         )}
 
@@ -1548,7 +1562,7 @@ export default function App() {
                   </div>
                   <div className="travel-catalog-action">
                     <span className="font-bold text-[#087FFF]">{h.price} / {page('night')}</span>
-                    <button 
+                    <button
                       onClick={() => handleOpenBooking(h, 'hotel')}
                       className="px-4 py-1.5 bg-[#087FFF] hover:bg-[#0284C7] text-white rounded-xl text-[12px] font-bold cursor-pointer"
                     >
@@ -1581,7 +1595,7 @@ export default function App() {
                   </div>
                   <div className="travel-catalog-action">
                     <span className="text-[12px] font-bold text-slate-600">{page('average')}: {r.avgPrice}</span>
-                    <button 
+                    <button
                       onClick={() => handleOpenBooking(r, 'restaurant')}
                       className="px-4 py-1.5 bg-[#087FFF] hover:bg-[#0284C7] text-white rounded-xl text-[12px] font-bold cursor-pointer"
                     >
@@ -1617,7 +1631,7 @@ export default function App() {
                   </div>
                   <div className="travel-catalog-action">
                     <strong className="text-[12px] font-bold text-[#007EAD]">{activityText(a.price, lang)}</strong>
-                    <button 
+                    <button
                       onClick={() => handleOpenBooking(a, 'activity')}
                       className="px-4 py-1.5 bg-[#087FFF] hover:bg-[#0284C7] text-white rounded-xl text-[12px] font-bold cursor-pointer"
                     >
@@ -1634,7 +1648,7 @@ export default function App() {
             PAGE 10: NEAR ME
         ==================================================================== */}
         {activeTab === 'nearme' && (
-          <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
+          <main className="reference-page max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
             <h1 className="text-3xl font-extrabold text-slate-900">{tr('nearMe')}</h1>
             <NearbyPlaces kind="essential" lang={lang} center={{ lat: currentCityInfo.lat, lng: currentCityInfo.lng }} cityName={currentCityInfo.name} />
           </main>
@@ -1644,25 +1658,29 @@ export default function App() {
             PAGE 10B: SAFETY — SEPARATE FROM STAY / ACTIVITIES
         ==================================================================== */}
         {activeTab === 'safety' && (
-          <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-5 pb-24">
+          <main className="reference-page reference-safety max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-5 pb-24">
             <div>
               <h1 className="text-3xl font-extrabold text-slate-900">{page('safety')}</h1>
               <p className="text-[13px] text-slate-500">{page('safetySub')}</p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {[
-                { title: page('emergencyTitle'), detail: page('emergencyText'), action: '112', href: 'tel:112' },
-                { title: tr('taxi'), detail: page('taxiSafety'), action: tr('taxi'), tab: 'taxi' },
-                { title: page('useful'), detail: page('usefulText'), action: tr('nearMe'), tab: 'nearme' }
+                { icon: '🚨', title: page('emergencyTitle'), detail: page('emergencyText'), action: '112', href: 'tel:112' },
+                { icon: '🚕', title: tr('taxi'), detail: page('taxiSafety'), action: tr('taxi'), tab: 'taxi' },
+                { icon: '📍', title: page('useful'), detail: page('usefulText'), action: tr('nearMe'), tab: 'nearme' }
               ].map((item) => (
                 <article key={item.title} className="p-5 bg-white border border-sky-100 rounded-2xl shadow-sm space-y-3">
-                  <ShieldCheck className="w-7 h-7 text-[#087FFF]" />
+                  <span className="reference-emoji" aria-hidden="true">{item.icon}</span>
                   <h2 className="font-extrabold text-slate-900">{item.title}</h2>
                   <p className="text-[12px] leading-relaxed text-slate-600">{item.detail}</p>
                   {item.href ? <a href={item.href} className="inline-flex px-3 py-2 rounded-xl bg-red-600 text-white text-[12px] font-bold">{item.action}</a> : <button onClick={() => setActiveTab(item.tab as 'taxi' | 'nearme')} className="px-3 py-2 rounded-xl bg-[#087FFF] text-white text-[12px] font-bold cursor-pointer">{item.action}</button>}
                 </article>
               ))}
             </div>
+            <section className="reference-safety-banner">
+              <div><h2>{page('safety')}</h2><p><span aria-hidden="true">✅</span> {page('taxiSafety')}</p><p><span aria-hidden="true">✅</span> {page('usefulText')}</p><a href="tel:112"><span aria-hidden="true">🚨</span> {page('emergencyTitle')} · 112</a></div>
+              <img src={citiesDetailedData['Antalya'].coverImage} alt={citiesDetailedData['Antalya'].name} loading="lazy" />
+            </section>
             <p className="text-[10px] text-slate-400">
               Photo credits: <a className="underline" href="https://commons.wikimedia.org/wiki/File:Anadolu_Medeniyetleri_M%C3%BCzesi.jpg" target="_blank" rel="noreferrer">José Luis Filpo Cabana / CC BY 3.0</a>{' · '}
               <a className="underline" href="https://commons.wikimedia.org/wiki/File:Topkapi_Palace,_Istanbul.jpg" target="_blank" rel="noreferrer">Rraj89 / CC BY-SA 4.0</a>. Other editorial images are from Unsplash; CC0/public-domain images are identified at their source.

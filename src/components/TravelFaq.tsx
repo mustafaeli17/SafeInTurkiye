@@ -80,15 +80,19 @@ export function TransportCardGuide({ city, lang }: { city: string; lang: string 
 
 export default function TravelFaq({ lang, initialQuery = '' }: { lang: string; initialQuery?: string }) {
   const [query, setQuery] = useState(initialQuery);
+  const [topic, setTopic] = useState(-1);
+  const topicLabels = ({ en: ['Transport', 'Money', 'Near me', 'Bookings', 'Activities'], tr: ['Ulaşım', 'Para', 'Yakınımda', 'Rezervasyon', 'Aktiviteler'], de: ['Verkehr', 'Geld', 'In der Nähe', 'Buchungen', 'Aktivitäten'], fr: ['Transports', 'Argent', 'À proximité', 'Réservations', 'Activités'], ar: ['المواصلات', 'المال', 'بالقرب مني', 'الحجوزات', 'الأنشطة'], ru: ['Транспорт', 'Деньги', 'Рядом', 'Бронирования', 'Развлечения'], zh: ['交通', '换汇', '附近', '预订', '活动'] } as Record<string, string[]>)[lang] ?? ['Transport', 'Money', 'Near me', 'Bookings', 'Activities'];
+  const topicRows = [[0,1,2,3,4,5], [6], [7,10], [8,9,13], [11,12]];
   const tr = lang === 'tr';
   const labels = ui[lang] ?? ui.en;
   const title = ({ tr: 'Sık sorulan sorular', en: 'Frequently asked questions', de: 'Häufige Fragen', fr: 'Questions fréquentes', ar: 'الأسئلة الشائعة', zh: '常见问题', ru: 'Частые вопросы' } as Record<string,string>)[lang] ?? 'Frequently asked questions';
   const rows = questions.map((row, index) => localized[lang]?.[index] ? [localized[lang][index][0], localized[lang][index][0], localized[lang][index][1], localized[lang][index][1], row[4]] : row);
-  const items = rows.filter(row => row.slice(0,4).join(' ').toLocaleLowerCase().includes(query.toLocaleLowerCase()));
-  return <main dir={lang === 'ar' ? 'rtl' : 'ltr'} className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-4 pb-24">
+  const items = rows.filter((row, index) => (topic === -1 || topicRows[topic].includes(index)) && row.slice(0,4).join(' ').toLocaleLowerCase().includes(query.toLocaleLowerCase()));
+  return <main dir={lang === 'ar' ? 'rtl' : 'ltr'} className="reference-page reference-guides max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-4 pb-24">
     <h1 className="text-3xl font-extrabold">{title}</h1>
     <p className="text-sm text-slate-600">{labels[0]}</p>
     <input value={query} onChange={e => setQuery(e.target.value)} placeholder={labels[1]} aria-label={title} className="w-full p-3 bg-white border border-sky-100 rounded-xl" />
+    <div className="reference-guide-topics">{topicLabels.map((label,index) => <button key={label} aria-pressed={topic === index} onClick={() => setTopic(topic === index ? -1 : index)}><span aria-hidden="true">{['🚇','💵','📍','🛏️','🎟️'][index]}</span>{label}</button>)}</div>
     {items.map(row => <details key={row[0]} className="rounded-2xl bg-white border border-sky-100 p-4"><summary className="font-bold cursor-pointer">{row[tr ? 0 : 1]}</summary><p className="text-sm text-slate-600 mt-3 leading-relaxed">{row[tr ? 2 : 3]}</p>{row[4] && <a href={row[4]} target="_blank" rel="noreferrer" className="inline-block mt-3 text-sky-700 underline text-sm">{labels[2]}</a>}</details>)}
     {!items.length && <p>{labels[3]}</p>}
   </main>;
