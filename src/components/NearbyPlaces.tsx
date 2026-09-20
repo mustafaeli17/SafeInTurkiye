@@ -16,7 +16,11 @@ const categoryLabels: Record<NearbyCategory, [string, string]> = {
   taxi: ['Taksi durağı', 'Taxi rank'], restaurant: ['Restoran', 'Restaurant'], cafe: ['Kafe', 'Café'],
 }
 
-export default function NearbyPlaces({ kind, lang = 'en', center, cityName }: NearbyPlacesProps) {
+export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter, cityName: initialCityName }: NearbyPlacesProps) {
+  const cities: Record<string, NearbyCenter> = { 'İstanbul': {lat:41.0082,lng:28.9784}, Ankara:{lat:39.9334,lng:32.8597}, 'İzmir':{lat:38.4237,lng:27.1428}, Antalya:{lat:36.8969,lng:30.7133}, Cappadocia:{lat:38.6431,lng:34.8289} };
+  const [selectedCity, setSelectedCity] = useState(initialCityName.startsWith('Cappadocia') ? 'Cappadocia' : initialCityName);
+  const cityName = selectedCity;
+  const center = cities[selectedCity] ?? initialCenter;
   const locale = lang.toLowerCase()
   const tr = locale.startsWith('tr')
   const translated: Record<string, Record<string, string>> = {
@@ -125,6 +129,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center, cityName }: Ne
           <p className="text-xs text-slate-600 mt-1">{text('2,5 km içindeki kayıtlar; mesafeler kuş uçuşudur.', 'Published places within 2.5 km; distances are straight-line estimates.')}</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <select aria-label={text('Aranacak şehir', 'Search city')} value={selectedCity} onChange={event => setSelectedCity(event.target.value)} className="rounded-xl border border-sky-200 bg-white px-3 py-2 text-xs">{Object.keys(cities).map(city => <option key={city}>{city}</option>)}</select>
           <button type="button" onClick={searchLocation} disabled={busy} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#00A3E0] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#0284C7] disabled:opacity-60 disabled:cursor-wait"><LocateFixed className="h-4 w-4" />{text('Konumumu kullan', 'Use my location')}</button>
           <button type="button" onClick={searchCity} disabled={state === 'loading'} className="inline-flex items-center justify-center gap-2 rounded-xl border border-sky-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-sky-50 disabled:opacity-60"><Search className="h-4 w-4" />{cityName} {text('merkezinde ara', 'centre')}</button>
         </div>
@@ -164,7 +169,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center, cityName }: Ne
         </article>)}
       </div>
       {places.length > limit && <button type="button" onClick={() => setLimit(value => value + 12)} className="rounded-xl border border-sky-200 bg-white px-4 py-2 text-xs font-bold text-[#007EAD]">{text('Daha fazla göster', 'Show more')}</button>}
-      {result && <p className="text-[11px] leading-relaxed text-slate-500">{text('Saatler kaynakta yazıldığı şekildedir; anlık açık/kapalı durumu ve nöbetçi eczane bilgisi doğrulanmış değildir. Gitmeden önce arayın. Topluluk kayıtları eksik veya eski olabilir.', 'Hours are shown as published; current open/closed status and on-duty pharmacies are not verified. Call before visiting. Community records can be incomplete or outdated.')} {' '}<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" className="underline">© OpenStreetMap {text('katkıda bulunanlar', 'contributors')}</a> · <a href="https://overpass-api.de" target="_blank" rel="noopener noreferrer" className="underline">Overpass API</a></p>}
+      {result && <p className="text-[11px] leading-relaxed text-slate-500">{text('Saatler kaynakta yazıldığı şekildedir; anlık açık/kapalı durumu ve nöbetçi eczane bilgisi doğrulanmış değildir. Gitmeden önce arayın. Topluluk kayıtları eksik veya eski olabilir.', 'Hours are shown as published; current open/closed status and on-duty pharmacies are not verified. Call before visiting. Community records can be incomplete or outdated.')} {' '}<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" className="underline">© OpenStreetMap {text('katkıda bulunanlar', 'contributors')}</a> · <a href={result.provider === 'Photon' ? 'https://github.com/komoot/photon' : 'https://overpass-api.de'} target="_blank" rel="noopener noreferrer" className="underline">{result.provider}</a></p>}
     </section>
   )
 }

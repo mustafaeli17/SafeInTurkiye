@@ -1,3 +1,4 @@
+import { photonNearbyUrl, photonToOsm } from '../src/services/photonNearby.js'
 type Request = { method?: string; url?: string; headers: Record<string, string | string[] | undefined> }
 type Response = {
   status: (code: number) => Response
@@ -6,7 +7,6 @@ type Response = {
 }
 
 const endpoints = [
-  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
   'https://overpass-api.de/api/interpreter',
   'https://overpass.private.coffee/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
@@ -16,8 +16,8 @@ const limits = new Map<string, number>()
 export default async function handler(req: Request, res: Response) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'GET required' })
   const requestUrl = new URL(req.url ?? '/api/nearby', 'https://safeinturkiye.com')
-  const lat = Number(requestUrl.searchParams.get('lat'))
-  const lng = Number(requestUrl.searchParams.get('lng'))
+  const lat = requestUrl.searchParams.has('lat') ? Number(requestUrl.searchParams.get('lat')) : NaN
+  const lng = requestUrl.searchParams.has('lng') ? Number(requestUrl.searchParams.get('lng')) : NaN
   const kind = requestUrl.searchParams.get('kind')
   if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180 || !['exchange', 'essential'].includes(kind ?? '')) {
     return res.status(400).json({ error: 'INVALID_INPUT' })
@@ -30,24 +30,32 @@ export default async function handler(req: Request, res: Response) {
   limits.set(client, Date.now() + 3000)
 
   const amenities = kind === 'exchange' ? 'bureau_de_change' : 'pharmacy|hospital|police|atm|taxi'
-  const query = `[out:json][timeout:15];nwr(around:2000,${lat.toFixed(6)},${lng.toFixed(6)})["amenity"~"^(${amenities})$"]["access"!="private"]["access"!="no"];out center tags 180;`
-  let lastStatus = 502
-  for (const endpoint of endpoints) {
-    try {
-      const upstream = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'content-type': 'application/x-www-form-urlencoded;charset=UTF-8', accept: 'application/json' },
-        body: new URLSearchParams({ data: query }),
-        signal: AbortSignal.timeout(7000),
+  const query = `[out:json][timeout:8];nwr(around:2500,${lat.toFixed(6)},${lng.toFixed(6)})["amenity"~"^(${amenities})$"]["access"!="private"]["access"!="no"];out center tags 180;`
+  const controllers = endpoints.map(() => new AbortController())
+  const timer = setTimeout(() => controllers.forEach(controller => controller.abort()), 4000)
+  try {
+    const payload = await Promise.any(endpoints.slice(0, 2).map(async (endpoint, index) => {
+      const upstream = await fetch(endpoint + '?data=' + encodeURIComponent(query), {
+        headers: { accept: 'application/json', 'User-Agent': 'SafeInTurkiye/1.0 (+https://safeinturkiye.com)' },
+        signal: controllers[index].signal,
       })
-      lastStatus = upstream.status
-      if (!upstream.ok) continue
-      const payload = await upstream.json()
+      if (!upstream.ok) throw new Error('PROVIDER_' + upstream.status)
+      const body = await upstream.json()
+      if (!Array.isArray(body.elements) || body.remark) throw new Error('INCOMPLETE_RESPONSE')
+      return body
+    }))
+    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600')
+    return res.status(200).json(payload)
+  } catch {
+    try {
+      const upstream = await fetch(photonNearbyUrl(lat, lng, kind!), {signal: AbortSignal.timeout(6000), headers: {accept:'application/json'}})
+      if (!upstream.ok) throw new Error('PROVIDER_UNAVAILABLE')
+      const payload = photonToOsm(await upstream.json())
       res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600')
       return res.status(200).json(payload)
-    } catch {
-      lastStatus = 502
-    }
+    } catch { return res.status(503).json({ error: 'PLACE_PROVIDER_UNAVAILABLE' }) }
+  } finally {
+    clearTimeout(timer)
+    controllers.forEach(controller => controller.abort())
   }
-  return res.status(lastStatus === 429 ? 429 : 502).json({ error: lastStatus === 429 ? 'TRY_AGAIN_LATER' : 'PLACE_PROVIDER_UNAVAILABLE' })
 }

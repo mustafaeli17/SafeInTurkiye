@@ -1,3 +1,4 @@
+import { photonNearbyUrl, photonToOsm } from './photonNearby'
 export type NearbyKind = 'exchange' | 'essential'
 export type NearbyCategory = 'bureau_de_change' | 'pharmacy' | 'hospital' | 'police' | 'atm' | 'taxi' | 'restaurant' | 'cafe'
 export interface NearbyCenter { lat: number; lng: number }
@@ -15,6 +16,7 @@ export interface NearbyPlaceRecord {
   sourceUrl: string
 }
 export interface NearbyResult {
+  provider: 'Photon' | 'Overpass'
   places: NearbyPlaceRecord[]
   fetchedAt: string
   mapDataAt: string | null
@@ -31,7 +33,6 @@ type OsmElement = {
 
 const categories: NearbyCategory[] = ['bureau_de_change', 'pharmacy', 'hospital', 'police', 'atm', 'taxi', 'restaurant', 'cafe']
 const developmentEndpoints = [
-  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
   'https://overpass-api.de/api/interpreter',
   'https://overpass.private.coffee/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
@@ -103,6 +104,7 @@ export function parseNearbyResponse(payload: unknown, center: NearbyCenter, kind
     const lat = raw.lat ?? raw.center?.lat
     const lng = raw.lon ?? raw.center?.lon
     if (typeof lat !== 'number' || typeof lng !== 'number' || !isValidCenter({ lat, lng })) continue
+    if (distanceInMeters(center, { lat, lng }) > 2500) continue
     const street = [cleanText(tags['addr:street']) || cleanText(tags['addr:place']), cleanText(tags['addr:housenumber'])].filter(Boolean).join(' ')
     const area = [cleanText(tags['addr:suburb']), cleanText(tags['addr:district']), cleanText(tags['addr:city'])].filter(Boolean)
     const address = cleanText(tags['addr:full']) || [street, ...new Set(area)].filter(Boolean).join(', ') || null
@@ -125,6 +127,7 @@ export function parseNearbyResponse(payload: unknown, center: NearbyCenter, kind
   const metadata = 'osm3s' in payload && payload.osm3s && typeof payload.osm3s === 'object' ? payload.osm3s : null
   const mapTimestamp = metadata && 'timestamp_osm_base' in metadata ? cleanText(metadata.timestamp_osm_base) : null
   return {
+    provider: 'provider' in payload && payload.provider === 'Photon' ? 'Photon' : 'Overpass',
     places: [...places.values()].sort((a, b) => a.distanceMeters - b.distanceMeters),
     fetchedAt: new Date().toISOString(),
     mapDataAt: mapTimestamp && Number.isFinite(Date.parse(mapTimestamp)) ? mapTimestamp : null,
@@ -146,17 +149,17 @@ export async function fetchNearbyPlaces(center: NearbyCenter, kind: NearbyKind, 
   signal?.addEventListener('abort', abort, { once: true })
   const timeout = setTimeout(() => { timedOut = true; controller.abort() }, 12000)
   const amenities = kind === 'exchange' ? 'bureau_de_change' : 'pharmacy|hospital|police|atm|taxi'
-  const query = `[out:json][timeout:15];nwr(around:2000,${center.lat.toFixed(6)},${center.lng.toFixed(6)})["amenity"~"^(${amenities})$"]["access"!="private"]["access"!="no"];out center tags 180;`
+  const query = `[out:json][timeout:8];nwr(around:2500,${center.lat.toFixed(6)},${center.lng.toFixed(6)})["amenity"~"^(${amenities})$"]["access"!="private"]["access"!="no"];out center tags 180;`
   try {
     let lastError: unknown = null
     const requests = import.meta.env.DEV
-      ? developmentEndpoints.map(endpoint => ({ url: endpoint, init: { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded;charset=UTF-8' }, body: new URLSearchParams({ data: query }) } as RequestInit }))
+      ? [...developmentEndpoints.slice(0, 2).map(endpoint => ({ url: endpoint + '?data=' + encodeURIComponent(query), init: {} as RequestInit })), {url: photonNearbyUrl(center.lat, center.lng, kind), init: {} as RequestInit}]
       : [{ url: `/api/nearby?lat=${center.lat.toFixed(6)}&lng=${center.lng.toFixed(6)}&kind=${kind}`, init: {} as RequestInit }]
     for (const request of requests) {
       try {
         const response = await fetch(request.url, {
           ...request.init,
-          signal: controller.signal,
+          signal: AbortSignal.any([controller.signal, AbortSignal.timeout(import.meta.env.DEV ? (request.url.includes('photon.komoot.io') ? 5000 : 2500) : 11500)]),
           // Preview deployments can be protected by Vercel. Keep the preview
           // session cookie for our own API, but never send credentials to the
           // third-party Overpass development endpoints.
@@ -165,7 +168,8 @@ export async function fetchNearbyPlaces(center: NearbyCenter, kind: NearbyKind, 
         })
         if (response.status === 429 || response.status === 406) { lastError = new NearbyError('busy'); continue }
         if (!response.ok) { lastError = new NearbyError('unavailable'); continue }
-        const result = parseNearbyResponse(await response.json(), center, kind)
+        const payload = await response.json()
+        const result = parseNearbyResponse(request.url.includes('photon.komoot.io') ? photonToOsm(payload) : payload, center, kind)
         signal?.throwIfAborted()
         if (cache.size >= 12) cache.delete(cache.keys().next().value!)
         cache.set(key, { result, expires: Date.now() + cacheDuration })

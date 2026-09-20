@@ -1,6 +1,8 @@
+import { officialLinks, directoryText, sourcedActivities, cityPhotos } from './lib/visitorDirectory';
+import SafetyTips from './components/SafetyTips';
 import CatalogFilters from './components/CatalogFilters';
-import { matchesCatalog, normalizeSearch, localDate, validBookingDate } from './lib/catalog';
-import { bookingText, bookingLabel } from './lib/bookingCopy';
+import { matchesCatalog, normalizeSearch, localDate } from './lib/catalog';
+import { bookingText } from './lib/bookingCopy';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Search,
@@ -426,7 +428,7 @@ const citiesDetailedData: Record<string, CityInfo> = {
   'Antalya': {
     name: 'Antalya',
     tagline: 'Turquoise Mediterranean shores, waterfalls and Roman ruins',
-    coverImage: 'https://images.unsplash.com/photo-1657873882134-75e359b54a3b?auto=format&fit=crop&w=1200&q=80',
+    coverImage: 'https://upload.wikimedia.org/wikipedia/commons/8/8e/Kalei%C3%A7i.jpg',
     lat: 36.8969, lng: 30.7133,
     temp: '30°C',
     weatherDesc: 'Warm & Sunny',
@@ -444,7 +446,7 @@ const citiesDetailedData: Record<string, CityInfo> = {
   'İzmir': {
     name: 'İzmir',
     tagline: 'Aegean breeze, Kordon promenade, and lively bazaar alleys',
-    coverImage: 'https://image.arrivalguides.com/x/06/6f835a77a5b6bf807ad30ce5489da764.jpg',
+    coverImage: cityPhotos.izmir,
     lat: 38.4237, lng: 27.1428,
     temp: '28°C',
     weatherDesc: 'Breezy & Sunny',
@@ -789,63 +791,10 @@ export default function App() {
     }
   };
 
-  // Rezervasyon Modal State & İsim Girmeme Hata Kontrolü
-  const [reservationModalOpen, setReservationModalOpen] = useState(false);
-  const [selectedBookingItem, setSelectedBookingItem] = useState<any>(null);
-  const [selectedBookingType, setSelectedBookingType] = useState<'hotel' | 'restaurant' | 'activity'>('activity');
-  const [guestFullName, setGuestFullName] = useState('');
-  const [bookingDate, setBookingDate] = useState(() => new Date().toISOString().slice(0, 10));
-  const [bookingBusy, setBookingBusy] = useState(false);
-  const bookingInFlight = useRef(false);
-  const [bookingErrorMsg, setBookingErrorMsg] = useState<string | null>(null);
-  const [bookingRequest, setBookingRequest] = useState<{
-    code: string;
-    itemTitle: string;
-    city: string;
-    price: string;
-    guest: string;
-    date: string;
-  } | null>(null);
-
-  const handleOpenBooking = (item: any, listingType: 'hotel' | 'restaurant' | 'activity') => {
-    setSelectedBookingItem(item);
-    setSelectedBookingType(listingType);
-    setBookingRequest(null);
-    setGuestFullName('');
-    setBookingDate(localDate());
-    setBookingErrorMsg(null);
-    setReservationModalOpen(true);
-  };
-
-  const handleConfirmReservation = async () => {
-    if (bookingInFlight.current) return;
-    setBookingErrorMsg(null);
-    if (!guestFullName.trim()) {
-      setBookingErrorMsg(bookingText(lang, 8));
-      return;
-    }
-    if (!validBookingDate(bookingDate)) { setBookingErrorMsg(bookingText(lang, 4)); return; }
-    if (!supabaseConfigured) { setBookingErrorMsg(bookingText(lang, 10)); return; }
-    if (!session?.user) { setBookingErrorMsg(bookingText(lang, 9)); setAuthModalOpen(true); return; }
-    bookingInFlight.current = true;
-    setBookingBusy(true);
-    try {
-      const booking = await createBooking({
-        listingType: selectedBookingType, listingName: selectedBookingItem.title || selectedBookingItem.name,
-        guestName: guestFullName, guestEmail: session.user.email ?? '', visitDate: bookingDate, guestCount: 1,
-      });
-      setBookingRequest({ code: booking.reference_code, itemTitle: selectedBookingItem.title || selectedBookingItem.name, city: selectedBookingItem.city, price: selectedBookingItem.price || selectedBookingItem.avgPrice, guest: guestFullName, date: bookingDate });
-    } catch (error) { setBookingErrorMsg(error instanceof Error ? error.message : 'Could not submit the booking request.'); }
-    finally { bookingInFlight.current = false; setBookingBusy(false); }
-  };
-
-  const downloadBookingSummary = () => {
-    if (!bookingRequest) return;
-    const text = [bookingText(lang, 7), bookingRequest.code, bookingRequest.itemTitle, bookingRequest.city, bookingRequest.guest, bookingRequest.date, bookingText(lang, 3)].join('\n');
-    const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
-    const link = document.createElement('a');
-    link.href = url; link.download = 'SafeInTurkiye-request.txt'; link.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  // Referral-only: never submit booking requests from the public directory.
+  const handleOpenBooking = (item: {id: string}, _listingType: string) => {
+    const url = officialLinks[item.id];
+    if (url) window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   // Taksi Durumları
@@ -1120,13 +1069,12 @@ export default function App() {
 
   // CMS Listeleri
   const [hotelsList, setHotelsList] = useState([
-    { id: 'h1', name: 'Kaleiçi Heritage Hotel & Spa', city: 'Antalya', area: 'Old Town', roomType: 'Deluxe Suite', price: '₺3,200', rating: '4.9', amenities: 'Pool, Spa, Marina Walk', img: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80' },
-    { id: 'h2', name: 'Göreme Valley Cave Suites', city: 'Cappadocia', area: 'Göreme', roomType: 'Fairy Chimney Cave', price: '₺5,800', rating: '5.0', amenities: 'Terrace, Balloon View', img: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=600&q=80' },
-    { id: 'h3', name: 'Bosphorus Palace Waterfront', city: 'İstanbul', area: 'Beşiktaş', roomType: 'Sea Front King', price: '₺7,400', rating: '4.8', amenities: 'Sea View, Fine Dining', img: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=600&q=80' }
+    { id: 'h1', name: 'Akra Antalya', city: 'Antalya', area: 'Old Town', roomType: '', price: '₺3,200', rating: '4.9', amenities: '', img: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80' },
+    { id: 'h2', name: 'Swissôtel Büyük Efes İzmir', city: 'İzmir', area: 'Konak', roomType: '', price: '₺5,800', rating: '5.0', amenities: '', img: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=600&q=80' },
+    { id: 'h3', name: 'Çırağan Palace Kempinski', city: 'İstanbul', area: 'Beşiktaş', roomType: '', price: '₺7,400', rating: '4.8', amenities: '', img: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=600&q=80' }
   ]);
 
   const [restaurantsList, setRestaurantsList] = useState([
-    { id: 'r1', name: 'Tarihi Sultanahmet Köftecisi (Est. 1920)', city: 'İstanbul', cuisine: 'Traditional Meatballs & Piyaz', avgPrice: '₺350 / person', openHours: '10:30 - 23:00', rating: '4.9', img: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=600&q=80' },
     { id: 'r2', name: 'Çiya Sofrası Anatolian Delights', city: 'İstanbul', cuisine: 'Regional Anatolian Herbs & Stews', avgPrice: '₺450 / person', openHours: '11:30 - 22:30', rating: '4.9', img: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80' },
     { id: 'r3', name: '7 Mehmet Mediterranean Cuisine', city: 'Antalya', cuisine: 'Fresh Seafood & Mediterranean', avgPrice: '₺800 / person', openHours: '12:00 - 00:00', rating: '4.8', img: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80' }
   ]);
@@ -1135,14 +1083,7 @@ export default function App() {
     { id: 'a1', title: 'Göreme Open-Air Museum', city: 'Cappadocia', category: 'Museum & Culture', duration: '2–3 Hours', price: 'Check official ticket', guideLang: 'Audio guide options', rating: '—', description: 'Rock-cut churches and frescoes; morning visits are usually calmer.', img: 'https://images.unsplash.com/photo-1641128324972-af3212f0f6bd?auto=format&fit=crop&w=900&q=80' },
     { id: 'a2', title: 'Museum of Anatolian Civilizations', city: 'Ankara', category: 'Museum & Culture', duration: '2–3 Hours', price: 'Check official ticket', guideLang: 'Museum information', rating: '—', description: 'A practical introduction to Anatolia before exploring Ankara Castle.', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Anadolu_Medeniyetleri_M%C3%BCzesi.jpg/960px-Anadolu_Medeniyetleri_M%C3%BCzesi.jpg' },
     { id: 'a3', title: 'Topkapı Palace & Historic Peninsula', city: 'İstanbul', category: 'Museum & Culture', duration: 'Half day', price: 'Check official ticket', guideLang: 'Audio guide options', rating: '—', description: 'Allow extra time for security queues and separate ticketed sections.', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Topkapi_Palace%2C_Istanbul.jpg/960px-Topkapi_Palace%2C_Istanbul.jpg' },
-    { id: 'a4', title: 'Cinema Night in Beyoğlu', city: 'İstanbul', category: 'Cinema', duration: 'Film schedule', price: 'Check programme', guideLang: 'Original/subtitled varies', rating: '—', description: 'Compare nearby cinema programmes and check the film language and subtitles before buying.', img: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=900&q=80' },
-    { id: 'a5', title: 'Independent Cinema Evening', city: 'Ankara', category: 'Cinema', duration: '2–3 Hours', price: 'Check programme', guideLang: 'Varies by screening', rating: '—', description: 'Compare the current programme and subtitle language before travelling.', img: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=900&q=80' },
-    { id: 'a6', title: 'Bosphorus Public Ferry Sunset', city: 'İstanbul', category: 'Entertainment', duration: '1.5–2 Hours', price: 'Transit fare applies', guideLang: 'Self-guided', rating: '—', description: 'A useful low-cost alternative to an unverified private cruise offer.', img: 'https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?auto=format&fit=crop&w=900&q=80' },
-    { id: 'a7', title: 'Kaleiçi Evening Walk', city: 'Antalya', category: 'Entertainment', duration: '2 Hours', price: 'Free', guideLang: 'Self-guided', rating: '—', description: 'Harbour views, old streets and restaurants; confirm venue closing times.', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Kalei%C3%A7i.jpg/960px-Kalei%C3%A7i.jpg' },
-    { id: 'a8', title: 'Kaş Sea Kayaking', city: 'Antalya', category: 'Summer', duration: 'Half day', price: 'Request current quote', guideLang: 'Operator dependent', rating: '—', description: 'Seasonal and weather-dependent. Confirm insurance, equipment and cancellation terms.', img: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=900&q=80' },
-    { id: 'a9', title: 'Cappadocia Sunrise Viewpoints', city: 'Cappadocia', category: 'Summer', duration: '2–3 Hours', price: 'Viewpoints vary', guideLang: 'Self-guided', rating: '—', description: 'Balloon flights are weather-dependent; viewpoints do not guarantee a launch.', img: 'https://images.unsplash.com/photo-1557972359-152b6ebd3eb3?auto=format&fit=crop&w=900&q=80' },
-    { id: 'a10', title: 'Erciyes Ski Day', city: 'Kayseri', category: 'Winter', duration: 'Full day', price: 'Seasonal', guideLang: 'Operator dependent', rating: '—', description: 'Check snow, lift status, equipment rental and return transport before leaving.', img: 'https://images.unsplash.com/photo-1486911278844-a81c5267e227?auto=format&fit=crop&w=900&q=80' },
-    { id: 'a11', title: 'Uludağ Winter Day Trip', city: 'Bursa', category: 'Winter', duration: 'Full day', price: 'Seasonal', guideLang: 'Self-guided/operator', rating: '—', description: 'Cable-car and road access can change with weather; verify on the travel day.', img: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/3/30/Uluda%C4%9F_Kayak_Merkezi-_Uludag_Ski_Center.jpg/960px-Uluda%C4%9F_Kayak_Merkezi-_Uludag_Ski_Center.jpg' }
+    ...sourcedActivities
   ]);
   const [activityCategory, setActivityCategory] = useState('All');
   const [catalogQuery, setCatalogQuery] = useState('');
@@ -1489,6 +1430,8 @@ export default function App() {
                 />
               </div>
             </div>
+            <aside className="catalog-editorial-note"><a className="reference-outline-action inline-block" href="https://www.bitaksi.com/home" target="_blank" rel="noopener noreferrer">🚕 {directoryText(lang, 3)} ↗</a><p className="mt-2">{directoryText(lang, 4)}</p></aside>
+
           </main>
         )}
 
@@ -1568,11 +1511,11 @@ export default function App() {
 
             {activitiesList.some(item => item.city === selectedCityName) && <section className="reference-photo-section">
               <h2>{tr('activities')}</h2>
-              <div className="reference-photo-grid">{activitiesList.filter(item => item.city === selectedCityName).slice(0,4).map(item => { const activity = activityContent(item, lang); return <button key={item.id} onClick={() => handleOpenBooking(activity, 'activity')}><img src={item.img} alt={activity.title} loading="lazy" /><strong>{activity.title}</strong><span>{page('details')} →</span></button>; })}</div>
+              <div className="reference-photo-grid">{activitiesList.filter(item => item.city === selectedCityName).slice(0,4).map(item => { const activity = activityContent(item, lang); return <button key={item.id} onClick={() => handleOpenBooking(activity, 'activity')}><img src={item.img} alt={activity.title} loading="lazy" /><strong>{activity.title}</strong><span>{directoryText(lang, 0)} →</span></button>; })}</div>
             </section>}
             <section className="reference-photo-section">
               <h2>{tr('hotels')}</h2>
-              <div className="reference-photo-grid">{hotelsList.filter(item => item.city === selectedCityName).map(item => <button key={item.id} onClick={() => handleOpenBooking(item, 'hotel')}><img src={item.img} alt={item.name} loading="lazy" /><strong>{item.name}</strong><span>{page('book')} →</span></button>)}</div>
+              <div className="reference-photo-grid">{hotelsList.filter(item => item.city === selectedCityName).map(item => <button key={item.id} onClick={() => handleOpenBooking(item, 'hotel')}><img src={item.img} alt={item.name} loading="lazy" /><strong>{item.name}</strong><span>{directoryText(lang, 0)} →</span></button>)}</div>
               <button className="reference-outline-action" onClick={() => setActiveTab('stay')}>{page('hotelsTitle')} →</button>
             </section>
             <TransportCardGuide city={selectedCityName} lang={lang} />
@@ -1587,7 +1530,7 @@ export default function App() {
           <main className="travel-catalog">
             <h1 className="text-3xl font-extrabold text-slate-900">{page('hotelsTitle')}</h1>
             {catalogFilters(hotelsList, filteredHotels.length)}
-            <p className="catalog-editorial-note">{bookingText(lang, 1)}</p>
+            <p className="catalog-editorial-note">{directoryText(lang, 2)}</p>
             <div className="travel-catalog-list">
               {filteredHotels.map(h => (
                 <div key={h.id} className="travel-catalog-row">
@@ -1596,7 +1539,7 @@ export default function App() {
                   </div>
                   <div className="travel-catalog-info">
                     <span className="travel-catalog-label">{h.city}</span>
-                    <strong className="text-[14px] text-slate-900 block">{h.name}</strong>
+                    <strong className="text-[14px] text-slate-900 block">{h.name}</strong><p>{directoryText(lang, 1)}</p>
                     <span className="text-[12px] text-[#087FFF] font-semibold">{h.roomType}</span>
                     <p className="text-[11px] text-slate-500">{h.amenities}</p>
                   </div>
@@ -1606,7 +1549,7 @@ export default function App() {
                       onClick={() => handleOpenBooking(h, 'hotel')}
                       className="px-4 py-1.5 bg-[#087FFF] hover:bg-[#0284C7] text-white rounded-xl text-[12px] font-bold cursor-pointer"
                     >
-                      {page('book')}
+                      {directoryText(lang, 0)}
                     </button>
                   </div>
                 </div>
@@ -1622,7 +1565,7 @@ export default function App() {
           <main className="travel-catalog">
             <h1 className="text-3xl font-extrabold text-slate-900">{page('diningTitle')}</h1>
             {catalogFilters(restaurantsList, filteredRestaurants.length)}
-            <p className="catalog-editorial-note">{bookingText(lang, 1)}</p>
+            <p className="catalog-editorial-note">{directoryText(lang, 2)}</p>
             <div className="travel-catalog-list">
               {filteredRestaurants.map(r => (
                 <div key={r.id} className="travel-catalog-row">
@@ -1641,7 +1584,7 @@ export default function App() {
                       onClick={() => handleOpenBooking(r, 'restaurant')}
                       className="px-4 py-1.5 bg-[#087FFF] hover:bg-[#0284C7] text-white rounded-xl text-[12px] font-bold cursor-pointer"
                     >
-                      {page('reserve')}
+                      {directoryText(lang, 0)}
                     </button>
                   </div>
                 </div>
@@ -1660,7 +1603,7 @@ export default function App() {
               {['All', 'Museum & Culture', 'Cinema', 'Entertainment', 'Summer', 'Winter'].map(category => <button type="button" key={category} aria-pressed={activityCategory === category} onClick={() => setActivityCategory(category)} className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs font-bold ${activityCategory === category ? 'border-[#087FFF] bg-[#087FFF] text-white' : 'border-sky-100 bg-white text-slate-700 hover:bg-sky-50'}`}>{activityLabel(category, lang)}</button>)}
             </div>
             {catalogFilters(activitiesList, filteredActivities.length)}
-            <p className="catalog-editorial-note">{bookingText(lang, 1)}</p>
+            <p className="catalog-editorial-note">{directoryText(lang, 2)}</p>
             <div className="travel-catalog-list">
               {filteredActivities.map(a => (
                 <div key={a.id} className="travel-catalog-row">
@@ -1670,8 +1613,8 @@ export default function App() {
                   <div className="travel-catalog-info">
                     <span className="travel-catalog-label">{activityLabel(a.category, lang)} • {a.city}</span>
                     <strong className="text-[14px] text-slate-900 block">{a.title}</strong>
-                    <span className="text-[11px] text-slate-500">{activityText('Duration', lang)}: {activityText(a.duration, lang)} | {activityText('Guide', lang)}: {activityText(a.guideLang, lang)}</span>
-                    <p className="pt-2 text-[12px] leading-relaxed text-slate-600">{a.description}</p>
+                    <span className="text-[11px] text-slate-500">{directoryText(lang, 5)}</span>
+                    <p className="pt-2 text-[12px] leading-relaxed text-slate-600">{a.description || directoryText(lang, 1)}</p>
                   </div>
                   <div className="travel-catalog-action">
                     <strong className="text-[12px] font-bold text-[#007EAD]">{activityText(a.price, lang)}</strong>
@@ -1679,7 +1622,7 @@ export default function App() {
                       onClick={() => handleOpenBooking(a, 'activity')}
                       className="px-4 py-1.5 bg-[#087FFF] hover:bg-[#0284C7] text-white rounded-xl text-[12px] font-bold cursor-pointer"
                     >
-                      {page('details')}
+                      {directoryText(lang, 0)}
                     </button>
                   </div>
                 </div>
@@ -1721,6 +1664,7 @@ export default function App() {
                 </article>
               ))}
             </div>
+            <SafetyTips lang={lang} />
             <section className="reference-safety-banner">
               <div><h2>{page('safety')}</h2><p><span aria-hidden="true">✅</span> {page('taxiSafety')}</p><p><span aria-hidden="true">✅</span> {page('usefulText')}</p><a href="tel:112"><span aria-hidden="true">🚨</span> {page('emergencyTitle')} · 112</a></div>
               <img src={citiesDetailedData['Antalya'].coverImage} alt={citiesDetailedData['Antalya'].name} loading="lazy" />
@@ -1739,143 +1683,6 @@ export default function App() {
         {activeTab === 'admin' && !isStaff && <main className="max-w-xl mx-auto p-6 my-8 rounded-2xl bg-white border border-sky-100 space-y-4"><h1 className="text-xl font-bold">Yönetici girişi</h1><p>{session ? 'Hesabınızın içerik yönetimi yetkisi kontrol ediliyor. Yetki verilmemişse bu bölüm açılamaz.' : 'Yönetim panelini açmak için yetkili hesabınızla giriş yapın.'}</p>{!session && <button onClick={() => setAuthModalOpen(true)} className="bg-sky-600 text-white rounded-xl px-5 py-3">Giriş yap</button>}</main>}
 
       </div>
-
-      {/* ====================================================================
-          LÜKS DİJİTAL REZERVASYON KUPONU (BOARDING PASS / VOUCHER MODAL)
-      ==================================================================== */}
-      {reservationModalOpen && selectedBookingItem && (
-        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div role="dialog" aria-modal="true" aria-labelledby="booking-title" className="bg-white w-full max-w-md max-h-[90dvh] overflow-y-auto rounded-3xl shadow-2xl space-y-4">
-            <div className="bg-gradient-to-r from-[#087FFF] to-[#0284C7] p-5 text-white flex justify-between items-start">
-              <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-sky-100 flex items-center gap-1">
-                  <ShieldCheck className="w-4 h-4" /> SafeInTürkiye
-                </span>
-                <h3 id="booking-title" className="text-xl font-extrabold mt-1">
-                  {bookingRequest ? bookingLabel(lang, 2) : bookingText(lang, 2)}
-                </h3>
-              </div>
-              <button aria-label={bookingLabel(lang, 7)} disabled={bookingBusy} onClick={() => setReservationModalOpen(false)} className="p-1 rounded-full bg-white/20 hover:bg-white/30 text-white cursor-pointer">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4">
-              {!bookingRequest ? (
-                <div className="space-y-3">
-                  <div className="p-3.5 bg-sky-50/70 border border-sky-100 rounded-2xl flex items-center gap-3">
-                    <img src={selectedBookingItem.img} alt="" className="w-14 h-14 object-cover rounded-xl shadow-sm" />
-                    <div>
-                      <strong className="text-[14px] text-slate-900 block">{selectedBookingItem.title || selectedBookingItem.name}</strong>
-                      <span className="text-[12px] font-bold text-[#087FFF]">{bookingText(lang, 0)}</span>
-                      <span className="text-[11px] text-slate-400 block">{selectedBookingItem.city}</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label htmlFor="booking-guest" className="text-[12px] font-bold text-slate-700 block mb-1">{bookingLabel(lang, 0)}</label>
-                    <input
-                      type="text"
-                      id="booking-guest"
-                      value={guestFullName}
-                      onChange={(e) => setGuestFullName(e.target.value)}
-                      placeholder={bookingLabel(lang, 0)}
-                      className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] font-medium focus:outline-none focus:border-[#087FFF]"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="booking-date" className="text-[12px] font-bold text-slate-700 block mb-1">{bookingLabel(lang, 1)}</label>
-                    <input
-                      type="date"
-                      min={localDate()}
-                      id="booking-date"
-                      value={bookingDate}
-                      onChange={(e) => setBookingDate(e.target.value)}
-                      className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] font-medium focus:outline-none focus:border-[#087FFF]"
-                    />
-                  </div>
-
-                  {/* DÜZELTİLMİŞ ŞIK HATA MESAJI */}
-                  {bookingErrorMsg && (
-                    <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-[11px] text-red-700 flex items-center gap-2 animate-shake">
-                      <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
-                      <span>{bookingErrorMsg}</span>
-                    </div>
-                  )}
-
-                  <div className="p-3 bg-emerald-50 border border-emerald-200/70 rounded-xl text-[11px] text-emerald-900 space-y-0.5">
-                    <p>{bookingText(lang, 3)}</p>
-                  </div>
-
-                  <button
-                    disabled={bookingBusy}
-                    onClick={handleConfirmReservation}
-                    className="w-full h-12 bg-[#087FFF] hover:bg-[#0284C7] text-white font-extrabold rounded-xl text-[13px] shadow-md shadow-sky-400/20 cursor-pointer"
-                  >
-                    {bookingBusy ? bookingText(lang, 5) : bookingText(lang, 2)}
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {/* GÜZELLEŞTİRİLMİŞ BOARDING PASS / VOUCHER GÖRÜNÜMÜ */}
-                  <div className="border-2 border-dashed border-sky-300 bg-gradient-to-b from-sky-50/50 to-white rounded-2xl p-5 space-y-3 relative overflow-hidden shadow-inner">
-                    <div className="flex justify-between items-start border-b border-sky-200/60 pb-3">
-                      <div>
-                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">{bookingLabel(lang, 4)}</span>
-                        <span className="text-xl font-black text-[#087FFF] tracking-wider">{bookingRequest.code}</span>
-                      </div>
-                      <span className="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5" /> {bookingLabel(lang, 3)}
-                      </span>
-                    </div>
-
-                    <div className="space-y-2 text-[12px]">
-                      <div>
-                        <span className="text-slate-400 text-[10px] block">{bookingLabel(lang, 5)}</span>
-                        <strong className="text-slate-900 font-bold text-[14px]">{bookingRequest.itemTitle}</strong>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-100">
-                        <div>
-                          <span className="text-slate-400 text-[10px] block">{bookingLabel(lang, 0)}</span>
-                          <strong className="text-slate-800">{bookingRequest.guest}</strong>
-                        </div>
-                        <div>
-                          <span className="text-slate-400 text-[10px] block">{bookingLabel(lang, 1)}</span>
-                          <strong className="text-slate-800">{bookingRequest.date}</strong>
-                        </div>
-                      </div>
-                      <div className="pt-1 border-t border-slate-100 flex items-center justify-between">
-                        <div>
-                          <span className="text-slate-400 text-[10px] block">{bookingLabel(lang, 8)}</span>
-                          <strong className="text-lg font-black text-[#087FFF]">{bookingText(lang, 0)}</strong>
-                        </div>
-                        <div className="w-16 h-8 bg-slate-900 rounded flex items-center justify-center text-[8px] text-white font-mono tracking-tighter">
-                          ||||| | ||||
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="pt-2 border-t border-sky-200/60 text-[10px] text-slate-500 italic flex items-center gap-1">
-                      <ShieldCheck className="w-3.5 h-3.5 text-[#087FFF] shrink-0" />
-                      {bookingLabel(lang, 9)}
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button onClick={downloadBookingSummary} className="flex-1 h-11 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-[12px] flex items-center justify-center gap-1.5 cursor-pointer">
-                      <Download className="w-4 h-4" /> {bookingText(lang, 6)}
-                    </button>
-                    <button onClick={() => setReservationModalOpen(false)} className="flex-1 h-11 bg-[#087FFF] hover:bg-[#0284C7] text-white font-bold rounded-xl text-[12px] cursor-pointer">
-                      {bookingLabel(lang, 6)}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       {authModalOpen && (
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -1934,7 +1741,7 @@ export default function App() {
                 <Lock className="w-3 h-3" />
               </button>
             </div>
-            <p>{footerCopy[lang].source}</p>
+            <p>{footerCopy[lang].source}</p><p className="mt-2">Photos: <a href="https://commons.wikimedia.org/wiki/File:%C4%B0zmir_Clock_Tower.jpg" target="_blank" rel="noreferrer">İzmir — Yılmaz Uğurlu / IgnisFatuus</a> · <a href="https://creativecommons.org/licenses/by-sa/2.0/" target="_blank" rel="noreferrer">CC BY-SA 2.0</a> · <a href="https://commons.wikimedia.org/wiki/File:Kalei%C3%A7i.jpg" target="_blank" rel="noreferrer">Antalya — Enessubasi33</a> · <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noreferrer">CC BY-SA 4.0</a> (cropped)</p>
           </div>
           <div className="flex items-center gap-4 text-[11px] font-bold text-[#087FFF]">
             <a href="#" className="hover:underline">{footerCopy[lang].privacy}</a>

@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { photonToOsm, photonNearbyUrl } from '../services/photonNearby'
 import { distanceInMeters, fetchNearbyPlaces, parseNearbyResponse, safeTelephone, safeWebsite } from '../services/nearbyPlaces'
 
 const centre = { lat: 41, lng: 29 }
@@ -7,6 +8,16 @@ const element = (id: number, lat: number, tags: Record<string, string>) => ({ ty
 afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers() })
 
 describe('nearby place data', () => {
+  it('converts sourced Photon records and excludes places outside the displayed radius', () => {
+    const payload = photonToOsm({features: [41.001, 42].map((lat, index) => ({geometry:{type:'Point',coordinates:[29,lat]},properties:{osm_key:'amenity',osm_value:'bureau_de_change',osm_type:'N',osm_id:index+1,name:'Döviz',street:'Cadde'}}))})
+    const result = parseNearbyResponse(payload, centre, 'exchange')
+    expect(result.provider).toBe('Photon')
+    expect(result.places).toHaveLength(1)
+    expect(result.places[0].address).toBe('Cadde')
+    expect(result.places[0].openingHours).toBeNull()
+    expect(photonNearbyUrl(41,29,'exchange')).toContain('amenity%3Abureau_de_change')
+    expect(()=>photonToOsm({})).toThrow()
+  })
   it('sorts by numeric metres, so 900 m is closer than 1.2 km, and keeps missing fields unknown', () => {
     const result = parseNearbyResponse({ elements: [
       element(1, 41.0108, { amenity: 'atm' }),

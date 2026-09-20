@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { directoryText } from '../lib/visitorDirectory';
 
 const questions = [
   ['İstanbul’da ulaşım kartını nasıl alırım?', 'How do I get an Istanbul transport card?', 'İstanbulkart satış ve dolum noktalarını resmî siteden bulun. Kart bedeli ile yolculuk bakiyesi ayrıdır. Aktarma indirimi ve kişiselleştirme koşullarını kart türünüz için kontrol edin.', 'Find İstanbulkart sales and top-up points on the official website. Card cost and travel balance are separate. Check transfer and personalisation conditions for your card type.', 'https://istanbulkart.istanbul/'],
@@ -87,7 +88,7 @@ export default function TravelFaq({ lang, initialQuery = '' }: { lang: string; i
   const labels = ui[lang] ?? ui.en;
   const title = ({ tr: 'Sık sorulan sorular', en: 'Frequently asked questions', de: 'Häufige Fragen', fr: 'Questions fréquentes', ar: 'الأسئلة الشائعة', zh: '常见问题', ru: 'Частые вопросы' } as Record<string,string>)[lang] ?? 'Frequently asked questions';
   const rows = questions.map((row, index) => localized[lang]?.[index] ? [localized[lang][index][0], localized[lang][index][0], localized[lang][index][1], localized[lang][index][1], row[4]] : row);
-  const items = rows.filter((row, index) => (topic === -1 || topicRows[topic].includes(index)) && row.slice(0,4).join(' ').toLocaleLowerCase().includes(query.toLocaleLowerCase()));
+  const items = rows.map((row,index) => index === 8 || index === 13 ? [row[0],row[1],directoryText(lang,2),directoryText(lang,2),''] : row).filter((row, index) => index !== 9 && (topic === -1 || topicRows[topic].includes(index)) && row.slice(0,4).join(' ').toLocaleLowerCase().includes(query.toLocaleLowerCase()));
   return <main dir={lang === 'ar' ? 'rtl' : 'ltr'} className="reference-page reference-guides max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-4 pb-24">
     <h1 className="text-3xl font-extrabold">{title}</h1>
     <p className="text-sm text-slate-600">{labels[0]}</p>
