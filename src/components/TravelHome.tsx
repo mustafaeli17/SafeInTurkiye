@@ -1,4 +1,4 @@
-import { Car, Coins, TrainFront, ShieldCheck, MapPin, Hotel, Utensils, Ticket, BookOpen, ArrowRight, Search, PhoneCall } from 'lucide-react'
+import { Hotel, Utensils, Ticket, BookOpen, ArrowRight, Search } from 'lucide-react'
 import { useState } from 'react'
 
 type Destination = 'city' | 'taxi' | 'transit' | 'currency' | 'nearme' | 'safety' | 'stay' | 'food' | 'experiences' | 'assistant'
@@ -21,7 +21,7 @@ export default function TravelHome({ lang, cities, onNavigate, onCity, onSearch,
 }) {
   const t = translations[lang as keyof typeof translations] ?? translations.en
   const [query, setQuery] = useState('')
-  const quick = [{ label: t[10], icon: Car, page: 'taxi' }, { label: t[11], icon: Coins, page: 'currency' }, { label: t[12], icon: TrainFront, page: 'transit' }, { label: t[13], icon: MapPin, page: 'nearme' }, { label: t[14], icon: ShieldCheck, page: 'safety' }] as const
+  const quick = [{ label: t[10], emoji: '🚕', page: 'taxi' }, { label: t[11], emoji: '💵', page: 'currency' }, { label: t[12], emoji: '🚌', page: 'transit' }, { label: t[13], emoji: '📍', page: 'nearme' }, { label: t[14], emoji: '🛡️', page: 'safety' }] as const
   const plan = [{ label: t[16], icon: Hotel, page: 'stay' }, { label: t[17], icon: Utensils, page: 'food' }, { label: t[18], icon: Ticket, page: 'experiences' }, { label: t[19], icon: BookOpen, page: 'assistant' }] as const
   return <main className="travel-home">
     <section className="travel-hero">
@@ -34,7 +34,7 @@ export default function TravelHome({ lang, cities, onNavigate, onCity, onSearch,
         <div className="travel-city-chips">{cities.map(city => <button key={city.key} onClick={() => onCity(city.key)}>{city.name}</button>)}</div>
       </div>
     </section>
-    <section className="travel-section"><h2>{t[5]}</h2><div className="travel-quick-grid">{quick.map(({ label, icon: Icon, page }) => <button key={page} onClick={() => onNavigate(page)} className="travel-tool"><Icon aria-hidden="true" /><span>{label}</span><ArrowRight size={14} aria-hidden="true" /></button>)}<a href="tel:112" className="travel-tool travel-emergency"><PhoneCall aria-hidden="true" /><span>{t[15]}</span><strong>112</strong></a></div></section>
+    <section className="travel-section"><h2>{t[5]}</h2><div className="travel-quick-grid">{quick.map(({ label, emoji, page }) => <button key={page} onClick={() => onNavigate(page)} className="travel-tool"><span className="travel-tool-emoji" aria-hidden="true">{emoji}</span><span>{label}</span><ArrowRight size={14} aria-hidden="true" /></button>)}<a href="tel:112" className="travel-tool travel-emergency"><span className="travel-tool-emoji" aria-hidden="true">🚨</span><span>{t[15]}</span><strong>112</strong></a></div></section>
     <section className="travel-section"><div className="travel-section-heading"><div><h2>{t[6]}</h2><p>{t[20]}</p></div><button onClick={() => onNavigate('city')}>{t[9]} <ArrowRight size={14} /></button></div><div className="travel-cities">{cities.map(city => <button key={city.key} onClick={() => onCity(city.key)}><img src={city.coverImage} alt={city.name} loading="lazy" /><span>{city.name}<ArrowRight size={16} /></span></button>)}</div></section>
     <section className="travel-section"><div className="travel-section-heading"><div><h2>{t[7]}</h2><p>{t[21]}</p></div></div><div className="travel-plan-grid">{plan.map(({ label, icon: Icon, page }) => <button key={page} onClick={() => onNavigate(page)} className="travel-tool"><Icon aria-hidden="true" /><span>{label}</span><ArrowRight size={14} aria-hidden="true" /></button>)}</div></section>
     <section className="travel-section"><div className="travel-section-heading"><h2>{t[18]}</h2><button onClick={() => onNavigate('experiences')}>{t[9]} <ArrowRight size={14} /></button></div><div className="travel-category-grid">{['Museum & Culture', 'Cinema', 'Entertainment', 'Summer', 'Winter'].map((category, index) => <button key={category} onClick={() => onCategory(category)}><span>{['🏛️', '🎬', '🎟️', '☀️', '❄️'][index]}</span>{t[23 + index]}<ArrowRight size={14} /></button>)}</div></section>

@@ -465,7 +465,7 @@ function SafeRouteMap({
   originCoords,
   destCoords,
   geometry,
-  color = '#00A3E0'
+  color = '#087FFF'
 }: {
   originCoords: Coordinates | null;
   destCoords: Coordinates | null;
@@ -526,7 +526,7 @@ function SafeRouteMap({
     if (originCoords) {
       const icon = L.divIcon({
         className: 'custom-map-marker',
-        html: `<div style="background-color:#00A3E0; width:16px; height:16px; border-radius:50%; border:3px solid #ffffff; box-shadow:0 0 6px rgba(0,0,0,0.4);"></div>`,
+        html: `<div style="background-color:#087FFF; width:16px; height:16px; border-radius:50%; border:3px solid #ffffff; box-shadow:0 0 6px rgba(0,0,0,0.4);"></div>`,
         iconSize: [16, 16],
         iconAnchor: [8, 8]
       });
@@ -587,7 +587,7 @@ function SafeRouteMap({
     <div className="w-full h-full min-h-[360px] rounded-2xl overflow-hidden border border-sky-100 shadow-sm relative z-0 bg-slate-100 flex items-center justify-center">
       {!leafletReady && (
         <div className="text-[12px] text-slate-500 flex items-center gap-2">
-          <Loader2 className="w-4 h-4 animate-spin text-[#00A3E0]" /> Harita modülü yükleniyor...
+          <Loader2 className="w-4 h-4 animate-spin text-[#087FFF]" /> Harita modülü yükleniyor...
         </div>
       )}
       <div ref={mapContainerRef} className="w-full h-full min-h-[360px]" />
@@ -602,6 +602,7 @@ export default function App() {
   const { session, isStaff, role, signIn, signOut } = useSupabaseAuth();
   const mockDataEnabled = import.meta.env.VITE_ENABLE_MOCK_DATA === 'true';
   const [activeTab, setActiveTab] = useState<'home' | 'city' | 'taxi' | 'transit' | 'currency' | 'nearme' | 'safety' | 'stay' | 'food' | 'experiences' | 'admin' | 'assistant'>('home');
+  useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }); }, [activeTab]);
   const [selectedCityName, setSelectedCityName] = useState<string>('İstanbul');
   const [lang, setLang] = useState<SupportedLang>('en');
   const [searchQuery, setSearchQuery] = useState('');
@@ -1128,7 +1129,7 @@ export default function App() {
     return (
       <main className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
         <section className="max-w-md bg-white border border-slate-200 rounded-3xl p-8 text-center shadow-sm">
-          <ShieldCheck className="w-10 h-10 text-[#00A3E0] mx-auto mb-4" />
+          <ShieldCheck className="w-10 h-10 text-[#087FFF] mx-auto mb-4" />
           <h1 className="text-xl font-extrabold text-slate-900">SafeInTürkiye is not configured</h1>
           <p className="mt-3 text-sm text-slate-600">Set the public Supabase URL and anon key to show verified content. Demo data is disabled by default.</p>
         </section>
@@ -1137,7 +1138,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F0F7FB] text-[#0A2540] font-['Plus_Jakarta_Sans',sans-serif] flex flex-col justify-between">
+    <div className="min-h-screen bg-[#F0F7FB] text-[#0A2540] font-['Inter',sans-serif] flex flex-col justify-between">
       
       {/* ====================================================================
           NAVBAR (TAŞMAYI ÖNLEYEN & TÜM SAYFALARI DESTEKLEYEN YAPI)
@@ -1156,7 +1157,7 @@ export default function App() {
               <button 
                 onClick={() => setActiveTab('home')} 
                 className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
-                  activeTab === 'home' ? 'text-[#00A3E0] bg-sky-50 font-extrabold' : 'hover:text-[#00A3E0] hover:bg-slate-50'
+                  activeTab === 'home' ? 'text-[#087FFF] bg-sky-50 font-extrabold' : 'hover:text-[#087FFF] hover:bg-slate-50'
                 }`}
               >
                 {tr('explore')}
@@ -1165,7 +1166,7 @@ export default function App() {
               <button 
                 onClick={() => setActiveTab('assistant')} 
                 className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl transition-all cursor-pointer font-extrabold ${
-                  activeTab === 'assistant' ? 'bg-[#00A3E0] text-white shadow-sm shadow-sky-500/20' : 'bg-sky-50 text-[#00A3E0] hover:bg-sky-100'
+                  activeTab === 'assistant' ? 'bg-[#087FFF] text-white shadow-sm shadow-sky-500/20' : 'bg-sky-50 text-[#087FFF] hover:bg-sky-100'
                 }`}
               >
                 <Bot className="w-4 h-4" /> {tr('assistant')}
@@ -1174,7 +1175,7 @@ export default function App() {
               <button 
                 onClick={() => setActiveTab('taxi')} 
                 className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
-                  activeTab === 'taxi' ? 'text-[#00A3E0] bg-sky-50 font-extrabold' : 'hover:text-[#00A3E0] hover:bg-slate-50'
+                  activeTab === 'taxi' ? 'text-[#087FFF] bg-sky-50 font-extrabold' : 'hover:text-[#087FFF] hover:bg-slate-50'
                 }`}
               >
                 {tr('taxi')}
@@ -1183,7 +1184,7 @@ export default function App() {
               <button 
                 onClick={() => setActiveTab('transit')} 
                 className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
-                  activeTab === 'transit' ? 'text-[#00A3E0] bg-sky-50 font-extrabold' : 'hover:text-[#00A3E0] hover:bg-slate-50'
+                  activeTab === 'transit' ? 'text-[#087FFF] bg-sky-50 font-extrabold' : 'hover:text-[#087FFF] hover:bg-slate-50'
                 }`}
               >
                 {tr('transit')}
@@ -1192,7 +1193,7 @@ export default function App() {
               <button 
                 onClick={() => setActiveTab('currency')} 
                 className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
-                  activeTab === 'currency' ? 'text-[#00A3E0] bg-sky-50 font-extrabold' : 'hover:text-[#00A3E0] hover:bg-slate-50'
+                  activeTab === 'currency' ? 'text-[#087FFF] bg-sky-50 font-extrabold' : 'hover:text-[#087FFF] hover:bg-slate-50'
                 }`}
               >
                 {tr('currency')}
@@ -1201,7 +1202,7 @@ export default function App() {
               <button 
                 onClick={() => { setSelectedCityName('İstanbul'); setActiveTab('city'); }} 
                 className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
-                  activeTab === 'city' ? 'text-[#00A3E0] bg-sky-50 font-extrabold' : 'hover:text-[#00A3E0] hover:bg-slate-50'
+                  activeTab === 'city' ? 'text-[#087FFF] bg-sky-50 font-extrabold' : 'hover:text-[#087FFF] hover:bg-slate-50'
                 }`}
               >
                 {tr('cityWeather')}
@@ -1212,7 +1213,7 @@ export default function App() {
                 <button
                   onClick={() => setMoreDropdownOpen(!moreDropdownOpen)}
                   className={`flex items-center gap-1 px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
-                    ['stay', 'food', 'experiences', 'nearme', 'safety'].includes(activeTab) ? 'text-[#00A3E0] bg-sky-50 font-extrabold' : 'hover:text-[#00A3E0] hover:bg-slate-50'
+                    ['stay', 'food', 'experiences', 'nearme', 'safety'].includes(activeTab) ? 'text-[#087FFF] bg-sky-50 font-extrabold' : 'hover:text-[#087FFF] hover:bg-slate-50'
                   }`}
                 >
                   <span>{page('more')}</span>
@@ -1222,19 +1223,19 @@ export default function App() {
                 {moreDropdownOpen && (
                   <div className="absolute top-full right-0 mt-1 w-44 bg-white border border-slate-200 rounded-2xl shadow-xl p-1.5 z-50 flex flex-col space-y-0.5 text-[12px]">
                     <button onClick={() => { setActiveTab('stay'); setMoreDropdownOpen(false); }} className="w-full text-left px-3 py-2 rounded-xl hover:bg-sky-50 text-slate-700 font-bold flex items-center gap-2">
-                      <Hotel className="w-4 h-4 text-[#00A3E0]" /> {tr('hotels')}
+                      <Hotel className="w-4 h-4 text-[#087FFF]" /> {tr('hotels')}
                     </button>
                     <button onClick={() => { setActiveTab('food'); setMoreDropdownOpen(false); }} className="w-full text-left px-3 py-2 rounded-xl hover:bg-sky-50 text-slate-700 font-bold flex items-center gap-2">
-                      <Utensils className="w-4 h-4 text-[#00A3E0]" /> {tr('dining')}
+                      <Utensils className="w-4 h-4 text-[#087FFF]" /> {tr('dining')}
                     </button>
                     <button onClick={() => { setActiveTab('experiences'); setMoreDropdownOpen(false); }} className="w-full text-left px-3 py-2 rounded-xl hover:bg-sky-50 text-slate-700 font-bold flex items-center gap-2">
-                      <Ticket className="w-4 h-4 text-[#00A3E0]" /> {tr('activities')}
+                      <Ticket className="w-4 h-4 text-[#087FFF]" /> {tr('activities')}
                     </button>
                     <button onClick={() => { setActiveTab('nearme'); setMoreDropdownOpen(false); }} className="w-full text-left px-3 py-2 rounded-xl hover:bg-sky-50 text-slate-700 font-bold flex items-center gap-2">
-                      <Navigation2 className="w-4 h-4 text-[#00A3E0]" /> {tr('nearMe')}
+                      <Navigation2 className="w-4 h-4 text-[#087FFF]" /> {tr('nearMe')}
                     </button>
                     <button onClick={() => { setActiveTab('safety'); setMoreDropdownOpen(false); }} className="w-full text-left px-3 py-2 rounded-xl hover:bg-sky-50 text-slate-700 font-bold flex items-center gap-2">
-                      <Shield className="w-4 h-4 text-[#00A3E0]" /> {page('safety')}
+                      <Shield className="w-4 h-4 text-[#087FFF]" /> {page('safety')}
                     </button>
                   </div>
                 )}
@@ -1249,7 +1250,7 @@ export default function App() {
 
             {/* Dil ve SOS (112 Acil Arama Aktif) */}
             <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-              <button type="button" aria-label="Open navigation" onClick={() => setMobileMenuOpen(value => !value)} className="lg:hidden w-9 h-9 rounded-xl bg-sky-50 text-[#00A3E0] flex items-center justify-center">
+              <button type="button" aria-label="Open navigation" onClick={() => setMobileMenuOpen(value => !value)} className="lg:hidden w-9 h-9 rounded-xl bg-sky-50 text-[#087FFF] flex items-center justify-center">
                 {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
               <select
@@ -1279,7 +1280,7 @@ export default function App() {
           {mobileMenuOpen && <nav className="lg:hidden border-t border-sky-100 bg-white px-4 py-3 grid grid-cols-2 gap-2 text-[12px] font-bold">
             {([
               ['assistant', tr('assistant')], ['taxi', tr('taxi')], ['transit', tr('transit')], ['currency', tr('currency')], ['city', tr('cityWeather')], ['nearme', tr('nearMe')], ['stay', tr('hotels')], ['food', tr('dining')], ['experiences', tr('activities')], ['safety', page('safety')],
-            ] as const).map(([tab, label]) => <button key={tab} type="button" onClick={() => { setActiveTab(tab); setMobileMenuOpen(false); }} className={`rounded-xl px-3 py-2 text-left ${activeTab === tab ? 'bg-sky-50 text-[#00A3E0]' : 'bg-slate-50 text-slate-700'}`}>{label}</button>)}
+            ] as const).map(([tab, label]) => <button key={tab} type="button" onClick={() => { setActiveTab(tab); setMobileMenuOpen(false); }} className={`rounded-xl px-3 py-2 text-left ${activeTab === tab ? 'bg-sky-50 text-[#087FFF]' : 'bg-slate-50 text-slate-700'}`}>{label}</button>)}
             {isStaff && <button type="button" onClick={() => { setActiveTab('admin'); setMobileMenuOpen(false); }} className="rounded-xl px-3 py-2 text-left bg-slate-900 text-white">CMS Studio</button>}
           </nav>}
         </header>
@@ -1307,7 +1308,7 @@ export default function App() {
         {activeTab === 'taxi' && (
           <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
             <div className="flex items-center gap-2 text-[12px] text-slate-500">
-              <button onClick={() => setActiveTab('home')} className="flex items-center gap-1 font-bold text-[#00A3E0] hover:underline cursor-pointer">
+              <button onClick={() => setActiveTab('home')} className="flex items-center gap-1 font-bold text-[#087FFF] hover:underline cursor-pointer">
                 <ArrowLeft className="w-3.5 h-3.5" /> {page('back')}
               </button>
               <span>/</span>
@@ -1323,10 +1324,10 @@ export default function App() {
               <div className="lg:col-span-5 bg-white p-5 sm:p-6 rounded-2xl border border-sky-100 shadow-sm space-y-4">
                 <div className="p-3 bg-sky-50 border border-sky-200/60 rounded-xl flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-[#00A3E0]" />
+                    <MapPin className="w-4 h-4 text-[#087FFF]" />
                     <span className="text-[12px] text-slate-600">Active Tariff:</span>
                   </div>
-                  <span className="font-extrabold text-[12px] text-[#00A3E0] bg-white px-2 py-0.5 rounded-md border border-sky-200">
+                  <span className="font-extrabold text-[12px] text-[#087FFF] bg-white px-2 py-0.5 rounded-md border border-sky-200">
                     {detectedTaxiCity} ({taxiTariffs[taxiClass.toUpperCase()]?.source ?? (detectedTaxiCity === 'İstanbul' ? istanbulReferenceTariff.source : 'current tariff unavailable')})
                   </span>
                 </div>
@@ -1338,7 +1339,7 @@ export default function App() {
                       type="button"
                       onClick={handleTaxiCurrentLocation}
                       disabled={isTaxiLocating}
-                      className="text-[11px] font-bold text-[#00A3E0] hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                      className="text-[11px] font-bold text-[#087FFF] hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50"
                     >
                       {isTaxiLocating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Navigation2 className="w-3 h-3" />}
                       {page('locate')}
@@ -1352,7 +1353,7 @@ export default function App() {
                       setTaxiOriginCoords(null);
                     }}
                     placeholder="Search departure place (e.g. Taksim, IST Airport)..."
-                    className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] font-medium focus:outline-none focus:border-[#00A3E0]"
+                    className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] font-medium focus:outline-none focus:border-[#087FFF]"
                   />
                   {taxiOriginSuggs.length > 0 && (
                     <div className="absolute top-full left-0 right-0 z-30 bg-white border border-slate-200 rounded-xl shadow-lg mt-1 max-h-48 overflow-y-auto">
@@ -1368,7 +1369,7 @@ export default function App() {
                           }}
                           className="p-2.5 hover:bg-sky-50 cursor-pointer text-[12px] text-slate-700 border-b border-slate-100 last:border-none"
                         >
-                          <MapPin className="w-3.5 h-3.5 text-[#00A3E0] inline mr-1.5" />
+                          <MapPin className="w-3.5 h-3.5 text-[#087FFF] inline mr-1.5" />
                           {s.label}
                         </div>
                       ))}
@@ -1386,7 +1387,7 @@ export default function App() {
                       setTaxiDestCoords(null);
                     }}
                     placeholder="Search destination (e.g. Kadıköy, Sultanahmet)..."
-                    className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] font-medium focus:outline-none focus:border-[#00A3E0]"
+                    className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] font-medium focus:outline-none focus:border-[#087FFF]"
                   />
                   {taxiDestSuggs.length > 0 && (
                     <div className="absolute top-full left-0 right-0 z-30 bg-white border border-slate-200 rounded-xl shadow-lg mt-1 max-h-48 overflow-y-auto">
@@ -1412,7 +1413,7 @@ export default function App() {
                   type="button"
                   onClick={handleCalculateTaxiRoute}
                   disabled={isTaxiRouting}
-                  className="w-full h-11 bg-[#00A3E0] hover:bg-[#0284C7] text-white font-bold rounded-xl text-[13px] shadow-sm cursor-pointer transition-all active:scale-98 flex items-center justify-center gap-2"
+                  className="w-full h-11 bg-[#087FFF] hover:bg-[#0284C7] text-white font-bold rounded-xl text-[13px] shadow-sm cursor-pointer transition-all active:scale-98 flex items-center justify-center gap-2"
                 >
                   {isTaxiRouting ? <Loader2 className="w-4 h-4 animate-spin" /> : page('calculate')}
                 </button>
@@ -1445,7 +1446,7 @@ export default function App() {
                   originCoords={taxiOriginCoords}
                   destCoords={taxiDestCoords}
                   geometry={taxiRouteResult ? taxiRouteResult.geometry : null}
-                  color="#00A3E0"
+                  color="#087FFF"
                 />
               </div>
             </div>
@@ -1479,7 +1480,7 @@ export default function App() {
                   key={cname}
                   onClick={() => setSelectedCityName(cname)}
                   className={`px-4 py-1.5 rounded-xl text-[12px] font-bold cursor-pointer transition-all ${
-                    selectedCityName === cname ? 'bg-[#00A3E0] text-white shadow-sm' : 'bg-white border border-sky-100 text-slate-600 hover:bg-sky-50'
+                    selectedCityName === cname ? 'bg-[#087FFF] text-white shadow-sm' : 'bg-white border border-sky-100 text-slate-600 hover:bg-sky-50'
                   }`}
                 >
                   {cname}
@@ -1510,7 +1511,7 @@ export default function App() {
 
             <section className="bg-white p-5 rounded-2xl border border-sky-100 shadow-sm">
               <div className="flex items-center gap-2 mb-4">
-                <Building2 className="w-5 h-5 text-[#00A3E0]" />
+                <Building2 className="w-5 h-5 text-[#087FFF]" />
                 <h2 className="font-extrabold text-[16px] text-slate-900">{page('miss')} {currentCityInfo.name}</h2>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -1530,26 +1531,26 @@ export default function App() {
             PAGE 7: OTELLER (HOTELS)
         ==================================================================== */}
         {activeTab === 'stay' && (
-          <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
+          <main className="travel-catalog">
             <h1 className="text-3xl font-extrabold text-slate-900">{page('hotelsTitle')}</h1>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            <div className="travel-catalog-list">
               {hotelsList.map(h => (
-                <div key={h.id} className="bg-white rounded-2xl border border-sky-100 overflow-hidden shadow-sm flex flex-col justify-between">
-                  <div className="h-44 w-full relative">
+                <div key={h.id} className="travel-catalog-row">
+                  <div className="travel-catalog-photo">
                     <img src={h.img} alt={h.name} className="w-full h-full object-cover" />
-                    <span className="absolute top-2 left-2 px-2 py-0.5 bg-black/70 text-white rounded text-[10px] font-bold">{h.city}</span>
-                    <span className="absolute top-2 right-2 px-2 py-0.5 bg-[#00A3E0] text-white rounded text-[10px] font-bold">★ {h.rating}</span>
                   </div>
-                  <div className="p-4 space-y-1">
+                  <div className="travel-catalog-info">
+                    <span className="travel-catalog-label">{h.city}</span>
+                    <span className="travel-catalog-label">★ {h.rating}</span>
                     <strong className="text-[14px] text-slate-900 block">{h.name}</strong>
-                    <span className="text-[12px] text-[#00A3E0] font-semibold">{h.roomType}</span>
+                    <span className="text-[12px] text-[#087FFF] font-semibold">{h.roomType}</span>
                     <p className="text-[11px] text-slate-500">{h.amenities}</p>
                   </div>
-                  <div className="p-4 border-t border-slate-100 flex items-center justify-between">
-                    <span className="font-bold text-[#00A3E0]">{h.price} / {page('night')}</span>
+                  <div className="travel-catalog-action">
+                    <span className="font-bold text-[#087FFF]">{h.price} / {page('night')}</span>
                     <button 
                       onClick={() => handleOpenBooking(h, 'hotel')}
-                      className="px-4 py-1.5 bg-[#00A3E0] hover:bg-[#0284C7] text-white rounded-xl text-[12px] font-bold cursor-pointer"
+                      className="px-4 py-1.5 bg-[#087FFF] hover:bg-[#0284C7] text-white rounded-xl text-[12px] font-bold cursor-pointer"
                     >
                       {page('book')}
                     </button>
@@ -1564,25 +1565,25 @@ export default function App() {
             PAGE 8: YEME & İÇME (DINING)
         ==================================================================== */}
         {activeTab === 'food' && (
-          <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
+          <main className="travel-catalog">
             <h1 className="text-3xl font-extrabold text-slate-900">{page('diningTitle')}</h1>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            <div className="travel-catalog-list">
               {restaurantsList.map(r => (
-                <div key={r.id} className="bg-white rounded-2xl border border-sky-100 overflow-hidden shadow-sm flex flex-col justify-between">
-                  <div className="h-44 w-full relative">
+                <div key={r.id} className="travel-catalog-row">
+                  <div className="travel-catalog-photo">
                     <img src={r.img} alt={r.name} className="w-full h-full object-cover" />
-                    <span className="absolute top-2 left-2 px-2 py-0.5 bg-black/70 text-white rounded text-[10px] font-bold">{r.city}</span>
                   </div>
-                  <div className="p-4 space-y-1">
+                  <div className="travel-catalog-info">
+                    <span className="travel-catalog-label">{r.city}</span>
                     <strong className="text-[14px] text-slate-900 block">{r.name}</strong>
-                    <span className="text-[12px] text-[#00A3E0] font-semibold">{r.cuisine}</span>
+                    <span className="text-[12px] text-[#087FFF] font-semibold">{r.cuisine}</span>
                     <span className="text-[11px] text-slate-400 block">{page('hours')}: {r.openHours}</span>
                   </div>
-                  <div className="p-4 border-t border-slate-100 flex items-center justify-between">
+                  <div className="travel-catalog-action">
                     <span className="text-[12px] font-bold text-slate-600">{page('average')}: {r.avgPrice}</span>
                     <button 
                       onClick={() => handleOpenBooking(r, 'restaurant')}
-                      className="px-4 py-1.5 bg-[#00A3E0] hover:bg-[#0284C7] text-white rounded-xl text-[12px] font-bold cursor-pointer"
+                      className="px-4 py-1.5 bg-[#087FFF] hover:bg-[#0284C7] text-white rounded-xl text-[12px] font-bold cursor-pointer"
                     >
                       {page('reserve')}
                     </button>
@@ -1597,28 +1598,28 @@ export default function App() {
             PAGE 9: AKTİVİTELER (ACTIVITIES)
         ==================================================================== */}
         {activeTab === 'experiences' && (
-          <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
+          <main className="travel-catalog">
             <div><h1 className="text-3xl font-extrabold text-slate-900">{page('activitiesTitle')}</h1><p className="mt-1 text-sm text-slate-600">{page('activitiesSub')}</p></div>
             <div className="flex gap-2 overflow-x-auto pb-1" aria-label={lang === 'tr' ? 'Aktivite kategorisi' : 'Activity category'}>
-              {['All', 'Museum & Culture', 'Cinema', 'Entertainment', 'Summer', 'Winter'].map(category => <button type="button" key={category} aria-pressed={activityCategory === category} onClick={() => setActivityCategory(category)} className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs font-bold ${activityCategory === category ? 'border-[#00A3E0] bg-[#00A3E0] text-white' : 'border-sky-100 bg-white text-slate-700 hover:bg-sky-50'}`}>{activityLabel(category, lang)}</button>)}
+              {['All', 'Museum & Culture', 'Cinema', 'Entertainment', 'Summer', 'Winter'].map(category => <button type="button" key={category} aria-pressed={activityCategory === category} onClick={() => setActivityCategory(category)} className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs font-bold ${activityCategory === category ? 'border-[#087FFF] bg-[#087FFF] text-white' : 'border-sky-100 bg-white text-slate-700 hover:bg-sky-50'}`}>{activityLabel(category, lang)}</button>)}
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            <div className="travel-catalog-list">
               {activitiesList.filter(activity => activityCategory === 'All' || activity.category === activityCategory).map(activity => activityContent(activity, lang)).map(a => (
-                <div key={a.id} className="bg-white rounded-2xl border border-sky-100 overflow-hidden shadow-sm flex flex-col justify-between">
-                  <div className="h-44 w-full relative">
+                <div key={a.id} className="travel-catalog-row">
+                  <div className="travel-catalog-photo">
                     <img src={a.img} alt={a.title} className="w-full h-full object-cover" />
-                    <span className="absolute top-2 left-2 px-2 py-0.5 bg-black/70 text-white rounded text-[10px] font-bold">{activityLabel(a.category, lang)} • {a.city}</span>
                   </div>
-                  <div className="p-4 space-y-1">
+                  <div className="travel-catalog-info">
+                    <span className="travel-catalog-label">{activityLabel(a.category, lang)} • {a.city}</span>
                     <strong className="text-[14px] text-slate-900 block">{a.title}</strong>
                     <span className="text-[11px] text-slate-500">{activityText('Duration', lang)}: {activityText(a.duration, lang)} | {activityText('Guide', lang)}: {activityText(a.guideLang, lang)}</span>
                     <p className="pt-2 text-[12px] leading-relaxed text-slate-600">{a.description}</p>
                   </div>
-                  <div className="p-4 border-t border-slate-100 flex items-center justify-between">
+                  <div className="travel-catalog-action">
                     <strong className="text-[12px] font-bold text-[#007EAD]">{activityText(a.price, lang)}</strong>
                     <button 
                       onClick={() => handleOpenBooking(a, 'activity')}
-                      className="px-4 py-1.5 bg-[#00A3E0] hover:bg-[#0284C7] text-white rounded-xl text-[12px] font-bold cursor-pointer"
+                      className="px-4 py-1.5 bg-[#087FFF] hover:bg-[#0284C7] text-white rounded-xl text-[12px] font-bold cursor-pointer"
                     >
                       {page('details')}
                     </button>
@@ -1655,10 +1656,10 @@ export default function App() {
                 { title: page('useful'), detail: page('usefulText'), action: tr('nearMe'), tab: 'nearme' }
               ].map((item) => (
                 <article key={item.title} className="p-5 bg-white border border-sky-100 rounded-2xl shadow-sm space-y-3">
-                  <ShieldCheck className="w-7 h-7 text-[#00A3E0]" />
+                  <ShieldCheck className="w-7 h-7 text-[#087FFF]" />
                   <h2 className="font-extrabold text-slate-900">{item.title}</h2>
                   <p className="text-[12px] leading-relaxed text-slate-600">{item.detail}</p>
-                  {item.href ? <a href={item.href} className="inline-flex px-3 py-2 rounded-xl bg-red-600 text-white text-[12px] font-bold">{item.action}</a> : <button onClick={() => setActiveTab(item.tab as 'taxi' | 'nearme')} className="px-3 py-2 rounded-xl bg-[#00A3E0] text-white text-[12px] font-bold cursor-pointer">{item.action}</button>}
+                  {item.href ? <a href={item.href} className="inline-flex px-3 py-2 rounded-xl bg-red-600 text-white text-[12px] font-bold">{item.action}</a> : <button onClick={() => setActiveTab(item.tab as 'taxi' | 'nearme')} className="px-3 py-2 rounded-xl bg-[#087FFF] text-white text-[12px] font-bold cursor-pointer">{item.action}</button>}
                 </article>
               ))}
             </div>
@@ -1683,7 +1684,7 @@ export default function App() {
       {reservationModalOpen && selectedBookingItem && (
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-2xl space-y-4">
-            <div className="bg-gradient-to-r from-[#00A3E0] to-[#0284C7] p-5 text-white flex justify-between items-start">
+            <div className="bg-gradient-to-r from-[#087FFF] to-[#0284C7] p-5 text-white flex justify-between items-start">
               <div>
                 <span className="text-[11px] font-bold uppercase tracking-wider text-sky-100 flex items-center gap-1">
                   <ShieldCheck className="w-4 h-4" /> SafeInTürkiye Verified Pass
@@ -1704,7 +1705,7 @@ export default function App() {
                     <img src={selectedBookingItem.img} alt="" className="w-14 h-14 object-cover rounded-xl shadow-sm" />
                     <div>
                       <strong className="text-[14px] text-slate-900 block">{selectedBookingItem.title || selectedBookingItem.name}</strong>
-                      <span className="text-[12px] font-bold text-[#00A3E0]">{selectedBookingItem.price || selectedBookingItem.avgPrice}</span>
+                      <span className="text-[12px] font-bold text-[#087FFF]">{selectedBookingItem.price || selectedBookingItem.avgPrice}</span>
                       <span className="text-[11px] text-slate-400 block">{selectedBookingItem.city}</span>
                     </div>
                   </div>
@@ -1716,7 +1717,7 @@ export default function App() {
                       value={guestFullName}
                       onChange={(e) => setGuestFullName(e.target.value)}
                       placeholder="e.g. John Doe / Mustafa..."
-                      className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] font-medium focus:outline-none focus:border-[#00A3E0]"
+                      className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] font-medium focus:outline-none focus:border-[#087FFF]"
                     />
                   </div>
 
@@ -1726,7 +1727,7 @@ export default function App() {
                       type="date"
                       value={bookingDate}
                       onChange={(e) => setBookingDate(e.target.value)}
-                      className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] font-medium focus:outline-none focus:border-[#00A3E0]"
+                      className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] font-medium focus:outline-none focus:border-[#087FFF]"
                     />
                   </div>
 
@@ -1745,7 +1746,7 @@ export default function App() {
 
                   <button
                     onClick={handleConfirmReservation}
-                    className="w-full h-12 bg-[#00A3E0] hover:bg-[#0284C7] text-white font-extrabold rounded-xl text-[13px] shadow-md shadow-sky-400/20 cursor-pointer"
+                    className="w-full h-12 bg-[#087FFF] hover:bg-[#0284C7] text-white font-extrabold rounded-xl text-[13px] shadow-md shadow-sky-400/20 cursor-pointer"
                   >
                     Submit booking request
                   </button>
@@ -1757,7 +1758,7 @@ export default function App() {
                     <div className="flex justify-between items-start border-b border-sky-200/60 pb-3">
                       <div>
                         <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">Reference Code</span>
-                        <span className="text-xl font-black text-[#00A3E0] tracking-wider">{bookingRequest.code}</span>
+                        <span className="text-xl font-black text-[#087FFF] tracking-wider">{bookingRequest.code}</span>
                       </div>
                       <span className="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5" /> Pending confirmation
@@ -1782,7 +1783,7 @@ export default function App() {
                       <div className="pt-1 border-t border-slate-100 flex items-center justify-between">
                         <div>
                           <span className="text-slate-400 text-[10px] block">Total Due on Site:</span>
-                          <strong className="text-lg font-black text-[#00A3E0]">{bookingRequest.price}</strong>
+                          <strong className="text-lg font-black text-[#087FFF]">{bookingRequest.price}</strong>
                         </div>
                         <div className="w-16 h-8 bg-slate-900 rounded flex items-center justify-center text-[8px] text-white font-mono tracking-tighter">
                           ||||| | ||||
@@ -1791,7 +1792,7 @@ export default function App() {
                     </div>
 
                     <div className="pt-2 border-t border-sky-200/60 text-[10px] text-slate-500 italic flex items-center gap-1">
-                      <ShieldCheck className="w-3.5 h-3.5 text-[#00A3E0] shrink-0" />
+                      <ShieldCheck className="w-3.5 h-3.5 text-[#087FFF] shrink-0" />
                       Request received. Await confirmation from the business before travelling.
                     </div>
                   </div>
@@ -1800,7 +1801,7 @@ export default function App() {
                     <button onClick={() => alert('Voucher saved successfully as PDF/Pass!')} className="flex-1 h-11 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-[12px] flex items-center justify-center gap-1.5 cursor-pointer">
                       <Download className="w-4 h-4" /> Save Pass
                     </button>
-                    <button onClick={() => setReservationModalOpen(false)} className="flex-1 h-11 bg-[#00A3E0] hover:bg-[#0284C7] text-white font-bold rounded-xl text-[12px] cursor-pointer">
+                    <button onClick={() => setReservationModalOpen(false)} className="flex-1 h-11 bg-[#087FFF] hover:bg-[#0284C7] text-white font-bold rounded-xl text-[12px] cursor-pointer">
                       Done
                     </button>
                   </div>
@@ -1814,7 +1815,7 @@ export default function App() {
       {authModalOpen && (
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-4 text-center">
-            <div className="w-12 h-12 rounded-2xl bg-sky-50 text-[#00A3E0] flex items-center justify-center mx-auto">
+            <div className="w-12 h-12 rounded-2xl bg-sky-50 text-[#087FFF] flex items-center justify-center mx-auto">
               <Lock className="w-6 h-6" />
             </div>
             <div>
@@ -1823,9 +1824,9 @@ export default function App() {
             </div>
             <input
               type="email" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} placeholder="Email"
-              className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] focus:outline-none focus:border-[#00A3E0]"
+              className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] focus:outline-none focus:border-[#087FFF]"
             />
-            <input type="password" value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} placeholder="Password" className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] focus:outline-none focus:border-[#00A3E0]" />
+            <input type="password" value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} placeholder="Password" className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] focus:outline-none focus:border-[#087FFF]" />
             {authError && <p className="text-[12px] text-red-600">{authError}</p>}
             <div className="flex gap-2">
               <button onClick={() => setAuthModalOpen(false)} className="flex-1 h-10 bg-slate-100 text-slate-600 font-bold rounded-xl text-[12px]">Cancel</button>
@@ -1849,7 +1850,7 @@ export default function App() {
                   } catch { setAuthError('Giriş hizmetine ulaşılamadı. Lütfen yeniden deneyin.'); }
                   finally { setAuthBusy(false); }
                 }}
-                className="flex-1 h-10 bg-[#00A3E0] hover:bg-[#0284C7] text-white font-bold rounded-xl text-[12px]"
+                className="flex-1 h-10 bg-[#087FFF] hover:bg-[#0284C7] text-white font-bold rounded-xl text-[12px]"
               >
                 {authBusy ? (lang === 'tr' ? 'Giriş yapılıyor…' : 'Please wait…') : footerCopy[lang].signIn}
               </button>
@@ -1864,13 +1865,13 @@ export default function App() {
           <div className="space-y-0.5 text-center sm:text-left">
             <div className="font-bold text-[#0A2540] flex items-center gap-1.5 justify-center sm:justify-start">
               SafeInTürkiye 2026
-              <button onClick={() => setAuthModalOpen(true)} title={footerCopy[lang].signIn} className="text-slate-300 hover:text-[#00A3E0] cursor-pointer">
+              <button onClick={() => setAuthModalOpen(true)} title={footerCopy[lang].signIn} className="text-slate-300 hover:text-[#087FFF] cursor-pointer">
                 <Lock className="w-3 h-3" />
               </button>
             </div>
             <p>{footerCopy[lang].source}</p>
           </div>
-          <div className="flex items-center gap-4 text-[11px] font-bold text-[#00A3E0]">
+          <div className="flex items-center gap-4 text-[11px] font-bold text-[#087FFF]">
             <a href="#" className="hover:underline">{footerCopy[lang].privacy}</a>
             <span>•</span>
             <a href="#" className="hover:underline">{footerCopy[lang].terms}</a>
