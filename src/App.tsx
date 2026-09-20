@@ -1744,6 +1744,7 @@ export default function App() {
                 <Lock className="w-3 h-3" />
               </button>
             </div>
+            <img src={siteLogo} alt="SafeInTürkiye" className="w-48 h-auto object-contain mx-auto sm:mx-0 my-3" />
             <p>{footerCopy[lang].source}</p><PhotoCredits />
           </div>
           <div className="flex items-center gap-4 text-[11px] font-bold text-[#087FFF]">
