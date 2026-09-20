@@ -65,6 +65,7 @@ import NearbyPlaces from './components/NearbyPlaces';
 import TransitPlanner from './components/TransitPlanner';
 import TravelFaq, { TransportCardGuide } from './components/TravelFaq';
 import ContentAdmin from './components/ContentAdmin';
+import siteLogo from './assets/safeinturkiye-logo.png';
 
 // ============================================================================
 // 1. TİP TANIMLARI & 6 DİLLİ SÖZLÜK SİSTEMİ
@@ -313,6 +314,26 @@ const dict: Record<SupportedLang, Record<string, string>> = {
     explore: '探索', assistant: '旅行助手', taxi: '出租车费用', transit: '公共交通', currency: '汇率', cityWeather: '城市与天气',
     hotels: '酒店', dining: '餐饮', activities: '活动', nearMe: '附近', emergency: '112 紧急电话'
   }
+};
+
+const pageCopy: Record<SupportedLang, Record<string, string>> = {
+  en: { more: 'More', safety: 'Safety guide', back: 'Back to home', taxiTitle: 'Taxi fare calculator', taxiSub: 'Estimate the fare with road distance and the dated official municipal tariff.', origin: 'From (origin)', destination: 'To (destination)', locate: 'Use current location', calculate: 'Calculate route & fare', estimate: 'Estimated fare range', distance: 'Road distance', duration: 'Estimated duration', miss: "Don't miss in", hotelsTitle: 'Hotels and cave stays', night: 'night', book: 'Request stay', diningTitle: 'Restaurants in Türkiye', hours: 'Hours', average: 'Average', reserve: 'Request table', activitiesTitle: 'Activities & tours', activitiesSub: 'Browse museums, cinema, entertainment, summer and winter ideas separately.', details: 'Details / request', safetySub: 'Practical essentials for a safer, calmer trip.', emergencyTitle: 'Emergency', emergencyText: 'Call 112 for ambulance, fire and police emergencies in Türkiye.', taxiSafety: 'Ask for the meter to be used and keep your receipt.', useful: 'Useful places', usefulText: 'Find published pharmacies, police desks, ATMs and taxi ranks nearby.', cityTransport: 'Getting around', noTraffic: 'Live traffic data is not connected; no fixed traffic percentage is shown.' },
+  tr: { more: 'Daha fazla', safety: 'Güvenlik rehberi', back: 'Ana sayfaya dön', taxiTitle: 'Taksi ücreti hesaplama', taxiSub: 'Yol mesafesi ve tarihli resmî belediye tarifesiyle tahmini ücret hesaplayın.', origin: 'Nereden', destination: 'Nereye', locate: 'Konumumu kullan', calculate: 'Rota ve ücreti hesapla', estimate: 'Tahmini ücret aralığı', distance: 'Yol mesafesi', duration: 'Tahmini süre', miss: 'Kaçırmayın:', hotelsTitle: 'Oteller ve mağara konaklamaları', night: 'gece', book: 'Konaklama talebi', diningTitle: 'Türkiye’de restoranlar', hours: 'Saatler', average: 'Ortalama', reserve: 'Masa talebi', activitiesTitle: 'Aktiviteler ve turlar', activitiesSub: 'Müze, sinema, eğlence, yaz ve kış seçeneklerini ayrı inceleyin.', details: 'Bilgi / talep', safetySub: 'Daha güvenli ve sakin bir gezi için temel bilgiler.', emergencyTitle: 'Acil durum', emergencyText: 'Türkiye’de ambulans, itfaiye ve polis için 112’yi arayın.', taxiSafety: 'Taksimetrenin açılmasını isteyin ve fişinizi saklayın.', useful: 'Yararlı yerler', usefulText: 'Yakındaki kayıtlı eczane, polis noktası, ATM ve taksi duraklarını bulun.', cityTransport: 'Şehir içi ulaşım', noTraffic: 'Canlı trafik verisi bağlı değil; sabit trafik yüzdesi gösterilmiyor.' },
+  de: { more: 'Mehr', safety: 'Sicherheit', back: 'Zur Startseite', taxiTitle: 'Taxipreis berechnen', taxiSub: 'Schätzung mit Straßenentfernung und datiertem amtlichem Tarif.', origin: 'Von', destination: 'Nach', locate: 'Standort verwenden', calculate: 'Route & Preis berechnen', estimate: 'Geschätzter Preis', distance: 'Straßenentfernung', duration: 'Geschätzte Dauer', miss: 'Nicht verpassen in', hotelsTitle: 'Hotels und Höhlenunterkünfte', night: 'Nacht', book: 'Unterkunft anfragen', diningTitle: 'Restaurants in Türkiye', hours: 'Öffnungszeiten', average: 'Durchschnitt', reserve: 'Tisch anfragen', activitiesTitle: 'Aktivitäten & Touren', activitiesSub: 'Museen, Kino, Unterhaltung sowie Sommer- und Winterideen.', details: 'Details / Anfrage', safetySub: 'Praktische Grundlagen für eine sichere Reise.', emergencyTitle: 'Notfall', emergencyText: 'Rufen Sie in Türkiye für Rettung, Feuerwehr und Polizei 112 an.', taxiSafety: 'Taxameter einschalten lassen und Beleg aufbewahren.', useful: 'Nützliche Orte', usefulText: 'Apotheken, Polizei, Geldautomaten und Taxistände in der Nähe finden.', cityTransport: 'Nahverkehr', noTraffic: 'Keine Live-Verkehrsdaten; es wird kein fester Prozentsatz angezeigt.' },
+  fr: { more: 'Plus', safety: 'Sécurité', back: 'Retour à l’accueil', taxiTitle: 'Calcul du tarif taxi', taxiSub: 'Estimation selon la distance routière et le tarif municipal officiel daté.', origin: 'Départ', destination: 'Destination', locate: 'Utiliser ma position', calculate: 'Calculer trajet et tarif', estimate: 'Fourchette estimée', distance: 'Distance routière', duration: 'Durée estimée', miss: 'À ne pas manquer à', hotelsTitle: 'Hôtels et hébergements troglodytes', night: 'nuit', book: 'Demander un séjour', diningTitle: 'Restaurants en Türkiye', hours: 'Horaires', average: 'Moyenne', reserve: 'Demander une table', activitiesTitle: 'Activités et visites', activitiesSub: 'Musées, cinéma, loisirs et idées d’été ou d’hiver.', details: 'Détails / demande', safetySub: 'L’essentiel pour un voyage plus serein.', emergencyTitle: 'Urgence', emergencyText: 'Appelez le 112 pour ambulance, pompiers et police en Türkiye.', taxiSafety: 'Demandez le compteur et gardez le reçu.', useful: 'Lieux utiles', usefulText: 'Trouvez pharmacies, police, distributeurs et stations de taxi.', cityTransport: 'Se déplacer', noTraffic: 'Pas de trafic en direct ; aucun pourcentage fixe n’est affiché.' },
+  ar: { more: 'المزيد', safety: 'دليل الأمان', back: 'العودة للرئيسية', taxiTitle: 'حاسبة أجرة التاكسي', taxiSub: 'تقدير حسب مسافة الطريق والتعرفة البلدية الرسمية المؤرخة.', origin: 'من', destination: 'إلى', locate: 'استخدم موقعي', calculate: 'احسب الطريق والأجرة', estimate: 'نطاق الأجرة التقديري', distance: 'مسافة الطريق', duration: 'المدة المقدرة', miss: 'لا تفوّت في', hotelsTitle: 'الفنادق والإقامات الكهفية', night: 'ليلة', book: 'طلب إقامة', diningTitle: 'مطاعم تركيا', hours: 'الساعات', average: 'المتوسط', reserve: 'طلب طاولة', activitiesTitle: 'الأنشطة والجولات', activitiesSub: 'المتاحف والسينما والترفيه وأنشطة الصيف والشتاء.', details: 'التفاصيل / طلب', safetySub: 'أساسيات عملية لرحلة أكثر أمانًا.', emergencyTitle: 'طوارئ', emergencyText: 'اتصل بـ112 للإسعاف والإطفاء والشرطة في تركيا.', taxiSafety: 'اطلب تشغيل العداد واحتفظ بالإيصال.', useful: 'أماكن مفيدة', usefulText: 'اعثر على الصيدليات والشرطة وأجهزة الصراف ومواقف التاكسي.', cityTransport: 'التنقل في المدينة', noTraffic: 'بيانات المرور المباشرة غير متصلة ولا نعرض نسبة ثابتة.' },
+  ru: { more: 'Ещё', safety: 'Безопасность', back: 'На главную', taxiTitle: 'Расчёт стоимости такси', taxiSub: 'Оценка по дорожному расстоянию и датированному муниципальному тарифу.', origin: 'Откуда', destination: 'Куда', locate: 'Моё местоположение', calculate: 'Рассчитать маршрут и цену', estimate: 'Примерная стоимость', distance: 'Расстояние', duration: 'Примерное время', miss: 'Не пропустите в', hotelsTitle: 'Отели и пещерные гостиницы', night: 'ночь', book: 'Запросить проживание', diningTitle: 'Рестораны Турции', hours: 'Часы', average: 'Среднее', reserve: 'Запросить столик', activitiesTitle: 'Экскурсии и развлечения', activitiesSub: 'Музеи, кино, развлечения, летние и зимние идеи.', details: 'Подробнее / запрос', safetySub: 'Практические основы безопасной поездки.', emergencyTitle: 'Экстренная помощь', emergencyText: 'В Турции звоните 112 для скорой, пожарной и полиции.', taxiSafety: 'Попросите включить счётчик и сохраните чек.', useful: 'Полезные места', usefulText: 'Найдите аптеки, полицию, банкоматы и стоянки такси.', cityTransport: 'Транспорт', noTraffic: 'Онлайн-данные трафика не подключены; фиксированный процент не показывается.' },
+  zh: { more: '更多', safety: '安全指南', back: '返回首页', taxiTitle: '出租车费用计算', taxiSub: '根据道路距离和注明日期的官方市政资费估算。', origin: '出发地', destination: '目的地', locate: '使用当前位置', calculate: '计算路线和费用', estimate: '预计费用范围', distance: '道路距离', duration: '预计时间', miss: '不可错过：', hotelsTitle: '酒店与洞穴住宿', night: '晚', book: '申请住宿', diningTitle: '土耳其餐厅', hours: '营业时间', average: '平均', reserve: '申请订桌', activitiesTitle: '活动与游览', activitiesSub: '分别浏览博物馆、影院、娱乐以及夏季和冬季活动。', details: '详情 / 申请', safetySub: '让旅程更安全从容的实用基础信息。', emergencyTitle: '紧急情况', emergencyText: '在土耳其需要救护车、消防或警察时拨打112。', taxiSafety: '请司机打表并保留收据。', useful: '实用地点', usefulText: '查找附近公开登记的药房、警察、ATM和出租车站。', cityTransport: '市内交通', noTraffic: '尚未接入实时交通数据，不显示固定拥堵百分比。' },
+};
+
+const footerCopy: Record<SupportedLang, { signIn: string; source: string; privacy: string; terms: string; rights: string }> = {
+  en: { signIn: 'Sign in', source: 'Source-labelled taxi tariffs, transit guides, reference rates and city information.', privacy: 'Privacy policy', terms: 'Terms of service', rights: 'All rights reserved.' },
+  tr: { signIn: 'Giriş yap', source: 'Kaynağı belirtilmiş taksi tarifeleri, ulaşım rehberleri, referans kurlar ve şehir bilgileri.', privacy: 'Gizlilik politikası', terms: 'Kullanım koşulları', rights: 'Tüm hakları saklıdır.' },
+  de: { signIn: 'Anmelden', source: 'Taxitarife, Verkehrshinweise, Referenzkurse und Stadtinformationen mit Quellen.', privacy: 'Datenschutz', terms: 'Nutzungsbedingungen', rights: 'Alle Rechte vorbehalten.' },
+  fr: { signIn: 'Se connecter', source: 'Tarifs taxi, guides de transport, cours de référence et informations urbaines avec sources.', privacy: 'Confidentialité', terms: 'Conditions d’utilisation', rights: 'Tous droits réservés.' },
+  ar: { signIn: 'تسجيل الدخول', source: 'تعرفات تاكسي وأدلة مواصلات وأسعار مرجعية ومعلومات مدن موثقة بالمصادر.', privacy: 'سياسة الخصوصية', terms: 'شروط الاستخدام', rights: 'جميع الحقوق محفوظة.' },
+  ru: { signIn: 'Войти', source: 'Тарифы такси, транспортные справочники, курсы и сведения о городах с указанием источников.', privacy: 'Конфиденциальность', terms: 'Условия использования', rights: 'Все права защищены.' },
+  zh: { signIn: '登录', source: '提供标注来源的出租车资费、交通指南、参考汇率和城市信息。', privacy: '隐私政策', terms: '服务条款', rights: '保留所有权利。' },
 };
 
 function offlineAssistantReply(prompt: string, language: SupportedLang): string {
@@ -587,6 +608,7 @@ export default function App() {
 
   // Dil Metinleri Helper Fonksiyonu
   const tr = useCallback((k: string) => k === 'assistant' ? ({ en: 'Travel FAQ', tr: 'Sık Sorulan Sorular', de: 'Reisefragen', fr: 'Questions fréquentes', ar: 'الأسئلة الشائعة', zh: '常见问题', ru: 'Частые вопросы' }[lang]) : dict[lang]?.[k] || dict.en[k] || k, [lang]);
+  const page = useCallback((key: string) => pageCopy[lang]?.[key] ?? pageCopy.en[key] ?? key, [lang]);
 
   useEffect(() => {
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
@@ -1123,16 +1145,8 @@ export default function App() {
           <div className="max-w-7xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between gap-4">
             
             {/* Logo */}
-            <div onClick={() => setActiveTab('home')} className="flex items-center gap-2.5 cursor-pointer shrink-0">
-              <div className="w-9 h-9 rounded-xl bg-[#00A3E0] flex items-center justify-center text-white shadow-md shadow-sky-500/20">
-                <ShieldCheck className="w-5 h-5" />
-              </div>
-              <div className="flex flex-col leading-none">
-                <span className="text-[19px] font-black tracking-tight text-[#00A3E0]">
-                  Safe<span className="text-[#0A2540]">InTürkiye</span>
-                </span>
-                <span className="text-[9px] font-bold text-slate-400 tracking-wider uppercase mt-0.5">Verified Travel</span>
-              </div>
+            <div onClick={() => setActiveTab('home')} className="flex items-center cursor-pointer shrink-0" aria-label="SafeInTürkiye home">
+              <img src={siteLogo} alt="SafeInTürkiye" className="h-9 w-auto max-w-[150px] object-contain sm:h-10 sm:max-w-[185px]" />
             </div>
 
             {/* Menü Butonları */}
@@ -1199,7 +1213,7 @@ export default function App() {
                     ['stay', 'food', 'experiences', 'nearme', 'safety'].includes(activeTab) ? 'text-[#00A3E0] bg-sky-50 font-extrabold' : 'hover:text-[#00A3E0] hover:bg-slate-50'
                   }`}
                 >
-                  <span>More</span>
+                  <span>{page('more')}</span>
                   <ChevronDown className="w-3.5 h-3.5" />
                 </button>
 
@@ -1218,7 +1232,7 @@ export default function App() {
                       <Navigation2 className="w-4 h-4 text-[#00A3E0]" /> {tr('nearMe')}
                     </button>
                     <button onClick={() => { setActiveTab('safety'); setMoreDropdownOpen(false); }} className="w-full text-left px-3 py-2 rounded-xl hover:bg-sky-50 text-slate-700 font-bold flex items-center gap-2">
-                      <Shield className="w-4 h-4 text-[#00A3E0]" /> Safety guide
+                      <Shield className="w-4 h-4 text-[#00A3E0]" /> {page('safety')}
                     </button>
                   </div>
                 )}
@@ -1261,7 +1275,7 @@ export default function App() {
           </div>
           {mobileMenuOpen && <nav className="lg:hidden border-t border-sky-100 bg-white px-4 py-3 grid grid-cols-2 gap-2 text-[12px] font-bold">
             {([
-              ['assistant', tr('assistant')], ['taxi', tr('taxi')], ['transit', tr('transit')], ['currency', tr('currency')], ['city', tr('cityWeather')], ['nearme', tr('nearMe')], ['stay', tr('hotels')], ['food', tr('dining')], ['experiences', tr('activities')], ['safety', 'Safety guide'],
+              ['assistant', tr('assistant')], ['taxi', tr('taxi')], ['transit', tr('transit')], ['currency', tr('currency')], ['city', tr('cityWeather')], ['nearme', tr('nearMe')], ['stay', tr('hotels')], ['food', tr('dining')], ['experiences', tr('activities')], ['safety', page('safety')],
             ] as const).map(([tab, label]) => <button key={tab} type="button" onClick={() => { setActiveTab(tab); setMobileMenuOpen(false); }} className={`rounded-xl px-3 py-2 text-left ${activeTab === tab ? 'bg-sky-50 text-[#00A3E0]' : 'bg-slate-50 text-slate-700'}`}>{label}</button>)}
             {isStaff && <button type="button" onClick={() => { setActiveTab('admin'); setMobileMenuOpen(false); }} className="rounded-xl px-3 py-2 text-left bg-slate-900 text-white">CMS Studio</button>}
           </nav>}
@@ -1374,15 +1388,15 @@ export default function App() {
           <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
             <div className="flex items-center gap-2 text-[12px] text-slate-500">
               <button onClick={() => setActiveTab('home')} className="flex items-center gap-1 font-bold text-[#00A3E0] hover:underline cursor-pointer">
-                <ArrowLeft className="w-3.5 h-3.5" /> Back to Home
+                <ArrowLeft className="w-3.5 h-3.5" /> {page('back')}
               </button>
               <span>/</span>
-              <span className="text-slate-800 font-bold">Official Taxi Fare Calculator</span>
+              <span className="text-slate-800 font-bold">{page('taxiTitle')}</span>
             </div>
 
             <div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">Official Taxi Fare Calculator</h1>
-              <p className="text-[13px] text-slate-500">Calculated using real road distance & official municipal UKOME tariffs.</p>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">{page('taxiTitle')}</h1>
+              <p className="text-[13px] text-slate-500">{page('taxiSub')}</p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -1399,7 +1413,7 @@ export default function App() {
 
                 <div className="relative">
                   <div className="flex justify-between items-center mb-1">
-                    <label className="text-[12px] font-bold text-slate-700">From (Origin)</label>
+                    <label className="text-[12px] font-bold text-slate-700">{page('origin')}</label>
                     <button
                       type="button"
                       onClick={handleTaxiCurrentLocation}
@@ -1407,7 +1421,7 @@ export default function App() {
                       className="text-[11px] font-bold text-[#00A3E0] hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50"
                     >
                       {isTaxiLocating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Navigation2 className="w-3 h-3" />}
-                      Use Current Location
+                      {page('locate')}
                     </button>
                   </div>
                   <input
@@ -1443,7 +1457,7 @@ export default function App() {
                 </div>
 
                 <div className="relative">
-                  <label className="text-[12px] font-bold text-slate-700 block mb-1">To (Destination)</label>
+                  <label className="text-[12px] font-bold text-slate-700 block mb-1">{page('destination')}</label>
                   <input
                     type="text"
                     value={taxiDestText}
@@ -1480,24 +1494,24 @@ export default function App() {
                   disabled={isTaxiRouting}
                   className="w-full h-11 bg-[#00A3E0] hover:bg-[#0284C7] text-white font-bold rounded-xl text-[13px] shadow-sm cursor-pointer transition-all active:scale-98 flex items-center justify-center gap-2"
                 >
-                  {isTaxiRouting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Calculate Route & Fare'}
+                  {isTaxiRouting ? <Loader2 className="w-4 h-4 animate-spin" /> : page('calculate')}
                 </button>
 
                 {taxiRouteResult && fareCalculation && (
                   <div className="pt-3 border-t border-slate-100 space-y-3">
                     <div className="p-4 bg-sky-50 rounded-2xl border border-sky-100 space-y-2">
-                      <span className="text-[11px] text-slate-500 font-semibold block">Estimated Fare Range</span>
+                      <span className="text-[11px] text-slate-500 font-semibold block">{page('estimate')}</span>
                       <span className="text-3xl font-black text-slate-900">
                         ₺{fareCalculation.minFare} – ₺{fareCalculation.maxFare}
                       </span>
                       <span className="text-[10px] text-slate-500 block">{taxiTariffs[taxiClass.toUpperCase()]?.source ?? istanbulReferenceTariff.source}. Estimate only; meter and traffic can change the final amount.</span>
                       <div className="grid grid-cols-2 gap-2 pt-2 border-t border-sky-200/60 text-[12px]">
                         <div>
-                          <span className="text-slate-400 block text-[10px]">Real Road Distance</span>
+                          <span className="text-slate-400 block text-[10px]">{page('distance')}</span>
                           <span className="font-bold text-slate-800">{taxiRouteResult.distanceKm} km</span>
                         </div>
                         <div>
-                          <span className="text-slate-400 block text-[10px]">Estimated Duration</span>
+                          <span className="text-slate-400 block text-[10px]">{page('duration')}</span>
                           <span className="font-bold text-slate-800">~{taxiRouteResult.durationMinutes} min</span>
                         </div>
                       </div>
@@ -1528,7 +1542,7 @@ export default function App() {
         ==================================================================== */}
         {activeTab === 'currency' && (
           <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
-            <h1 className="text-3xl font-extrabold text-slate-900">{({ en: 'Currency and exchange bureaux', tr: 'Döviz ve döviz büroları', de: 'Wechselkurse und Wechselstuben', fr: 'Change et bureaux de change', ar: 'العملات ومكاتب الصرافة', ru: 'Валюта и обменные пункты' } as Record<SupportedLang, string>)[lang]}</h1>
+            <h1 className="text-3xl font-extrabold text-slate-900">{({ en: 'Currency and exchange bureaux', tr: 'Döviz ve döviz büroları', de: 'Wechselkurse und Wechselstuben', fr: 'Change et bureaux de change', ar: 'العملات ومكاتب الصرافة', ru: 'Валюта и обменные пункты', zh: '汇率与附近兑换点' } as Record<SupportedLang, string>)[lang]}</h1>
             <CurrencyRates lang={lang} />
             <NearbyPlaces kind="exchange" lang={lang} center={{ lat: currentCityInfo.lat, lng: currentCityInfo.lng }} cityName={currentCityInfo.name} />
           </main>
@@ -1567,9 +1581,9 @@ export default function App() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <WeatherCard lat={currentCityInfo.lat} lng={currentCityInfo.lng} cityName={currentCityInfo.name} lang={lang} />
               <div className="p-5 bg-white rounded-2xl border border-sky-100 shadow-sm space-y-3">
-                <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider block">{lang === 'tr' ? 'Şehir içi ulaşım' : 'Getting around'}</span>
+                <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider block">{page('cityTransport')}</span>
                 <p className="text-sm text-slate-700">{currentCityInfo.localTip}</p>
-                <p className="text-xs text-slate-500">{lang === 'tr' ? 'Canlı trafik verisi şu anda bağlı değil; sabit trafik yüzdesi gösterilmiyor.' : 'Live traffic data is not connected; no fixed traffic percentage is shown.'}</p>
+                <p className="text-xs text-slate-500">{page('noTraffic')}</p>
                 <button onClick={() => setActiveTab('transit')} className="px-4 py-2 bg-sky-50 text-sky-800 rounded-xl text-sm font-bold">{tr('transit')}</button>
               </div>
             </div>
@@ -1577,7 +1591,7 @@ export default function App() {
             <section className="bg-white p-5 rounded-2xl border border-sky-100 shadow-sm">
               <div className="flex items-center gap-2 mb-4">
                 <Building2 className="w-5 h-5 text-[#00A3E0]" />
-                <h2 className="font-extrabold text-[16px] text-slate-900">Don’t miss in {currentCityInfo.name}</h2>
+                <h2 className="font-extrabold text-[16px] text-slate-900">{page('miss')} {currentCityInfo.name}</h2>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {currentCityInfo.highlights.map((highlight) => (
@@ -1597,7 +1611,7 @@ export default function App() {
         ==================================================================== */}
         {activeTab === 'stay' && (
           <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
-            <h1 className="text-3xl font-extrabold text-slate-900">Verified Hotels & Cave Stays</h1>
+            <h1 className="text-3xl font-extrabold text-slate-900">{page('hotelsTitle')}</h1>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
               {hotelsList.map(h => (
                 <div key={h.id} className="bg-white rounded-2xl border border-sky-100 overflow-hidden shadow-sm flex flex-col justify-between">
@@ -1612,12 +1626,12 @@ export default function App() {
                     <p className="text-[11px] text-slate-500">{h.amenities}</p>
                   </div>
                   <div className="p-4 border-t border-slate-100 flex items-center justify-between">
-                    <span className="font-bold text-[#00A3E0]">{h.price} / night</span>
+                    <span className="font-bold text-[#00A3E0]">{h.price} / {page('night')}</span>
                     <button 
                       onClick={() => handleOpenBooking(h, 'hotel')}
                       className="px-4 py-1.5 bg-[#00A3E0] hover:bg-[#0284C7] text-white rounded-xl text-[12px] font-bold cursor-pointer"
                     >
-                      Book Stay
+                      {page('book')}
                     </button>
                   </div>
                 </div>
@@ -1631,7 +1645,7 @@ export default function App() {
         ==================================================================== */}
         {activeTab === 'food' && (
           <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
-            <h1 className="text-3xl font-extrabold text-slate-900">Authentic Dining Guide</h1>
+            <h1 className="text-3xl font-extrabold text-slate-900">{page('diningTitle')}</h1>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
               {restaurantsList.map(r => (
                 <div key={r.id} className="bg-white rounded-2xl border border-sky-100 overflow-hidden shadow-sm flex flex-col justify-between">
@@ -1642,15 +1656,15 @@ export default function App() {
                   <div className="p-4 space-y-1">
                     <strong className="text-[14px] text-slate-900 block">{r.name}</strong>
                     <span className="text-[12px] text-[#00A3E0] font-semibold">{r.cuisine}</span>
-                    <span className="text-[11px] text-slate-400 block">Hours: {r.openHours}</span>
+                    <span className="text-[11px] text-slate-400 block">{page('hours')}: {r.openHours}</span>
                   </div>
                   <div className="p-4 border-t border-slate-100 flex items-center justify-between">
-                    <span className="text-[12px] font-bold text-slate-600">Avg: {r.avgPrice}</span>
+                    <span className="text-[12px] font-bold text-slate-600">{page('average')}: {r.avgPrice}</span>
                     <button 
                       onClick={() => handleOpenBooking(r, 'restaurant')}
                       className="px-4 py-1.5 bg-[#00A3E0] hover:bg-[#0284C7] text-white rounded-xl text-[12px] font-bold cursor-pointer"
                     >
-                      Reserve Table
+                      {page('reserve')}
                     </button>
                   </div>
                 </div>
@@ -1664,7 +1678,7 @@ export default function App() {
         ==================================================================== */}
         {activeTab === 'experiences' && (
           <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
-            <div><h1 className="text-3xl font-extrabold text-slate-900">{lang === 'tr' ? 'Aktiviteler ve mevsimlik deneyimler' : 'Activities and seasonal experiences'}</h1><p className="mt-1 text-sm text-slate-600">{lang === 'tr' ? 'Müze, sinema, eğlence, yaz ve kış seçeneklerini ayrı incele. Tarihsiz fiyat veya doğrulanmamış puan gösterilmez.' : 'Browse museums, cinema, entertainment, summer and winter ideas separately. Undated prices and unverified ratings are not shown.'}</p></div>
+            <div><h1 className="text-3xl font-extrabold text-slate-900">{page('activitiesTitle')}</h1><p className="mt-1 text-sm text-slate-600">{page('activitiesSub')}</p></div>
             <div className="flex gap-2 overflow-x-auto pb-1" aria-label={lang === 'tr' ? 'Aktivite kategorisi' : 'Activity category'}>
               {['All', 'Museum & Culture', 'Cinema', 'Entertainment', 'Summer', 'Winter'].map(category => <button type="button" key={category} aria-pressed={activityCategory === category} onClick={() => setActivityCategory(category)} className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs font-bold ${activityCategory === category ? 'border-[#00A3E0] bg-[#00A3E0] text-white' : 'border-sky-100 bg-white text-slate-700 hover:bg-sky-50'}`}>{lang === 'tr' ? ({ All: 'Tümü', 'Museum & Culture': 'Müze & Kültür', Cinema: 'Sinema', Entertainment: 'Eğlence', Summer: 'Yaz', Winter: 'Kış' } as Record<string, string>)[category] : category}</button>)}
             </div>
@@ -1686,7 +1700,7 @@ export default function App() {
                       onClick={() => handleOpenBooking(a, 'activity')}
                       className="px-4 py-1.5 bg-[#00A3E0] hover:bg-[#0284C7] text-white rounded-xl text-[12px] font-bold cursor-pointer"
                     >
-                      {lang === 'tr' ? 'Bilgi / talep' : 'Details / request'}
+                      {page('details')}
                     </button>
                   </div>
                 </div>
@@ -1711,14 +1725,14 @@ export default function App() {
         {activeTab === 'safety' && (
           <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-5 pb-24">
             <div>
-              <h1 className="text-3xl font-extrabold text-slate-900">Safety guide</h1>
-              <p className="text-[13px] text-slate-500">Practical basics for a calmer trip — separate from stays and activities.</p>
+              <h1 className="text-3xl font-extrabold text-slate-900">{page('safety')}</h1>
+              <p className="text-[13px] text-slate-500">{page('safetySub')}</p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {[
-                { title: 'Emergency', detail: 'Call 112 for ambulance, fire and police emergencies in Türkiye.', action: 'Call 112', href: 'tel:112' },
-                { title: 'Taxi', detail: 'Ask for the meter to be used. Keep the receipt if you need to report a problem.', action: 'Check taxi fare', tab: 'taxi' },
-                { title: 'Useful places', detail: 'Use your location to find published pharmacies, police desks, ATMs and taxi ranks.', action: 'Find nearby', tab: 'nearme' }
+                { title: page('emergencyTitle'), detail: page('emergencyText'), action: '112', href: 'tel:112' },
+                { title: tr('taxi'), detail: page('taxiSafety'), action: tr('taxi'), tab: 'taxi' },
+                { title: page('useful'), detail: page('usefulText'), action: tr('nearMe'), tab: 'nearme' }
               ].map((item) => (
                 <article key={item.title} className="p-5 bg-white border border-sky-100 rounded-2xl shadow-sm space-y-3">
                   <ShieldCheck className="w-7 h-7 text-[#00A3E0]" />
@@ -1884,7 +1898,7 @@ export default function App() {
               <Lock className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="font-extrabold text-[17px] text-slate-900">Sign in</h3>
+              <h3 className="font-extrabold text-[17px] text-slate-900">{footerCopy[lang].signIn}</h3>
               <p className="text-[12px] text-slate-500">CMS access is granted only by your Supabase role.</p>
             </div>
             <input
@@ -1917,7 +1931,7 @@ export default function App() {
                 }}
                 className="flex-1 h-10 bg-[#00A3E0] hover:bg-[#0284C7] text-white font-bold rounded-xl text-[12px]"
               >
-                {authBusy ? 'Giriş yapılıyor…' : 'Sign in'}
+                {authBusy ? (lang === 'tr' ? 'Giriş yapılıyor…' : 'Please wait…') : footerCopy[lang].signIn}
               </button>
             </div>
           </div>
@@ -1929,19 +1943,19 @@ export default function App() {
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-[12px] text-slate-500">
           <div className="space-y-0.5 text-center sm:text-left">
             <div className="font-bold text-[#0A2540] flex items-center gap-1.5 justify-center sm:justify-start">
-              SafeInTürkiye 2026 Platform
-              <button onClick={() => setAuthModalOpen(true)} title="Sign in" className="text-slate-300 hover:text-[#00A3E0] cursor-pointer">
+              SafeInTürkiye 2026
+              <button onClick={() => setAuthModalOpen(true)} title={footerCopy[lang].signIn} className="text-slate-300 hover:text-[#00A3E0] cursor-pointer">
                 <Lock className="w-3 h-3" />
               </button>
             </div>
-            <p>Source-labelled taxi tariffs, transit guides, reference rates and city information.</p>
+            <p>{footerCopy[lang].source}</p>
           </div>
           <div className="flex items-center gap-4 text-[11px] font-bold text-[#00A3E0]">
-            <a href="#" className="hover:underline">Privacy Policy</a>
+            <a href="#" className="hover:underline">{footerCopy[lang].privacy}</a>
             <span>•</span>
-            <a href="#" className="hover:underline">Terms of Service</a>
+            <a href="#" className="hover:underline">{footerCopy[lang].terms}</a>
             <span>•</span>
-            <span>All rights reserved.</span>
+            <span>{footerCopy[lang].rights}</span>
           </div>
         </div>
       </footer>

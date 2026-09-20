@@ -1,29 +1,69 @@
-import { Info, MapPinned, ShieldCheck } from 'lucide-react'
-import TransitJourney from './TransitJourney'
+import { useState } from 'react'
+import { Bus, Clock3, ExternalLink, Info, MapPinned, Ship, TrainFront, TramFront } from 'lucide-react'
+
+type Lang = 'en' | 'tr' | 'de' | 'fr' | 'ar' | 'ru' | 'zh'
+type City = 'İstanbul' | 'Ankara' | 'İzmir' | 'Antalya'
+
+const copy: Record<Lang, Record<string, string>> = {
+  en: { title: 'Getting around Türkiye', sub: 'Metro, tram, bus, rail and ferry information from official city operators.', select: 'Choose a city', typical: 'Typical service', frequency: 'Typical frequency', source: 'Official operator', notice: 'Times and intervals are a practical guide, not live departures. Check the official operator before travelling, especially at night, on public holidays or during maintenance.', card: 'Transport card', cardText: 'One city card can usually be used across municipal transport. Airport services and some private operators may charge separately.', stops: 'Stops & timetables', live: 'Open official timetable', modes: 'Services in this city' },
+  tr: { title: 'Türkiye’de şehir içi ulaşım', sub: 'Resmî şehir işletmelerinden metro, tramvay, otobüs, raylı sistem ve vapur bilgileri.', select: 'Şehir seçin', typical: 'Genel çalışma aralığı', frequency: 'Yaklaşık sıklık', source: 'Resmî işletme', notice: 'Saatler ve aralıklar canlı kalkış bilgisi değil, pratik rehberdir. Özellikle gece, resmî tatil ve bakım günlerinde yola çıkmadan işletmenin sitesini kontrol edin.', card: 'Ulaşım kartı', cardText: 'Şehir kartı genellikle belediye ulaşım araçlarında kullanılabilir. Havalimanı servisleri ve bazı özel işletmeler ayrıca ücretlendirebilir.', stops: 'Duraklar ve saatler', live: 'Resmî tarifeyi aç', modes: 'Bu şehirdeki ulaşım türleri' },
+  de: { title: 'Unterwegs in Türkiye', sub: 'Informationen zu Metro, Tram, Bus, Bahn und Fähren von offiziellen Betreibern.', select: 'Stadt wählen', typical: 'Übliche Betriebszeit', frequency: 'Üblicher Takt', source: 'Offizieller Betreiber', notice: 'Zeiten und Takte sind ein praktischer Richtwert, keine Live-Abfahrten. Prüfen Sie vor der Fahrt die Betreiberseite.', card: 'Verkehrskarte', cardText: 'Eine Stadtkarte gilt meist in kommunalen Verkehrsmitteln. Flughafen- und private Dienste können extra kosten.', stops: 'Haltestellen & Fahrpläne', live: 'Offiziellen Fahrplan öffnen', modes: 'Verkehrsmittel dieser Stadt' },
+  fr: { title: 'Se déplacer en Türkiye', sub: 'Métro, tram, bus, train et ferry selon les opérateurs officiels.', select: 'Choisir une ville', typical: 'Plage de service habituelle', frequency: 'Fréquence habituelle', source: 'Opérateur officiel', notice: 'Les horaires sont indicatifs et ne sont pas des départs en direct. Consultez le site officiel avant de partir.', card: 'Carte de transport', cardText: 'La carte de la ville fonctionne généralement dans les transports municipaux. Les navettes aéroport et certains services privés peuvent être facturés séparément.', stops: 'Arrêts et horaires', live: 'Ouvrir les horaires officiels', modes: 'Services dans cette ville' },
+  ar: { title: 'التنقل داخل مدن تركيا', sub: 'معلومات المترو والترام والحافلات والقطارات والعبّارات من المشغلين الرسميين.', select: 'اختر مدينة', typical: 'ساعات التشغيل المعتادة', frequency: 'التواتر المعتاد', source: 'المشغل الرسمي', notice: 'الأوقات والفواصل دليل عملي وليست مواعيد مباشرة. تحقق من موقع المشغل قبل السفر.', card: 'بطاقة المواصلات', cardText: 'تعمل بطاقة المدينة عادة في وسائل النقل البلدية. قد تكون لخدمات المطار وبعض الشركات الخاصة رسوم منفصلة.', stops: 'المحطات والجداول', live: 'فتح الجدول الرسمي', modes: 'الخدمات في هذه المدينة' },
+  ru: { title: 'Транспорт в городах Турции', sub: 'Метро, трамваи, автобусы, поезда и паромы по данным официальных операторов.', select: 'Выберите город', typical: 'Обычное время работы', frequency: 'Обычный интервал', source: 'Официальный оператор', notice: 'Время и интервалы приведены для справки и не являются онлайн-расписанием. Перед поездкой проверьте сайт оператора.', card: 'Транспортная карта', cardText: 'Городская карта обычно действует в муниципальном транспорте. Аэропортовые и частные сервисы могут оплачиваться отдельно.', stops: 'Остановки и расписание', live: 'Открыть официальный график', modes: 'Транспорт этого города' },
+  zh: { title: '土耳其城市交通', sub: '查看官方运营方提供的地铁、有轨电车、公交、铁路和轮渡信息。', select: '选择城市', typical: '通常运营时间', frequency: '通常班次间隔', source: '官方运营方', notice: '页面时间和间隔仅供参考，并非实时发车信息。夜间、节假日或检修期间出行前请查看官方公告。', card: '交通卡', cardText: '城市交通卡通常可用于市政公共交通。机场服务和部分私营线路可能另行收费。', stops: '车站与时刻表', live: '打开官方时刻表', modes: '本市交通方式' },
+}
+
+type Mode = { name: string; detail: string; hours: string; frequency: string; operator: string; url: string; icon: 'metro' | 'tram' | 'bus' | 'rail' | 'ferry' }
+const mode = (name: string, detail: string, hours: string, frequency: string, operator: string, url: string, icon: Mode['icon']): Mode => ({ name, detail, hours, frequency, operator, url, icon })
+const data: Record<City, { card: string; cardUrl: string; modes: Mode[] }> = {
+  İstanbul: { card: 'İstanbulkart', cardUrl: 'https://www.istanbulkart.istanbul/', modes: [
+    mode('Metro İstanbul', 'M1–M11 metro and F1/F4 funicular services. Use the official network map for stations and transfers.', 'about 06:00–00:00', 'about 4–10 min', 'Metro İstanbul', 'https://www.metro.istanbul/', 'metro'),
+    mode('Tram', 'T1 is the main visitor corridor; T3 and T5 serve other central districts.', 'about 06:00–00:00', 'about 5–12 min', 'Metro İstanbul', 'https://www.metro.istanbul/Hatlarimiz', 'tram'),
+    mode('Bus (İETT)', 'Wide city network. Search the official stop and line pages by stop name or line number.', 'varies by line; some night routes', 'varies by line', 'İETT', 'https://iett.istanbul/En', 'bus'),
+    mode('Marmaray', 'Cross-city rail between the European and Asian sides, with major rail and metro connections.', 'about 06:00–00:00', 'about 5–15 min', 'TCDD Taşımacılık', 'https://marmaray.gov.tr/', 'rail'),
+    mode('Ferry', 'Bosphorus and Golden Horn routes. Weather can affect sailings.', 'route dependent', 'about 15–60 min', 'Şehir Hatları', 'https://www.sehirhatlari.istanbul/en', 'ferry'),
+  ]},
+  Ankara: { card: 'Başkentkart / AnkaraKart', cardUrl: 'https://www.ego.gov.tr/sayfa/2346/kart-basvurusu', modes: [
+    mode('Ankara Metro', 'M1–M4 connect Kızılay, Batıkent, Çayyolu, Keçiören and the city centre.', 'about 06:00–01:00', 'about 5–12 min', 'EGO', 'https://www.ego.gov.tr/tr/sayfa/1075/rayli-sistemler', 'metro'),
+    mode('ANKARAY', 'Light rail between AŞTİ and Dikimevi via Kızılay.', 'about 06:00–00:30', 'about 4–10 min', 'EGO', 'https://www.ego.gov.tr/tr/sayfa/1075/rayli-sistemler', 'tram'),
+    mode('EGO Bus', 'Municipal buses across Ankara. Search by line, stop or district on EGO CEP’TE.', 'varies by line', 'varies by line', 'EGO', 'https://www.ego.gov.tr/', 'bus'),
+    mode('Başkentray', 'Suburban rail between Kayaş and Sincan with central interchanges.', 'about 06:00–23:30', 'about 10–20 min', 'TCDD Taşımacılık', 'https://www.tcddtasimacilik.gov.tr/', 'rail'),
+  ]},
+  İzmir: { card: 'İzmirim Kart', cardUrl: 'https://www.izmirimkart.com.tr/', modes: [
+    mode('İzmir Metro', 'Main urban rail corridor with transfers to tram, İZBAN, bus and ferry.', 'about 06:00–00:20', 'about 4–10 min', 'İzmir Metro', 'https://www.izmirmetro.com.tr/', 'metro'),
+    mode('Tram İzmir', 'Konak, Karşıyaka and Çiğli tram lines.', 'about 06:00–00:20', 'about 5–15 min', 'Tram İzmir', 'https://www.tramizmir.com/', 'tram'),
+    mode('ESHOT Bus', 'Municipal network including airport and district connections.', 'varies by line; selected night routes', 'varies by line', 'ESHOT', 'https://www.eshot.gov.tr/', 'bus'),
+    mode('İZBAN', 'Suburban rail from Aliağa through the centre and airport to Selçuk.', 'about 05:20–01:20', 'about 10–24 min', 'İZBAN', 'https://www.izban.com.tr/', 'rail'),
+    mode('İZDENİZ Ferry', 'Bay ferry routes between Konak, Karşıyaka, Bostanlı and other piers.', 'route dependent', 'about 15–60 min', 'İZDENİZ', 'https://www.izdeniz.com.tr/', 'ferry'),
+  ]},
+  Antalya: { card: 'Antalyakart', cardUrl: 'https://www.antalyakart.com.tr/', modes: [
+    mode('Antray', 'T1 connects the airport, bus terminal and centre; T3 serves Varsak–Museum.', 'about 06:00–00:00', 'about 8–15 min', 'Antalya Ulaşım', 'https://www.antalyakart.com.tr/', 'tram'),
+    mode('Nostalji Tramvayı', 'Heritage tram along the central coast between Museum and Zerdalilik.', 'daytime and evening', 'about 30 min', 'Antalya Ulaşım', 'https://www.antalyakart.com.tr/', 'tram'),
+    mode('Municipal Bus', 'City and district routes. Check stop-based arrivals in the official transport tools.', 'varies by line', 'varies by line', 'Antalya Büyükşehir Belediyesi', 'https://www.antalyakart.com.tr/', 'bus'),
+  ]},
+}
+const icons = { metro: TrainFront, tram: TramFront, bus: Bus, rail: TrainFront, ferry: Ship }
+const modeSummary: Record<Lang, Record<Mode['icon'], string>> = {
+  en: { metro: 'Urban metro service; use the official network map for stations and transfers.', tram: 'Street-running rail service; check the official line page for stops.', bus: 'Wide city bus network; search the official site by line or stop.', rail: 'Suburban rail with connections to central stations and metro lines.', ferry: 'Passenger ferry service; weather can affect sailings.' },
+  tr: { metro: 'Şehir içi metro hizmeti; istasyon ve aktarmalar için resmî ağ haritasını kullanın.', tram: 'Şehir içi tramvay hizmeti; duraklar için resmî hat sayfasını kontrol edin.', bus: 'Geniş otobüs ağı; resmî sitede hat veya durak adına göre arayın.', rail: 'Merkez istasyonları ve metro bağlantıları bulunan banliyö treni.', ferry: 'Yolcu vapuru hizmeti; hava koşulları seferleri etkileyebilir.' },
+  de: { metro: 'Stadtmetro; Stationen und Umstiege stehen im offiziellen Netzplan.', tram: 'Straßenbahn; Haltestellen auf der offiziellen Linienseite prüfen.', bus: 'Großes Busnetz; offiziell nach Linie oder Haltestelle suchen.', rail: 'Vorortbahn mit Anschlüssen an Zentrum und Metro.', ferry: 'Personenfähre; Wetter kann Fahrten beeinflussen.' },
+  fr: { metro: 'Métro urbain ; consultez le plan officiel pour les stations et correspondances.', tram: 'Tramway urbain ; consultez la page officielle pour les arrêts.', bus: 'Large réseau de bus ; recherchez la ligne ou l’arrêt sur le site officiel.', rail: 'Train suburbain relié aux gares centrales et au métro.', ferry: 'Ferry passagers ; la météo peut modifier les traversées.' },
+  ar: { metro: 'مترو داخل المدينة؛ راجع الخريطة الرسمية للمحطات والتحويلات.', tram: 'ترام داخل المدينة؛ راجع صفحة الخط الرسمية للمحطات.', bus: 'شبكة حافلات واسعة؛ ابحث رسميًا باسم الخط أو المحطة.', rail: 'قطار ضواحي يتصل بالمحطات المركزية والمترو.', ferry: 'عبّارات ركاب؛ قد تؤثر الأحوال الجوية في الرحلات.' },
+  ru: { metro: 'Городское метро; станции и пересадки смотрите на официальной схеме.', tram: 'Городской трамвай; остановки указаны на официальной странице линии.', bus: 'Широкая автобусная сеть; ищите официальный маршрут или остановку.', rail: 'Пригородная железная дорога с пересадками на метро и вокзалы.', ferry: 'Пассажирский паром; погода может влиять на рейсы.' },
+  zh: { metro: '城市地铁服务；车站与换乘请查看官方线路图。', tram: '城市有轨电车；车站信息请查看官方线路页面。', bus: '覆盖广泛的公交网络；可在官网按线路或车站查询。', rail: '连接市中心车站和地铁的市郊铁路。', ferry: '客运轮渡；天气可能影响航班。' },
+}
 
 export default function TransitPlanner({ lang }: { lang: string }) {
-  const tr = lang.toLowerCase() === 'tr'
-
-  return (
-    <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-5 pb-24">
-      <TransitJourney lang={lang} />
-      <section className="grid gap-3 sm:grid-cols-3" aria-label={tr ? 'Rota bilgileri' : 'Route information'}>
-        <article className="rounded-2xl border border-sky-100 bg-white p-4 shadow-sm">
-          <MapPinned className="h-5 w-5 text-[#00A3E0]" />
-          <h2 className="mt-2 text-sm font-extrabold text-slate-900">{tr ? 'Kendi başlangıcını seç' : 'Choose your own origin'}</h2>
-          <p className="mt-1 text-xs leading-relaxed text-slate-600">{tr ? 'Konumunu kullanabilir veya adres, durak ve mekân adını kendin yazabilirsin.' : 'Use your location or enter any address, stop or place.'}</p>
-        </article>
-        <article className="rounded-2xl border border-sky-100 bg-white p-4 shadow-sm">
-          <Info className="h-5 w-5 text-[#00A3E0]" />
-          <h2 className="mt-2 text-sm font-extrabold text-slate-900">{tr ? 'Aktarma ve saatler' : 'Transfers and times'}</h2>
-          <p className="mt-1 text-xs leading-relaxed text-slate-600">{tr ? 'Sağlayıcı bilgi verirse hat, durak, kalkış, varış ve aktarma adımları ayrı gösterilir.' : 'Lines, stops, departures, arrivals and transfers are shown when supplied.'}</p>
-        </article>
-        <article className="rounded-2xl border border-sky-100 bg-white p-4 shadow-sm">
-          <ShieldCheck className="h-5 w-5 text-[#00A3E0]" />
-          <h2 className="mt-2 text-sm font-extrabold text-slate-900">{tr ? 'Tahmin, garanti değil' : 'Estimate, not a guarantee'}</h2>
-          <p className="mt-1 text-xs leading-relaxed text-slate-600">{tr ? 'Sefer ve ücretler değişebilir. Yola çıkmadan ilgili belediye işletmesinin duyurusunu kontrol et.' : 'Departures and fares can change. Check the local operator before travel.'}</p>
-        </article>
-      </section>
-    </main>
-  )
+  const locale = (lang.toLowerCase() in copy ? lang.toLowerCase() : 'en') as Lang
+  const t = copy[locale]
+  const [city, setCity] = useState<City>('İstanbul')
+  const selected = data[city]
+  const scheduleText = (value: string) => locale === 'tr' ? value.replace('about ', 'yaklaşık ').replace('varies by line; some night routes', 'hatta göre değişir; bazı gece hatları').replace('varies by line; selected night routes', 'hatta göre değişir; seçili gece hatları').replace('varies by line', 'hatta göre değişir').replace('route dependent', 'hatta göre değişir').replace('daytime and evening', 'gündüz ve akşam') : locale === 'zh' ? value.replace('about ', '约 ').replace(/varies by line(;.*)?/, '因线路而异').replace('route dependent', '因线路而异').replace('daytime and evening', '白天及晚间') : value
+  return <main dir={locale === 'ar' ? 'rtl' : 'ltr'} className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-5 pb-24">
+    <header className="rounded-3xl border border-sky-100 bg-white p-5 sm:p-7 shadow-sm"><p className="text-xs font-extrabold uppercase tracking-wider text-[#007EAD]">{t.select}</p><h1 className="mt-2 text-3xl font-black text-slate-900">{t.title}</h1><p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">{t.sub}</p><div className="mt-5 flex gap-2 overflow-x-auto pb-1">{(Object.keys(data) as City[]).map(item => <button key={item} type="button" onClick={() => setCity(item)} aria-pressed={city === item} className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs font-bold ${city === item ? 'border-[#00A3E0] bg-[#00A3E0] text-white' : 'border-sky-100 bg-white text-slate-700 hover:bg-sky-50'}`}>{item}</button>)}</div></header>
+    <section className="grid gap-4 lg:grid-cols-[1fr_280px]"><div className="space-y-3"><h2 className="text-lg font-extrabold text-slate-900">{t.modes}</h2>{selected.modes.map(item => { const Icon = icons[item.icon]; return <article key={item.name} className="rounded-2xl border border-sky-100 bg-white p-4 shadow-sm sm:p-5"><div className="flex items-start gap-4"><div className="rounded-xl bg-sky-50 p-3 text-[#00A3E0]"><Icon className="h-5 w-5" /></div><div className="min-w-0 flex-1"><div className="flex flex-wrap items-start justify-between gap-2"><h3 className="font-extrabold text-slate-900">{item.name}</h3><a href={item.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs font-bold text-[#007EAD] hover:underline">{t.live}<ExternalLink className="h-3.5 w-3.5" /></a></div><p className="mt-1.5 text-xs leading-relaxed text-slate-600">{locale === 'en' ? item.detail : modeSummary[locale][item.icon]}</p><dl className="mt-3 grid gap-2 text-xs sm:grid-cols-3"><div><dt className="font-bold text-slate-400">{t.typical}</dt><dd className="mt-0.5 text-slate-700">{scheduleText(item.hours)}</dd></div><div><dt className="font-bold text-slate-400">{t.frequency}</dt><dd className="mt-0.5 text-slate-700">{scheduleText(item.frequency)}</dd></div><div><dt className="font-bold text-slate-400">{t.source}</dt><dd className="mt-0.5 text-slate-700">{item.operator}</dd></div></dl></div></div></article>})}</div>
+      <aside className="space-y-3"><div className="rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 to-white p-5 shadow-sm"><MapPinned className="h-6 w-6 text-[#00A3E0]" /><h2 className="mt-3 font-extrabold text-slate-900">{t.card}</h2><p className="mt-1 text-sm font-bold text-[#007EAD]">{selected.card}</p><p className="mt-2 text-xs leading-relaxed text-slate-600">{t.cardText}</p><a href={selected.cardUrl} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-[#007EAD] underline">{t.source}<ExternalLink className="h-3.5 w-3.5" /></a></div><div className="rounded-2xl border border-amber-200 bg-amber-50 p-5"><div className="flex gap-2"><Info className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" /><p className="text-xs leading-relaxed text-amber-950">{t.notice}</p></div></div><div className="rounded-2xl border border-sky-100 bg-white p-5"><Clock3 className="h-5 w-5 text-[#00A3E0]" /><h3 className="mt-2 text-sm font-extrabold text-slate-900">{t.stops}</h3><p className="mt-1 text-xs leading-relaxed text-slate-600">{locale === 'tr' ? 'Durak, hat ve güncel kalkışlar için yukarıdaki resmî bağlantıları kullanın.' : locale === 'zh' ? '请通过上方官方链接查询车站、线路和最新发车时间。' : 'Use the official links above for stops, lines and current departure notices.'}</p></div></aside>
+    </section>
+  </main>
 }

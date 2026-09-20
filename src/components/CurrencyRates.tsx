@@ -13,6 +13,7 @@ export default function CurrencyRates({ lang = 'en' }: { lang?: string }) {
     fr: { title: 'Cours de référence du jour', ref: 'Référence', converter: 'Convertisseur de référence', unavailable: 'Cours indisponibles pour le moment.', loading: 'Chargement des cours…', tryAgain: 'Réessayer', disclaimer: 'Ce ne sont pas les cours d’achat/vente d’un bureau.' },
     ar: { title: 'أسعار الصرف المرجعية اليومية', ref: 'مرجعي', converter: 'محول مرجعي', unavailable: 'أسعار الصرف غير متاحة الآن.', loading: 'جارٍ تحميل الأسعار…', tryAgain: 'إعادة المحاولة', disclaimer: 'ليست أسعار شراء أو بيع مكتب صرافة.' },
     ru: { title: 'Дневные справочные курсы', ref: 'Справочный', converter: 'Справочный конвертер', unavailable: 'Курсы сейчас недоступны.', loading: 'Загрузка курсов…', tryAgain: 'Повторить', disclaimer: 'Это не курс покупки/продажи обменного пункта.' },
+    zh: { title: '每日参考汇率', ref: '参考', converter: '参考换算器', unavailable: '当前无法获取参考汇率。', loading: '正在加载每日参考汇率…', tryAgain: '重试', disclaimer: '这不是兑换点的实际买入或卖出报价。' },
   };
   const t = labels[lang.toLowerCase()] ?? labels.en;
   const [rates, setRates] = useState<ReferenceRates | null>(null);
