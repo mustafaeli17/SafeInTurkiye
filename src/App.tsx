@@ -1,4 +1,5 @@
 import { officialLinks, directoryText, sourcedActivities, cityPhotos } from './lib/visitorDirectory';
+import { updateSectionSeo } from './lib/seo';
 import SafetyTips from './components/SafetyTips';
 import CatalogFilters from './components/CatalogFilters';
 import { matchesCatalog, normalizeSearch, localDate } from './lib/catalog';
@@ -609,6 +610,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'home' | 'city' | 'taxi' | 'transit' | 'currency' | 'nearme' | 'safety' | 'stay' | 'food' | 'experiences' | 'admin' | 'assistant'>('home');
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }); }, [activeTab]);
   const [selectedCityName, setSelectedCityName] = useState<string>('İstanbul');
+  useEffect(() => { updateSectionSeo(activeTab, selectedCityName); }, [activeTab, selectedCityName]);
   const [lang, setLang] = useState<SupportedLang>('en');
   const [searchQuery, setSearchQuery] = useState('');
   const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);

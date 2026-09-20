@@ -28,7 +28,7 @@ export default function TravelHome({ lang, cities, onNavigate, onCity, onSearch,
       <img className="travel-hero-photo" src={cities[0]?.coverImage} alt={cities[0]?.name} fetchPriority="high" />
       <div className="travel-hero-wash" />
       <div className="travel-hero-copy">
-        <h1>{t[0]}<br /><span>{t[1]}</span></h1>
+        <h1>{t[0]}<br />{' '}<span>{t[1]}</span></h1>
         <p>{t[2]}</p>
         <form onSubmit={event => { event.preventDefault(); onSearch(query) }} className="travel-search"><Search size={19} aria-hidden="true" /><input aria-label={t[3]} placeholder={t[3]} value={query} onChange={event => setQuery(event.target.value)} /><button type="submit">{t[4]}</button></form>
         <div className="travel-city-chips">{cities.map(city => <button key={city.key} onClick={() => onCity(city.key)}>{city.name}</button>)}</div>
