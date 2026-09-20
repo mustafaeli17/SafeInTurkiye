@@ -1,3 +1,6 @@
+import CatalogFilters from './components/CatalogFilters';
+import { matchesCatalog, normalizeSearch, localDate, validBookingDate } from './lib/catalog';
+import { bookingText, bookingLabel } from './lib/bookingCopy';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Search,
@@ -717,7 +720,7 @@ export default function App() {
         const makeQuote = (currency: string) => currency === 'EUR' ? eurTry : eurTry / data.rates[currency];
         if (!cancelled) {
           setExchangeQuotes(['EUR', 'USD', 'GBP', 'CHF'].map(currency => ({ pair: `${currency} / TRY`, rate: makeQuote(currency) })));
-          setExchangeUpdatedAt(data.date || new Date().toISOString().slice(0, 10));
+          setExchangeUpdatedAt(data.date || localDate());
         }
       } catch {
         if (!cancelled) setExchangeError('Live reference rates are temporarily unavailable. No estimated rate is shown.');
@@ -760,6 +763,11 @@ export default function App() {
     const query = input.trim();
     if (!query) return;
     const low = query.toLocaleLowerCase('tr-TR');
+    const normalized = normalizeSearch(query);
+    const mentionedCity = Object.keys(citiesDetailedData).find(city => normalized.includes(normalizeSearch(city)));
+    setCatalogCity(mentionedCity ?? '');
+    setCatalogQuery('');
+    setActivityCategory('All');
     const cityMatch = Object.keys(citiesDetailedData).find(city => city.toLocaleLowerCase('tr-TR') === low || city.toLowerCase().replace(/i̇/g, 'i') === query.toLowerCase());
     if (cityMatch) { setSelectedCityName(cityMatch); setActiveTab('city'); return; }
     if (/taksi|taxi|fare|ücret|такси|تاكسي|出租车/.test(low)) setActiveTab('taxi');
@@ -771,7 +779,13 @@ export default function App() {
     else if (/aktiv|activit|etkinlik|museum|musée|müze|gez|cinema|cinéma|музе|кино|متحف|أنشط|سينما|活动|博物馆|影院/.test(low)) setActiveTab('experiences');
     else if (/güven|safety|acil|emergency|sicher|sécurité|безопас|أمان|طوارئ|安全|紧急/.test(low)) setActiveTab('safety');
     else {
-      setActiveTab('assistant');
+      const hotel = hotelsList.find(item => matchesCatalog(item, query, ''));
+      const restaurant = restaurantsList.find(item => matchesCatalog(item, query, ''));
+      const activity = activitiesList.find(item => matchesCatalog(activityContent(item, lang), query, ''));
+      if (hotel || restaurant || activity) {
+        setCatalogQuery(query);
+        setActiveTab(hotel ? 'stay' : restaurant ? 'food' : 'experiences');
+      } else setActiveTab('assistant');
     }
   };
 
@@ -781,6 +795,8 @@ export default function App() {
   const [selectedBookingType, setSelectedBookingType] = useState<'hotel' | 'restaurant' | 'activity'>('activity');
   const [guestFullName, setGuestFullName] = useState('');
   const [bookingDate, setBookingDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [bookingBusy, setBookingBusy] = useState(false);
+  const bookingInFlight = useRef(false);
   const [bookingErrorMsg, setBookingErrorMsg] = useState<string | null>(null);
   const [bookingRequest, setBookingRequest] = useState<{
     code: string;
@@ -796,18 +812,23 @@ export default function App() {
     setSelectedBookingType(listingType);
     setBookingRequest(null);
     setGuestFullName('');
+    setBookingDate(localDate());
     setBookingErrorMsg(null);
     setReservationModalOpen(true);
   };
 
   const handleConfirmReservation = async () => {
+    if (bookingInFlight.current) return;
     setBookingErrorMsg(null);
     if (!guestFullName.trim()) {
-      setBookingErrorMsg('Please enter the lead guest name.');
+      setBookingErrorMsg(bookingText(lang, 8));
       return;
     }
-    if (!supabaseConfigured) { setBookingErrorMsg('Bu önizleme hesap hizmetine bağlı değil. Rezervasyon talebi şu anda gönderilemiyor.'); return; }
-    if (!session?.user) { setBookingErrorMsg('Talebinizi göndermek için giriş yapın; sonra bu forma dönebilirsiniz.'); setAuthModalOpen(true); return; }
+    if (!validBookingDate(bookingDate)) { setBookingErrorMsg(bookingText(lang, 4)); return; }
+    if (!supabaseConfigured) { setBookingErrorMsg(bookingText(lang, 10)); return; }
+    if (!session?.user) { setBookingErrorMsg(bookingText(lang, 9)); setAuthModalOpen(true); return; }
+    bookingInFlight.current = true;
+    setBookingBusy(true);
     try {
       const booking = await createBooking({
         listingType: selectedBookingType, listingName: selectedBookingItem.title || selectedBookingItem.name,
@@ -815,6 +836,16 @@ export default function App() {
       });
       setBookingRequest({ code: booking.reference_code, itemTitle: selectedBookingItem.title || selectedBookingItem.name, city: selectedBookingItem.city, price: selectedBookingItem.price || selectedBookingItem.avgPrice, guest: guestFullName, date: bookingDate });
     } catch (error) { setBookingErrorMsg(error instanceof Error ? error.message : 'Could not submit the booking request.'); }
+    finally { bookingInFlight.current = false; setBookingBusy(false); }
+  };
+
+  const downloadBookingSummary = () => {
+    if (!bookingRequest) return;
+    const text = [bookingText(lang, 7), bookingRequest.code, bookingRequest.itemTitle, bookingRequest.city, bookingRequest.guest, bookingRequest.date, bookingText(lang, 3)].join('\n');
+    const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url; link.download = 'SafeInTurkiye-request.txt'; link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   // Taksi Durumları
@@ -1114,6 +1145,14 @@ export default function App() {
     { id: 'a11', title: 'Uludağ Winter Day Trip', city: 'Bursa', category: 'Winter', duration: 'Full day', price: 'Seasonal', guideLang: 'Self-guided/operator', rating: '—', description: 'Cable-car and road access can change with weather; verify on the travel day.', img: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/3/30/Uluda%C4%9F_Kayak_Merkezi-_Uludag_Ski_Center.jpg/960px-Uluda%C4%9F_Kayak_Merkezi-_Uludag_Ski_Center.jpg' }
   ]);
   const [activityCategory, setActivityCategory] = useState('All');
+  const [catalogQuery, setCatalogQuery] = useState('');
+  const [catalogCity, setCatalogCity] = useState('');
+  const filteredHotels = hotelsList.filter(item => matchesCatalog(item, catalogQuery, catalogCity));
+  const filteredRestaurants = restaurantsList.filter(item => matchesCatalog(item, catalogQuery, catalogCity));
+  const filteredActivities = activitiesList.map(item => activityContent(item, lang)).filter(item => (activityCategory === 'All' || item.category === activityCategory) && matchesCatalog(item, catalogQuery, catalogCity));
+  const resetCatalog = () => { setCatalogQuery(''); setCatalogCity(''); setActivityCategory('All'); };
+  const catalogFilters = (items: {city: string}[], count: number) => <CatalogFilters lang={lang} query={catalogQuery} city={catalogCity} cities={[...new Set([...items.map(item => item.city), ...(catalogCity ? [catalogCity] : [])])]} count={count} onQuery={setCatalogQuery} onCity={setCatalogCity} onReset={resetCatalog} />;
+
 
   const [nearbyPlacesList, setNearbyPlacesList] = useState([
     { id: 'n1', name: 'Nöbetçi Eczane (24/7 Duty Pharmacy)', dist: '180m', addr: 'Sıraselviler Cad. No:24, Taksim', cat: 'Pharmacy', phone: '+90 212 244 10 10', is247: true },
@@ -1547,21 +1586,22 @@ export default function App() {
         {activeTab === 'stay' && (
           <main className="travel-catalog">
             <h1 className="text-3xl font-extrabold text-slate-900">{page('hotelsTitle')}</h1>
+            {catalogFilters(hotelsList, filteredHotels.length)}
+            <p className="catalog-editorial-note">{bookingText(lang, 1)}</p>
             <div className="travel-catalog-list">
-              {hotelsList.map(h => (
+              {filteredHotels.map(h => (
                 <div key={h.id} className="travel-catalog-row">
                   <div className="travel-catalog-photo">
                     <img src={h.img} alt={h.name} className="w-full h-full object-cover" />
                   </div>
                   <div className="travel-catalog-info">
                     <span className="travel-catalog-label">{h.city}</span>
-                    <span className="travel-catalog-label">★ {h.rating}</span>
                     <strong className="text-[14px] text-slate-900 block">{h.name}</strong>
                     <span className="text-[12px] text-[#087FFF] font-semibold">{h.roomType}</span>
                     <p className="text-[11px] text-slate-500">{h.amenities}</p>
                   </div>
                   <div className="travel-catalog-action">
-                    <span className="font-bold text-[#087FFF]">{h.price} / {page('night')}</span>
+                    <span className="font-bold text-[#087FFF]">{bookingText(lang, 0)}</span>
                     <button
                       onClick={() => handleOpenBooking(h, 'hotel')}
                       className="px-4 py-1.5 bg-[#087FFF] hover:bg-[#0284C7] text-white rounded-xl text-[12px] font-bold cursor-pointer"
@@ -1581,8 +1621,10 @@ export default function App() {
         {activeTab === 'food' && (
           <main className="travel-catalog">
             <h1 className="text-3xl font-extrabold text-slate-900">{page('diningTitle')}</h1>
+            {catalogFilters(restaurantsList, filteredRestaurants.length)}
+            <p className="catalog-editorial-note">{bookingText(lang, 1)}</p>
             <div className="travel-catalog-list">
-              {restaurantsList.map(r => (
+              {filteredRestaurants.map(r => (
                 <div key={r.id} className="travel-catalog-row">
                   <div className="travel-catalog-photo">
                     <img src={r.img} alt={r.name} className="w-full h-full object-cover" />
@@ -1591,10 +1633,10 @@ export default function App() {
                     <span className="travel-catalog-label">{r.city}</span>
                     <strong className="text-[14px] text-slate-900 block">{r.name}</strong>
                     <span className="text-[12px] text-[#087FFF] font-semibold">{r.cuisine}</span>
-                    <span className="text-[11px] text-slate-400 block">{page('hours')}: {r.openHours}</span>
+                    <span className="text-[11px] text-slate-400 block">{r.city}</span>
                   </div>
                   <div className="travel-catalog-action">
-                    <span className="text-[12px] font-bold text-slate-600">{page('average')}: {r.avgPrice}</span>
+                    <span className="text-[12px] font-bold text-slate-600">{bookingText(lang, 0)}</span>
                     <button
                       onClick={() => handleOpenBooking(r, 'restaurant')}
                       className="px-4 py-1.5 bg-[#087FFF] hover:bg-[#0284C7] text-white rounded-xl text-[12px] font-bold cursor-pointer"
@@ -1617,8 +1659,10 @@ export default function App() {
             <div className="flex gap-2 overflow-x-auto pb-1" aria-label={lang === 'tr' ? 'Aktivite kategorisi' : 'Activity category'}>
               {['All', 'Museum & Culture', 'Cinema', 'Entertainment', 'Summer', 'Winter'].map(category => <button type="button" key={category} aria-pressed={activityCategory === category} onClick={() => setActivityCategory(category)} className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs font-bold ${activityCategory === category ? 'border-[#087FFF] bg-[#087FFF] text-white' : 'border-sky-100 bg-white text-slate-700 hover:bg-sky-50'}`}>{activityLabel(category, lang)}</button>)}
             </div>
+            {catalogFilters(activitiesList, filteredActivities.length)}
+            <p className="catalog-editorial-note">{bookingText(lang, 1)}</p>
             <div className="travel-catalog-list">
-              {activitiesList.filter(activity => activityCategory === 'All' || activity.category === activityCategory).map(activity => activityContent(activity, lang)).map(a => (
+              {filteredActivities.map(a => (
                 <div key={a.id} className="travel-catalog-row">
                   <div className="travel-catalog-photo">
                     <img src={a.img} alt={a.title} className="w-full h-full object-cover" />
@@ -1701,17 +1745,17 @@ export default function App() {
       ==================================================================== */}
       {reservationModalOpen && selectedBookingItem && (
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-2xl space-y-4">
+          <div role="dialog" aria-modal="true" aria-labelledby="booking-title" className="bg-white w-full max-w-md max-h-[90dvh] overflow-y-auto rounded-3xl shadow-2xl space-y-4">
             <div className="bg-gradient-to-r from-[#087FFF] to-[#0284C7] p-5 text-white flex justify-between items-start">
               <div>
                 <span className="text-[11px] font-bold uppercase tracking-wider text-sky-100 flex items-center gap-1">
-                  <ShieldCheck className="w-4 h-4" /> SafeInTürkiye Verified Pass
+                  <ShieldCheck className="w-4 h-4" /> SafeInTürkiye
                 </span>
-                <h3 className="text-xl font-extrabold mt-1">
-                  {bookingRequest ? 'Booking request submitted' : 'Request a booking (No Advance Fee)'}
+                <h3 id="booking-title" className="text-xl font-extrabold mt-1">
+                  {bookingRequest ? bookingLabel(lang, 2) : bookingText(lang, 2)}
                 </h3>
               </div>
-              <button onClick={() => setReservationModalOpen(false)} className="p-1 rounded-full bg-white/20 hover:bg-white/30 text-white cursor-pointer">
+              <button aria-label={bookingLabel(lang, 7)} disabled={bookingBusy} onClick={() => setReservationModalOpen(false)} className="p-1 rounded-full bg-white/20 hover:bg-white/30 text-white cursor-pointer">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -1723,26 +1767,29 @@ export default function App() {
                     <img src={selectedBookingItem.img} alt="" className="w-14 h-14 object-cover rounded-xl shadow-sm" />
                     <div>
                       <strong className="text-[14px] text-slate-900 block">{selectedBookingItem.title || selectedBookingItem.name}</strong>
-                      <span className="text-[12px] font-bold text-[#087FFF]">{selectedBookingItem.price || selectedBookingItem.avgPrice}</span>
+                      <span className="text-[12px] font-bold text-[#087FFF]">{bookingText(lang, 0)}</span>
                       <span className="text-[11px] text-slate-400 block">{selectedBookingItem.city}</span>
                     </div>
                   </div>
 
                   <div>
-                    <label className="text-[12px] font-bold text-slate-700 block mb-1">Lead Guest Full Name (Ad Soyad)</label>
+                    <label htmlFor="booking-guest" className="text-[12px] font-bold text-slate-700 block mb-1">{bookingLabel(lang, 0)}</label>
                     <input
                       type="text"
+                      id="booking-guest"
                       value={guestFullName}
                       onChange={(e) => setGuestFullName(e.target.value)}
-                      placeholder="e.g. John Doe / Mustafa..."
+                      placeholder={bookingLabel(lang, 0)}
                       className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] font-medium focus:outline-none focus:border-[#087FFF]"
                     />
                   </div>
 
                   <div>
-                    <label className="text-[12px] font-bold text-slate-700 block mb-1">Date of Visit (Ziyaret Tarihi)</label>
+                    <label htmlFor="booking-date" className="text-[12px] font-bold text-slate-700 block mb-1">{bookingLabel(lang, 1)}</label>
                     <input
                       type="date"
+                      min={localDate()}
+                      id="booking-date"
                       value={bookingDate}
                       onChange={(e) => setBookingDate(e.target.value)}
                       className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] font-medium focus:outline-none focus:border-[#087FFF]"
@@ -1758,15 +1805,15 @@ export default function App() {
                   )}
 
                   <div className="p-3 bg-emerald-50 border border-emerald-200/70 rounded-xl text-[11px] text-emerald-900 space-y-0.5">
-                    <strong>Zero Upfront Payment Policy:</strong>
-                    <p>Ödeme doğrudan otele/restorana/rehbere varışta yapılır. Kredi kartı gerekmez.</p>
+                    <p>{bookingText(lang, 3)}</p>
                   </div>
 
                   <button
+                    disabled={bookingBusy}
                     onClick={handleConfirmReservation}
                     className="w-full h-12 bg-[#087FFF] hover:bg-[#0284C7] text-white font-extrabold rounded-xl text-[13px] shadow-md shadow-sky-400/20 cursor-pointer"
                   >
-                    Submit booking request
+                    {bookingBusy ? bookingText(lang, 5) : bookingText(lang, 2)}
                   </button>
                 </div>
               ) : (
@@ -1775,33 +1822,33 @@ export default function App() {
                   <div className="border-2 border-dashed border-sky-300 bg-gradient-to-b from-sky-50/50 to-white rounded-2xl p-5 space-y-3 relative overflow-hidden shadow-inner">
                     <div className="flex justify-between items-start border-b border-sky-200/60 pb-3">
                       <div>
-                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">Reference Code</span>
+                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">{bookingLabel(lang, 4)}</span>
                         <span className="text-xl font-black text-[#087FFF] tracking-wider">{bookingRequest.code}</span>
                       </div>
                       <span className="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5" /> Pending confirmation
+                        <Clock className="w-3.5 h-3.5" /> {bookingLabel(lang, 3)}
                       </span>
                     </div>
 
                     <div className="space-y-2 text-[12px]">
                       <div>
-                        <span className="text-slate-400 text-[10px] block">Venue / Experience:</span>
+                        <span className="text-slate-400 text-[10px] block">{bookingLabel(lang, 5)}</span>
                         <strong className="text-slate-900 font-bold text-[14px]">{bookingRequest.itemTitle}</strong>
                       </div>
                       <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-100">
                         <div>
-                          <span className="text-slate-400 text-[10px] block">Primary Guest:</span>
+                          <span className="text-slate-400 text-[10px] block">{bookingLabel(lang, 0)}</span>
                           <strong className="text-slate-800">{bookingRequest.guest}</strong>
                         </div>
                         <div>
-                          <span className="text-slate-400 text-[10px] block">Scheduled Date:</span>
+                          <span className="text-slate-400 text-[10px] block">{bookingLabel(lang, 1)}</span>
                           <strong className="text-slate-800">{bookingRequest.date}</strong>
                         </div>
                       </div>
                       <div className="pt-1 border-t border-slate-100 flex items-center justify-between">
                         <div>
-                          <span className="text-slate-400 text-[10px] block">Total Due on Site:</span>
-                          <strong className="text-lg font-black text-[#087FFF]">{bookingRequest.price}</strong>
+                          <span className="text-slate-400 text-[10px] block">{bookingLabel(lang, 8)}</span>
+                          <strong className="text-lg font-black text-[#087FFF]">{bookingText(lang, 0)}</strong>
                         </div>
                         <div className="w-16 h-8 bg-slate-900 rounded flex items-center justify-center text-[8px] text-white font-mono tracking-tighter">
                           ||||| | ||||
@@ -1811,16 +1858,16 @@ export default function App() {
 
                     <div className="pt-2 border-t border-sky-200/60 text-[10px] text-slate-500 italic flex items-center gap-1">
                       <ShieldCheck className="w-3.5 h-3.5 text-[#087FFF] shrink-0" />
-                      Request received. Await confirmation from the business before travelling.
+                      {bookingLabel(lang, 9)}
                     </div>
                   </div>
 
                   <div className="flex gap-2">
-                    <button onClick={() => alert('Voucher saved successfully as PDF/Pass!')} className="flex-1 h-11 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-[12px] flex items-center justify-center gap-1.5 cursor-pointer">
-                      <Download className="w-4 h-4" /> Save Pass
+                    <button onClick={downloadBookingSummary} className="flex-1 h-11 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-[12px] flex items-center justify-center gap-1.5 cursor-pointer">
+                      <Download className="w-4 h-4" /> {bookingText(lang, 6)}
                     </button>
                     <button onClick={() => setReservationModalOpen(false)} className="flex-1 h-11 bg-[#087FFF] hover:bg-[#0284C7] text-white font-bold rounded-xl text-[12px] cursor-pointer">
-                      Done
+                      {bookingLabel(lang, 6)}
                     </button>
                   </div>
                 </div>
