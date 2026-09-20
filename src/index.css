@@ -152,15 +152,19 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .travel-catalog-row { display: grid; grid-template-columns: 180px minmax(0,1fr) 175px; align-items: center; gap: 22px; padding: 20px 0; }
 .travel-catalog-row + .travel-catalog-row { border-top: 1px solid #e6eef5; }
 .travel-catalog-photo { position: relative; height: 132px; border-radius: 11px; overflow: hidden; background: #eaf3fb; }
-.travel-catalog-photo img { width: 100%; height: 100%; object-fit: contain; }
-.place-photo-image { width: 100%; height: 100%; object-fit: contain; background: #edf5fa; }
+.travel-catalog-photo img { width: 100%; height: 100%; object-fit: cover; }
+.place-photo-image { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; background: #edf5fa; }
 .place-photo-missing { min-height: 112px; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 12px; gap: 8px; text-align: center; color: #42617e; background: #edf5fa; }
 .place-photo-missing > span { font-size: 30px; }
 .place-photo-missing small { font-size: 11px; }
-.reference-photo-grid .place-photo-image { object-fit: contain; }
-.travel-cities img[src="/photos/izmir.jpg"] { object-fit: contain; background: #2390c4; }
+.reference-photo-grid .place-photo-image { object-fit: cover; }
+.travel-cities img[src="/photos/izmir.jpg"] { object-fit: cover; object-position: center 38%; }
 .city-photo-banner { height: clamp(280px, 42vw, 480px); background: #164e63; }
-.city-photo-banner img { object-fit: contain; }
+.city-photo-banner img { object-fit: cover; object-position: center; }
+.city-photo-banner img[src="/photos/izmir.jpg"] { object-position: center 28%; }
+.city-photo-banner img[src="/photos/ankara.jpg"] { object-position: center 62%; }
+.place-photo-image[data-photo-id="a2"] { object-position: 50% 60%; }
+.place-photo-image[data-photo-id="modern"] { object-position: 50% 60%; }
 .travel-catalog-info { min-width: 0; display: flex; flex-direction: column; gap: 7px; }
 .travel-catalog-info > strong { font-size: 16px; color: #102b50; line-height: 1.4; }
 .travel-catalog-info p { line-height: 1.65; }
