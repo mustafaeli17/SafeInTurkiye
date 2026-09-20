@@ -65,6 +65,8 @@ import NearbyPlaces from './components/NearbyPlaces';
 import TransitPlanner from './components/TransitPlanner';
 import TravelFaq, { TransportCardGuide } from './components/TravelFaq';
 import ContentAdmin from './components/ContentAdmin';
+import TravelHome from './components/TravelHome';
+import { activityLabel, activityText, activityContent } from './lib/activityLabels';
 import siteLogo from './assets/safeinturkiye-logo.png';
 
 // ============================================================================
@@ -753,20 +755,20 @@ export default function App() {
   };
 
 
-  const handleGlobalSearch = () => {
-    const query = searchQuery.trim();
+  const handleGlobalSearch = (input = searchQuery) => {
+    const query = input.trim();
     if (!query) return;
     const low = query.toLocaleLowerCase('tr-TR');
     const cityMatch = Object.keys(citiesDetailedData).find(city => city.toLocaleLowerCase('tr-TR') === low || city.toLowerCase().replace(/i̇/g, 'i') === query.toLowerCase());
     if (cityMatch) { setSelectedCityName(cityMatch); setActiveTab('city'); return; }
-    if (/taksi|taxi|fare|ücret/.test(low)) setActiveTab('taxi');
-    else if (/metro|otobüs|bus|tren|train|vapur|ferry|marmaray|ulaşım|transit|route|rota/.test(low)) setActiveTab('transit');
-    else if (/döviz|kur|exchange|currency|euro|usd/.test(low)) setActiveTab('currency');
-    else if (/yakın|near|eczane|pharmacy|hastane|hospital|atm|polis|police/.test(low)) setActiveTab('nearme');
-    else if (/otel|hotel|konak|stay/.test(low)) setActiveTab('stay');
-    else if (/restoran|restaurant|yemek|food|cafe|kafe/.test(low)) setActiveTab('food');
-    else if (/aktiv|activity|etkinlik|museum|müze|gez/.test(low)) setActiveTab('experiences');
-    else if (/güven|safety|acil|emergency/.test(low)) setActiveTab('safety');
+    if (/taksi|taxi|fare|ücret|такси|تاكسي|出租车/.test(low)) setActiveTab('taxi');
+    else if (/metro|métro|otobüs|bus|tren|train|vapur|ferry|marmaray|ulaşım|transit|route|rota|bahn|transport|транспорт|метро|автобус|مواصلات|مترو|حافل|地铁|公交|交通|火车/.test(low)) setActiveTab('transit');
+    else if (/döviz|kur|exchange|currency|euro|usd|wechsel|change|валют|обмен|صرف|صراف|汇率|换汇/.test(low)) setActiveTab('currency');
+    else if (/yakın|near|eczane|pharmacy|hastane|hospital|atm|polis|police|nähe|apotheke|proximité|pharmacie|рядом|аптек|قريب|صيدلي|附近|药房/.test(low)) setActiveTab('nearme');
+    else if (/otel|hotel|hôtel|konak|stay|отел|гостиниц|فندق|فنادق|酒店|住宿/.test(low)) setActiveTab('stay');
+    else if (/restoran|restaurant|yemek|food|cafe|kafe|ресторан|مطعم|مطاعم|餐厅|餐饮/.test(low)) setActiveTab('food');
+    else if (/aktiv|activit|etkinlik|museum|musée|müze|gez|cinema|cinéma|музе|кино|متحف|أنشط|سينما|活动|博物馆|影院/.test(low)) setActiveTab('experiences');
+    else if (/güven|safety|acil|emergency|sicher|sécurité|безопас|أمان|طوارئ|安全|紧急/.test(low)) setActiveTab('safety');
     else {
       setActiveTab('assistant');
     }
@@ -1285,97 +1287,14 @@ export default function App() {
         {/* ====================================================================
             PAGE 1: EXPLORE
         ==================================================================== */}
-        {activeTab === 'home' && (
-          <main className="space-y-12 pb-24">
-            <section className="relative h-[380px] sm:h-[420px] flex items-center justify-center text-center px-4 overflow-hidden">
-              <img 
-                src="https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?auto=format&fit=crop&w=1920&q=80"
-                alt="Istanbul Ortakoy" 
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-slate-950/45" />
-
-              <div className="relative z-10 max-w-2xl space-y-3">
-                <h1 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight drop-shadow-sm">
-                  {tr('heroTitle')}
-                </h1>
-                <p className="text-xs sm:text-sm text-white/95 font-medium max-w-md mx-auto">
-                  {tr('heroSub')}
-                </p>
-
-                <div className="pt-2 max-w-lg mx-auto">
-                  <div className="flex items-center bg-white rounded-xl shadow-xl px-4 py-1 border border-sky-100 focus-within:ring-2 focus-within:ring-[#00A3E0]">
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder={tr('searchPlaceholder')}
-                      onKeyDown={(event) => { if (event.key === 'Enter') handleGlobalSearch(); }}
-                      className="w-full h-11 text-[13px] text-slate-800 placeholder-slate-400 focus:outline-none bg-transparent"
-                    />
-                    <button 
-                      onClick={handleGlobalSearch}
-                      className="text-[#00A3E0] hover:text-[#0284C7] p-1.5 cursor-pointer"
-                    >
-                      <Search className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* 8'li Araç Kutusu */}
-            <section className="max-w-6xl mx-auto px-6 -mt-14 relative z-20">
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-9 gap-2.5">
-                {[
-                  { name: tr('assistant'), sub: lang === 'tr' ? 'Pratik seyahat rehberi' : 'Practical travel guide', icon: Bot, action: () => setActiveTab('assistant') },
-                  { name: tr('taxi'), sub: 'UKOME tariff & route', icon: Car, action: () => setActiveTab('taxi') },
-                  { name: tr('transit'), sub: 'Metro & Ferry Routes', icon: Train, action: () => setActiveTab('transit') },
-                  { name: tr('currency'), sub: 'Reference rates & nearby bureaux', icon: Coins, action: () => setActiveTab('currency') },
-                  { name: tr('cityWeather'), sub: 'Weather, museums & city tips', icon: Compass, action: () => setActiveTab('city') },
-                  { name: tr('hotels'), sub: 'Verified Stays', icon: Building2, action: () => setActiveTab('stay') },
-                  { name: tr('dining'), sub: 'Historic Kitchens', icon: Utensils, action: () => setActiveTab('food') },
-                  { name: ({tr:'Aktiviteler',en:'Activities',de:'Aktivitäten',fr:'Activités',ar:'الأنشطة',zh:'活动',ru:'Развлечения'})[lang], sub: lang === 'tr' ? 'Turlar ve deneyimler' : 'Tours & experiences', icon: Ticket, action: () => setActiveTab('experiences') },
-                  { name: tr('nearMe'), sub: 'Pharmacy, Police, ATM', icon: Navigation2, action: () => setActiveTab('nearme') }
-                ].map((tool, idx) => {
-                  const Icon = tool.icon;
-                  return (
-                    <button
-                      key={idx}
-                      onClick={tool.action}
-                      className="bg-white p-3.5 rounded-xl border border-sky-100 shadow-sm hover:shadow-md hover:border-[#00A3E0] transition-all flex flex-col items-center text-center group cursor-pointer active:scale-95"
-                    >
-                      <div className="w-9 h-9 rounded-lg flex items-center justify-center mb-1.5 bg-sky-50 text-[#00A3E0]">
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      <span className="text-[12px] font-bold text-slate-800 leading-tight">{tool.name}</span>
-                      <span className="text-[10px] text-slate-500 mt-1 leading-snug line-clamp-2">{tool.sub}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-
-            <section className="max-w-6xl mx-auto px-6 pt-2">
-              <div className="flex items-end justify-between gap-3 mb-4">
-                <div>
-                  <h2 className="text-xl font-black text-slate-900">{tr('popCities')}</h2>
-                  <p className="text-[12px] text-slate-500 mt-1">{tr('popCitiesSub')}</p>
-                </div>
-                <button onClick={() => setActiveTab('city')} className="text-[12px] font-bold text-[#00A3E0] hover:underline">{tr('viewAll')}</button>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {(['İstanbul', 'Ankara', 'Cappadocia', 'Antalya', 'İzmir'] as const).map((cityName) => {
-                  const city = citiesDetailedData[cityName];
-                  return <button key={cityName} onClick={() => { setSelectedCityName(cityName); setActiveTab('city'); }} className="group text-left bg-white rounded-2xl border border-sky-100 overflow-hidden shadow-sm hover:shadow-md hover:border-[#00A3E0] transition-all cursor-pointer">
-                    {city.coverImage ? <img src={city.coverImage} alt={city.name} className="w-full h-28 sm:h-36 object-cover group-hover:scale-[1.02] transition-transform" /> : <div className="h-28 sm:h-36 bg-sky-100 flex items-center justify-center text-sky-800 font-bold">Ankara</div>}
-                    <span className="block px-3 py-2.5 text-[13px] font-extrabold text-slate-900">{city.name}</span>
-                  </button>;
-                })}
-              </div>
-            </section>
-          </main>
-        )}
+        {activeTab === 'home' && <TravelHome
+          lang={lang}
+          cities={['İstanbul', 'Antalya', 'Cappadocia', 'Ankara', 'İzmir'].map(key => ({ key, name: citiesDetailedData[key].name, coverImage: citiesDetailedData[key].coverImage }))}
+          onNavigate={setActiveTab}
+          onCity={city => { setSelectedCityName(city); setActiveTab('city'); }}
+          onSearch={query => { setSearchQuery(query); handleGlobalSearch(query); }}
+          onCategory={category => { setActivityCategory(category); setActiveTab('experiences'); }}
+        />}
 
         {/* ====================================================================
             PAGE 2: AI TRAVEL ASSISTANT
@@ -1681,22 +1600,22 @@ export default function App() {
           <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
             <div><h1 className="text-3xl font-extrabold text-slate-900">{page('activitiesTitle')}</h1><p className="mt-1 text-sm text-slate-600">{page('activitiesSub')}</p></div>
             <div className="flex gap-2 overflow-x-auto pb-1" aria-label={lang === 'tr' ? 'Aktivite kategorisi' : 'Activity category'}>
-              {['All', 'Museum & Culture', 'Cinema', 'Entertainment', 'Summer', 'Winter'].map(category => <button type="button" key={category} aria-pressed={activityCategory === category} onClick={() => setActivityCategory(category)} className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs font-bold ${activityCategory === category ? 'border-[#00A3E0] bg-[#00A3E0] text-white' : 'border-sky-100 bg-white text-slate-700 hover:bg-sky-50'}`}>{lang === 'tr' ? ({ All: 'Tümü', 'Museum & Culture': 'Müze & Kültür', Cinema: 'Sinema', Entertainment: 'Eğlence', Summer: 'Yaz', Winter: 'Kış' } as Record<string, string>)[category] : category}</button>)}
+              {['All', 'Museum & Culture', 'Cinema', 'Entertainment', 'Summer', 'Winter'].map(category => <button type="button" key={category} aria-pressed={activityCategory === category} onClick={() => setActivityCategory(category)} className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs font-bold ${activityCategory === category ? 'border-[#00A3E0] bg-[#00A3E0] text-white' : 'border-sky-100 bg-white text-slate-700 hover:bg-sky-50'}`}>{activityLabel(category, lang)}</button>)}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-              {activitiesList.filter(activity => activityCategory === 'All' || activity.category === activityCategory).map(a => (
+              {activitiesList.filter(activity => activityCategory === 'All' || activity.category === activityCategory).map(activity => activityContent(activity, lang)).map(a => (
                 <div key={a.id} className="bg-white rounded-2xl border border-sky-100 overflow-hidden shadow-sm flex flex-col justify-between">
                   <div className="h-44 w-full relative">
                     <img src={a.img} alt={a.title} className="w-full h-full object-cover" />
-                    <span className="absolute top-2 left-2 px-2 py-0.5 bg-black/70 text-white rounded text-[10px] font-bold">{a.category} • {a.city}</span>
+                    <span className="absolute top-2 left-2 px-2 py-0.5 bg-black/70 text-white rounded text-[10px] font-bold">{activityLabel(a.category, lang)} • {a.city}</span>
                   </div>
                   <div className="p-4 space-y-1">
                     <strong className="text-[14px] text-slate-900 block">{a.title}</strong>
-                    <span className="text-[11px] text-slate-400">Duration: {a.duration} | Guide: {a.guideLang}</span>
+                    <span className="text-[11px] text-slate-500">{activityText('Duration', lang)}: {activityText(a.duration, lang)} | {activityText('Guide', lang)}: {activityText(a.guideLang, lang)}</span>
                     <p className="pt-2 text-[12px] leading-relaxed text-slate-600">{a.description}</p>
                   </div>
                   <div className="p-4 border-t border-slate-100 flex items-center justify-between">
-                    <strong className="text-[12px] font-bold text-[#007EAD]">{a.price}</strong>
+                    <strong className="text-[12px] font-bold text-[#007EAD]">{activityText(a.price, lang)}</strong>
                     <button 
                       onClick={() => handleOpenBooking(a, 'activity')}
                       className="px-4 py-1.5 bg-[#00A3E0] hover:bg-[#0284C7] text-white rounded-xl text-[12px] font-bold cursor-pointer"
