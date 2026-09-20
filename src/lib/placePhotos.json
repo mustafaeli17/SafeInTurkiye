@@ -1,0 +1,92 @@
+{
+  "izmir": {
+    "src": "/photos/izmir.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Izmir_square_clock_tower.jpg",
+    "author": "User:Sailko",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "width": 1600,
+    "height": 1600
+  },
+  "ankara": {
+    "src": "/photos/ankara.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Ataturk%27s_Mausoleum_(6225341313).jpg",
+    "author": "William Neuheisel from DC, US",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "width": 1600,
+    "height": 1067
+  },
+  "antalya": {
+    "src": "/photos/antalya.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Antalya_Harbour_from_high_From_south_%C4%B1n_2011_10.jpg",
+    "author": "Dosseman",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "width": 1600,
+    "height": 1065
+  },
+  "h2": {
+    "src": "/photos/h2.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Swissotel_B%C3%BCy%C3%BCk_EFES.jpg",
+    "author": "Satirdan kahraman",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "width": 1600,
+    "height": 720
+  },
+  "h3": {
+    "src": "/photos/h3.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Ciragan_Palace_2014.JPG",
+    "author": "This Photo was taken by Wolfgang Moroder.  \n\nFeel free to use my photos, but please mention me as the author and send me a  message. \n\n\n\nThis image is not in the public domain. Please respect the copyright protection. It may only be used according to the rules mentioned here. This specifically excludes use in social media, if applicable terms of the licenses listed here not appropriate.\n\n\n\nPlease do not upload an updated image here without consultation with the Author. The author would like to make corrections only at his own source. This ensures that the changes are preserved.Please if you think that any changes should be required, please inform the author.Otherwise you can upload a new image with a new name. Please use one of the templates derivative or extract.",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "width": 1600,
+    "height": 1068
+  },
+  "a1": {
+    "src": "/photos/a1.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:G%C3%B6reme_Open_Air_Museum_01.jpg",
+    "author": "Bernard Gagnon",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "width": 1600,
+    "height": 1067
+  },
+  "a2": {
+    "src": "/photos/a2.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Anadolu_Medeniyetleri_M%C3%BCzesi.jpg",
+    "author": "José Luis Filpo Cabana",
+    "license": "CC BY 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/3.0",
+    "width": 1600,
+    "height": 900
+  },
+  "a3": {
+    "src": "/photos/a3.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Topkapi_Palace,_Istanbul.jpg",
+    "author": "Rraj89",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "width": 1600,
+    "height": 713
+  },
+  "modern": {
+    "src": "/photos/modern.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:%C4%B0stanbul_Modern_2023.jpg",
+    "author": "Antoloji",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "width": 1600,
+    "height": 1200
+  },
+  "erciyes": {
+    "src": "/photos/erciyes.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:KAYAK_ERC%C4%B0YES_.jpg",
+    "author": "Hmyr2021",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "width": 1600,
+    "height": 1131
+  }
+}

@@ -1,4 +1,5 @@
 import { officialLinks, directoryText, sourcedActivities, cityPhotos } from './lib/visitorDirectory';
+import PlacePhoto, { PhotoCredits } from './components/PlacePhoto';
 import { updateSectionSeo } from './lib/seo';
 import SafetyTips from './components/SafetyTips';
 import CatalogFilters from './components/CatalogFilters';
@@ -381,7 +382,7 @@ function offlineAssistantReply(prompt: string, language: SupportedLang): string 
 const citiesDetailedData: Record<string, CityInfo> = {
   'Ankara': {
     name: 'Ankara', tagline: 'Türkiye’s capital: museums, historic streets and parks',
-    coverImage: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Anitkabir_Ankara.jpg/1280px-Anitkabir_Ankara.jpg', lat: 39.9334, lng: 32.8597,
+    coverImage: '/photos/ankara.jpg', lat: 39.9334, lng: 32.8597,
     temp: '', weatherDesc: '', humidity: '', wind: '', trafficIndex: '', trafficStatus: 'Low',
     localTip: 'Use Başkent Kart Ulaşım for urban transport. Check EGO for routes and departure times.',
     highlights: [
@@ -429,7 +430,7 @@ const citiesDetailedData: Record<string, CityInfo> = {
   'Antalya': {
     name: 'Antalya',
     tagline: 'Turquoise Mediterranean shores, waterfalls and Roman ruins',
-    coverImage: 'https://upload.wikimedia.org/wikipedia/commons/8/8e/Kalei%C3%A7i.jpg',
+    coverImage: '/photos/antalya.jpg',
     lat: 36.8969, lng: 30.7133,
     temp: '30°C',
     weatherDesc: 'Warm & Sunny',
@@ -1472,7 +1473,7 @@ export default function App() {
               ))}
             </div>
 
-            <div className="relative h-64 rounded-3xl overflow-hidden shadow-md flex items-end p-6 text-white">
+            <div className="city-photo-banner relative rounded-3xl overflow-hidden shadow-md flex items-end p-6 text-white">
               {currentCityInfo.coverImage && <img src={currentCityInfo.coverImage} alt={currentCityInfo.name} className="absolute inset-0 w-full h-full object-cover" />}
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-transparent" />
               <div className="relative z-10">
@@ -1484,7 +1485,7 @@ export default function App() {
             <nav className="reference-city-nav" aria-label={currentCityInfo.name}>
  {([{tab:'experiences',label:tr('activities'),icon:'🎟️'},{tab:'stay',label:tr('hotels'),icon:'🛏️'},{tab:'food',label:tr('dining'),icon:'🍽️'},{tab:'transit',label:tr('transit'),icon:'🚇'},{tab:'safety',label:page('safety'),icon:'🛡️'}] as const).map(item=><button key={item.tab} onClick={()=>setActiveTab(item.tab)}><span aria-hidden="true">{item.icon}</span>{item.label}</button>)}
  </nav>
-            {selectedCityName === 'Ankara' && <p className="text-xs text-slate-500">Anıtkabir: <a className="underline" href="https://commons.wikimedia.org/wiki/File:Anitkabir_Ankara.jpg" target="_blank" rel="noreferrer">Lethiciasouza / Wikimedia Commons</a> · <a className="underline" href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noreferrer">CC BY-SA 4.0</a> · {lang === 'tr' ? 'Görünüm için kırpılmıştır.' : 'Cropped for display.'}</p>}
+
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <WeatherCard lat={currentCityInfo.lat} lng={currentCityInfo.lng} cityName={currentCityInfo.name} lang={lang} />
@@ -1513,11 +1514,11 @@ export default function App() {
 
             {activitiesList.some(item => item.city === selectedCityName) && <section className="reference-photo-section">
               <h2>{tr('activities')}</h2>
-              <div className="reference-photo-grid">{activitiesList.filter(item => item.city === selectedCityName).slice(0,4).map(item => { const activity = activityContent(item, lang); return <button key={item.id} onClick={() => handleOpenBooking(activity, 'activity')}><img src={item.img} alt={activity.title} loading="lazy" /><strong>{activity.title}</strong><span>{directoryText(lang, 0)} →</span></button>; })}</div>
+              <div className="reference-photo-grid">{activitiesList.filter(item => item.city === selectedCityName).slice(0,4).map(item => { const activity = activityContent(item, lang); return <button key={item.id} onClick={() => handleOpenBooking(activity, 'activity')}><PlacePhoto id={item.id} name={activity.title} lang={lang} /><strong>{activity.title}</strong><span>{directoryText(lang, 0)} →</span></button>; })}</div>
             </section>}
             <section className="reference-photo-section">
               <h2>{tr('hotels')}</h2>
-              <div className="reference-photo-grid">{hotelsList.filter(item => item.city === selectedCityName).map(item => <button key={item.id} onClick={() => handleOpenBooking(item, 'hotel')}><img src={item.img} alt={item.name} loading="lazy" /><strong>{item.name}</strong><span>{directoryText(lang, 0)} →</span></button>)}</div>
+              <div className="reference-photo-grid">{hotelsList.filter(item => item.city === selectedCityName).map(item => <button key={item.id} onClick={() => handleOpenBooking(item, 'hotel')}><PlacePhoto id={item.id} name={item.name} lang={lang} /><strong>{item.name}</strong><span>{directoryText(lang, 0)} →</span></button>)}</div>
               <button className="reference-outline-action" onClick={() => setActiveTab('stay')}>{page('hotelsTitle')} →</button>
             </section>
             <TransportCardGuide city={selectedCityName} lang={lang} />
@@ -1537,7 +1538,7 @@ export default function App() {
               {filteredHotels.map(h => (
                 <div key={h.id} className="travel-catalog-row">
                   <div className="travel-catalog-photo">
-                    <img src={h.img} alt={h.name} className="w-full h-full object-cover" />
+                    <PlacePhoto id={h.id} name={h.name} lang={lang} />
                   </div>
                   <div className="travel-catalog-info">
                     <span className="travel-catalog-label">{h.city}</span>
@@ -1572,7 +1573,7 @@ export default function App() {
               {filteredRestaurants.map(r => (
                 <div key={r.id} className="travel-catalog-row">
                   <div className="travel-catalog-photo">
-                    <img src={r.img} alt={r.name} className="w-full h-full object-cover" />
+                    <PlacePhoto id={r.id} name={r.name} lang={lang} />
                   </div>
                   <div className="travel-catalog-info">
                     <span className="travel-catalog-label">{r.city}</span>
@@ -1610,7 +1611,7 @@ export default function App() {
               {filteredActivities.map(a => (
                 <div key={a.id} className="travel-catalog-row">
                   <div className="travel-catalog-photo">
-                    <img src={a.img} alt={a.title} className="w-full h-full object-cover" />
+                    <PlacePhoto id={a.id} name={a.title} lang={lang} />
                   </div>
                   <div className="travel-catalog-info">
                     <span className="travel-catalog-label">{activityLabel(a.category, lang)} • {a.city}</span>
@@ -1743,7 +1744,7 @@ export default function App() {
                 <Lock className="w-3 h-3" />
               </button>
             </div>
-            <p>{footerCopy[lang].source}</p><p className="mt-2">Photos: <a href="https://commons.wikimedia.org/wiki/File:%C4%B0zmir_Clock_Tower.jpg" target="_blank" rel="noreferrer">İzmir — Yılmaz Uğurlu / IgnisFatuus</a> · <a href="https://creativecommons.org/licenses/by-sa/2.0/" target="_blank" rel="noreferrer">CC BY-SA 2.0</a> · <a href="https://commons.wikimedia.org/wiki/File:Kalei%C3%A7i.jpg" target="_blank" rel="noreferrer">Antalya — Enessubasi33</a> · <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noreferrer">CC BY-SA 4.0</a> (cropped)</p>
+            <p>{footerCopy[lang].source}</p><PhotoCredits />
           </div>
           <div className="flex items-center gap-4 text-[11px] font-bold text-[#087FFF]">
             <a href="#" className="hover:underline">{footerCopy[lang].privacy}</a>

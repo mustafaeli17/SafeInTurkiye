@@ -26,8 +26,8 @@ const copy: Record<string, string[]> = {
 };
 export const directoryText = (lang: string, index: number) => (copy[lang] ?? copy.en)[index];
 export const cityPhotos = {
- izmir: 'https://upload.wikimedia.org/wikipedia/commons/c/cf/%C4%B0zmir_Clock_Tower.jpg',
- antalya: 'https://upload.wikimedia.org/wikipedia/commons/8/8e/Kalei%C3%A7i.jpg',
+ izmir: '/photos/izmir.jpg',
+ antalya: '/photos/antalya.jpg',
 };
 export const sourcedActivities = [
  ['cinemaIstanbul','Paribu Cineverse Cevahir','İstanbul','Cinema'],
