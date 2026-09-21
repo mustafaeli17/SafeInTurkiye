@@ -1,7 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
   <title>SafeInTürkiye</title>
-  <rect width="96" height="96" rx="20" fill="#ffffff"/>
-  <!-- Compact S and sun/water motif in the existing wordmark's blue and red. -->
-  <path d="M64 24C56 17 29 18 25 32C20 47 42 49 52 52C71 58 62 77 45 77C35 77 27 74 21 68" fill="none" stroke="#09a4ed" stroke-width="13" stroke-linecap="round"/>
-  <circle cx="74" cy="25" r="9" fill="#ed1027"/>
+  <rect width="100" height="100" fill="#ffffff"/>
+  <!-- Reference-aligned crescent: both circles share a horizontal centreline. -->
+  <circle cx="43.5" cy="50" r="28.5" fill="#0099ff"/>
+  <circle cx="51.5" cy="50" r="22" fill="#ffffff"/>
+  <!-- Five-point star, with its left tip pointing into the crescent. -->
+  <path d="M62 50 71.65 46.86 71.65 36.72 77.62 44.93 87.33 41.77 81.33 50 87.33 58.23 77.62 55.07 71.65 63.28 71.65 53.14Z" fill="#0099ff"/>
 </svg>
