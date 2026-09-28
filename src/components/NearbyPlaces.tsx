@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Clock3, ExternalLink, LocateFixed, MapPin, Phone, Search } from 'lucide-react'
 import { fetchNearbyPlaces, NearbyError } from '../services/nearbyPlaces'
+import { searchDestinations, directionsText } from '../lib/searchDestinations'
 import type { NearbyCategory, NearbyCenter, NearbyKind, NearbyResult } from '../services/nearbyPlaces'
 
 interface NearbyPlacesProps {
@@ -17,7 +18,7 @@ const categoryLabels: Record<NearbyCategory, [string, string]> = {
 }
 
 export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter, cityName: initialCityName }: NearbyPlacesProps) {
-  const cities: Record<string, NearbyCenter> = { 'İstanbul': {lat:41.0082,lng:28.9784}, Ankara:{lat:39.9334,lng:32.8597}, 'İzmir':{lat:38.4237,lng:27.1428}, Antalya:{lat:36.8969,lng:30.7133}, Cappadocia:{lat:38.6431,lng:34.8289} };
+  const cities: Record<string, NearbyCenter> = searchDestinations;
   const [selectedCity, setSelectedCity] = useState(initialCityName.startsWith('Cappadocia') ? 'Cappadocia' : initialCityName);
   const cityName = selectedCity;
   const center = cities[selectedCity] ?? initialCenter;
@@ -160,14 +161,14 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
             <div className="flex gap-2"><dt className="shrink-0"><Phone className="mt-0.5 h-4 w-4" /><span className="sr-only">{text('Telefon', 'Phone')}</span></dt><dd>{place.telephoneUrl ? <a href={place.telephoneUrl} className="font-semibold text-[#007EAD] underline underline-offset-2">{place.phone}</a> : text('Telefon bilgisi yok.', 'Phone not listed.')}</dd></div>
             <div className="flex gap-2"><dt className="shrink-0"><Clock3 className="mt-0.5 h-4 w-4" /><span className="sr-only">{text('Çalışma saatleri', 'Opening hours')}</span></dt><dd className="min-w-0 break-words"><span className="block font-medium text-slate-700">{text('Kaynaktaki çalışma saatleri', 'Published opening hours')}</span>{place.openingHours || text('Çalışma saatleri paylaşılmamış.', 'Opening hours not listed.')}</dd></div>
           </dl>
-          <p className="mt-3 text-[11px] text-slate-500">{text('Kaynaklı kullanıcı puanı mevcut değil.', 'No sourced visitor rating available.')}</p>
-          {kind === 'exchange' && <p className="mt-2 text-[11px] text-slate-600">{text('Büronun alış/satış fiyatı paylaşılmamış. Net fiyat ve komisyonu telefonla sorun.', 'This bureau has not supplied buy/sell rates. Call to confirm the final rate and commission.')}</p>}
           <div className="mt-3 flex flex-wrap gap-4 border-t border-slate-100 pt-3 text-xs font-semibold text-[#007EAD]">
             <a href={place.sourceUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1">{text('Harita kaydı ve kaynak', 'Map record & source')}<ExternalLink className="h-3 w-3" /></a>
+            <a href={`https://www.google.com/maps/dir/?api=1&destination=${place.coordinates.lat},${place.coordinates.lng}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-1">{directionsText[locale] ?? directionsText.en}<ExternalLink aria-hidden="true" className="h-3 w-3" /></a>
             {place.website && <a href={place.website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1">{text('Web sitesi', 'Website')}<ExternalLink className="h-3 w-3" /></a>}
           </div>
         </article>)}
       </div>
+      {state==='ready' && kind==='exchange' && <p className="text-xs text-slate-500">{text('Büro alış/satış kurları mevcut değil; işlemden önce net kur ve komisyonu işletmeden teyit edin.', 'Bureau buy/sell rates are not available; confirm the net rate and commission with the business before exchanging.')}</p>}
       {places.length > limit && <button type="button" onClick={() => setLimit(value => value + 12)} className="rounded-xl border border-sky-200 bg-white px-4 py-2 text-xs font-bold text-[#007EAD]">{text('Daha fazla göster', 'Show more')}</button>}
       {result && <p className="text-[11px] leading-relaxed text-slate-500">{text('Saatler kaynakta yazıldığı şekildedir; anlık açık/kapalı durumu ve nöbetçi eczane bilgisi doğrulanmış değildir. Gitmeden önce arayın. Topluluk kayıtları eksik veya eski olabilir.', 'Hours are shown as published; current open/closed status and on-duty pharmacies are not verified. Call before visiting. Community records can be incomplete or outdated.')} {' '}<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" className="underline">© OpenStreetMap {text('katkıda bulunanlar', 'contributors')}</a> · <a href={result.provider === 'Photon' ? 'https://github.com/komoot/photon' : 'https://overpass-api.de'} target="_blank" rel="noopener noreferrer" className="underline">{result.provider}</a></p>}
     </section>

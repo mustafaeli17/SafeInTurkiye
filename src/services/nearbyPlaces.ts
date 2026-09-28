@@ -39,8 +39,7 @@ const developmentEndpoints = [
 ]
 const cache = new Map<string, { result: NearbyResult; expires: number }>()
 const cacheDuration = 5 * 60 * 1000
-let lastRequestAt = 0
-let blockedUntil = 0
+const blockedUntil = new Map<string, number>()
 
 export class NearbyError extends Error {
   readonly code: 'invalid-location' | 'busy' | 'timeout' | 'unavailable' | 'invalid-response'
@@ -106,9 +105,9 @@ export function parseNearbyResponse(payload: unknown, center: NearbyCenter, kind
     if (typeof lat !== 'number' || typeof lng !== 'number' || !isValidCenter({ lat, lng })) continue
     if (distanceInMeters(center, { lat, lng }) > 2500) continue
     const street = [cleanText(tags['addr:street']) || cleanText(tags['addr:place']), cleanText(tags['addr:housenumber'])].filter(Boolean).join(' ')
-    const area = [cleanText(tags['addr:suburb']), cleanText(tags['addr:district']), cleanText(tags['addr:city'])].filter(Boolean)
+    const area = [cleanText(tags['addr:suburb']), cleanText(tags['addr:district']), cleanText(tags['addr:city']),cleanText(tags['addr:province']),cleanText(tags['addr:postcode'])].filter(Boolean)
     const address = cleanText(tags['addr:full']) || [street, ...new Set(area)].filter(Boolean).join(', ') || null
-    const telephone = safeTelephone(tags['contact:phone']) || safeTelephone(tags.phone)
+    const telephone = safeTelephone(tags['contact:phone']) || safeTelephone(tags.phone) || safeTelephone(tags['contact:mobile']) || safeTelephone(tags.mobile)
     const id = `${raw.type}/${raw.id}`
     places.set(id, {
       id,
@@ -140,16 +139,15 @@ export async function fetchNearbyPlaces(center: NearbyCenter, kind: NearbyKind, 
   const key = `${kind}:${center.lat.toFixed(5)}:${center.lng.toFixed(5)}`
   const cached = cache.get(key)
   if (cached && cached.expires > Date.now()) return cached.result
-  if (Date.now() < blockedUntil || Date.now() - lastRequestAt < 2000) throw new NearbyError('busy')
-  lastRequestAt = Date.now()
+  if (Date.now() < (blockedUntil.get(key) ?? 0)) throw new NearbyError('busy')
 
   const controller = new AbortController()
   let timedOut = false
   const abort = () => controller.abort(signal?.reason)
   signal?.addEventListener('abort', abort, { once: true })
-  const timeout = setTimeout(() => { timedOut = true; controller.abort() }, 12000)
+  const timeout = setTimeout(() => { timedOut = true; controller.abort() }, 18000)
   const amenities = kind === 'exchange' ? 'bureau_de_change' : 'pharmacy|hospital|police|atm|taxi'
-  const query = `[out:json][timeout:8];nwr(around:2500,${center.lat.toFixed(6)},${center.lng.toFixed(6)})["amenity"~"^(${amenities})$"]["access"!="private"]["access"!="no"];out center tags 180;`
+  const query = `[out:json][timeout:2];nwr(around:2500,${center.lat.toFixed(6)},${center.lng.toFixed(6)})["amenity"~"^(${amenities})$"]["access"!="private"]["access"!="no"];out center tags 180;`
   try {
     let lastError: unknown = null
     const requests = import.meta.env.DEV
@@ -159,7 +157,7 @@ export async function fetchNearbyPlaces(center: NearbyCenter, kind: NearbyKind, 
       try {
         const response = await fetch(request.url, {
           ...request.init,
-          signal: AbortSignal.any([controller.signal, AbortSignal.timeout(import.meta.env.DEV ? (request.url.includes('photon.komoot.io') ? 5000 : 2500) : 11500)]),
+          signal: AbortSignal.any([controller.signal, AbortSignal.timeout(import.meta.env.DEV ? (request.url.includes('photon.komoot.io') ? 5000 : 2500) : 17500)]),
           // Preview deployments can be protected by Vercel. Keep the preview
           // session cookie for our own API, but never send credentials to the
           // third-party Overpass development endpoints.
@@ -180,7 +178,7 @@ export async function fetchNearbyPlaces(center: NearbyCenter, kind: NearbyKind, 
         lastError = error
       }
     }
-    if (lastError instanceof NearbyError && lastError.code === 'busy') { blockedUntil = Date.now() + 30000; throw lastError }
+    if (lastError instanceof NearbyError && lastError.code === 'busy') { if (blockedUntil.size >= 100) blockedUntil.clear(); blockedUntil.set(key, Date.now() + 30000); throw lastError }
     throw new NearbyError('unavailable')
   } catch (error) {
     if (signal?.aborted) throw signal.reason ?? new DOMException('Aborted', 'AbortError')

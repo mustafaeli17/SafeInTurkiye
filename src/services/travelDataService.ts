@@ -1,9 +1,13 @@
-export type CurrencyCode = 'EUR' | 'USD' | 'GBP' | 'CHF' | 'TRY';
+export const supportedCurrencies = ['EUR', 'USD', 'GBP', 'CHF', 'TRY', 'AED', 'SAR'] as const;
+export type CurrencyCode = typeof supportedCurrencies[number];
 
 export interface ReferenceRates {
   date: string;
-  /** Units of each currency for one EUR, from one ECB publication date. */
+  /** Units of each currency for one EUR, from one provider publication date. */
   perEuro: Record<CurrencyCode, number>;
+  source: 'TCMB / Frankfurter';
+  sourceUrl: string;
+  rateType: 'reference';
 }
 
 export interface CurrentWeather {
@@ -44,14 +48,14 @@ function publicationDate(value: unknown): string {
 }
 
 export function parseReferenceRates(payload: unknown, now = new Date()): ReferenceRates {
-  if (!Array.isArray(payload) || payload.length !== 4) throw new TravelDataError('invalid');
-  const perEuro: Record<CurrencyCode, number> = { EUR: 1, USD: 0, GBP: 0, CHF: 0, TRY: 0 };
+  if (!Array.isArray(payload) || payload.length !== 6) throw new TravelDataError('invalid');
+  const perEuro: Record<CurrencyCode, number> = { EUR: 1, USD: 0, GBP: 0, CHF: 0, TRY: 0, AED: 0, SAR: 0 };
   let date = '';
   const seen = new Set<string>();
   for (const entry of payload) {
     const row = record(entry);
     const rowDate = publicationDate(row.date);
-    if (row.base !== 'EUR' || typeof row.quote !== 'string' || !['USD', 'GBP', 'CHF', 'TRY'].includes(row.quote) || seen.has(row.quote)) {
+    if (row.base !== 'EUR' || typeof row.quote !== 'string' || !['USD', 'GBP', 'CHF', 'TRY', 'AED', 'SAR'].includes(row.quote) || seen.has(row.quote)) {
       throw new TravelDataError('invalid');
     }
     if (date && date !== rowDate) throw new TravelDataError('invalid');
@@ -61,7 +65,7 @@ export function parseReferenceRates(payload: unknown, now = new Date()): Referen
   }
   // A publication cannot be in the future. An older date is retained and clearly labelled in the UI.
   if (referencePublicationAge(date, now) < 0) throw new TravelDataError('invalid');
-  return { date, perEuro };
+  return { date, perEuro, source: 'TCMB / Frankfurter', sourceUrl: 'https://frankfurter.dev/', rateType: 'reference' };
 }
 
 export function referencePublicationAge(date: string, now = new Date()): number {
@@ -125,7 +129,7 @@ export async function fetchTravelJson(url: string, signal: AbortSignal, timeoutM
 }
 
 export async function getReferenceRates(signal: AbortSignal): Promise<ReferenceRates> {
-  const data = await fetchTravelJson('https://api.frankfurter.dev/v2/providers/ecb/rates?base=EUR&quotes=TRY,USD,GBP,CHF', signal);
+  const data = await fetchTravelJson('https://api.frankfurter.dev/v2/providers/tcmb/rates?base=EUR&quotes=TRY,USD,GBP,CHF,AED,SAR', signal);
   return parseReferenceRates(data);
 }
 

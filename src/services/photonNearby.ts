@@ -12,6 +12,8 @@ export function photonToOsm(payload: unknown) {
     if (!p || p.osm_key !== 'amenity' || feature?.geometry?.type !== 'Point' || !Array.isArray(coordinates)) return [];
     return [{id: p.osm_id, type: ({N:'node', W:'way', R:'relation'} as Record<string,string>)[p.osm_type], lat: coordinates[1], lon: coordinates[0], tags: {
       amenity: p.osm_value, name: p.name, 'addr:street': p.street, 'addr:housenumber': p.housenumber, 'addr:district': p.district, 'addr:city': p.city,
+      'addr:full':p['addr:full'], 'addr:postcode':p.postcode, 'addr:province':p.state,
+      phone: p.phone, 'contact:phone': p['contact:phone'], mobile:p.mobile, 'contact:mobile':p['contact:mobile'], website: p.website, 'contact:website': p['contact:website'], opening_hours: p.opening_hours,
     }}];
   })};
 }

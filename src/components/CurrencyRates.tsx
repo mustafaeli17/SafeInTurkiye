@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Calculator, Loader2, RefreshCw } from 'lucide-react';
-import { convertReferenceAmount, getReferenceRates, TravelDataError } from '../services/travelDataService';
+import { convertReferenceAmount, getReferenceRates, TravelDataError, supportedCurrencies } from '../services/travelDataService';
 import type { CurrencyCode, ReferenceRates } from '../services/travelDataService';
 
-const currencies: CurrencyCode[] = ['EUR', 'USD', 'GBP', 'CHF', 'TRY'];
+const currencies = supportedCurrencies;
 
 export default function CurrencyRates({ lang = 'en' }: { lang?: string }) {
   const labels: Record<string, { title: string; ref: string; converter: string; unavailable: string; loading: string; tryAgain: string; disclaimer: string }> = {
@@ -38,13 +38,13 @@ export default function CurrencyRates({ lang = 'en' }: { lang?: string }) {
   const converted = rates ? convertReferenceAmount(Number(amount), from, to, rates) : null;
   return <section className="space-y-4" aria-live="polite">
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-      {rates ? ['EUR', 'USD', 'GBP', 'CHF'].map((currency) => {
+      {rates ? currencies.filter(currency => currency !== 'TRY').map((currency) => {
         const value = rates.perEuro.TRY / rates.perEuro[currency as CurrencyCode];
         return <div key={currency} className="p-4 bg-white rounded-2xl border border-sky-100 shadow-sm"><span className="text-[11px] font-bold text-slate-500 block">{currency} / TRY</span><strong className="text-[20px] font-black text-slate-900 block">{value.toFixed(4)} ₺</strong><span className="text-[11px] text-[#00A3E0]">{t.ref}</span></div>;
       }) : <div className="col-span-full p-4 bg-white rounded-2xl border border-sky-100 text-[13px] text-slate-600 flex gap-2 items-center">{!error && <Loader2 className="w-4 h-4 animate-spin text-[#00A3E0]" />}{error ? t.unavailable : t.loading}</div>}
     </div>
     {error && <button onClick={() => setRetry(value => value + 1)} className="inline-flex gap-2 items-center px-3 py-2 rounded-xl border border-sky-200 text-[12px] font-bold text-sky-700"><RefreshCw className="w-3.5 h-3.5" />{t.tryAgain}</button>}
-    {rates && <p className="text-[11px] text-slate-500">{t.title}: {rates.date} · ECB/Frankfurter. {t.disclaimer}</p>}
+    {rates && <p className="text-[11px] text-slate-500">{t.title}: {rates.date} · <a href={rates.sourceUrl} target="_blank" rel="noreferrer" className="underline">{rates.source}</a>. {t.disclaimer}</p>}
     <div className="bg-white p-5 rounded-2xl border border-sky-100 shadow-sm space-y-3"><div className="flex gap-2 items-center font-extrabold text-[15px] text-slate-900"><Calculator className="w-5 h-5 text-[#00A3E0]" />{t.converter}</div><div className="grid grid-cols-1 sm:grid-cols-3 gap-2"><input aria-label="Amount" type="number" min="0" value={amount} onChange={e => setAmount(e.target.value)} className="h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px]" /><select value={from} onChange={e => setFrom(e.target.value as CurrencyCode)} className="h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px]">{currencies.map(c => <option key={c}>{c}</option>)}</select><select value={to} onChange={e => setTo(e.target.value as CurrencyCode)} className="h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px]">{currencies.map(c => <option key={c}>{c}</option>)}</select></div>{converted !== null && <p className="text-sm text-slate-700"><strong>{amount || '0'} {from} ≈ {converted.toFixed(2)} {to}</strong> <span className="text-slate-500">{t.ref}</span></p>}</div>
   </section>;
 }

@@ -11,7 +11,42 @@ const endpoints = [
   'https://overpass.private.coffee/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
 ]
-const limits = new Map<string, number>()
+const limits = new Map<string, { count: number; until: number }>()
+const cache = new Map<string, { body: unknown; until: number }>()
+const pending = new Map<string, Promise<unknown>>()
+
+async function search(lat: number, lng: number, kind: string): Promise<unknown> {
+  const amenities = kind === 'exchange' ? 'bureau_de_change' : 'pharmacy|hospital|police|atm|taxi'
+  const query = `[out:json][timeout:8];nwr(around:2500,${lat.toFixed(6)},${lng.toFixed(6)})["amenity"~"^(${amenities})$"]["access"!="private"]["access"!="no"];out center tags 180;`
+  const controllers = endpoints.map(() => new AbortController())
+  // The HTTP deadline must exceed Overpass's own query deadline.
+  const timer = setTimeout(() => controllers.forEach(controller => controller.abort()), 9500)
+  try {
+    return await Promise.any(endpoints.map(async (endpoint, index) => {
+      try {
+        const upstream = await fetch(endpoint + '?data=' + encodeURIComponent(query), {
+          headers: { accept: 'application/json', 'User-Agent': 'SafeInTurkiye/1.0 (+https://safeinturkiye.com)' },
+          signal: controllers[index].signal,
+        })
+        if (!upstream.ok) throw new Error(`HTTP_${upstream.status}`)
+        const body = await upstream.json()
+        if (!body || !Array.isArray(body.elements) || body.remark) throw new Error('INCOMPLETE_RESPONSE')
+        return body
+      } catch (error) {
+        // No user coordinates, IPs or credentials in diagnostic logs.
+        if (!controllers[index].signal.aborted) console.warn('Nearby upstream failure', new URL(endpoint).hostname, error instanceof Error ? error.message : 'UNKNOWN')
+        throw error
+      }
+    }))
+  } catch {
+    const upstream = await fetch(photonNearbyUrl(lat, lng, kind), { signal: AbortSignal.timeout(6000), headers: { accept: 'application/json' } })
+    if (!upstream.ok) throw new Error(`PHOTON_HTTP_${upstream.status}`)
+    return photonToOsm(await upstream.json())
+  } finally {
+    clearTimeout(timer)
+    controllers.forEach(controller => controller.abort())
+  }
+}
 
 export default async function handler(req: Request, res: Response) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'GET required' })
@@ -25,37 +60,34 @@ export default async function handler(req: Request, res: Response) {
 
   const forwarded = req.headers['x-forwarded-for']
   const client = (Array.isArray(forwarded) ? forwarded[0] : forwarded)?.split(',')[0]?.trim() || 'unknown'
-  if ((limits.get(client) ?? 0) > Date.now()) return res.status(429).json({ error: 'TRY_AGAIN_LATER' })
+  const key = `${kind}:${lat.toFixed(6)}:${lng.toFixed(6)}`
+  const cached = cache.get(key)
+  if (cached && cached.until > Date.now()) {
+    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600')
+    return res.status(200).json(cached.body)
+  }
+  const limit = limits.get(client)
+  if (limit && limit.until > Date.now() && limit.count >= 12) {
+    res.setHeader('Retry-After', String(Math.ceil((limit.until - Date.now()) / 1000)))
+    res.setHeader('Cache-Control', 'no-store')
+    return res.status(429).json({ error: 'TRY_AGAIN_LATER' })
+  }
   if (limits.size > 2000) limits.clear()
-  limits.set(client, Date.now() + 3000)
-
-  const amenities = kind === 'exchange' ? 'bureau_de_change' : 'pharmacy|hospital|police|atm|taxi'
-  const query = `[out:json][timeout:8];nwr(around:2500,${lat.toFixed(6)},${lng.toFixed(6)})["amenity"~"^(${amenities})$"]["access"!="private"]["access"!="no"];out center tags 180;`
-  const controllers = endpoints.map(() => new AbortController())
-  const timer = setTimeout(() => controllers.forEach(controller => controller.abort()), 4000)
+  limits.set(client, limit && limit.until > Date.now() ? { ...limit, count: limit.count + 1 } : { count: 1, until: Date.now() + 60000 })
   try {
-    const payload = await Promise.any(endpoints.slice(0, 2).map(async (endpoint, index) => {
-      const upstream = await fetch(endpoint + '?data=' + encodeURIComponent(query), {
-        headers: { accept: 'application/json', 'User-Agent': 'SafeInTurkiye/1.0 (+https://safeinturkiye.com)' },
-        signal: controllers[index].signal,
-      })
-      if (!upstream.ok) throw new Error('PROVIDER_' + upstream.status)
-      const body = await upstream.json()
-      if (!Array.isArray(body.elements) || body.remark) throw new Error('INCOMPLETE_RESPONSE')
-      return body
-    }))
+    let task = pending.get(key)
+    if (!task) {
+      task = search(lat, lng, kind!).finally(() => pending.delete(key))
+      pending.set(key, task)
+    }
+    const payload = await task
+    if (cache.size >= 200) cache.delete(cache.keys().next().value!)
+    cache.set(key, { body: payload, until: Date.now() + 300000 })
     res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600')
     return res.status(200).json(payload)
-  } catch {
-    try {
-      const upstream = await fetch(photonNearbyUrl(lat, lng, kind!), {signal: AbortSignal.timeout(6000), headers: {accept:'application/json'}})
-      if (!upstream.ok) throw new Error('PROVIDER_UNAVAILABLE')
-      const payload = photonToOsm(await upstream.json())
-      res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600')
-      return res.status(200).json(payload)
-    } catch { return res.status(503).json({ error: 'PLACE_PROVIDER_UNAVAILABLE' }) }
-  } finally {
-    clearTimeout(timer)
-    controllers.forEach(controller => controller.abort())
+  } catch (error) {
+    console.warn('Nearby fallback failure', error instanceof Error ? error.message : 'UNKNOWN')
+    res.setHeader('Cache-Control', 'no-store')
+    return res.status(503).json({ error: 'PLACE_PROVIDER_UNAVAILABLE' })
   }
 }

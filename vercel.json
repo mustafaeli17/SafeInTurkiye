@@ -1,0 +1,8 @@
+{
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/hotels/:slug(.+--[a-f0-9-]{36})", "destination": "/index.html" },
+    { "source": "/restaurants/:slug(.+--[a-f0-9-]{36})", "destination": "/index.html" },
+    { "source": "/activities/:slug(.+--[a-f0-9-]{36})", "destination": "/index.html" }
+  ]
+}

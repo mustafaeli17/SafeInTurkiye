@@ -5,7 +5,7 @@ const links=html.match(/<link\b[^>]+>/g).filter(tag=>/rel="(?:icon|apple-touch-i
 assert.equal(links.length,6);
 for(const tag of links){
  const href=tag.match(/href="([^"]+)"/)[1];
- assert(href.endsWith('?v=blue-crescent-1'));
+ assert(href.endsWith('?v=landmarks-1'));
  assert(fs.statSync('dist'+href.split('?')[0]).size>0);
 }
 for(const [file,size] of [['favicon-32x32.png',32],['favicon-48x48.png',48],['favicon-96x96.png',96],['apple-touch-icon.png',180],['icon-192.png',192],['icon-512.png',512]]){

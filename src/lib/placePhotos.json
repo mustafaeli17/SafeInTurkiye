@@ -18,13 +18,14 @@
     "height": 1067
   },
   "antalya": {
-    "src": "/photos/antalya.jpg",
-    "source": "https://commons.wikimedia.org/wiki/File:Antalya_Harbour_from_high_From_south_%C4%B1n_2011_10.jpg",
-    "author": "Dosseman",
+    "src": "/photos/antalya-city.webp",
+    "thumbnail": "/photos/antalya-city-small.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:View_of_Konyaalt%C4%B1_Beach_and_Beyda%C4%9Flar%C4%B1_Mountains,_Antalya.jpg",
+    "author": "FingerWiki",
     "license": "CC BY-SA 4.0",
     "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
     "width": 1600,
-    "height": 1065
+    "height": 1205
   },
   "h2": {
     "src": "/photos/h2.jpg",
@@ -88,5 +89,85 @@
     "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
     "width": 1600,
     "height": 1131
+  },
+  "mugla": {
+    "src": "/photos/mugla-city.webp",
+    "thumbnail": "/photos/mugla-city-small.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Bodrum_castle2.jpg",
+    "author": "Ad Meskens",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "width": 1600,
+    "height": 995
+  },
+  "aydin": {
+    "src": "/photos/aydin-city.webp",
+    "thumbnail": "/photos/aydin-city-small.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:G%C3%BCvercinada_Castle,_Ku%C5%9Fadas%C4%B1.jpg",
+    "author": "Koray",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "width": 1600,
+    "height": 1067
+  },
+  "denizli": {
+    "src": "/photos/denizli-city.webp",
+    "thumbnail": "/photos/denizli-city-small.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Denizli_-_Pamukkale_Travertines.jpg",
+    "author": "Blacksk1912",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "width": 1600,
+    "height": 1200
+  },
+  "trabzon": {
+    "src": "/photos/trabzon-city.webp",
+    "thumbnail": "/photos/trabzon-city-small.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Sumela_Monastery!.jpg",
+    "author": "Xayala Mammadli",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "width": 1600,
+    "height": 1200
+  },
+  "konya": {
+    "src": "/photos/konya-city.webp",
+    "thumbnail": "/photos/konya-city-small.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Maulana_mausoleum_konya.jpg",
+    "author": "Fabienkhan",
+    "license": "CC BY-SA 2.5",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.5",
+    "width": 1600,
+    "height": 1000
+  },
+  "bursa": {
+    "src": "/photos/bursa-city.webp",
+    "thumbnail": "/photos/bursa-city-small.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Uludag.JPG",
+    "author": "Julian Nyča",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "width": 1600,
+    "height": 1067
+  },
+  "koza-han": {
+    "src": "/photos/koza-han-city.webp",
+    "thumbnail": "/photos/koza-han-city-small.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Koza_Han.jpg",
+    "author": "Ibra~28",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "width": 1600,
+    "height": 1200
+  },
+  "karatay-tile-museum": {
+    "src": "/photos/karatay-tile-museum-city.webp",
+    "thumbnail": "/photos/karatay-tile-museum-city-small.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Karatay_Madrasa,_Konya,_Turkey_09.jpg",
+    "author": "Murat Özsoy 1958",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "width": 1600,
+    "height": 829
   }
 }

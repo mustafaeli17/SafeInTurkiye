@@ -1,10 +1,11 @@
-// Render the code-native SVG favicon. Usage: node scripts/build-icons.mjs <sharp module path>
+// Deterministically resize the supplied artwork; do not redraw the brand.
+// Usage: node scripts/build-icons.mjs <sharp module path> [source PNG path]
 import {createRequire} from 'node:module';
 import {readFile, writeFile} from 'node:fs/promises';
 const require = createRequire(import.meta.url);
 const sharp = require(process.argv[2] || 'sharp');
 const root = new URL('../public/', import.meta.url);
-const svg = await readFile(new URL('favicon.svg', root));
+const svg = await readFile(process.argv[3] || new URL('../assets/brand/favicon-source.png', import.meta.url));
 for (const [size, name] of [[32,'favicon-32x32.png'],[48,'favicon-48x48.png'],[96,'favicon-96x96.png'],[180,'apple-touch-icon.png'],[192,'icon-192.png'],[512,'icon-512.png']]) {
  await sharp(svg).resize(size,size).png().toFile(new URL(name,root).pathname.replace(/^\/([A-Z]:)/i,'$1'));
 }
