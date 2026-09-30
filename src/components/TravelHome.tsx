@@ -1,5 +1,7 @@
 import { Hotel, Utensils, Ticket, BookOpen, ArrowRight, Search } from 'lucide-react'
 import { useState } from 'react'
+import hero from '../data/heroPhoto.json'
+
 
 type Destination = 'city' | 'taxi' | 'transit' | 'currency' | 'nearme' | 'safety' | 'stay' | 'food' | 'experiences' | 'assistant'
 const translations = {
@@ -25,7 +27,7 @@ export default function TravelHome({ lang, cities, onNavigate, onCity, onSearch,
   const plan = [{ label: t[16], icon: Hotel, page: 'stay' }, { label: t[17], icon: Utensils, page: 'food' }, { label: t[18], icon: Ticket, page: 'experiences' }, { label: t[19], icon: BookOpen, page: 'assistant' }] as const
   return <main className="travel-home">
     <section className="travel-hero">
-      <img className="travel-hero-photo" src={cities[0]?.coverImage} alt={cities[0]?.name} fetchPriority="high" />
+      <img className="travel-hero-photo" src={hero.src} width={hero.width} height={hero.height} alt="" fetchPriority="high" />
       <div className="travel-hero-wash" />
       <div className="travel-hero-copy">
         <h1>{t[0]}<br />{' '}<span>{t[1]}</span></h1>

@@ -1,0 +1,8 @@
+{
+ "cities":["İstanbul","Antalya","İzmir","Ankara","Cappadocia","Muğla","Aydın","Denizli","Trabzon","Konya","Bursa","Kayseri"],
+ "hotelsPerCity":5,
+ "restaurantsPerCity":5,
+ "activitiesPerCategory":3,
+ "activityCategories":["Museum & Culture","Cinema","Entertainment","Summer","Winter"],
+ "notes":"Targets are minimums, not permission to fabricate venues or duplicate one experience to fill a quota. All current destinations remain in scope. Illustrative photography is allowed only for explicitly labelled cinema, entertainment and seasonal activities; never hotels, restaurants or museums."
+}

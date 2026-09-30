@@ -9,7 +9,6 @@ type Response = {
 const endpoints = [
   'https://overpass-api.de/api/interpreter',
   'https://overpass.private.coffee/api/interpreter',
-  'https://overpass.kumi.systems/api/interpreter',
 ]
 const limits = new Map<string, { count: number; until: number }>()
 const cache = new Map<string, { body: unknown; until: number }>()
@@ -17,35 +16,27 @@ const pending = new Map<string, Promise<unknown>>()
 
 async function search(lat: number, lng: number, kind: string): Promise<unknown> {
   const amenities = kind === 'exchange' ? 'bureau_de_change' : 'pharmacy|hospital|police|atm|taxi'
-  const query = `[out:json][timeout:8];nwr(around:2500,${lat.toFixed(6)},${lng.toFixed(6)})["amenity"~"^(${amenities})$"]["access"!="private"]["access"!="no"];out center tags 180;`
-  const controllers = endpoints.map(() => new AbortController())
-  // The HTTP deadline must exceed Overpass's own query deadline.
-  const timer = setTimeout(() => controllers.forEach(controller => controller.abort()), 9500)
-  try {
-    return await Promise.any(endpoints.map(async (endpoint, index) => {
+  const query = `[out:json][timeout:3];nwr(around:2500,${lat.toFixed(6)},${lng.toFixed(6)})["amenity"~"^(${amenities})$"]["access"!="private"]["access"!="no"];out center tags 180;`
+  // Bounded sequential failover: healthy requests use one provider, not three.
+  // 4s + 4s + 4s leaves room inside the client's 18s deadline.
+  for (const endpoint of endpoints) {
       try {
         const upstream = await fetch(endpoint + '?data=' + encodeURIComponent(query), {
           headers: { accept: 'application/json', 'User-Agent': 'SafeInTurkiye/1.0 (+https://safeinturkiye.com)' },
-          signal: controllers[index].signal,
+          signal: AbortSignal.timeout(4000),
         })
         if (!upstream.ok) throw new Error(`HTTP_${upstream.status}`)
         const body = await upstream.json()
         if (!body || !Array.isArray(body.elements) || body.remark) throw new Error('INCOMPLETE_RESPONSE')
         return body
-      } catch (error) {
+      } catch {
         // No user coordinates, IPs or credentials in diagnostic logs.
-        if (!controllers[index].signal.aborted) console.warn('Nearby upstream failure', new URL(endpoint).hostname, error instanceof Error ? error.message : 'UNKNOWN')
-        throw error
+        console.warn('Nearby upstream failure', new URL(endpoint).hostname)
       }
-    }))
-  } catch {
-    const upstream = await fetch(photonNearbyUrl(lat, lng, kind), { signal: AbortSignal.timeout(6000), headers: { accept: 'application/json' } })
+  }
+    const upstream = await fetch(photonNearbyUrl(lat, lng, kind), { signal: AbortSignal.timeout(4000), headers: { accept: 'application/json' } })
     if (!upstream.ok) throw new Error(`PHOTON_HTTP_${upstream.status}`)
     return photonToOsm(await upstream.json())
-  } finally {
-    clearTimeout(timer)
-    controllers.forEach(controller => controller.abort())
-  }
 }
 
 export default async function handler(req: Request, res: Response) {
@@ -54,7 +45,7 @@ export default async function handler(req: Request, res: Response) {
   const lat = requestUrl.searchParams.has('lat') ? Number(requestUrl.searchParams.get('lat')) : NaN
   const lng = requestUrl.searchParams.has('lng') ? Number(requestUrl.searchParams.get('lng')) : NaN
   const kind = requestUrl.searchParams.get('kind')
-  if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180 || !['exchange', 'essential'].includes(kind ?? '')) {
+  if (!requestUrl.searchParams.get('lat')?.trim() || !requestUrl.searchParams.get('lng')?.trim() || !Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180 || !['exchange', 'essential'].includes(kind ?? '')) {
     return res.status(400).json({ error: 'INVALID_INPUT' })
   }
 
@@ -85,8 +76,8 @@ export default async function handler(req: Request, res: Response) {
     cache.set(key, { body: payload, until: Date.now() + 300000 })
     res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600')
     return res.status(200).json(payload)
-  } catch (error) {
-    console.warn('Nearby fallback failure', error instanceof Error ? error.message : 'UNKNOWN')
+  } catch {
+    console.warn('Nearby fallback unavailable')
     res.setHeader('Cache-Control', 'no-store')
     return res.status(503).json({ error: 'PLACE_PROVIDER_UNAVAILABLE' })
   }

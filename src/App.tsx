@@ -1,20 +1,21 @@
 import { officialLinks, directoryText, sourcedActivities, cityPhotos } from './lib/visitorDirectory';
-import { openDirectoryEntry, registerPublishedEntry } from './lib/directory';
+import { openDirectoryEntry, registerPublishedEntry, photoCuratedCatalog } from './lib/directory';
 import { curatedDirectory as directoryRecords } from './lib/directory';
 import cityGuides from './data/cityGuides.json';
+import citiesZh from './data/citiesZh.json';
 import cityImages from './lib/placePhotos.json';
 import { findCityGuide, openCityGuide } from './lib/cityNavigation';
 import HomeButton from './components/HomeButton';
 import { getPublishedContent } from './repositories/contentRepository';
 import { detailLabel, hotelSummary } from './lib/directoryLabels';
-import { taxiCityFromCoordinates, taxiUnavailableText } from './lib/taxiCity';
+import { taxiCityFromAddress, taxiUnavailableText } from './lib/taxiCity';
 import PlacePhoto, { PhotoCredits } from './components/PlacePhoto';
 import { updateSectionSeo } from './lib/seo';
 import SafetyTips from './components/SafetyTips';
 import CatalogFilters from './components/CatalogFilters';
 import { matchesCatalog, normalizeSearch, localDate } from './lib/catalog';
 import { bookingText } from './lib/bookingCopy';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
 import {
   Search,
   MapPin,
@@ -73,14 +74,16 @@ import {
 import { useSupabaseAuth } from './hooks/useSupabaseAuth';
 import { createBooking } from './repositories/bookingRepository';
 import { getCurrentTaxiTariffs } from './repositories/tariffRepository';
+import { routeFareRange } from './lib/taxiCalculation';
+import { taxiEstimateCopy, taxiDetailsCopy } from './lib/taxiCopy';
 import { getAssistantReply } from './services/travelDataService';
 import { supabaseConfigured } from './lib/supabase';
 import { WeatherCard } from './components/WeatherCard';
 import CurrencyRates from './components/CurrencyRates';
 import NearbyPlaces from './components/NearbyPlaces';
-import TransitPlanner from './components/TransitPlanner';
+const TransitPlanner = lazy(()=>import('./components/TransitPlanner'));
 import TravelFaq, { TransportCardGuide } from './components/TravelFaq';
-import ContentAdmin from './components/ContentAdmin';
+const ContentAdmin = lazy(()=>import('./components/ContentAdmin'));
 import TravelHome from './components/TravelHome';
 import { activityLabel, activityText, activityContent } from './lib/activityLabels';
 import siteLogo from './assets/safeinturkiye-logo.png';
@@ -138,8 +141,6 @@ interface CityInfo {
   weatherDesc: string;
   humidity: string;
   wind: string;
-  trafficIndex: string;
-  trafficStatus: 'Low' | 'Moderate' | 'Heavy';
   localTip: string;
   highlights: { name: string; detail: string }[];
 }
@@ -170,24 +171,12 @@ interface TaxiTariff {
   lastUpdated: string;
 }
 
-// Used only when the public tariff table is empty or the preview is running
-// without Supabase. The figures are labelled as a dated reference estimate in
-// the UI; a newer verified database row always takes precedence.
-const istanbulReferenceTariff: TaxiTariff = {
-  city: 'İstanbul',
-  openingFare: 71.94,
-  pricePerKm: 47.92,
-  minimumFare: 230,
-  waitingFarePerHour: 598.90,
-  source: 'İBB/UKOME reference tariff · 20 Jul 2026',
-  lastUpdated: '2026-07-20',
-};
 
 // Tam Çalışan Çeviri Sözlüğü
 const dict: Record<SupportedLang, Record<string, string>> = {
   en: {
     heroTitle: 'Explore Türkiye with confidence',
-    heroSub: 'Verified taxi tariffs, station guides, dated reference rates, and practical city information.',
+    heroSub: 'Taxi estimates, station guides, dated reference rates, and practical city information.',
     searchPlaceholder: 'What do you need help with? (e.g. Taksim taxi, M11 Metro, pharmacy)',
     popCities: 'Popular Cities',
     popCitiesSub: "Explore Türkiye's most visited destinations",
@@ -386,7 +375,7 @@ const citiesDetailedData: Record<string, CityInfo> = {
   'Ankara': {
     name: 'Ankara', tagline: 'Türkiye’s capital: museums, historic streets and parks',
     coverImage: '/photos/ankara.jpg', lat: 39.9334, lng: 32.8597,
-    temp: '', weatherDesc: '', humidity: '', wind: '', trafficIndex: '', trafficStatus: 'Low',
+    temp: '', weatherDesc: '', humidity: '', wind: '',
     localTip: 'Use Başkent Kart Ulaşım for urban transport. Check EGO for routes and departure times.',
     highlights: [
       { name: 'Anıtkabir', detail: 'Memorial grounds and museum; check visiting hours before travel.' },
@@ -403,8 +392,6 @@ const citiesDetailedData: Record<string, CityInfo> = {
     weatherDesc: 'Sunny & Pleasant',
     humidity: '58%',
     wind: '18 km/h NE',
-    trafficIndex: '68% (Heavy on Bridges)',
-    trafficStatus: 'Heavy',
     localTip: 'During 17:30 - 20:00, prefer Marmaray or Bosphorus ferries to avoid bridge gridlock.',
     highlights: [
       { name: 'Hagia Sophia & Sultanahmet', detail: 'Historic peninsula essentials; arrive early for shorter queues.' },
@@ -421,8 +408,6 @@ const citiesDetailedData: Record<string, CityInfo> = {
     weatherDesc: 'Clear Sky & Calm',
     humidity: '34%',
     wind: '7 km/h SW',
-    trafficIndex: '12% (Smooth Open Roads)',
-    trafficStatus: 'Low',
     localTip: 'Early dawn balloon flights depend on Civil Aviation wind approval checked at 05:00.',
     highlights: [
       { name: 'Göreme Open-Air Museum', detail: 'Rock-cut churches and frescoes; go first thing in the morning.' },
@@ -439,8 +424,6 @@ const citiesDetailedData: Record<string, CityInfo> = {
     weatherDesc: 'Warm & Sunny',
     humidity: '64%',
     wind: '12 km/h S',
-    trafficIndex: '35% (Moderate Coastal Flow)',
-    trafficStatus: 'Moderate',
     localTip: 'Use AntRay tramway from the airport directly to Hadrian Gate in Kaleiçi.',
     highlights: [
       { name: 'Antalya Museum', detail: 'One of Türkiye’s strongest archaeology collections.' },
@@ -457,8 +440,6 @@ const citiesDetailedData: Record<string, CityInfo> = {
     weatherDesc: 'Breezy & Sunny',
     humidity: '50%',
     wind: '22 km/h W',
-    trafficIndex: '42% (Normal Flow)',
-    trafficStatus: 'Moderate',
     localTip: 'Enjoy the sunset ferry from Alsancak to Karşıyaka with contactless credit card tap.',
     highlights: [
       { name: 'Agora Open Air Museum', detail: 'Roman-era remains beside the historic market district.' },
@@ -608,14 +589,24 @@ function SafeRouteMap({
 // ============================================================================
 // 4. ANA BİLEŞEN
 // ============================================================================
-export default function App() {
+export default function App({initialCity,initialLanguage}:{initialCity?:string;initialLanguage?:string} = {}) {
   const { session, isStaff, role, signIn, signOut } = useSupabaseAuth();
   const mockDataEnabled = import.meta.env.VITE_ENABLE_MOCK_DATA === 'true';
-  const [activeTab, setActiveTab] = useState<'home' | 'city' | 'taxi' | 'transit' | 'currency' | 'nearme' | 'safety' | 'stay' | 'food' | 'experiences' | 'admin' | 'assistant'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'city' | 'taxi' | 'transit' | 'currency' | 'nearme' | 'safety' | 'stay' | 'food' | 'experiences' | 'admin' | 'assistant'>(initialCity?'city':'home');
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }); }, [activeTab]);
-  const [selectedCityName, setSelectedCityName] = useState<string>('İstanbul');
-  useEffect(() => { updateSectionSeo(activeTab, selectedCityName); }, [activeTab, selectedCityName]);
-  const [lang, setLang] = useState<SupportedLang>('en');
+  const [selectedCityName, setSelectedCityName] = useState<string>(initialCity??'İstanbul');
+  useEffect(() => {
+    updateSectionSeo(activeTab, selectedCityName);
+    const guide=activeTab==='city'?cityGuides.find(city=>city.name===selectedCityName):undefined;
+    const path=guide?`/cities/${guide.slug}`:'/';
+    if(initialCity)window.history.replaceState({},'',path);
+    document.querySelector('link[rel="canonical"]')?.setAttribute('href',`https://www.safeinturkiye.com${path}`);
+    document.querySelector('meta[property="og:url"]')?.setAttribute('content',`https://www.safeinturkiye.com${path}`);
+  }, [activeTab, selectedCityName,initialCity]);
+  const [lang, setLang] = useState<SupportedLang>(() => {
+    const candidate = initialLanguage || localStorage.getItem('safeinturkiye-language') || 'en';
+    return ['en','tr','de','fr','ar','ru','zh'].includes(candidate) ? candidate as SupportedLang : 'en';
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -627,6 +618,7 @@ export default function App() {
   useEffect(() => {
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = lang;
+    localStorage.setItem('safeinturkiye-language',lang);
   }, [lang]);
 
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -769,15 +761,15 @@ export default function App() {
   const [taxiTariffs, setTaxiTariffs] = useState<Record<string, TaxiTariff>>({});
 
   useEffect(() => {
-    if (!supabaseConfigured) return;
+    setTaxiTariffs({});
+    if (!supabaseConfigured || !detectedTaxiCity) return;
     let cancelled = false;
     void getCurrentTaxiTariffs(detectedTaxiCity).then((tariffs) => {
       if (cancelled) return;
       const next: Record<string, TaxiTariff> = {};
-      for (const tariff of tariffs) next[tariff.vehicleClass] = { city: tariff.city, openingFare: tariff.openingFare, pricePerKm: tariff.perKm, minimumFare: tariff.minimumFare, waitingFarePerHour: tariff.waitingFare, source: 'Verified SafeInTürkiye data source', lastUpdated: tariff.effectiveFrom };
+      for (const tariff of tariffs) next[tariff.vehicleClass] = { city: tariff.city, openingFare: tariff.openingFare, pricePerKm: tariff.perKm, minimumFare: tariff.minimumFare, waitingFarePerHour: tariff.waitingFare, source: tariff.sourceName + ' · ' + tariff.effectiveFrom, lastUpdated: tariff.lastVerified };
       setTaxiTariffs(next);
-      if (Object.keys(next).length === 0 && detectedTaxiCity === 'İstanbul') setTaxiTariffs({ YELLOW: istanbulReferenceTariff });
-    }).catch(() => { if (!cancelled) setTaxiTariffs(detectedTaxiCity === 'İstanbul' ? { YELLOW: istanbulReferenceTariff } : {}); });
+    }).catch(() => { if (!cancelled) setTaxiTariffs({}); });
     return () => { cancelled = true; };
   }, [detectedTaxiCity]);
 
@@ -788,31 +780,39 @@ export default function App() {
     source: string;
   } | null>(null);
 
-  const [fareCalculation, setFareCalculation] = useState<{ minFare: number; maxFare: number; disclaimer: string } | null>(null);
+  const [fareCalculation, setFareCalculation] = useState<{ amount: number; upper:number; hasRange:boolean; source: string } | null>(null);
+  const taxiRequest = useRef(0);
+  useEffect(() => {
+    taxiRequest.current++;
+    setFareCalculation(null);
+    setTaxiRouteResult(null);
+    setIsTaxiRouting(false);
+  }, [taxiOriginCoords, taxiDestCoords, taxiClass, detectedTaxiCity]);
 
-  const autoDetectCityFromCoords = taxiCityFromCoordinates;
+  const taxiOriginLookupId = useRef(0);
 
   useEffect(() => {
     if (!taxiOriginText || taxiOriginCoords) {
       setTaxiOriginSuggs([]);
       return;
     }
+    const controller = new AbortController();
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(taxiOriginText)}&limit=5&lat=41.0082&lon=28.9784`);
+        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(taxiOriginText)}&limit=5&lat=41.0082&lon=28.9784`,{signal:AbortSignal.any([controller.signal,AbortSignal.timeout(8000)])});
         if (!res.ok) return;
         const data = await res.json();
-        if (data.features) {
+        if (!controller.signal.aborted && data.features) {
           setTaxiOriginSuggs(data.features.map((f: any) => ({
             label: [f.properties.name, f.properties.city, f.properties.country].filter(Boolean).join(', '),
             lat: f.geometry.coordinates[1],
             lng: f.geometry.coordinates[0],
-            city: f.properties.city || f.properties.state
+            city: taxiCityFromAddress(f.properties.countrycode, f.properties.state)
           })));
         }
       } catch {}
     }, 300);
-    return () => clearTimeout(timer);
+    return () => {clearTimeout(timer);controller.abort();};
   }, [taxiOriginText, taxiOriginCoords]);
 
   useEffect(() => {
@@ -820,12 +820,13 @@ export default function App() {
       setTaxiDestSuggs([]);
       return;
     }
+    const controller = new AbortController();
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(taxiDestText)}&limit=5&lat=41.0082&lon=28.9784`);
+        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(taxiDestText)}&limit=5&lat=41.0082&lon=28.9784`,{signal:AbortSignal.any([controller.signal,AbortSignal.timeout(8000)])});
         if (!res.ok) return;
         const data = await res.json();
-        if (data.features) {
+        if (!controller.signal.aborted && data.features) {
           setTaxiDestSuggs(data.features.map((f: any) => ({
             label: [f.properties.name, f.properties.city, f.properties.country].filter(Boolean).join(', '),
             lat: f.geometry.coordinates[1],
@@ -835,10 +836,11 @@ export default function App() {
         }
       } catch {}
     }, 300);
-    return () => clearTimeout(timer);
+    return () => {clearTimeout(timer);controller.abort();};
   }, [taxiDestText, taxiDestCoords]);
 
   const handleTaxiCurrentLocation = () => {
+    const lookupId = ++taxiOriginLookupId.current;
     if (!('geolocation' in navigator)) {
       setTaxiRouteError('Geolocation is not supported by your browser.');
       return;
@@ -848,27 +850,30 @@ export default function App() {
 
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
+        if (lookupId !== taxiOriginLookupId.current) return;
         setIsTaxiLocating(false);
         const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        setTaxiOriginCoords(coords);
+        setTaxiOriginCoords(null);
         setTaxiOriginText('Fetching address...');
-
-        const detected = autoDetectCityFromCoords(coords.lat, coords.lng);
-        setDetectedTaxiCity(detected);
+        setDetectedTaxiCity('');
 
         try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords.lat}&lon=${coords.lng}&zoom=16`);
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords.lat}&lon=${coords.lng}&zoom=16`, {signal: AbortSignal.timeout(8000)});
+          if (lookupId !== taxiOriginLookupId.current) return;
           if (res.ok) {
             const data = await res.json();
+            if (lookupId !== taxiOriginLookupId.current) return;
             setTaxiOriginText(data.display_name || `${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}`);
           } else {
             setTaxiOriginText(`${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}`);
           }
         } catch {
+          if (lookupId !== taxiOriginLookupId.current) return;
           setTaxiOriginText(`${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}`);
         }
       },
       () => {
+        if (lookupId !== taxiOriginLookupId.current) return;
         setIsTaxiLocating(false);
         setTaxiRouteError('Location access was denied.');
       },
@@ -877,6 +882,7 @@ export default function App() {
   };
 
   const handleCalculateTaxiRoute = async () => {
+    const request = ++taxiRequest.current;
     setTaxiRouteError(null);
     setTaxiRouteResult(null);
     setFareCalculation(null);
@@ -885,12 +891,17 @@ export default function App() {
       setTaxiRouteError('Please select both a valid origin and destination from suggestions or use Current Location.');
       return;
     }
+    if(!detectedTaxiCity||!taxiTariffs[taxiClass.toUpperCase()]){
+      setTaxiRouteError(taxiUnavailableText(lang));
+      return;
+    }
 
     setIsTaxiRouting(true);
 
     try {
-      const url = `https://router.project-osrm.org/route/v1/driving/${taxiOriginCoords.lng},${taxiOriginCoords.lat};${taxiDestCoords.lng},${taxiDestCoords.lat}?overview=full&geometries=geojson`;
-      const res = await fetch(url);
+      const url = `https://router.project-osrm.org/route/v1/driving/${taxiOriginCoords.lng},${taxiOriginCoords.lat};${taxiDestCoords.lng},${taxiDestCoords.lat}?overview=full&geometries=geojson&alternatives=true`;
+      const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
+      if (request !== taxiRequest.current) return;
       setIsTaxiRouting(false);
 
       if (!res.ok) {
@@ -899,13 +910,15 @@ export default function App() {
       }
 
       const data = await res.json();
+      if (request !== taxiRequest.current) return;
       if (!data.routes || data.routes.length === 0) {
         setTaxiRouteError('No drivable route found between these locations.');
         return;
       }
 
       const primary = data.routes[0];
-      const distanceKm = Number((primary.distance / 1000).toFixed(2));
+      if (!Number.isFinite(primary.distance) || primary.distance <= 0 || !Number.isFinite(primary.duration) || primary.duration < 0) throw new Error('INVALID_ROUTE');
+      const distanceKm = primary.distance / 1000;
       const durationMinutes = Math.max(1, Math.round(primary.duration / 60));
 
       const geometry: RouteGeometryPoint[] = primary.geometry.coordinates.map((coord: [number, number]) => ({
@@ -921,28 +934,19 @@ export default function App() {
       });
 
       const selectedTariff = taxiTariffs[taxiClass.toUpperCase()];
-      const tariff = selectedTariff?.city === detectedTaxiCity ? selectedTariff : (detectedTaxiCity === 'İstanbul' ? istanbulReferenceTariff : undefined);
+      const tariff = selectedTariff?.city === detectedTaxiCity ? selectedTariff : undefined;
       if (!tariff) {
         setFareCalculation(null);
         setTaxiRouteError(taxiUnavailableText(lang));
         setIsTaxiRouting(false);
         return;
       }
-      const classMult = selectedTariff === tariff ? 1 : taxiClass === 'Yellow' ? 1.0 : taxiClass === 'Turquoise' ? 1.15 : 1.70;
-
-      const opening = tariff.openingFare * classMult;
-      const perKm = tariff.pricePerKm * classMult;
-
-      const baseFare = opening + (distanceKm * perKm);
-      const minCalculated = Math.max(Math.round(baseFare), Math.round(tariff.minimumFare * classMult));
-      const maxCalculated = Math.max(Math.round(baseFare * 1.15), minCalculated + 40);
-
       setFareCalculation({
-        minFare: minCalculated,
-        maxFare: maxCalculated,
-        disclaimer: 'Estimated fare. Final taximeter fare may vary depending on actual waiting time at traffic lights and toll fees.'
+        ...routeFareRange(data.routes.filter((route:{distance:number})=>Number.isFinite(route.distance)&&route.distance>0).map((route:{distance:number})=>route.distance/1000), tariff.openingFare, tariff.pricePerKm, tariff.minimumFare),
+        source: detectedTaxiCity+' · '+taxiClass+' · '+tariff.source
       });
     } catch {
+      if (request !== taxiRequest.current) return;
       setIsTaxiRouting(false);
       setTaxiRouteError('Routing service network error. Please check your internet connection.');
     }
@@ -1027,52 +1031,44 @@ export default function App() {
 
   const [restaurantsList, setRestaurantsList] = useState(()=>directoryRecords.filter(entry=>entry.kind==='restaurants').map(entry=>({id:entry.id,name:entry.name,city:entry.city,cuisine:'',avgPrice:'',openHours:'openingHours' in entry ? entry.openingHours??'':'',rating:'',img:''})));
 
-  const [activitiesList, setActivitiesList] = useState([
-    { id: 'a1', title: 'Göreme Open-Air Museum', city: 'Cappadocia', category: 'Museum & Culture', duration: '2–3 Hours', price: 'Check official ticket', guideLang: 'Audio guide options', rating: '—', description: 'Rock-cut churches and frescoes; morning visits are usually calmer.', img: 'https://images.unsplash.com/photo-1641128324972-af3212f0f6bd?auto=format&fit=crop&w=900&q=80' },
-    { id: 'a2', title: 'Museum of Anatolian Civilizations', city: 'Ankara', category: 'Museum & Culture', duration: '2–3 Hours', price: 'Check official ticket', guideLang: 'Museum information', rating: '—', description: 'A practical introduction to Anatolia before exploring Ankara Castle.', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Anadolu_Medeniyetleri_M%C3%BCzesi.jpg/960px-Anadolu_Medeniyetleri_M%C3%BCzesi.jpg' },
-    { id: 'a3', title: 'Topkapı Palace & Historic Peninsula', city: 'İstanbul', category: 'Museum & Culture', duration: 'Half day', price: 'Check official ticket', guideLang: 'Audio guide options', rating: '—', description: 'Allow extra time for security queues and separate ticketed sections.', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Topkapi_Palace%2C_Istanbul.jpg/960px-Topkapi_Palace%2C_Istanbul.jpg' },
-    ...sourcedActivities,
-    ...directoryRecords.filter(entry=>entry.kind==='activities' && entry.category).map(entry=>({id:entry.id,title:entry.name,city:entry.city,category:entry.category??'',duration:'',price:'',guideLang:'',rating:'',description:entry.description[lang]??entry.description.en,img:''}))
-  ]);
+  const [activitiesList, setActivitiesList] = useState(()=>directoryRecords.filter(entry=>entry.kind==='activities').map(entry=>({id:entry.id,title:entry.name,city:entry.city,category:entry.category??(entry.id==='erciyes'?'Winter':'Museum & Culture'),duration:'',price:'',guideLang:'',rating:'',description:entry.description[lang]??entry.description.en,img:''})));
   const [activityCategory, setActivityCategory] = useState('All');
-  const initialCatalog=useRef({hotels:hotelsList,restaurants:restaurantsList,activities:activitiesList});
+  const [catalogError, setCatalogError] = useState(false);
   useEffect(() => {
-    if (!supabaseConfigured || !['stay','food','experiences','city'].includes(activeTab)) return;
+    if (photoCuratedCatalog || !supabaseConfigured || !['stay','food','experiences','city'].includes(activeTab)) return;
     let cancelled=false;
+    setCatalogError(false);
+    setHotelsList([]); setRestaurantsList([]); setActivitiesList([]);
     void Promise.all(['hotels','restaurants','activities'].map(async table => {
       const rows=await getPublishedContent(table as 'hotels'|'restaurants'|'activities');
       if(cancelled) return;
-      if(!rows?.length){
-        if(table==='hotels')setHotelsList(initialCatalog.current.hotels);
-        if(table==='restaurants')setRestaurantsList(initialCatalog.current.restaurants);
-        if(table==='activities')setActivitiesList(initialCatalog.current.activities);
-        return;
-      }
       for(const row of rows)registerPublishedEntry(row,table);
       if(table==='hotels')setHotelsList(rows.map(row=>({id:row.id,name:row.name,city:row.city?.name??'',area:'',roomType:'',price:'',rating:'',amenities:'',img:''})));
       if(table==='restaurants')setRestaurantsList(rows.map(row=>({id:row.id,name:row.name,city:row.city?.name??'',cuisine:'',avgPrice:'',openHours:'',rating:'',img:''})));
       if(table==='activities')setActivitiesList(rows.map(row=>({id:row.id,title:row.name,city:row.city?.name??'',category:'',duration:'',price:'',guideLang:'',rating:'',description:row.description??'',img:''})));
-    })).catch(()=>{ /* Keep the existing sourced directory if the connection is unavailable. */ });
+    })).catch(()=>{ if(!cancelled)setCatalogError(true); });
     return()=>{cancelled=true;};
   },[activeTab]);
   const [catalogQuery, setCatalogQuery] = useState('');
   const [catalogCity, setCatalogCity] = useState('');
   const filteredHotels = hotelsList.filter(item => matchesCatalog(item, catalogQuery, catalogCity));
   const filteredRestaurants = restaurantsList.filter(item => matchesCatalog(item, catalogQuery, catalogCity));
-  const filteredActivities = activitiesList.map(item => activityContent(item, lang)).filter(item => (activityCategory === 'All' || item.category === activityCategory) && matchesCatalog(item, catalogQuery, catalogCity));
+  const filteredActivities = activitiesList.filter(item=>directoryRecords.some(entry=>entry.id===item.id)).map(item => activityContent(item, lang)).filter(item => (activityCategory === 'All' || item.category === activityCategory) && matchesCatalog(item, catalogQuery, catalogCity));
   const resetCatalog = () => { setCatalogQuery(''); setCatalogCity(''); setActivityCategory('All'); };
-  const catalogFilters = (items: {city: string}[], count: number) => <CatalogFilters lang={lang} query={catalogQuery} city={catalogCity} cities={[...new Set([...items.map(item => item.city), ...(catalogCity ? [catalogCity] : [])])]} count={count} onQuery={setCatalogQuery} onCity={setCatalogCity} onReset={resetCatalog} />;
+  const catalogFilters = (items: {city: string}[], count: number) => <>{catalogError && <p role="alert">{lang==='tr'?'İçerik yüklenemedi. Lütfen sayfayı yenileyerek tekrar deneyin.':'Content could not be loaded. Please refresh to retry.'}</p>}<CatalogFilters lang={lang} query={catalogQuery} city={catalogCity} cities={[...new Set([...items.map(item => item.city), ...(catalogCity ? [catalogCity] : [])])]} count={count} onQuery={setCatalogQuery} onCity={setCatalogCity} onReset={resetCatalog} /></>;
 
 
-  const [nearbyPlacesList, setNearbyPlacesList] = useState([
-    { id: 'n1', name: 'Nöbetçi Eczane (24/7 Duty Pharmacy)', dist: '180m', addr: 'Sıraselviler Cad. No:24, Taksim', cat: 'Pharmacy', phone: '+90 212 244 10 10', is247: true },
-    { id: 'n2', name: 'Taksim Tourist Police Desk', dist: '320m', addr: 'Taksim Square Subway Entrance', cat: 'Police', phone: '+90 212 527 45 03', is247: true },
-    { id: 'n3', name: 'Ziraat & Garanti Contactless Multi-ATM', dist: '90m', addr: 'İstiklal Cad. No:45', cat: 'ATM', phone: '112', is247: true },
-    { id: 'n4', name: 'Taksim Gümüşsuyu Taxi Stand', dist: '140m', addr: 'Gümüşsuyu Cad. Taksim', cat: 'Taxi', phone: '+90 212 249 05 05', is247: true }
-  ]);
 
 
-  const currentCityInfo = citiesDetailedData[selectedCityName] || citiesDetailedData['İstanbul'];
+  const regionalCity=cityGuides.find(city=>city.name===selectedCityName);
+  const baseCityInfo = regionalCity ? {
+    name:regionalCity.name,tagline:regionalCity.focus,
+    coverImage:cityImages[regionalCity.slug as keyof typeof cityImages].src,
+    lat:regionalCity.lat,lng:regionalCity.lng,
+    localTip:regionalCity.description[lang==='tr'?'tr':'en'],
+    highlights:regionalCity.places.map(name=>({name,detail:''})),
+  } : citiesDetailedData[selectedCityName] || citiesDetailedData['İstanbul'];
+  const currentCityInfo=lang==='zh'?{...baseCityInfo,...citiesZh[selectedCityName as keyof typeof citiesZh]}:baseCityInfo;
 
   if (!supabaseConfigured && !mockDataEnabled) {
     return (
@@ -1290,8 +1286,11 @@ export default function App() {
                     type="text"
                     value={taxiOriginText}
                     onChange={(e) => {
+                      taxiOriginLookupId.current++;
+                      setIsTaxiLocating(false);
                       setTaxiOriginText(e.target.value);
                       setTaxiOriginCoords(null);
+                      setDetectedTaxiCity('');
                     }}
                     placeholder="Search departure place (e.g. Taksim, IST Airport)..."
                     className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] font-medium focus:outline-none focus:border-[#087FFF]"
@@ -1302,11 +1301,12 @@ export default function App() {
                         <div
                           key={idx}
                           onClick={() => {
+                            taxiOriginLookupId.current++;
+                            setIsTaxiLocating(false);
                             setTaxiOriginText(s.label);
                             setTaxiOriginCoords({ lat: s.lat, lng: s.lng });
                             setTaxiOriginSuggs([]);
-                            const detected = autoDetectCityFromCoords(s.lat, s.lng);
-                            setDetectedTaxiCity(detected);
+                            setDetectedTaxiCity(s.city || '');
                           }}
                           className="p-2.5 hover:bg-sky-50 cursor-pointer text-[12px] text-slate-700 border-b border-slate-100 last:border-none"
                         >
@@ -1359,18 +1359,20 @@ export default function App() {
                   {isTaxiRouting ? <Loader2 className="w-4 h-4 animate-spin" /> : page('calculate')}
                 </button>
 
+                {taxiRouteError && <p role="alert" className="text-sm text-red-700 bg-red-50 rounded-xl p-3">{taxiRouteError}</p>}
                 {taxiRouteResult && fareCalculation && (
                   <div className="pt-3 border-t border-slate-100 space-y-3">
                     <div className="p-4 bg-sky-50 rounded-2xl border border-sky-100 space-y-2">
-                      <div className="reference-estimate-title"><span>{page('estimate')}</span><span aria-hidden="true">🚕</span></div>
+                      <div className="reference-estimate-title"><span>{taxiEstimateCopy[lang][0]}</span><span aria-hidden="true">🚕</span></div>
                       <span className="text-3xl font-black text-slate-900">
-                        ₺{fareCalculation.minFare} – ₺{fareCalculation.maxFare}
+                        {taxiDetailsCopy[lang][1]} ₺{(fareCalculation.hasRange?Math.floor(fareCalculation.amount):Math.round(fareCalculation.amount)).toLocaleString(lang)}{fareCalculation.hasRange?` – ₺${Math.ceil(fareCalculation.upper).toLocaleString(lang)}`:''}
                       </span>
-                      <span className="text-[10px] text-slate-500 block">{taxiTariffs[taxiClass.toUpperCase()]?.source ?? istanbulReferenceTariff.source}. Estimate only; meter and traffic can change the final amount.</span>
+                      <span className="text-[11px] text-slate-500 block">{taxiEstimateCopy[lang][1]}</span>
+                      <details className="text-xs text-slate-500"><summary className="cursor-pointer min-h-8">{taxiDetailsCopy[lang][0]}</summary><p>{fareCalculation.source}</p><p>{taxiDetailsCopy[lang][2]}</p></details>
                       <div className="grid grid-cols-2 gap-2 pt-2 border-t border-sky-200/60 text-[12px]">
                         <div>
                           <span className="text-slate-400 block text-[10px]">{page('distance')}</span>
-                          <span className="font-bold text-slate-800">{taxiRouteResult.distanceKm} km</span>
+                          <span className="font-bold text-slate-800">{taxiRouteResult.distanceKm.toLocaleString(lang,{maximumFractionDigits:1})} km</span>
                         </div>
                         <div>
                           <span className="text-slate-400 block text-[10px]">{page('duration')}</span>
@@ -1399,7 +1401,7 @@ export default function App() {
         {/* ====================================================================
             PAGE 4: TOPLU TAŞIMA (TRANSIT - DÜZELTİLDİ VE AKTİF)
         ==================================================================== */}
-        {activeTab === 'transit' && <TransitPlanner lang={lang} />}
+        {activeTab === 'transit' && <Suspense fallback={<main aria-busy="true" className="p-8">SafeInTürkiye…</main>}><TransitPlanner lang={lang} /></Suspense>}
 
         {/* ====================================================================
             PAGE 5: EXCHANGE (CANLI KURLAR + YAKINLARDAKİ DÖVİZCİLER - DÜZELTİLDİ)
@@ -1640,7 +1642,7 @@ export default function App() {
         {/* ====================================================================
             PAGE 11: ROLE-PROTECTED ADMIN CMS
         ==================================================================== */}
-        {activeTab === 'admin' && isStaff && <ContentAdmin role={role} />}
+        {activeTab === 'admin' && isStaff && <Suspense fallback={<main aria-busy="true" className="p-8">SafeInTürkiye…</main>}><ContentAdmin role={role} /></Suspense>}
         {activeTab === 'admin' && !isStaff && <main className="max-w-xl mx-auto p-6 my-8 rounded-2xl bg-white border border-sky-100 space-y-4"><h1 className="text-xl font-bold">Yönetici girişi</h1><p>{session ? 'Hesabınızın içerik yönetimi yetkisi kontrol ediliyor. Yetki verilmemişse bu bölüm açılamaz.' : 'Yönetim panelini açmak için yetkili hesabınızla giriş yapın.'}</p>{!session && <button onClick={() => setAuthModalOpen(true)} className="bg-sky-600 text-white rounded-xl px-5 py-3">Giriş yap</button>}</main>}
 
       </div>
@@ -1703,12 +1705,12 @@ export default function App() {
               </button>
             </div>
             <img src={siteLogo} alt="SafeInTürkiye" className="w-48 h-auto object-contain mx-auto sm:mx-0 my-3" />
-            <p>{footerCopy[lang].source}</p><PhotoCredits />
+            <p>{footerCopy[lang].source}</p><PhotoCredits lang={lang} />
           </div>
           <div className="flex items-center gap-4 text-[11px] font-bold text-[#087FFF]">
-            <a href="#" className="hover:underline">{footerCopy[lang].privacy}</a>
+            <span aria-disabled="true">{footerCopy[lang].privacy}</span>
             <span>•</span>
-            <a href="#" className="hover:underline">{footerCopy[lang].terms}</a>
+            <span aria-disabled="true">{footerCopy[lang].terms}</span>
             <span>•</span>
             <span>{footerCopy[lang].rights}</span>
           </div>

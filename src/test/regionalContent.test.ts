@@ -3,6 +3,8 @@ import {findCityGuide} from '../lib/cityNavigation';
 import {curatedDirectory} from '../lib/directory';
 import cities from '../data/cityGuides.json';
 import photos from '../lib/placePhotos.json';
+import reviewed from '../lib/reviewedPhotos.json';
+import publication from '../data/photoPublication.json';
 describe('regional content',()=>{
  it('resolves destination aliases without hijacking generic searches',()=>{
   expect(findCityGuide('Bodrum')?.slug).toBe('mugla');
@@ -11,10 +13,14 @@ describe('regional content',()=>{
   expect(findCityGuide('tarih')).toBeUndefined();
   expect(findCityGuide('')).toBeUndefined();
  });
- it('has at least three sourced hotels and activities per new city',()=>{
-  for(const city of cities)for(const kind of ['hotels','activities']){
-   expect(curatedDirectory.filter(entry=>entry.city===city.name&&entry.kind===kind).length).toBeGreaterThanOrEqual(3);
+ it('publishes only the photo-approved catalog instead of padding city quotas',()=>{
+  expect(curatedDirectory.map(e=>e.id).sort()).toEqual(Object.keys(publication.galleries).sort());
+  for(const entry of curatedDirectory)for(const id of entry.gallery){
+   expect(reviewed).toHaveProperty(id);
+   expect(reviewed[id as keyof typeof reviewed].rightsStatus).toBe('verified-open');
   }
+  for(const city of cities)expect(curatedDirectory.some(e=>e.city===city.name&&e.kind==='activities')).toBe(true);
+  expect(curatedDirectory.some(e=>e.slug==='colossae-pamukkale')).toBe(false);
  });
  it('provides licensed regional photographs with listing thumbnails',()=>{
   for(const id of ['antalya',...cities.map(city=>city.slug)]){

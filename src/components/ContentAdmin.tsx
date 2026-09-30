@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { requireSupabase } from '../lib/supabase';
+import { photoCuratedCatalog } from '../lib/directory';
 
 const sections = {
   hotels: ['Oteller', 'Otel adı', 'Oda türleri, giriş/çıkış saatleri, tesis olanakları, erişilebilirlik ve iptal koşulları.'],
@@ -58,6 +59,7 @@ export default function ContentAdmin({ role }: { role: string }) {
   };
   const field = 'w-full rounded-xl border border-sky-100 bg-white px-3 py-2 text-sm';
   return <main className="max-w-6xl mx-auto p-4 sm:p-6 space-y-5 pb-24">
+    {photoCuratedCatalog&&<p role="status" className="p-3 bg-amber-50 rounded-xl">Bu önizleme, fotoğrafı ve kullanım hakkı kontrol edilmiş editoryal kataloğu kullanıyor. Burada kaydedilen CMS değişiklikleri bu kataloğa otomatik eklenmez. Veritabanındaki mevcut kayıtlar korunuyor.</p>}
     <header><h1 className="text-2xl font-bold">İçerik yönetimi</h1><p className="text-sm text-slate-600 mt-2">Gerçek veritabanı kayıtları · {role}. Yayımlanan kayıtları canlı site de okuyabilir; denemeleri taslak kaydedin.</p></header>
     <section className="p-4 rounded-xl border border-sky-100 bg-white"><h2 className="font-bold">Ziyaretçi istatistikleri</h2><p className="text-sm text-slate-600 my-2">Ziyaretçi, görüntülenme, ülke, cihaz ve yönlendiren kaynak bilgilerini Vercel Analytics ekranında görebilirsiniz. Vercel proje erişimi gerekir. Ölçüm kurulmadan önceki ziyaretler geriye dönük hesaplanamaz. Ücretsiz planda bölüm tıklamaları ölçülmez.</p><a href="https://vercel.com/eli-1196/safe-in-turkiye/analytics" target="_blank" rel="noopener noreferrer" className="text-sky-700 underline font-semibold">İstatistikleri aç ↗</a></section>
     {!writable && <p className="p-3 bg-amber-50 rounded-xl">Hesabınız görüntüleme yetkisine sahip. Düzenleme için editör veya yönetici rolü gerekir.</p>}

@@ -3,8 +3,33 @@ import handler from '../../api/nearby';
 function response() { return {status:vi.fn().mockReturnThis(),setHeader:vi.fn(),json:vi.fn()}; }
 afterEach(()=>vi.unstubAllGlobals());
 describe('nearby server',()=>{
+ it('uses only the primary provider on success and preserves genuine zero results',async()=>{
+  const fetchMock=vi.fn().mockResolvedValue({ok:true,json:async()=>({elements:[]})});vi.stubGlobal('fetch',fetchMock);
+  const res=response();await handler({method:'GET',url:'/api/nearby?lat=39.99&lng=32.9&kind=essential',headers:{'x-forwarded-for':'primary-success'}},res);
+  expect(fetchMock).toHaveBeenCalledTimes(1);expect(res.json).toHaveBeenCalledWith({elements:[]});
+ });
+ it('continues to the backup after a primary timeout',async()=>{
+  const fetchMock=vi.fn().mockRejectedValueOnce(new DOMException('Timed out','TimeoutError')).mockResolvedValueOnce({ok:true,json:async()=>({elements:[]})});vi.stubGlobal('fetch',fetchMock);
+  const res=response();await handler({method:'GET',url:'/api/nearby?lat=39.98&lng=32.9&kind=essential',headers:{'x-forwarded-for':'primary-timeout'}},res);
+  expect(fetchMock).toHaveBeenCalledTimes(2);expect(res.status).toHaveBeenCalledWith(200);
+ });
+ it('never sends raw upstream failures or invented records to visitors',async()=>{
+  vi.stubGlobal('fetch',vi.fn().mockRejectedValue(new Error('RAW_API_SECRET_DIAGNOSTIC')));
+  const res=response();await handler({method:'GET',url:'/api/nearby?lat=39.97&lng=32.9&kind=essential',headers:{'x-forwarded-for':'all-failed'}},res);
+  expect(res.status).toHaveBeenCalledWith(503);expect(res.json).toHaveBeenCalledWith({error:'PLACE_PROVIDER_UNAVAILABLE'});
+ });
+ it('rejects nonnumeric and out-of-range coordinates',async()=>{
+  const fetchMock=vi.fn();vi.stubGlobal('fetch',fetchMock);
+  for(const lat of ['abc','91','Infinity']){const res=response();await handler({method:'GET',url:`/api/nearby?lat=${lat}&lng=29&kind=exchange`,headers:{}},res);expect(res.status).toHaveBeenCalledWith(400);}
+  expect(fetchMock).not.toHaveBeenCalled();
+ });
+ it('rejects blank coordinates without calling a provider',async()=>{
+  const fetchMock=vi.fn();vi.stubGlobal('fetch',fetchMock);
+  const res=response();await handler({method:'GET',url:'/api/nearby?lat=&lng=29&kind=exchange',headers:{}},res);
+  expect(res.status).toHaveBeenCalledWith(400);expect(fetchMock).not.toHaveBeenCalled();
+ });
  it('falls back to Photon when Overpass providers fail',async()=>{
-  vi.stubGlobal('fetch',vi.fn().mockResolvedValueOnce({ok:false}).mockResolvedValueOnce({ok:false}).mockResolvedValueOnce({ok:false}).mockResolvedValueOnce({ok:true,json:async()=>({features:[]})}));
+  vi.stubGlobal('fetch',vi.fn().mockResolvedValueOnce({ok:false}).mockResolvedValueOnce({ok:false}).mockResolvedValueOnce({ok:true,json:async()=>({features:[]})}));
   const res=response();await handler({method:'GET',url:'/api/nearby?lat=41&lng=29&kind=exchange',headers:{'x-forwarded-for':'test-photon'}},res);
   expect(res.status).toHaveBeenCalledWith(200);expect(res.json).toHaveBeenCalledWith({provider:'Photon',elements:[]});
  });
@@ -29,7 +54,7 @@ describe('nearby server',()=>{
   const req={method:'GET',url:'/api/nearby?lat=40.99&lng=29.1&kind=exchange',headers:{'x-forwarded-for':'cache-test'}};
   await Promise.all([handler(req,response()),handler(req,response())]);
   await handler(req,response());
-  expect(mock).toHaveBeenCalledTimes(3);
+  expect(mock).toHaveBeenCalledTimes(1);
  });
  it('allows exchange and essentials consecutively for the same visitor',async()=>{
   vi.stubGlobal('fetch',vi.fn().mockResolvedValue({ok:true,json:async()=>({elements:[]})}));

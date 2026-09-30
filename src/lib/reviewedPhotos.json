@@ -1,0 +1,1838 @@
+{
+  "izmir": {
+    "src": "/photos/reviewed/izmir-1280.webp",
+    "width": 1280,
+    "height": 1280,
+    "thumbnail": "/photos/reviewed/izmir-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/izmir-320.webp",
+        "width": 320,
+        "height": 320
+      },
+      {
+        "src": "/photos/reviewed/izmir-640.webp",
+        "width": 640,
+        "height": 640
+      },
+      {
+        "src": "/photos/reviewed/izmir-1280.webp",
+        "width": 1280,
+        "height": 1280
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Izmir_square_clock_tower.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "User:Sailko",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "attributionRequired": true,
+    "retrievedAt": "2026-09-28",
+    "rightsStatus": "verified-open",
+    "alt": "Izmir square clock tower",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2013-07-04 08:44:27"
+  },
+  "ankara": {
+    "src": "/photos/reviewed/ankara-1280.webp",
+    "width": 1280,
+    "height": 853,
+    "thumbnail": "/photos/reviewed/ankara-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/ankara-320.webp",
+        "width": 320,
+        "height": 213
+      },
+      {
+        "src": "/photos/reviewed/ankara-640.webp",
+        "width": 640,
+        "height": 427
+      },
+      {
+        "src": "/photos/reviewed/ankara-1280.webp",
+        "width": 1280,
+        "height": 853
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Ataturk%27s_Mausoleum_(6225341313).jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "William Neuheisel from DC, US",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "attributionRequired": true,
+    "retrievedAt": "2026-09-28",
+    "rightsStatus": "verified-open",
+    "alt": "Ataturk's Mausoleum (6225341313)",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2011-10-07 21:36"
+  },
+  "antalya": {
+    "src": "/photos/reviewed/antalya-1280.webp",
+    "width": 1280,
+    "height": 964,
+    "thumbnail": "/photos/reviewed/antalya-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/antalya-320.webp",
+        "width": 320,
+        "height": 241
+      },
+      {
+        "src": "/photos/reviewed/antalya-640.webp",
+        "width": 640,
+        "height": 482
+      },
+      {
+        "src": "/photos/reviewed/antalya-1280.webp",
+        "width": 1280,
+        "height": 964
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:View_of_Konyaalt%C4%B1_Beach_and_Beyda%C4%9Flar%C4%B1_Mountains,_Antalya.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "FingerWiki",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "attributionRequired": true,
+    "retrievedAt": "2026-09-28",
+    "rightsStatus": "verified-open",
+    "alt": "View of Konyaaltı Beach and Beydağları Mountains, Antalya",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2023-04-19 17:23:05"
+  },
+  "h2": {
+    "src": "/photos/reviewed/h2-1280.webp",
+    "width": 1280,
+    "height": 576,
+    "thumbnail": "/photos/reviewed/h2-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/h2-320.webp",
+        "width": 320,
+        "height": 144
+      },
+      {
+        "src": "/photos/reviewed/h2-640.webp",
+        "width": 640,
+        "height": 288
+      },
+      {
+        "src": "/photos/reviewed/h2-1280.webp",
+        "width": 1280,
+        "height": 576
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Swissotel_B%C3%BCy%C3%BCk_EFES.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Satirdan kahraman",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "attributionRequired": true,
+    "retrievedAt": "2026-09-28",
+    "rightsStatus": "verified-open",
+    "alt": "Swissotel Büyük EFES",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2025-02-24 15:08:55"
+  },
+  "h3": {
+    "src": "/photos/reviewed/h3-1280.webp",
+    "width": 1280,
+    "height": 854,
+    "thumbnail": "/photos/reviewed/h3-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/h3-320.webp",
+        "width": 320,
+        "height": 213
+      },
+      {
+        "src": "/photos/reviewed/h3-640.webp",
+        "width": 640,
+        "height": 427
+      },
+      {
+        "src": "/photos/reviewed/h3-1280.webp",
+        "width": 1280,
+        "height": 854
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Ciragan_Palace_2014.JPG",
+    "sourceName": "Wikimedia Commons",
+    "author": "Wolfgang Moroder",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "attributionRequired": true,
+    "retrievedAt": "2026-09-28",
+    "rightsStatus": "verified-open",
+    "alt": "Ciragan Palace 2014",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2014-04-19"
+  },
+  "a1": {
+    "src": "/photos/reviewed/a1-1280.webp",
+    "width": 1280,
+    "height": 853,
+    "thumbnail": "/photos/reviewed/a1-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/a1-320.webp",
+        "width": 320,
+        "height": 213
+      },
+      {
+        "src": "/photos/reviewed/a1-640.webp",
+        "width": 640,
+        "height": 427
+      },
+      {
+        "src": "/photos/reviewed/a1-1280.webp",
+        "width": 1280,
+        "height": 853
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:G%C3%B6reme_Open_Air_Museum_01.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Bernard Gagnon",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "attributionRequired": true,
+    "retrievedAt": "2026-09-28",
+    "rightsStatus": "verified-open",
+    "alt": "Göreme Open Air Museum 01",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2014-05-20"
+  },
+  "a2": {
+    "src": "/photos/reviewed/a2-1280.webp",
+    "width": 1280,
+    "height": 720,
+    "thumbnail": "/photos/reviewed/a2-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/a2-320.webp",
+        "width": 320,
+        "height": 180
+      },
+      {
+        "src": "/photos/reviewed/a2-640.webp",
+        "width": 640,
+        "height": 360
+      },
+      {
+        "src": "/photos/reviewed/a2-1280.webp",
+        "width": 1280,
+        "height": 720
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Anadolu_Medeniyetleri_M%C3%BCzesi.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "José Luis Filpo Cabana",
+    "license": "CC BY 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/3.0",
+    "attributionRequired": true,
+    "retrievedAt": "2026-09-28",
+    "rightsStatus": "verified-open",
+    "alt": "Anadolu Medeniyetleri Müzesi",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2008-07-06"
+  },
+  "a3": {
+    "src": "/photos/reviewed/a3-1280.webp",
+    "width": 1280,
+    "height": 571,
+    "thumbnail": "/photos/reviewed/a3-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/a3-320.webp",
+        "width": 320,
+        "height": 143
+      },
+      {
+        "src": "/photos/reviewed/a3-640.webp",
+        "width": 640,
+        "height": 285
+      },
+      {
+        "src": "/photos/reviewed/a3-1280.webp",
+        "width": 1280,
+        "height": 571
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Topkapi_Palace,_Istanbul.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Rraj89",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "attributionRequired": true,
+    "retrievedAt": "2026-09-28",
+    "rightsStatus": "verified-open",
+    "alt": "Topkapi Palace, Istanbul",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2014-08-27 14:28:15"
+  },
+  "modern": {
+    "src": "/photos/reviewed/modern-1280.webp",
+    "width": 1280,
+    "height": 960,
+    "thumbnail": "/photos/reviewed/modern-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/modern-320.webp",
+        "width": 320,
+        "height": 240
+      },
+      {
+        "src": "/photos/reviewed/modern-640.webp",
+        "width": 640,
+        "height": 480
+      },
+      {
+        "src": "/photos/reviewed/modern-1280.webp",
+        "width": 1280,
+        "height": 960
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:%C4%B0stanbul_Modern_2023.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Antoloji",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "attributionRequired": false,
+    "retrievedAt": "2026-09-28",
+    "rightsStatus": "verified-open",
+    "alt": "İstanbul Modern 2023",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2023-08-09 15:08:00"
+  },
+  "erciyes": {
+    "src": "/photos/reviewed/erciyes-1280.webp",
+    "width": 1280,
+    "height": 905,
+    "thumbnail": "/photos/reviewed/erciyes-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/erciyes-320.webp",
+        "width": 320,
+        "height": 226
+      },
+      {
+        "src": "/photos/reviewed/erciyes-640.webp",
+        "width": 640,
+        "height": 452
+      },
+      {
+        "src": "/photos/reviewed/erciyes-1280.webp",
+        "width": 1280,
+        "height": 905
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:KAYAK_ERC%C4%B0YES_.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Hmyr2021",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "attributionRequired": true,
+    "retrievedAt": "2026-09-28",
+    "rightsStatus": "verified-open",
+    "alt": "KAYAK ERCİYES ",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2018-12-15 13:31:39"
+  },
+  "mugla": {
+    "src": "/photos/reviewed/mugla-1280.webp",
+    "width": 1280,
+    "height": 796,
+    "thumbnail": "/photos/reviewed/mugla-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/mugla-320.webp",
+        "width": 320,
+        "height": 199
+      },
+      {
+        "src": "/photos/reviewed/mugla-640.webp",
+        "width": 640,
+        "height": 398
+      },
+      {
+        "src": "/photos/reviewed/mugla-1280.webp",
+        "width": 1280,
+        "height": 796
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Bodrum_castle2.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Ad Meskens",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "attributionRequired": true,
+    "retrievedAt": "2026-09-28",
+    "rightsStatus": "verified-open",
+    "alt": "Bodrum castle2",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2008-07"
+  },
+  "aydin": {
+    "src": "/photos/reviewed/aydin-1280.webp",
+    "width": 1280,
+    "height": 854,
+    "thumbnail": "/photos/reviewed/aydin-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/aydin-320.webp",
+        "width": 320,
+        "height": 213
+      },
+      {
+        "src": "/photos/reviewed/aydin-640.webp",
+        "width": 640,
+        "height": 427
+      },
+      {
+        "src": "/photos/reviewed/aydin-1280.webp",
+        "width": 1280,
+        "height": 854
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:G%C3%BCvercinada_Castle,_Ku%C5%9Fadas%C4%B1.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Koray",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "attributionRequired": true,
+    "retrievedAt": "2026-09-28",
+    "rightsStatus": "verified-open",
+    "alt": "Güvercinada Castle, Kuşadası",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2026-03-29 15:09:39"
+  },
+  "denizli": {
+    "src": "/photos/reviewed/denizli-1280.webp",
+    "width": 1280,
+    "height": 960,
+    "thumbnail": "/photos/reviewed/denizli-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/denizli-320.webp",
+        "width": 320,
+        "height": 240
+      },
+      {
+        "src": "/photos/reviewed/denizli-640.webp",
+        "width": 640,
+        "height": 480
+      },
+      {
+        "src": "/photos/reviewed/denizli-1280.webp",
+        "width": 1280,
+        "height": 960
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Denizli_-_Pamukkale_Travertines.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Blacksk1912",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "attributionRequired": true,
+    "retrievedAt": "2026-09-28",
+    "rightsStatus": "verified-open",
+    "alt": "Denizli - Pamukkale Travertines",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2023-04-28 15:35:20"
+  },
+  "trabzon": {
+    "src": "/photos/reviewed/trabzon-1280.webp",
+    "width": 1280,
+    "height": 960,
+    "thumbnail": "/photos/reviewed/trabzon-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/trabzon-320.webp",
+        "width": 320,
+        "height": 240
+      },
+      {
+        "src": "/photos/reviewed/trabzon-640.webp",
+        "width": 640,
+        "height": 480
+      },
+      {
+        "src": "/photos/reviewed/trabzon-1280.webp",
+        "width": 1280,
+        "height": 960
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Sumela_Monastery!.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Xayala Mammadli",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "attributionRequired": true,
+    "retrievedAt": "2026-09-28",
+    "rightsStatus": "verified-open",
+    "alt": "Sumela Monastery!",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2025-10-28"
+  },
+  "konya": {
+    "src": "/photos/reviewed/konya-1280.webp",
+    "width": 1280,
+    "height": 800,
+    "thumbnail": "/photos/reviewed/konya-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/konya-320.webp",
+        "width": 320,
+        "height": 200
+      },
+      {
+        "src": "/photos/reviewed/konya-640.webp",
+        "width": 640,
+        "height": 400
+      },
+      {
+        "src": "/photos/reviewed/konya-1280.webp",
+        "width": 1280,
+        "height": 800
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Maulana_mausoleum_konya.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Fabienkhan",
+    "license": "CC BY-SA 2.5",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.5",
+    "attributionRequired": true,
+    "retrievedAt": "2026-09-28",
+    "rightsStatus": "verified-open",
+    "alt": "Maulana mausoleum konya",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "Summer 2008date QS:P,+2008-00-00T00:00:00Z/9,P4241,Q40720564"
+  },
+  "bursa": {
+    "src": "/photos/reviewed/bursa-1280.webp",
+    "width": 1280,
+    "height": 854,
+    "thumbnail": "/photos/reviewed/bursa-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/bursa-320.webp",
+        "width": 320,
+        "height": 213
+      },
+      {
+        "src": "/photos/reviewed/bursa-640.webp",
+        "width": 640,
+        "height": 427
+      },
+      {
+        "src": "/photos/reviewed/bursa-1280.webp",
+        "width": 1280,
+        "height": 854
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Uludag.JPG",
+    "sourceName": "Wikimedia Commons",
+    "author": "Julian Nyča",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "attributionRequired": true,
+    "retrievedAt": "2026-09-28",
+    "rightsStatus": "verified-open",
+    "alt": "Uludag",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2014-11-01 13:11:28"
+  },
+  "koza-han": {
+    "src": "/photos/reviewed/koza-han-1280.webp",
+    "width": 1280,
+    "height": 960,
+    "thumbnail": "/photos/reviewed/koza-han-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/koza-han-320.webp",
+        "width": 320,
+        "height": 240
+      },
+      {
+        "src": "/photos/reviewed/koza-han-640.webp",
+        "width": 640,
+        "height": 480
+      },
+      {
+        "src": "/photos/reviewed/koza-han-1280.webp",
+        "width": 1280,
+        "height": 960
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Koza_Han.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Ibra~28",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "attributionRequired": true,
+    "retrievedAt": "2026-09-28",
+    "rightsStatus": "verified-open",
+    "alt": "Koza Han",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2010-10-25 15:37:11"
+  },
+  "karatay-tile-museum": {
+    "src": "/photos/reviewed/karatay-tile-museum-1280.webp",
+    "width": 1280,
+    "height": 663,
+    "thumbnail": "/photos/reviewed/karatay-tile-museum-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/karatay-tile-museum-320.webp",
+        "width": 320,
+        "height": 166
+      },
+      {
+        "src": "/photos/reviewed/karatay-tile-museum-640.webp",
+        "width": 640,
+        "height": 332
+      },
+      {
+        "src": "/photos/reviewed/karatay-tile-museum-1280.webp",
+        "width": 1280,
+        "height": 663
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Karatay_Madrasa,_Konya,_Turkey_09.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Murat Özsoy 1958",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "attributionRequired": true,
+    "retrievedAt": "2026-09-28",
+    "rightsStatus": "verified-open",
+    "alt": "Karatay Madrasa, Konya, Turkey 09",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2019-11-26"
+  },
+  "beyti-interior": {
+    "src": "/photos/reviewed/beyti-interior-1280.webp",
+    "width": 1280,
+    "height": 960,
+    "thumbnail": "/photos/reviewed/beyti-interior-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/beyti-interior-320.webp",
+        "width": 320,
+        "height": 240
+      },
+      {
+        "src": "/photos/reviewed/beyti-interior-640.webp",
+        "width": 640,
+        "height": 480
+      },
+      {
+        "src": "/photos/reviewed/beyti-interior-1280.webp",
+        "width": 1280,
+        "height": 960
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Beyti_Istanbul.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Nicoleon",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "attributionRequired": false,
+    "retrievedAt": "2026-09-28",
+    "rightsStatus": "verified-open",
+    "alt": "Dining room at Beyti restaurant in Florya, Istanbul",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "Taken on 18 February 2025, 21:47:35"
+  },
+  "kale-exterior": {
+    "src": "/photos/reviewed/kale-exterior-1280.webp",
+    "width": 1280,
+    "height": 720,
+    "thumbnail": "/photos/reviewed/kale-exterior-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/kale-exterior-320.webp",
+        "width": 320,
+        "height": 180
+      },
+      {
+        "src": "/photos/reviewed/kale-exterior-640.webp",
+        "width": 640,
+        "height": 360
+      },
+      {
+        "src": "/photos/reviewed/kale-exterior-1280.webp",
+        "width": 1280,
+        "height": 720
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Kale_cafe_%26_Restaurant.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Jwslubbock",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "attributionRequired": true,
+    "retrievedAt": "2026-09-28",
+    "rightsStatus": "verified-open",
+    "alt": "Kale Cafe and Restaurant in Rumelihisarı, Istanbul",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2018-05-01"
+  },
+  "pera-exterior": {
+    "src": "/photos/reviewed/pera-exterior-1280.webp",
+    "width": 1280,
+    "height": 799,
+    "thumbnail": "/photos/reviewed/pera-exterior-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/pera-exterior-320.webp",
+        "width": 320,
+        "height": 200
+      },
+      {
+        "src": "/photos/reviewed/pera-exterior-640.webp",
+        "width": 640,
+        "height": 400
+      },
+      {
+        "src": "/photos/reviewed/pera-exterior-1280.webp",
+        "width": 1280,
+        "height": 799
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Hotel_Exterior_2.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Canerol86",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "attributionRequired": true,
+    "retrievedAt": "2026-09-28",
+    "rightsStatus": "verified-open",
+    "alt": "Exterior of Pera Palace Hotel in Istanbul",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2011-10-05"
+  },
+  "pera-domes": {
+    "src": "/photos/reviewed/pera-domes-1280.webp",
+    "width": 1280,
+    "height": 1451,
+    "thumbnail": "/photos/reviewed/pera-domes-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/pera-domes-320.webp",
+        "width": 320,
+        "height": 363
+      },
+      {
+        "src": "/photos/reviewed/pera-domes-640.webp",
+        "width": 640,
+        "height": 726
+      },
+      {
+        "src": "/photos/reviewed/pera-domes-1280.webp",
+        "width": 1280,
+        "height": 1451
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Pera_Palas_domes.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Francesco.Brocchi",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "attributionRequired": true,
+    "retrievedAt": "2026-09-28",
+    "rightsStatus": "verified-open",
+    "alt": "Interior domes at Pera Palace Hotel in Istanbul",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2011-07-31"
+  },
+  "swissotel-facade": {
+    "src": "/photos/reviewed/swissotel-facade-1280.webp",
+    "width": 1280,
+    "height": 960,
+    "thumbnail": "/photos/reviewed/swissotel-facade-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/swissotel-facade-320.webp",
+        "width": 320,
+        "height": 240
+      },
+      {
+        "src": "/photos/reviewed/swissotel-facade-640.webp",
+        "width": 640,
+        "height": 480
+      },
+      {
+        "src": "/photos/reviewed/swissotel-facade-1280.webp",
+        "width": 1280,
+        "height": 960
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Swiss%C3%B4tel_B%C3%BCy%C3%BCk_Efes,_2008.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "ugur onder bozkurt",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "rightsStatus": "verified-open",
+    "retrievedAt": "2026-09-28",
+    "alt": "Swissôtel Büyük Efes exterior in İzmir, photographed in 2008",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2008-04-10 09:49:31",
+    "illustrative": false
+  },
+  "izmir-marriott": {
+    "src": "/photos/reviewed/izmir-marriott-1280.webp",
+    "width": 1280,
+    "height": 720,
+    "thumbnail": "/photos/reviewed/izmir-marriott-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/izmir-marriott-320.webp",
+        "width": 320,
+        "height": 180
+      },
+      {
+        "src": "/photos/reviewed/izmir-marriott-640.webp",
+        "width": 640,
+        "height": 360
+      },
+      {
+        "src": "/photos/reviewed/izmir-marriott-1280.webp",
+        "width": 1280,
+        "height": 720
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:%C4%B0zmir_Marriott_Hotel.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Samizambak",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "rightsStatus": "verified-open",
+    "retrievedAt": "2026-09-28",
+    "alt": "İzmir Marriott Hotel exterior",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2024-04-25",
+    "illustrative": false
+  },
+  "izmir-hyatt": {
+    "src": "/photos/reviewed/izmir-hyatt-1280.webp",
+    "width": 1280,
+    "height": 1707,
+    "thumbnail": "/photos/reviewed/izmir-hyatt-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/izmir-hyatt-320.webp",
+        "width": 320,
+        "height": 427
+      },
+      {
+        "src": "/photos/reviewed/izmir-hyatt-640.webp",
+        "width": 640,
+        "height": 854
+      },
+      {
+        "src": "/photos/reviewed/izmir-hyatt-1280.webp",
+        "width": 1280,
+        "height": 1707
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Hyatt_Regency_%C4%B0zmir_01.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "BSRF",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "rightsStatus": "verified-open",
+    "retrievedAt": "2026-09-28",
+    "alt": "Exterior of the hotel now named Grand Hyatt İzmir İstinyePark; photographed under its previous branding",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2022-12-28 22:32:41",
+    "illustrative": false
+  },
+  "ege-palas": {
+    "src": "/photos/reviewed/ege-palas-1280.webp",
+    "width": 1280,
+    "height": 1807,
+    "thumbnail": "/photos/reviewed/ege-palas-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/ege-palas-320.webp",
+        "width": 320,
+        "height": 452
+      },
+      {
+        "src": "/photos/reviewed/ege-palas-640.webp",
+        "width": 640,
+        "height": 904
+      },
+      {
+        "src": "/photos/reviewed/ege-palas-1280.webp",
+        "width": 1280,
+        "height": 1807
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Ege_Palas,_December_2018.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "BSRF",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "rightsStatus": "verified-open",
+    "retrievedAt": "2026-09-28",
+    "alt": "Ege Palas hotel in İzmir, December 2018",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2018-12-07 17:33:29",
+    "illustrative": false
+  },
+  "wyndham-izmir": {
+    "src": "/photos/reviewed/wyndham-izmir-1280.webp",
+    "width": 1200,
+    "height": 1600,
+    "thumbnail": "/photos/reviewed/wyndham-izmir-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/wyndham-izmir-320.webp",
+        "width": 320,
+        "height": 427
+      },
+      {
+        "src": "/photos/reviewed/wyndham-izmir-640.webp",
+        "width": 640,
+        "height": 853
+      },
+      {
+        "src": "/photos/reviewed/wyndham-izmir-1280.webp",
+        "width": 1200,
+        "height": 1600
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Crowne_Plaza_%C4%B0zmir.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Memty at Turkish Wikipedia",
+    "license": "Public domain",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:Crowne_Plaza_%C4%B0zmir.jpg#Licensing",
+    "rightsStatus": "verified-open",
+    "retrievedAt": "2026-09-28",
+    "alt": "Exterior of today's Wyndham Grand İzmir Özdilek, photographed under its former Crowne Plaza branding",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "8 September 2007 (original upload date)",
+    "illustrative": false
+  },
+  "ramada-antalya": {
+    "src": "/photos/reviewed/ramada-antalya-1280.webp",
+    "width": 1280,
+    "height": 850,
+    "thumbnail": "/photos/reviewed/ramada-antalya-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/ramada-antalya-320.webp",
+        "width": 320,
+        "height": 213
+      },
+      {
+        "src": "/photos/reviewed/ramada-antalya-640.webp",
+        "width": 640,
+        "height": 425
+      },
+      {
+        "src": "/photos/reviewed/ramada-antalya-1280.webp",
+        "width": 1280,
+        "height": 850
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Ramada_Plaza_by_Wyndham_Antalya_01.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Insidderr",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "rightsStatus": "verified-open",
+    "retrievedAt": "2026-09-28",
+    "alt": "Ramada Plaza by Wyndham Antalya",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2018-12-31 13:58:37",
+    "illustrative": false
+  },
+  "sealife-antalya": {
+    "src": "/photos/reviewed/sealife-antalya-1280.webp",
+    "width": 1280,
+    "height": 960,
+    "thumbnail": "/photos/reviewed/sealife-antalya-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/sealife-antalya-320.webp",
+        "width": 320,
+        "height": 240
+      },
+      {
+        "src": "/photos/reviewed/sealife-antalya-640.webp",
+        "width": 640,
+        "height": 480
+      },
+      {
+        "src": "/photos/reviewed/sealife-antalya-1280.webp",
+        "width": 1280,
+        "height": 960
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Sealife_Family_Resort_Hotel_01.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Insidderr",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "rightsStatus": "verified-open",
+    "retrievedAt": "2026-09-28",
+    "alt": "SeaLife Family Resort Hotel in Antalya",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2019-07-06 16:59:57",
+    "illustrative": false
+  },
+  "rixos-antalya": {
+    "src": "/photos/reviewed/rixos-antalya-1280.webp",
+    "width": 1200,
+    "height": 1600,
+    "thumbnail": "/photos/reviewed/rixos-antalya-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/rixos-antalya-320.webp",
+        "width": 320,
+        "height": 427
+      },
+      {
+        "src": "/photos/reviewed/rixos-antalya-640.webp",
+        "width": 640,
+        "height": 853
+      },
+      {
+        "src": "/photos/reviewed/rixos-antalya-1280.webp",
+        "width": 1200,
+        "height": 1600
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Rixos_downtown_antalya.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Masamaraqa",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "rightsStatus": "verified-open",
+    "retrievedAt": "2026-09-28",
+    "alt": "Rixos Downtown Antalya",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2024-01-25",
+    "illustrative": false
+  },
+  "alp-pasa": {
+    "src": "/photos/reviewed/alp-pasa-1280.webp",
+    "width": 1280,
+    "height": 851,
+    "thumbnail": "/photos/reviewed/alp-pasa-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/alp-pasa-320.webp",
+        "width": 320,
+        "height": 213
+      },
+      {
+        "src": "/photos/reviewed/alp-pasa-640.webp",
+        "width": 640,
+        "height": 426
+      },
+      {
+        "src": "/photos/reviewed/alp-pasa-1280.webp",
+        "width": 1280,
+        "height": 851
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Alp_Pasa_Boutique_Hotel.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "\"Creator:Ali Akçakaya\"",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "rightsStatus": "verified-open",
+    "retrievedAt": "2026-09-28",
+    "alt": "Alp Paşa hotel in Antalya Kaleiçi",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "Mayıs 2005",
+    "illustrative": false
+  },
+  "lara-barut": {
+    "src": "/photos/reviewed/lara-barut-1280.webp",
+    "width": 1280,
+    "height": 853,
+    "thumbnail": "/photos/reviewed/lara-barut-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/lara-barut-320.webp",
+        "width": 320,
+        "height": 213
+      },
+      {
+        "src": "/photos/reviewed/lara-barut-640.webp",
+        "width": 640,
+        "height": 427
+      },
+      {
+        "src": "/photos/reviewed/lara-barut-1280.webp",
+        "width": 1280,
+        "height": 853
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Barut_Lara_Hotel._Main_building_-_panoramio.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Anton Nikiforov",
+    "license": "CC BY 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/3.0",
+    "rightsStatus": "verified-open",
+    "retrievedAt": "2026-09-28",
+    "alt": "Main building of Lara Barut hotel in Antalya",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "Taken on 29 April 2012",
+    "illustrative": false
+  },
+  "grand-konya": {
+    "src": "/photos/reviewed/grand-konya-1280.webp",
+    "width": 1280,
+    "height": 1928,
+    "thumbnail": "/photos/reviewed/grand-konya-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/grand-konya-320.webp",
+        "width": 320,
+        "height": 482
+      },
+      {
+        "src": "/photos/reviewed/grand-konya-640.webp",
+        "width": 640,
+        "height": 964
+      },
+      {
+        "src": "/photos/reviewed/grand-konya-1280.webp",
+        "width": 1280,
+        "height": 1928
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Rixos_Hotel_in_Konya.JPG",
+    "sourceName": "Wikimedia Commons",
+    "author": "José Luiz",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "rightsStatus": "verified-open",
+    "retrievedAt": "2026-09-28",
+    "alt": "Today's Grand Hotel Konya, photographed under its former Rixos branding",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2011-09-19",
+    "illustrative": false
+  },
+  "kanaat-interior": {
+    "src": "/photos/reviewed/kanaat-interior-1280.webp",
+    "width": 1280,
+    "height": 720,
+    "thumbnail": "/photos/reviewed/kanaat-interior-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/kanaat-interior-320.webp",
+        "width": 320,
+        "height": 180
+      },
+      {
+        "src": "/photos/reviewed/kanaat-interior-640.webp",
+        "width": 640,
+        "height": 360
+      },
+      {
+        "src": "/photos/reviewed/kanaat-interior-1280.webp",
+        "width": 1280,
+        "height": 720
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:%C3%9Csk%C3%BCdar_Kanaat_Lokantas%C4%B1_(34243555222).jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "John Lubbock",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+    "rightsStatus": "verified-open",
+    "retrievedAt": "2026-09-28",
+    "alt": "Interior of Kanaat Lokantası in Üsküdar",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2017-04-30 10:49",
+    "illustrative": false
+  },
+  "sultanahmet-kofte": {
+    "src": "/photos/reviewed/sultanahmet-kofte-1280.webp",
+    "width": 1280,
+    "height": 853,
+    "thumbnail": "/photos/reviewed/sultanahmet-kofte-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/sultanahmet-kofte-320.webp",
+        "width": 320,
+        "height": 213
+      },
+      {
+        "src": "/photos/reviewed/sultanahmet-kofte-640.webp",
+        "width": 640,
+        "height": 427
+      },
+      {
+        "src": "/photos/reviewed/sultanahmet-kofte-1280.webp",
+        "width": 1280,
+        "height": 853
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Sultanahmet_K%C3%B6ftecisi.JPG",
+    "sourceName": "Wikimedia Commons",
+    "author": "Ibrahimferhadli",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "rightsStatus": "verified-open",
+    "retrievedAt": "2026-09-28",
+    "alt": "Tarihi Sultanahmet Köftecisi in Istanbul",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2013-12-16",
+    "illustrative": false
+  },
+  "iskender-bursa": {
+    "src": "/photos/reviewed/iskender-bursa-1280.webp",
+    "width": 1280,
+    "height": 999,
+    "thumbnail": "/photos/reviewed/iskender-bursa-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/iskender-bursa-320.webp",
+        "width": 320,
+        "height": 250
+      },
+      {
+        "src": "/photos/reviewed/iskender-bursa-640.webp",
+        "width": 640,
+        "height": 500
+      },
+      {
+        "src": "/photos/reviewed/iskender-bursa-1280.webp",
+        "width": 1280,
+        "height": 999
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Tarihi_Mavi_D%C3%BCkkan_%C4%B0skender_04.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Derbrauni",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+    "rightsStatus": "verified-open",
+    "retrievedAt": "2026-09-28",
+    "alt": "İskender kebab served at Tarihi Mavi Dükkan İskender in Bursa",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2024-04-26 14:01:26",
+    "illustrative": false
+  },
+  "red-dragon-izmir": {
+    "src": "/photos/reviewed/red-dragon-izmir-1280.webp",
+    "width": 1280,
+    "height": 2844,
+    "thumbnail": "/photos/reviewed/red-dragon-izmir-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/red-dragon-izmir-320.webp",
+        "width": 320,
+        "height": 711
+      },
+      {
+        "src": "/photos/reviewed/red-dragon-izmir-640.webp",
+        "width": 640,
+        "height": 1422
+      },
+      {
+        "src": "/photos/reviewed/red-dragon-izmir-1280.webp",
+        "width": 1280,
+        "height": 2844
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Red_Dragon_%C4%B0zmir.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Satirdan kahraman",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "rightsStatus": "verified-open",
+    "retrievedAt": "2026-09-28",
+    "alt": "Red Dragon restaurant in İzmir",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "24 February 2025 (according to Exif data)",
+    "illustrative": false
+  },
+  "hasanaga-antalya": {
+    "src": "/photos/reviewed/hasanaga-antalya-1280.webp",
+    "width": 1280,
+    "height": 886,
+    "thumbnail": "/photos/reviewed/hasanaga-antalya-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/hasanaga-antalya-320.webp",
+        "width": 320,
+        "height": 222
+      },
+      {
+        "src": "/photos/reviewed/hasanaga-antalya-640.webp",
+        "width": 640,
+        "height": 443
+      },
+      {
+        "src": "/photos/reviewed/hasanaga-antalya-1280.webp",
+        "width": 1280,
+        "height": 886
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Antalya_Restaurant_Hasana%C4%9Fa.JPG",
+    "sourceName": "Wikimedia Commons",
+    "author": "Elelicht",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "rightsStatus": "verified-open",
+    "retrievedAt": "2026-09-28",
+    "alt": "HasanAğa restaurant in Antalya",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2012-06-02 11:57:16",
+    "illustrative": false
+  },
+  "cukur-meyhane": {
+    "src": "/photos/reviewed/cukur-meyhane-1280.webp",
+    "width": 1280,
+    "height": 720,
+    "thumbnail": "/photos/reviewed/cukur-meyhane-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/cukur-meyhane-320.webp",
+        "width": 320,
+        "height": 180
+      },
+      {
+        "src": "/photos/reviewed/cukur-meyhane-640.webp",
+        "width": 640,
+        "height": 360
+      },
+      {
+        "src": "/photos/reviewed/cukur-meyhane-1280.webp",
+        "width": 1280,
+        "height": 720
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:%C3%87ukur_Meyhane_2.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Jwslubbock",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "rightsStatus": "verified-open",
+    "retrievedAt": "2026-09-28",
+    "alt": "Interior of Çukur Meyhane in Beyoğlu",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2018-03-13",
+    "illustrative": false
+  },
+  "cinema-illustration": {
+    "src": "/photos/reviewed/cinema-illustration-1280.webp",
+    "width": 1280,
+    "height": 1707,
+    "thumbnail": "/photos/reviewed/cinema-illustration-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/cinema-illustration-320.webp",
+        "width": 320,
+        "height": 427
+      },
+      {
+        "src": "/photos/reviewed/cinema-illustration-640.webp",
+        "width": 640,
+        "height": 854
+      },
+      {
+        "src": "/photos/reviewed/cinema-illustration-1280.webp",
+        "width": 1280,
+        "height": 1707
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Cinema_seats_in_blue.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Laura Billings from London, UK",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "rightsStatus": "verified-open",
+    "retrievedAt": "2026-09-28",
+    "alt": "Illustrative cinema seating; not a photograph of the listed venue",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2008-01-17 19:48",
+    "illustrative": true
+  },
+  "cinema-wide": {
+    "src": "/photos/reviewed/cinema-wide-1280.webp",
+    "width": 1280,
+    "height": 960,
+    "thumbnail": "/photos/reviewed/cinema-wide-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/cinema-wide-320.webp",
+        "width": 320,
+        "height": 240
+      },
+      {
+        "src": "/photos/reviewed/cinema-wide-640.webp",
+        "width": 640,
+        "height": 480
+      },
+      {
+        "src": "/photos/reviewed/cinema-wide-1280.webp",
+        "width": 1280,
+        "height": 960
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Cinema_Seats_I_(51830912465).jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Eden, Janine and Jim from New York City",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "rightsStatus": "verified-open",
+    "retrievedAt": "2026-09-28",
+    "alt": "Illustrative cinema auditorium; not the listed cinema",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2022-01-18 23:34",
+    "illustrative": true
+  },
+  "hierapolis-theatre": {
+    "src": "/photos/reviewed/hierapolis-theatre-1280.webp",
+    "width": 1280,
+    "height": 849,
+    "thumbnail": "/photos/reviewed/hierapolis-theatre-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/hierapolis-theatre-320.webp",
+        "width": 320,
+        "height": 212
+      },
+      {
+        "src": "/photos/reviewed/hierapolis-theatre-640.webp",
+        "width": 640,
+        "height": 425
+      },
+      {
+        "src": "/photos/reviewed/hierapolis-theatre-1280.webp",
+        "width": 1280,
+        "height": 849
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:The_Roman_theatre,_built_in_the_2nd_century_AD_under_Hadrian_on_the_ruins_of_an_earlier_theatre,_later_renovated_under_Septimius_Severus,_Hierapolis,_Turkey_-_17033619498.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Carole Raddato",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+    "rightsStatus": "verified-open",
+    "retrievedAt": "2026-09-28",
+    "alt": "Roman theatre at Hierapolis, Denizli",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "Taken on 3 April 2015, 12:33:19",
+    "illustrative": false
+  },
+  "laodikeia-ruins": {
+    "src": "/photos/reviewed/laodikeia-ruins-1280.webp",
+    "width": 1280,
+    "height": 1707,
+    "thumbnail": "/photos/reviewed/laodikeia-ruins-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/laodikeia-ruins-320.webp",
+        "width": 320,
+        "height": 427
+      },
+      {
+        "src": "/photos/reviewed/laodikeia-ruins-640.webp",
+        "width": 640,
+        "height": 854
+      },
+      {
+        "src": "/photos/reviewed/laodikeia-ruins-1280.webp",
+        "width": 1280,
+        "height": 1707
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Laodicea_on_the_Lycus,_2021.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Basak",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "rightsStatus": "verified-open",
+    "retrievedAt": "2026-09-28",
+    "alt": "Ancient remains of Laodikeia near Denizli",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "29 October 2021 (according to Exif data)",
+    "illustrative": false
+  },
+  "didyma-temple": {
+    "src": "/photos/reviewed/didyma-temple-1280.webp",
+    "width": 1280,
+    "height": 900,
+    "thumbnail": "/photos/reviewed/didyma-temple-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/didyma-temple-320.webp",
+        "width": 320,
+        "height": 225
+      },
+      {
+        "src": "/photos/reviewed/didyma-temple-640.webp",
+        "width": 640,
+        "height": 450
+      },
+      {
+        "src": "/photos/reviewed/didyma-temple-1280.webp",
+        "width": 1280,
+        "height": 900
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Temple_of_Apollo,_Didyma_01.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Bernard Gagnon",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "rightsStatus": "verified-open",
+    "retrievedAt": "2026-09-28",
+    "alt": "Temple of Apollo at Didyma in Aydın",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2014-05-31",
+    "illustrative": false
+  },
+  "uzungol-lake": {
+    "src": "/photos/reviewed/uzungol-lake-1280.webp",
+    "width": 1280,
+    "height": 853,
+    "thumbnail": "/photos/reviewed/uzungol-lake-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/uzungol-lake-320.webp",
+        "width": 320,
+        "height": 213
+      },
+      {
+        "src": "/photos/reviewed/uzungol-lake-640.webp",
+        "width": 640,
+        "height": 427
+      },
+      {
+        "src": "/photos/reviewed/uzungol-lake-1280.webp",
+        "width": 1280,
+        "height": 853
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Uzung%C3%B6l,_Trabzon_2014.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Hamdigumus",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "rightsStatus": "verified-open",
+    "retrievedAt": "2026-09-28",
+    "alt": "Uzungöl lake and surrounding landscape in Trabzon, 2014",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2014-08-06 15:45:20",
+    "illustrative": false
+  },
+  "bursa-ulu-cami": {
+    "src": "/photos/reviewed/bursa-ulu-cami-1280.webp",
+    "width": 1280,
+    "height": 850,
+    "thumbnail": "/photos/reviewed/bursa-ulu-cami-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/bursa-ulu-cami-320.webp",
+        "width": 320,
+        "height": 213
+      },
+      {
+        "src": "/photos/reviewed/bursa-ulu-cami-640.webp",
+        "width": 640,
+        "height": 425
+      },
+      {
+        "src": "/photos/reviewed/bursa-ulu-cami-1280.webp",
+        "width": 1280,
+        "height": 850
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Grand_Mosque_of_Bursa_at_South_exterior_side_in_2006_3022.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Dosseman",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "rightsStatus": "verified-open",
+    "retrievedAt": "2026-09-28",
+    "alt": "South exterior of Bursa Ulu Cami, 2006",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2006-12-17 09:30:59",
+    "illustrative": false
+  },
+  "pam-thermal": {
+    "src": "/photos/reviewed/pam-thermal-1280.webp",
+    "width": 1024,
+    "height": 768,
+    "thumbnail": "/photos/reviewed/pam-thermal-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/pam-thermal-320.webp",
+        "width": 320,
+        "height": 240
+      },
+      {
+        "src": "/photos/reviewed/pam-thermal-640.webp",
+        "width": 640,
+        "height": 480
+      },
+      {
+        "src": "/photos/reviewed/pam-thermal-1280.webp",
+        "width": 1024,
+        "height": 768
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Thermal_Hotel_Pam_-_panoramio.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Olga and Djek",
+    "license": "CC BY 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/3.0",
+    "rightsStatus": "verified-open",
+    "retrievedAt": "2026-09-28",
+    "alt": "Pam Thermal Hotel in Karahayıt, Denizli",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "Taken on 27 May 2008",
+    "illustrative": false
+  },
+  "anatolia-bursa": {
+    "src": "/photos/reviewed/anatolia-bursa-1280.webp",
+    "width": 1280,
+    "height": 853,
+    "thumbnail": "/photos/reviewed/anatolia-bursa-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/anatolia-bursa-320.webp",
+        "width": 320,
+        "height": 213
+      },
+      {
+        "src": "/photos/reviewed/anatolia-bursa-640.webp",
+        "width": 640,
+        "height": 427
+      },
+      {
+        "src": "/photos/reviewed/anatolia-bursa-1280.webp",
+        "width": 1280,
+        "height": 853
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Bursa,_Hotel_Anatolia.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Carl Ha",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "rightsStatus": "verified-open",
+    "retrievedAt": "2026-09-28",
+    "alt": "Hotel Anatolia in Bursa",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2025-03-29 11:07:09",
+    "illustrative": false
+  },
+  "fantasia-kusadasi": {
+    "src": "/photos/reviewed/fantasia-kusadasi-1280.webp",
+    "width": 1280,
+    "height": 853,
+    "thumbnail": "/photos/reviewed/fantasia-kusadasi-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/fantasia-kusadasi-320.webp",
+        "width": 320,
+        "height": 213
+      },
+      {
+        "src": "/photos/reviewed/fantasia-kusadasi-640.webp",
+        "width": 640,
+        "height": 427
+      },
+      {
+        "src": "/photos/reviewed/fantasia-kusadasi-1280.webp",
+        "width": 1280,
+        "height": 853
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Fantasia_Hotel_de_Luxe,_Kusadasi_-_panoramio.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Fra Ganda",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "rightsStatus": "verified-open",
+    "retrievedAt": "2026-09-28",
+    "alt": "Fantasia Hotel de Luxe in Kuşadası, Aydın",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "Taken on 18 September 2012",
+    "illustrative": false
+  },
+  "efe-kusadasi": {
+    "src": "/photos/reviewed/efe-kusadasi-1280.webp",
+    "width": 1280,
+    "height": 745,
+    "thumbnail": "/photos/reviewed/efe-kusadasi-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/efe-kusadasi-320.webp",
+        "width": 320,
+        "height": 186
+      },
+      {
+        "src": "/photos/reviewed/efe-kusadasi-640.webp",
+        "width": 640,
+        "height": 373
+      },
+      {
+        "src": "/photos/reviewed/efe-kusadasi-1280.webp",
+        "width": 1280,
+        "height": 745
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Efe_Boutique_Hotel,_Ku%C5%9Fadas%C4%B1.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Zeynel Cebeci",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "rightsStatus": "verified-open",
+    "retrievedAt": "2026-09-28",
+    "alt": "Efe Boutique Hotel in Kuşadası",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2016-02-05 11:48:14",
+    "illustrative": false
+  },
+  "doubletree-kusadasi": {
+    "src": "/photos/reviewed/doubletree-kusadasi-1280.webp",
+    "width": 1280,
+    "height": 812,
+    "thumbnail": "/photos/reviewed/doubletree-kusadasi-640.webp",
+    "variants": [
+      {
+        "src": "/photos/reviewed/doubletree-kusadasi-320.webp",
+        "width": 320,
+        "height": 203
+      },
+      {
+        "src": "/photos/reviewed/doubletree-kusadasi-640.webp",
+        "width": 640,
+        "height": 406
+      },
+      {
+        "src": "/photos/reviewed/doubletree-kusadasi-1280.webp",
+        "width": 1280,
+        "height": 812
+      }
+    ],
+    "source": "https://commons.wikimedia.org/wiki/File:Double_Tree_by_Hilton_Hotel,_Ku%C5%9Fadas%C4%B1.jpg",
+    "sourceName": "Wikimedia Commons",
+    "author": "Zeynel Cebeci",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "rightsStatus": "verified-open",
+    "retrievedAt": "2026-09-28",
+    "alt": "DoubleTree by Hilton hotel in Kuşadası",
+    "focalX": 50,
+    "focalY": 50,
+    "changes": "Resized and converted to WebP; display crop may vary. No retouching.",
+    "captureDate": "2016-02-02 21:49:21",
+    "illustrative": false
+  }
+}

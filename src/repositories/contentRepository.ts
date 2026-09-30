@@ -17,9 +17,9 @@ export interface ContentItem {
 export async function getPublishedContent(table: ContentTable, cityId?: string) {
   let query = requireSupabase().from(table).select('*, city:cities(name)').eq('active', true).eq('status', 'PUBLISHED')
   if (cityId) query = query.eq('city_id', cityId)
-  const { data, error } = await query.order('name')
+  const { data, error } = await query.order('name').abortSignal(AbortSignal.timeout(12000))
   if (error) throw error
-  return data
+  return data ?? []
 }
 
 export async function getManageableContent(table: ContentTable) {

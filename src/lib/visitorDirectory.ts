@@ -24,7 +24,16 @@ const copy: Record<string, string[]> = {
  ru: ['Официальный сайт / контакты', 'Уточняйте программу, билеты, язык и условия посещения на официальном сайте.', 'Здесь нет бронирования и оплаты. Обращайтесь напрямую к поставщику. Фото могут быть иллюстративными.', 'Вызвать через BiTaksi', 'Внешний сервис; наличие машин и итоговая цена зависят от поставщика.', 'Источники проверены: 20.09.2026'],
  zh: ['官方网站 / 联系方式', '请在官网确认最新安排、门票、语言及参观条件。', '本站不接受预订或付款。请直接在商家网站办理。图片可能仅供参考。', '通过 BiTaksi 叫车', '外部服务；车辆供应及最终费用由服务商决定。', '来源核验：2026年9月20日'],
 };
-export const directoryText = (lang: string, index: number) => (copy[lang] ?? copy.en)[index];
+const bookingDisclaimer:Record<string,string>={
+ tr:'Rezervasyon ve ödeme bu sitede alınmaz. İşlemler doğrudan işletmenin sitesinde yapılır.',
+ en:'No bookings or payments are taken here. Deal directly with the business on its website.',
+ de:'Hier keine Buchungen oder Zahlungen. Direkt beim Anbieter buchen.',
+ fr:'Aucune réservation ni paiement ici. Contactez directement le prestataire.',
+ ar:'لا نقبل حجوزات أو مدفوعات هنا. تعامل مباشرة مع المنشأة عبر موقعها.',
+ ru:'Здесь нет бронирования и оплаты. Обращайтесь напрямую к поставщику.',
+ zh:'本站不接受预订或付款。请直接在商家网站办理。',
+};
+export const directoryText = (lang: string, index: number) => index===2 ? bookingDisclaimer[lang]??bookingDisclaimer.en : (copy[lang] ?? copy.en)[index];
 export const cityPhotos = {
  izmir: '/photos/izmir.jpg',
  antalya: '/photos/antalya-city.webp',

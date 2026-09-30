@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { ExternalLink, MapPin, Phone } from 'lucide-react';
 import HomeButton from './HomeButton';
+import {translatedDescription,photoEditingCopy} from '../lib/contentTranslation';
 import type { DirectoryEntry } from '../lib/directory';
 import { entryPath } from '../lib/directory';
-import { entryPhotos,contextLabel } from '../lib/directoryPhotos';
+import { entryPhotos,contextLabel,illustrativeLabel } from '../lib/directoryPhotos';
 import siteLogo from '../assets/safeinturkiye-logo.png';
 import { useDetailSeo } from '../lib/useDetailSeo';
-import { safeTelephone, safeWebsite } from '../services/nearbyPlaces';
+import { safeTelephone } from '../services/nearbyPlaces';
+import {catalogWebsite} from '../lib/catalogLinks';
 
 const copy:Record<string,string[]> = {
   en:['Back to directory','Official website / reservations','Address','Phone','Published opening hours','Source checked','Source','Confirm current prices, hours and availability with the business. Reservations and payments take place on its official website, not SafeInTürkiye.','A licensed photo gallery is not available yet.','Directions','About','Not yet verified','Details'],
@@ -20,11 +22,11 @@ const copy:Record<string,string[]> = {
 
 export default function DirectoryDetail({entry,lang,onBack}:{entry:DirectoryEntry;lang:string;onBack:()=>void}) {
   const t = copy[lang] ?? copy.en;
-  const description = entry.description[lang] ?? entry.description.en;
+  const description = translatedDescription(entry,lang);
   const gallery = entryPhotos(entry);
   const [selected,setSelected]=useState(0);
   const [failed,setFailed]=useState<string[]>([]);
-  const website=safeWebsite(entry.website);
+  const website=catalogWebsite(entry.website);
   const phone=safeTelephone(entry.phone);
   useDetailSeo(`${entry.name} | SafeInTürkiye`,description,entryPath(entry));
   useEffect(() => {
@@ -40,11 +42,12 @@ export default function DirectoryDetail({entry,lang,onBack}:{entry:DirectoryEntr
     <HomeButton lang={lang} onClick={onBack}/>
     <header><p className="text-sm font-bold text-blue-600">{entry.city}</p><h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900">{entry.name}</h1></header>
     <section aria-label={entry.name} className="rounded-2xl overflow-hidden border border-sky-100 bg-white">
-      {current && !failed.includes(current.src) ? <div className="relative"><img src={current.src} width={current.width} height={current.height} alt={current.cityContext?contextLabel(lang,current.cityContext):entry.name} decoding="async" onError={()=>setFailed(previous=>[...previous,current.src])} className="w-full h-64 sm:h-96 object-cover" />{current.cityContext&&<p className="absolute bottom-0 inset-x-0 bg-slate-950/85 text-white text-xs px-4 py-2">{contextLabel(lang,current.cityContext)}</p>}</div> : <p className="p-8 text-sm text-slate-500">{t[8]}</p>}
+      {current && !failed.includes(current.src) ? <div className="relative"><img src={current.src} srcSet={current.variants?.map(v=>`${v.src} ${v.width}w`).join(', ')} sizes="(max-width: 1024px) 100vw, 1024px" width={current.width} height={current.height} style={{objectPosition:`${current.focalX??50}% ${current.focalY??50}%`}} alt={lang==='en'?(current.alt??entry.name):entry.name} decoding="async" onError={()=>setFailed(previous=>[...previous,current.src])} className="w-full h-64 sm:h-96 object-cover" />{current.cityContext&&<p className="absolute bottom-0 inset-x-0 bg-slate-950/85 text-white text-xs px-4 py-2">{contextLabel(lang,current.cityContext)}</p>}</div> : <p className="p-8 text-sm text-slate-500">{t[8]}</p>}
+      {current?.illustrative&&<p className="px-3 py-2 text-xs text-slate-600">{illustrativeLabel(lang)}</p>}
       {gallery.length>1 && <div className="flex flex-wrap gap-2 p-3">{gallery.map((photo,index)=><button key={photo.src} onClick={()=>setSelected(index)} aria-pressed={index===selected} className="min-h-11 min-w-11 rounded-lg border border-sky-200 px-3">{index+1}</button>)}</div>}
-      {current?.source && <p className="p-3 text-xs text-slate-500"><a className="underline" href={current.source} target="_blank" rel="noreferrer">{current.author}</a> · <a href={current.licenseUrl} target="_blank" rel="noreferrer">{current.license}</a></p>}
+      {current?.source && <p className="p-3 text-xs text-slate-500"><a className="underline" href={current.source} target="_blank" rel="noreferrer">{current.author}</a> · <a href={current.licenseUrl} target="_blank" rel="noreferrer">{current.license}</a>{current.captureDate&&<> · {current.captureDate}</>}<br/>{photoEditingCopy[lang]??photoEditingCopy.en}</p>}
     </section>
-    <div className="grid md:grid-cols-3 gap-6"><section className="md:col-span-2 rounded-2xl border border-sky-100 bg-white p-6 space-y-4"><h2 className="text-xl font-bold">{t[10]}</h2><p lang={entry.description[lang]?lang:'en'} className="leading-relaxed text-slate-600">{description}</p><dl className="space-y-4 text-sm">{entry.address && <div><dt className="font-bold flex gap-2"><MapPin className="w-4 h-4" />{t[2]}</dt><dd>{entry.address}</dd></div>}{phone && <div><dt className="font-bold flex gap-2"><Phone className="w-4 h-4" />{t[3]}</dt><dd><a className="text-blue-700 underline" href={phone.telephoneUrl}>{phone.phone}</a></dd></div>}{entry.openingHours && <div><dt className="font-bold">{t[4]}</dt><dd>{entry.openingHours}</dd></div>}</dl></section>
-    <aside className="rounded-2xl border border-sky-100 bg-white p-6 space-y-4">{website && <a href={website} target="_blank" rel="noopener noreferrer" className="flex min-h-12 items-center justify-center gap-2 bg-[#087FFF] text-white p-3 rounded-xl font-bold">{t[1]}<ExternalLink className="w-4 h-4 shrink-0" /></a>}{entry.address && <a className="block text-blue-700 underline min-h-11" href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(entry.address)}`} target="_blank" rel="noreferrer">{t[9]}</a>}<p className="text-xs leading-relaxed text-slate-600">{t[7]}</p><p className="text-xs text-slate-500">{t[5]}: {entry.lastVerified ?? t[11]}</p><a className="text-xs text-blue-700 underline" href={entry.sourceUrl} target="_blank" rel="noreferrer">{t[6]}</a></aside></div>
+    <div className="grid md:grid-cols-3 gap-6"><section className="md:col-span-2 rounded-2xl border border-sky-100 bg-white p-6 space-y-4"><h2 className="text-xl font-bold">{t[10]}</h2><p lang={lang} className="leading-relaxed text-slate-600">{description}</p><dl className="space-y-4 text-sm">{entry.address && <div><dt className="font-bold flex gap-2"><MapPin className="w-4 h-4" />{t[2]}</dt><dd>{entry.address}</dd></div>}{phone && <div><dt className="font-bold flex gap-2"><Phone className="w-4 h-4" />{t[3]}</dt><dd><a className="text-blue-700 underline" href={phone.telephoneUrl}>{phone.phone}</a></dd></div>}{entry.openingHours && <div><dt className="font-bold">{t[4]}</dt><dd>{entry.openingHours}</dd></div>}</dl></section>
+    <aside className="rounded-2xl border border-sky-100 bg-white p-6 space-y-4">{website && <a href={website} target="_blank" rel="noopener noreferrer" className="flex min-h-12 items-center justify-center gap-2 bg-[#087FFF] text-white p-3 rounded-xl font-bold">{t[1]}<ExternalLink className="w-4 h-4 shrink-0" /></a>}{entry.address && <a className="block text-blue-700 underline min-h-11" href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(entry.address)}`} target="_blank" rel="noreferrer">{t[9]}</a>}<p className="text-xs leading-relaxed text-slate-600">{t[7]}</p><p className="text-xs text-slate-500">{t[5]}: {entry.lastVerified ?? t[11]}</p>{catalogWebsite(entry.sourceUrl)&&<a className="text-xs text-blue-700 underline" href={catalogWebsite(entry.sourceUrl)!} target="_blank" rel="noreferrer">{t[6]}</a>}</aside></div>
   </main>;
 }

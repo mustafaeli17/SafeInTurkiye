@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import {locationErrorText} from '../lib/locationError'
 import { Clock3, ExternalLink, LocateFixed, MapPin, Phone, Search } from 'lucide-react'
 import { fetchNearbyPlaces, NearbyError } from '../services/nearbyPlaces'
 import { searchDestinations, directionsText } from '../lib/searchDestinations'
@@ -110,9 +111,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
         if (requestId !== generation.current) return
         if (locationTimer.current) clearTimeout(locationTimer.current)
         setState('error')
-        setError(reason.code === 1
-          ? text('Konum izni verilmedi. Aşağıdaki şehir merkezi aramasını kullanabilirsiniz.', 'Location permission was declined. You can use the city-centre search below.')
-          : text('Konum alınamadı. Şehir merkezinde arayabilir veya tekrar deneyebilirsiniz.', 'Your location could not be found. Search the city centre or try again.'))
+        setError(locationErrorText(reason.code,locale))
       },
       { enableHighAccuracy: false, maximumAge: 60000, timeout: 12000 },
     )

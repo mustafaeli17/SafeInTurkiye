@@ -1,12 +1,29 @@
-/** Conservative supported-city bounds; unknown locations must not inherit Istanbul fares. */
+/** Coordinates alone do not establish the licensed taxi tariff jurisdiction.
+ * No authoritative boundary dataset is configured. Require explicit selection,
+ * even at a city centre, rather than trusting rectangles or nearest-city guesses.
+ */
 export function taxiCityFromCoordinates(lat: number, lng: number): string {
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) return '';
-  if (lat >= 40.8 && lat <= 41.4 && lng >= 28.0 && lng <= 30.0) return 'İstanbul';
-  if (lat >= 39.5 && lat <= 40.3 && lng >= 32.2 && lng <= 33.5) return 'Ankara';
-  if (lat >= 38.0 && lat <= 38.8 && lng >= 26.5 && lng <= 27.6) return 'İzmir';
-  if (lat >= 36.4 && lat <= 37.4 && lng >= 30.0 && lng <= 32.2) return 'Antalya';
   return '';
 }
+/** Resolve only an explicitly selected address's administrative province.
+ * Never use free text, the destination, nearest-city distance or device coordinates.
+ * Istanbul is the only province-wide tariff currently reviewed for publication.
+ * District-specific provinces (e.g. Izmir/Cesme) remain unsupported here.
+ */
+export function taxiCityFromAddress(countryCode: unknown, province: unknown): string {
+  if (typeof countryCode !== 'string' || countryCode.toLowerCase() !== 'tr' || typeof province !== 'string') return '';
+  return ['İstanbul', 'Istanbul'].includes(province.trim()) ? 'İstanbul' : '';
+}
+export const taxiCitySelectionCopy:Record<string,[string,string]>={
+ tr:['Başlangıç şehri','Şehir seçin — konum tek başına tarife bölgesini doğrulamaz.'],
+ en:['Departure city','Choose a city — location alone does not verify the tariff area.'],
+ de:['Abfahrtsstadt','Stadt wählen — der Standort allein bestätigt kein Tarifgebiet.'],
+ fr:['Ville de départ','Choisissez la ville : la position seule ne confirme pas la zone tarifaire.'],
+ ar:['مدينة الانطلاق','اختر المدينة؛ الموقع وحده لا يؤكد منطقة التعرفة.'],
+ ru:['Город отправления','Выберите город: координаты сами по себе не подтверждают тарифную зону.'],
+ zh:['出发城市','请选择城市；仅凭定位无法确认适用的费率区域。'],
+};
 
 const unavailable: Record<string, string> = {
   tr: 'Bu başlangıç noktası ve araç için doğrulanmış tarife bulunamadı. Yanlış şehir tarifesiyle fiyat göstermiyoruz. Güncel ücreti taksi sağlayıcısından kontrol edin.',

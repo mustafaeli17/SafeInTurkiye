@@ -1,4 +1,4 @@
-export const supportedCurrencies = ['EUR', 'USD', 'GBP', 'CHF', 'TRY', 'AED', 'SAR'] as const;
+export const supportedCurrencies = ['EUR', 'USD', 'GBP', 'CHF', 'TRY', 'AED', 'SAR', 'CNY'] as const;
 export type CurrencyCode = typeof supportedCurrencies[number];
 
 export interface ReferenceRates {
@@ -48,14 +48,14 @@ function publicationDate(value: unknown): string {
 }
 
 export function parseReferenceRates(payload: unknown, now = new Date()): ReferenceRates {
-  if (!Array.isArray(payload) || payload.length !== 6) throw new TravelDataError('invalid');
-  const perEuro: Record<CurrencyCode, number> = { EUR: 1, USD: 0, GBP: 0, CHF: 0, TRY: 0, AED: 0, SAR: 0 };
+  if (!Array.isArray(payload) || payload.length !== supportedCurrencies.length - 1) throw new TravelDataError('invalid');
+  const perEuro: Record<CurrencyCode, number> = { EUR: 1, USD: 0, GBP: 0, CHF: 0, TRY: 0, AED: 0, SAR: 0, CNY: 0 };
   let date = '';
   const seen = new Set<string>();
   for (const entry of payload) {
     const row = record(entry);
     const rowDate = publicationDate(row.date);
-    if (row.base !== 'EUR' || typeof row.quote !== 'string' || !['USD', 'GBP', 'CHF', 'TRY', 'AED', 'SAR'].includes(row.quote) || seen.has(row.quote)) {
+    if (row.base !== 'EUR' || typeof row.quote !== 'string' || !supportedCurrencies.filter(c=>c!=='EUR').includes(row.quote as Exclude<CurrencyCode,'EUR'>) || seen.has(row.quote)) {
       throw new TravelDataError('invalid');
     }
     if (date && date !== rowDate) throw new TravelDataError('invalid');
@@ -129,7 +129,7 @@ export async function fetchTravelJson(url: string, signal: AbortSignal, timeoutM
 }
 
 export async function getReferenceRates(signal: AbortSignal): Promise<ReferenceRates> {
-  const data = await fetchTravelJson('https://api.frankfurter.dev/v2/providers/tcmb/rates?base=EUR&quotes=TRY,USD,GBP,CHF,AED,SAR', signal);
+  const data = await fetchTravelJson('https://api.frankfurter.dev/v2/providers/tcmb/rates?base=EUR&quotes=TRY,USD,GBP,CHF,AED,SAR,CNY', signal);
   return parseReferenceRates(data);
 }
 

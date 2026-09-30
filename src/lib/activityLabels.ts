@@ -1,3 +1,5 @@
+import {directory} from './directory';
+import {translatedDescription} from './contentTranslation';
 const categories = ['All', 'Museum & Culture', 'Cinema', 'Entertainment', 'Summer', 'Winter']
 const labels: Record<string, string[]> = {
   en: categories,
@@ -46,5 +48,6 @@ export function activityText(value: string, lang: string) {
 }
 export function activityContent<T extends { id: string; title: string; description: string }>(item: T, lang: string): T {
   const index = Number(item.id.slice(1)) - 1
-  return { ...item, title: titles[lang]?.[index] ?? item.title, description: descriptions[lang]?.[index] ?? item.description }
+  const entry=directory.find(entry=>entry.id===item.id);
+  return { ...item, title: titles[lang]?.[index] ?? item.title, description: entry?translatedDescription(entry,lang):descriptions[lang]?.[index] ?? item.description }
 }

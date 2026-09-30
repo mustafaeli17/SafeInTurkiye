@@ -1,0 +1,14 @@
+[
+ {"slug":"paribu-akasya","name":"Paribu Cineverse Akasya","city":"İstanbul","website":"https://www.paribucineverse.com/sinemalar/akasya","address":"Acıbadem Mahallesi, Çeçen Sokak No:25, Üsküdar, İstanbul"},
+ {"slug":"paribu-aqua-florya","name":"Paribu Cineverse Aqua Florya","city":"İstanbul","website":"https://www.paribucineverse.com/sinemalar/aqua-florya","address":"Aqua Florya AVM, Şenlikköy Mahallesi, Yeşilköy Halkalı Caddesi No:93, Florya, İstanbul"},
+ {"slug":"paribu-antares","name":"Paribu Cineverse Antares AVM","city":"Ankara","website":"https://www.paribucineverse.com/sinemalar/antares","address":"Antares AVM, Halil Sezai Erkut Caddesi No:121, Etlik, Ankara"},
+ {"slug":"paribu-armada","name":"Paribu Cineverse Armada","city":"Ankara","website":"https://www.paribucineverse.com/sinemalar/armada","address":"Armada AVM, Eskişehir Yolu, Söğütözü, Ankara"},
+ {"slug":"paribu-forum-kayseri","name":"Paribu Cineverse Forum Kayseri","city":"Kayseri","website":"https://www.paribucineverse.com/sinemalar/forum-kayseri","address":"Hunat Mahallesi, Sivas Caddesi 24/1, Kat:2, Melikgazi, Kayseri"},
+ {"slug":"paribu-izmir-park","name":"Paribu Cineverse İzmir Park","city":"İzmir","website":"https://www.paribucineverse.com/sinemalar/izmir-park","address":"Güneşli Mahallesi, Eşref Paşa Caddesi No:408, Konak, İzmir"},
+ {"slug":"paribu-optimum-izmir","name":"Paribu Cineverse Optimum İzmir","city":"İzmir","website":"https://www.paribucineverse.com/sinemalar/optimum-izmir","address":"Optimum İzmir AVM, Akçay Caddesi No:101, Gaziemir, İzmir"},
+ {"slug":"paribu-kent-plaza","name":"Paribu Cineverse Kent Plaza","city":"Konya","website":"https://www.paribucineverse.com/sinemalar/kent-plaza","address":"Bedir Mahallesi, Ataseven Caddesi No:2/305, Selçuklu, Konya"},
+ {"slug":"paribu-bursa-podyum","name":"Paribu Cineverse Bursa Podyumpark","city":"Bursa","website":"https://www.paribucineverse.com/sinemalar/bursa-podyum","address":"Cumhuriyet Mahallesi, Nilüfer Hatun Caddesi No:114, Bursa"},
+ {"slug":"paribu-bursa-marka","name":"Paribu Cineverse Bursa Marka","city":"Bursa","website":"https://www.paribucineverse.com/sinemalar/sur-yapi-marka"},
+ {"slug":"paribu-denizli-sm","name":"Paribu Cineverse Denizli SM","city":"Denizli","website":"https://www.paribucineverse.com/sinemalar/denizli-sm","address":"Denizli Sanat Merkezi, Altıntop Mahallesi, Merkezefendi, Denizli"},
+ {"slug":"paribu-bodrum-midtown","name":"Paribu Cineverse Bodrum Midtown","city":"Muğla","website":"https://www.paribucineverse.com/sinemalar/bodrum-midtown","address":"Midtown Alışveriş Merkezi, Kemer Mevkii, Ortakent, Bodrum"}
+]

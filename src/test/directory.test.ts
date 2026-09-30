@@ -1,7 +1,7 @@
 import {describe,it,expect} from 'vitest';
 import {directory,directoryEntry,entryPath} from '../lib/directory';
 import {safeWebsite} from '../services/nearbyPlaces';
-import photos from '../lib/placePhotos.json';
+import photos from '../lib/reviewedPhotos.json';
 describe('real directory detail routes',()=>{
  it('gives every entry a unique supported path and official source',()=>{
   expect(new Set(directory.map(entryPath)).size).toBe(directory.length);

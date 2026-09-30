@@ -1,6 +1,6 @@
 import { useEffect, useState, lazy, Suspense } from 'react';
 import App from './App';
-import { directoryEntry, registerPublishedEntry } from './lib/directory';
+import { directoryEntry, registerPublishedEntry, photoCuratedCatalog } from './lib/directory';
 import type { DirectoryEntry } from './lib/directory';
 import { requireSupabase } from './lib/supabase';
 import cityGuides from './data/cityGuides.json';
@@ -13,11 +13,11 @@ export default function TravelApp() {
   const match=path.match(/^\/(hotels|restaurants|activities)\/[a-z0-9-]+--([a-f0-9-]{36})\/?$/);
   useEffect(()=>{
     const route=path.match(/^\/(hotels|restaurants|activities)\/[a-z0-9-]+--([a-f0-9-]{36})\/?$/);
-    if(!route)return;
+    if(!route||photoCuratedCatalog){if(route)setRemote({path});return;}
     let cancelled=false;
     void (async()=>{
       try {
-        const {data,error}=await requireSupabase().from(route[1]).select('*, city:cities(name)').eq('id',route[2]).eq('active',true).eq('status','PUBLISHED').maybeSingle();
+        const {data,error}=await requireSupabase().from(route[1]).select('*, city:cities(name)').eq('id',route[2]).eq('active',true).eq('status','PUBLISHED').abortSignal(AbortSignal.timeout(12000)).maybeSingle();
         if(cancelled)return;
         setRemote({path,...(error?{error:true}:data?{entry:registerPublishedEntry(data,route[1])}:{})});
       }catch { if(!cancelled)setRemote({path,error:true}); }
