@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-  <title>SafeInTürkiye</title>
-  <rect width="100" height="100" fill="#ffffff"/>
-  <!-- Reference-aligned crescent: both circles share a horizontal centreline. -->
-  <circle cx="43.5" cy="50" r="28.5" fill="#0099ff"/>
-  <circle cx="51.5" cy="50" r="22" fill="#ffffff"/>
-  <!-- Five-point star, with its left tip pointing into the crescent. -->
-  <path d="M62 50 71.65 46.86 71.65 36.72 77.62 44.93 87.33 41.77 81.33 50 87.33 58.23 77.62 55.07 71.65 63.28 71.65 53.14Z" fill="#0099ff"/>
-</svg>

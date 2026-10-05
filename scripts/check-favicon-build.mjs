@@ -1,6 +1,9 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 const html=fs.readFileSync('dist/index.html','utf8');
+assert(!fs.existsSync('dist/favicon.svg'), 'Legacy crescent SVG must not ship');
+const redirects=JSON.parse(fs.readFileSync('vercel.json','utf8')).redirects;
+assert(redirects.some(r=>r.source==='/favicon.svg'&&r.destination==='/favicon-96x96.png'&&r.permanent===true));
 const links=html.match(/<link\b[^>]+>/g).filter(tag=>/rel="(?:icon|apple-touch-icon|manifest)"/.test(tag));
 assert.equal(links.length,6);
 for(const tag of links){

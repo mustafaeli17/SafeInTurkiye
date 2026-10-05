@@ -12,10 +12,20 @@ describe('SEO and real public assets',()=>{
   for(const item of schema['@graph']) expect(item.name).toBe('SafeInTürkiye');
  });
  it('ships real favicon variants, manifest, sitemap and robots',()=>{
-  for(const file of ['favicon.svg','favicon.ico','favicon-96x96.png','apple-touch-icon.png','icon-192.png','icon-512.png','robots.txt','sitemap.xml','site.webmanifest']) expect(existsSync('public/'+file)).toBe(true);
+  for(const file of ['favicon.ico','favicon-96x96.png','apple-touch-icon.png','icon-192.png','icon-512.png','robots.txt','sitemap.xml','site.webmanifest']) expect(existsSync('public/'+file)).toBe(true);
   const ico=readFileSync('public/favicon.ico');expect(ico.readUInt16LE(2)).toBe(1);expect(ico.readUInt16LE(4)).toBe(3);
   const sitemap=readFileSync('public/sitemap.xml','utf8');expect(sitemap.match(/<loc>/g)).toHaveLength(1);
   expect(readFileSync('public/robots.txt','utf8')).toContain('Sitemap: https://www.safeinturkiye.com/sitemap.xml');
+ });
+ it('retires the old SVG URL without changing the current icon URLs',()=>{
+  expect(existsSync('public/favicon.svg')).toBe(false);
+  const config=JSON.parse(readFileSync('vercel.json','utf8'));
+  expect(config.redirects).toContainEqual({source:'/favicon.svg',destination:'/favicon-96x96.png',permanent:true});
+  const html=readFileSync('index.html','utf8');
+  expect(html).not.toContain('/favicon.svg');
+  expect(html).toContain('/favicon-96x96.png?v=landmarks-1');
+  const manifest=JSON.parse(readFileSync('public/site.webmanifest','utf8'));
+  for(const icon of manifest.icons) expect(icon.src).not.toContain('.svg');
  });
  it('gives existing sections distinct titles without inventing routes',()=>{
   const keys=['home','taxi','transit','currency','nearme','stay','food','experiences','safety','assistant','city'];
