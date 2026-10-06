@@ -76,7 +76,7 @@ import { createBooking } from './repositories/bookingRepository';
 import { getCurrentTaxiTariffs } from './repositories/tariffRepository';
 import { routeFareRange } from './lib/taxiCalculation';
 import { taxiEstimateCopy, taxiDetailsCopy } from './lib/taxiCopy';
-import { taxiErrorText } from './lib/taxiErrors';
+import { taxiErrorText, type TaxiErrorKey } from './lib/taxiErrors';
 import { regionalDescription } from './lib/regionalDescription';
 import { getAssistantReply } from './services/travelDataService';
 import { supabaseConfigured } from './lib/supabase';
@@ -759,7 +759,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
 
   const [isTaxiLocating, setIsTaxiLocating] = useState(false);
   const [isTaxiRouting, setIsTaxiRouting] = useState(false);
-  const [taxiRouteError, setTaxiRouteError] = useState<string | null>(null);
+  const [taxiRouteError, setTaxiRouteError] = useState<TaxiErrorKey | 'unavailable' | null>(null);
   const [taxiTariffs, setTaxiTariffs] = useState<Record<string, TaxiTariff>>({});
 
   useEffect(() => {
@@ -844,7 +844,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
   const handleTaxiCurrentLocation = () => {
     const lookupId = ++taxiOriginLookupId.current;
     if (!('geolocation' in navigator)) {
-      setTaxiRouteError(taxiErrorText(lang, 'unsupported'));
+      setTaxiRouteError('unsupported');
       return;
     }
     setIsTaxiLocating(true);
@@ -877,7 +877,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
       () => {
         if (lookupId !== taxiOriginLookupId.current) return;
         setIsTaxiLocating(false);
-        setTaxiRouteError(taxiErrorText(lang, 'locationFailed'));
+        setTaxiRouteError('locationFailed');
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
@@ -890,11 +890,11 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
     setFareCalculation(null);
 
     if (!taxiOriginCoords || !taxiDestCoords) {
-      setTaxiRouteError(taxiErrorText(lang, 'missingPlaces'));
+      setTaxiRouteError('missingPlaces');
       return;
     }
     if(!detectedTaxiCity||!taxiTariffs[taxiClass.toUpperCase()]){
-      setTaxiRouteError(taxiUnavailableText(lang));
+      setTaxiRouteError('unavailable');
       return;
     }
 
@@ -907,14 +907,14 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
       setIsTaxiRouting(false);
 
       if (!res.ok) {
-        setTaxiRouteError(taxiErrorText(lang, 'routeFailed'));
+        setTaxiRouteError('routeFailed');
         return;
       }
 
       const data = await res.json();
       if (request !== taxiRequest.current) return;
       if (!data.routes || data.routes.length === 0) {
-        setTaxiRouteError(taxiErrorText(lang, 'noRoute'));
+        setTaxiRouteError('noRoute');
         return;
       }
 
@@ -939,7 +939,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
       const tariff = selectedTariff?.city === detectedTaxiCity ? selectedTariff : undefined;
       if (!tariff) {
         setFareCalculation(null);
-        setTaxiRouteError(taxiUnavailableText(lang));
+        setTaxiRouteError('unavailable');
         setIsTaxiRouting(false);
         return;
       }
@@ -950,7 +950,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
     } catch {
       if (request !== taxiRequest.current) return;
       setIsTaxiRouting(false);
-      setTaxiRouteError(taxiErrorText(lang, 'network'));
+      setTaxiRouteError('network');
     }
   };
 
@@ -1361,7 +1361,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
                   {isTaxiRouting ? <Loader2 className="w-4 h-4 animate-spin" /> : page('calculate')}
                 </button>
 
-                {taxiRouteError && <p role="alert" className="text-sm text-red-700 bg-red-50 rounded-xl p-3">{taxiRouteError}</p>}
+                {taxiRouteError && <p role="alert" className="text-sm text-red-700 bg-red-50 rounded-xl p-3">{taxiRouteError === 'unavailable' ? taxiUnavailableText(lang) : taxiErrorText(lang, taxiRouteError)}</p>}
                 {taxiRouteResult && fareCalculation && (
                   <div className="pt-3 border-t border-slate-100 space-y-3">
                     <div className="p-4 bg-sky-50 rounded-2xl border border-sky-100 space-y-2">

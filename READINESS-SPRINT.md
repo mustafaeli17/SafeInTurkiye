@@ -70,9 +70,11 @@ All 59 published editorial entries lack explicit de/fr/ar/ru descriptions; Engli
 
 ## Final checks for this partial Phase 1 commit
 
-Lint PASS; TypeScript PASS; production build PASS; 93/93 tests PASS across 26 files (12 new tests). Initial JS 699.15 kB / gzip 216.16 kB versus 690.07 / 212.17 before; increase is persisted translations, not a performance improvement. Existing bundle warning remains.
+Lint PASS; TypeScript PASS; production build PASS; 93/93 tests PASS across 26 files (12 new tests). Initial JS 699.17 kB / gzip 216.18 kB versus 690.07 / 212.17 before; increase is persisted translations, not a performance improvement. Existing bundle warning remains.
 
 Browser confirmed German Aydın description and German missing-origin/destination message. Mobile screenshot: `tmp/readiness-mobile.png`. No claim that every language/page has passed full end-to-end regression. Existing current-location flow leaves origin coordinates unselected after reverse lookup and needs a separately tested correction before full Phase 1 approval. No new city tariff has been enabled.
+
+Follow-up regression: existing taxi errors now translate immediately when language changes (English → German → English checked in browser). Istanbul Taksim → Sultanahmet repeated after changes: same 5.6 km, ~9 min, TRY 338–378 result as baseline. Partial Phase 1 commit `df88528`; follow-up commit stores error keys instead of translated error strings.
 
 Changed files in this Phase 1 partial commit: `src/App.tsx`, `src/index.css`, `src/lib/taxiErrors.ts`, `src/lib/regionalDescription.ts`, `src/data/regionalDescriptions.json`, `src/test/taxiErrors.test.ts`, `src/test/regionalDescription.test.ts`, `scripts/audit-readiness-baseline.mjs`, `READINESS-SPRINT.md`.
 
