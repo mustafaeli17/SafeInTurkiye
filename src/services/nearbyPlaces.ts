@@ -1,6 +1,6 @@
 import { photonNearbyUrl, photonToOsm } from './photonNearby'
 export type NearbyKind = 'exchange' | 'essential'
-export type NearbyCategory = 'bureau_de_change' | 'pharmacy' | 'hospital' | 'police' | 'atm' | 'taxi' | 'restaurant' | 'cafe'
+export type NearbyCategory = 'bureau_de_change' | 'pharmacy' | 'hospital' | 'police' | 'atm' | 'taxi' | 'restaurant' | 'cafe' | 'hotel' | 'attraction' | 'museum' | 'shopping'
 export interface NearbyCenter { lat: number; lng: number }
 export interface NearbyPlaceRecord {
   id: string
@@ -14,9 +14,13 @@ export interface NearbyPlaceRecord {
   website: string | null
   openingHours: string | null
   sourceUrl: string
+  rating?: number
+  reviewCount?: number
+  openNow?: boolean
+  attributions?: { name: string; url: string | null }[]
 }
 export interface NearbyResult {
-  provider: 'Photon' | 'Overpass'
+  provider: 'Photon' | 'Overpass' | 'Google Maps'
   places: NearbyPlaceRecord[]
   fetchedAt: string
   mapDataAt: string | null

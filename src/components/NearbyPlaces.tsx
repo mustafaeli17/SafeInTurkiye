@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import {locationErrorText} from '../lib/locationError'
 import { Clock3, ExternalLink, LocateFixed, MapPin, Phone, Search } from 'lucide-react'
-import { fetchNearbyPlaces, NearbyError } from '../services/nearbyPlaces'
+import { NearbyError } from '../services/nearbyPlaces'
+import { fetchGoogleNearby } from '../services/googleNearby'
 import { searchDestinations, directionsText } from '../lib/searchDestinations'
 import type { NearbyCategory, NearbyCenter, NearbyKind, NearbyResult } from '../services/nearbyPlaces'
 
@@ -16,6 +17,7 @@ const categoryLabels: Record<NearbyCategory, [string, string]> = {
   bureau_de_change: ['Döviz bürosu', 'Exchange bureau'], pharmacy: ['Eczane', 'Pharmacy'],
   hospital: ['Hastane', 'Hospital'], police: ['Polis', 'Police'], atm: ['ATM', 'ATM'],
   taxi: ['Taksi durağı', 'Taxi rank'], restaurant: ['Restoran', 'Restaurant'], cafe: ['Kafe', 'Café'],
+  hotel: ['Otel', 'Hotel'], attraction: ['Gezilecek yer', 'Attraction'], museum: ['Müze', 'Museum'], shopping: ['Alışveriş', 'Shopping'],
 }
 
 export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter, cityName: initialCityName }: NearbyPlacesProps) {
@@ -71,7 +73,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
     setOrigin(source)
     setLimit(12)
     try {
-      const data = await fetchNearbyPlaces(point, kind, request.signal)
+      const data = await fetchGoogleNearby(point, kind === 'exchange' ? 'bureau_de_change' : filter, locale, request.signal)
       if (requestId !== generation.current || request.signal.aborted) return
       setResult(data)
       setState('ready')
@@ -137,7 +139,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
       <p className="text-[11px] leading-relaxed text-slate-500">{text('Konumunuzu seçerseniz arama için yaklaşık koordinatlarınız harita veri sağlayıcısına gönderilir; bu sitede kalıcı olarak saklanmaz.', 'If you use your location, approximate coordinates are sent to the map data service to run the search; this site does not permanently store them.')}</p>
 
       {kind === 'essential' && <div className="flex flex-wrap gap-2" aria-label={text('Yer türü', 'Place category')}>
-        {(['all', 'pharmacy', 'hospital', 'police', 'atm', 'taxi'] as const).map(category => <button type="button" key={category} aria-pressed={filter === category} onClick={() => { setFilter(category); setLimit(12) }} className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${filter === category ? 'border-[#00A3E0] bg-[#00A3E0] text-white' : 'border-slate-200 bg-white text-slate-700 hover:bg-sky-50'}`}>{category === 'all' ? text('Tümü', 'All') : categoryLabel(category)}</button>)}
+        {(['all', 'restaurant', 'hotel', 'cafe', 'attraction', 'museum', 'pharmacy', 'hospital', 'atm', 'bureau_de_change', 'shopping', 'police', 'taxi'] as const).map(category => <button type="button" key={category} aria-pressed={filter === category} onClick={() => { generation.current += 1; controller.current?.abort(); setFilter(category); setResult(null); setState('idle'); setError(null); setLimit(12) }} className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${filter === category ? 'border-[#00A3E0] bg-[#00A3E0] text-white' : 'border-slate-200 bg-white text-slate-700 hover:bg-sky-50'}`}>{category === 'all' ? text('Tümü', 'All') : categoryLabel(category)}</button>)}
       </div>}
 
       <div aria-live="polite" role="status" className="text-xs text-slate-600">
@@ -156,10 +158,13 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
             <span className="shrink-0 rounded-lg bg-sky-50 px-2 py-1 text-xs font-bold text-[#007EAD]">{formatDistance(place.distanceMeters)}</span>
           </div>
           <dl className="mt-3 space-y-2.5 text-xs leading-relaxed text-slate-600">
-            <div className="flex gap-2"><dt className="shrink-0"><MapPin className="mt-0.5 h-4 w-4" /><span className="sr-only">{text('Adres', 'Address')}</span></dt><dd className="break-words">{place.address || text('Kaynakta adres bulunmuyor.', 'Address not listed in the source.')}</dd></div>
-            <div className="flex gap-2"><dt className="shrink-0"><Phone className="mt-0.5 h-4 w-4" /><span className="sr-only">{text('Telefon', 'Phone')}</span></dt><dd>{place.telephoneUrl ? <a href={place.telephoneUrl} className="font-semibold text-[#007EAD] underline underline-offset-2">{place.phone}</a> : text('Telefon bilgisi yok.', 'Phone not listed.')}</dd></div>
-            <div className="flex gap-2"><dt className="shrink-0"><Clock3 className="mt-0.5 h-4 w-4" /><span className="sr-only">{text('Çalışma saatleri', 'Opening hours')}</span></dt><dd className="min-w-0 break-words"><span className="block font-medium text-slate-700">{text('Kaynaktaki çalışma saatleri', 'Published opening hours')}</span>{place.openingHours || text('Çalışma saatleri paylaşılmamış.', 'Opening hours not listed.')}</dd></div>
+            {place.address && <div className="flex gap-2"><dt className="shrink-0"><MapPin className="mt-0.5 h-4 w-4" /><span className="sr-only">{text('Adres', 'Address')}</span></dt><dd className="break-words">{place.address}</dd></div>}
+            {place.telephoneUrl && <div className="flex gap-2"><dt className="shrink-0"><Phone className="mt-0.5 h-4 w-4" /><span className="sr-only">{text('Telefon', 'Phone')}</span></dt><dd><a href={place.telephoneUrl} className="font-semibold text-[#007EAD] underline underline-offset-2">{place.phone}</a></dd></div>}
+            {place.openingHours && <div className="flex gap-2"><dt className="shrink-0"><Clock3 className="mt-0.5 h-4 w-4" /><span className="sr-only">{text('Çalışma saatleri', 'Opening hours')}</span></dt><dd className="min-w-0 break-words">{place.openingHours}</dd></div>}
           </dl>
+          {typeof place.openNow === 'boolean' && <p className="mt-2 text-xs">{place.openNow ? text('Şu an açık', 'Open now') : text('Şu an kapalı', 'Closed now')}</p>}
+          {place.rating !== undefined && <p className="mt-2 text-xs">Google Maps · ★ {place.rating}{place.reviewCount !== undefined ? ` (${place.reviewCount})` : ''}</p>}
+          {place.attributions?.map((a, i) => <p key={i} className="text-xs">{a.url ? <a href={a.url} target="_blank" rel="noopener noreferrer">{a.name}</a> : a.name}</p>)}
           <div className="mt-3 flex flex-wrap gap-4 border-t border-slate-100 pt-3 text-xs font-semibold text-[#007EAD]">
             <a href={place.sourceUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1">{text('Harita kaydı ve kaynak', 'Map record & source')}<ExternalLink className="h-3 w-3" /></a>
             <a href={`https://www.google.com/maps/dir/?api=1&destination=${place.coordinates.lat},${place.coordinates.lng}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-1">{directionsText[locale] ?? directionsText.en}<ExternalLink aria-hidden="true" className="h-3 w-3" /></a>
@@ -169,7 +174,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
       </div>
       {state==='ready' && kind==='exchange' && <p className="text-xs text-slate-500">{text('Büro alış/satış kurları mevcut değil; işlemden önce net kur ve komisyonu işletmeden teyit edin.', 'Bureau buy/sell rates are not available; confirm the net rate and commission with the business before exchanging.')}</p>}
       {places.length > limit && <button type="button" onClick={() => setLimit(value => value + 12)} className="rounded-xl border border-sky-200 bg-white px-4 py-2 text-xs font-bold text-[#007EAD]">{text('Daha fazla göster', 'Show more')}</button>}
-      {result && <p className="text-[11px] leading-relaxed text-slate-500">{text('Saatler kaynakta yazıldığı şekildedir; anlık açık/kapalı durumu ve nöbetçi eczane bilgisi doğrulanmış değildir. Gitmeden önce arayın. Topluluk kayıtları eksik veya eski olabilir.', 'Hours are shown as published; current open/closed status and on-duty pharmacies are not verified. Call before visiting. Community records can be incomplete or outdated.')} {' '}<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" className="underline">© OpenStreetMap {text('katkıda bulunanlar', 'contributors')}</a> · <a href={result.provider === 'Photon' ? 'https://github.com/komoot/photon' : 'https://overpass-api.de'} target="_blank" rel="noopener noreferrer" className="underline">{result.provider}</a></p>}
+      {result && <div className="text-xs text-slate-600"><p className="text-sm font-medium" translate="no">Google Maps</p><p>{text('Bilgiler değişebilir; gitmeden önce işletmeyi arayın. Nöbetçi eczane bilgisi değildir.', 'Information may change; call before visiting. This is not an on-duty pharmacy service.')}</p><a className="underline" href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google Privacy Policy</a> · <a className="underline" href="https://maps.google.com/help/terms_maps/" target="_blank" rel="noopener noreferrer">Google Maps Terms</a></div>}
     </section>
   )
 }
