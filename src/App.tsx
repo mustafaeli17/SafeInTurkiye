@@ -563,18 +563,27 @@ function SafeRouteMap({
     };
   }, [leafletReady, originCoords, destCoords, geometry, color, googleBrowserKey]);
 
-  if (googleBrowserKey && originCoords && destCoords) {
+  if (googleBrowserKey) {
     const mapParams = new URLSearchParams({
       key: googleBrowserKey,
-      origin: `${originCoords.lat},${originCoords.lng}`,
-      destination: `${destCoords.lat},${destCoords.lng}`,
-      mode: 'driving',
       language: document.documentElement.lang || 'en',
       region: 'TR'
     });
+    const mapMode = originCoords && destCoords ? 'directions' : originCoords || destCoords ? 'place' : 'view';
+    if (originCoords && destCoords) {
+      mapParams.set('origin', `${originCoords.lat},${originCoords.lng}`);
+      mapParams.set('destination', `${destCoords.lat},${destCoords.lng}`);
+      mapParams.set('mode', 'driving');
+    } else if (originCoords || destCoords) {
+      const point = (originCoords || destCoords)!;
+      mapParams.set('q', `${point.lat},${point.lng}`);
+    } else {
+      mapParams.set('center', '39,35');
+      mapParams.set('zoom', '5');
+    }
     return (
       <div className="w-full h-full min-h-[360px] rounded-2xl overflow-hidden border border-sky-100 shadow-sm bg-slate-100">
-        <iframe title="Google Maps taxi route" src={`https://www.google.com/maps/embed/v1/directions?${mapParams.toString()}`} className="w-full h-full min-h-[360px] sm:min-h-[480px]" loading="lazy" referrerPolicy="no-referrer-when-downgrade" allowFullScreen />
+        <iframe title="Google Maps taxi route" src={`https://www.google.com/maps/embed/v1/${mapMode}?${mapParams.toString()}`} className="w-full h-full min-h-[360px] sm:min-h-[480px]" loading="lazy" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen />
       </div>
     );
   }
@@ -1509,6 +1518,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
         {activeTab === 'stay' && (
           <main className="travel-catalog">
             <h1 className="text-3xl font-extrabold text-slate-900">{page('hotelsTitle')}</h1>
+            <NearbyPlaces kind="essential" fixedCategory="hotel" lang={lang} center={{lat:currentCityInfo.lat,lng:currentCityInfo.lng}} cityName={currentCityInfo.name} />
             {catalogFilters(hotelsList, filteredHotels.length)}
             <p className="catalog-editorial-note">{directoryText(lang, 2)}</p>
             <div className="travel-catalog-list">
@@ -1544,6 +1554,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
         {activeTab === 'food' && (
           <main className="travel-catalog">
             <h1 className="text-3xl font-extrabold text-slate-900">{page('diningTitle')}</h1>
+            <NearbyPlaces kind="essential" fixedCategory="restaurant" lang={lang} center={{lat:currentCityInfo.lat,lng:currentCityInfo.lng}} cityName={currentCityInfo.name} />
             {catalogFilters(restaurantsList, filteredRestaurants.length)}
             <p className="catalog-editorial-note">{directoryText(lang, 2)}</p>
             <div className="travel-catalog-list">
@@ -1579,6 +1590,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
         {activeTab === 'experiences' && (
           <main className="travel-catalog">
             <div><h1 className="text-3xl font-extrabold text-slate-900">{page('activitiesTitle')}</h1><p className="mt-1 text-sm text-slate-600">{page('activitiesSub')}</p></div>
+            <NearbyPlaces kind="essential" fixedCategory="activity" lang={lang} center={{lat:currentCityInfo.lat,lng:currentCityInfo.lng}} cityName={currentCityInfo.name} />
             <div className="flex gap-2 overflow-x-auto pb-1" aria-label={lang === 'tr' ? 'Aktivite kategorisi' : 'Activity category'}>
               {['All', 'Museum & Culture', 'Cinema', 'Entertainment', 'Summer', 'Winter'].map(category => <button type="button" key={category} aria-pressed={activityCategory === category} onClick={() => setActivityCategory(category)} className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs font-bold ${activityCategory === category ? 'border-[#087FFF] bg-[#087FFF] text-white' : 'border-sky-100 bg-white text-slate-700 hover:bg-sky-50'}`}>{activityLabel(category, lang)}</button>)}
             </div>

@@ -1,3 +1,4 @@
+import { photoSignature } from '../src/server/placePhotoToken.js'
 // Places API (New). Deliberately no persistent cache or CDN caching of Google data.
 type Request = { method?: string; url?: string; headers: Record<string, string | string[] | undefined> }
 type Response = { status: (code: number) => Response; setHeader: (name: string, value: string) => void; json: (body: unknown) => void }
@@ -5,6 +6,8 @@ const types: Record<string, string[]> = {
   all: ['restaurant', 'hotel', 'cafe', 'tourist_attraction', 'museum', 'pharmacy', 'hospital', 'atm', 'shopping_mall'],
   restaurant: ['restaurant'], hotel: ['hotel'], cafe: ['cafe'], attraction: ['tourist_attraction'], museum: ['museum'],
   pharmacy: ['pharmacy'], hospital: ['hospital'], atm: ['atm'], shopping: ['shopping_mall'], police: ['police'], taxi: ['taxi_stand'],
+  activity: ['tourist_attraction', 'museum', 'historical_landmark', 'park', 'amusement_park', 'movie_theater', 'bowling_alley'],
+  park: ['park'], historical: ['historical_landmark'], entertainment: ['amusement_park', 'movie_theater', 'bowling_alley'],
 }
 const limits = new Map<string, { count: number; until: number }>()
 export default async function handler(req: Request, res: Response) {
@@ -32,15 +35,23 @@ export default async function handler(req: Request, res: Response) {
     const upstream = await fetch(`https://places.googleapis.com/v1/places:${exchange ? 'searchText' : 'searchNearby'}`, {
       method: 'POST', signal: AbortSignal.timeout(8000),
       headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': key,
-        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.location,places.types,places.googleMapsUri,places.businessStatus,places.rating,places.userRatingCount,places.currentOpeningHours,places.regularOpeningHours,places.internationalPhoneNumber,places.websiteUri,places.attributions' },
+        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.location,places.types,places.primaryTypeDisplayName,places.photos,places.googleMapsUri,places.businessStatus,places.rating,places.userRatingCount,places.currentOpeningHours,places.regularOpeningHours,places.internationalPhoneNumber,places.websiteUri,places.attributions' },
       body: JSON.stringify(exchange
         ? { textQuery: 'döviz bürosu currency exchange', locationBias: { circle }, pageSize: 20, languageCode: lang === 'zh' ? 'zh-CN' : lang }
-        : { includedTypes: types[category], locationRestriction: { circle }, maxResultCount: 20, rankPreference: 'DISTANCE', languageCode: lang === 'zh' ? 'zh-CN' : lang }),
+        : { includedTypes: types[category], locationRestriction: { circle }, maxResultCount: 20, rankPreference: 'POPULARITY', languageCode: lang === 'zh' ? 'zh-CN' : lang }),
     })
     if (!upstream.ok) return res.status(upstream.status === 429 ? 429 : 503).json({ error: upstream.status === 429 ? 'BUSY' : 'PROVIDER_UNAVAILABLE' })
     const body = await upstream.json()
     if (!body || typeof body !== 'object' || (body.places !== undefined && !Array.isArray(body.places))) return res.status(503).json({ error: 'INVALID_RESPONSE' })
-    return res.status(200).json({ provider: 'Google Maps', places: body.places ?? [] })
+    const places = (body.places ?? []).map((place: Record<string, unknown>) => {
+      const photos = place.photos as { name?: string; authorAttributions?: unknown[]; googleMapsUri?: string }[] | undefined
+      const photo = photos?.[0]
+      const expires = Date.now() + 15 * 60000
+      const photoUrl = photo?.name ? `/api/place-photo?${new URLSearchParams({ name: photo.name, expires: String(expires), signature: photoSignature(photo.name, expires, key) })}` : null
+      const { photos: omittedPhotos, ...rest } = place
+      return { ...rest, photo: photoUrl ? { url: photoUrl, authors: photo?.authorAttributions ?? [], sourceUrl: photo?.googleMapsUri ?? place.googleMapsUri } : null }
+    })
+    return res.status(200).json({ provider: 'Google Maps', places })
   } catch (error) {
     return res.status(503).json({ error: error instanceof Error && error.name === 'TimeoutError' ? 'TIMEOUT' : 'PROVIDER_UNAVAILABLE' })
   }

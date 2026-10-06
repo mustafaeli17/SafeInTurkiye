@@ -27,6 +27,11 @@ export function parseGooglePlaces(payload: unknown, center: NearbyCenter, catego
       rating: typeof p.rating === 'number' && p.rating >= 1 && p.rating <= 5 ? p.rating : undefined,
       reviewCount: Number.isSafeInteger(p.userRatingCount) && p.userRatingCount >= 0 ? p.userRatingCount : undefined,
       attributions: Array.isArray(p.attributions) ? p.attributions.flatMap((a: { provider?: unknown; providerUri?: unknown }) => str(a.provider) ? [{ name: str(a.provider)!, url: safeWebsite(a.providerUri) }] : []) : [],
+      typeLabel: str(p.primaryTypeDisplayName?.text) ?? undefined,
+      photo: typeof p.photo?.url === 'string' && p.photo.url.startsWith('/api/place-photo?') ? {
+        url: p.photo.url, sourceUrl: safeWebsite(p.photo.sourceUrl) ?? sourceUrl,
+        authors: Array.isArray(p.photo.authors) ? p.photo.authors.flatMap((a: { displayName?: unknown; uri?: unknown }) => str(a.displayName) ? [{ name: str(a.displayName)!, url: safeWebsite(typeof a.uri === 'string' && a.uri.startsWith('//') ? `https:${a.uri}` : a.uri) }] : []) : [],
+      } : undefined,
     })
   }
   return { provider: 'Google Maps', places: [...records.values()].sort((a,b) => a.distanceMeters-b.distanceMeters), fetchedAt: new Date().toISOString(), mapDataAt: null }
