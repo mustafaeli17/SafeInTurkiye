@@ -2,6 +2,7 @@ import { officialLinks, directoryText, sourcedActivities, cityPhotos } from './l
 import { openDirectoryEntry, registerPublishedEntry, photoCuratedCatalog } from './lib/directory';
 import { curatedDirectory as directoryRecords } from './lib/directory';
 import cityGuides from './data/cityGuides.json';
+import {cityPath} from './lib/publicRoutes';
 import citiesZh from './data/citiesZh.json';
 import cityImages from './lib/placePhotos.json';
 import { findCityGuide, openCityGuide } from './lib/cityNavigation';
@@ -76,6 +77,7 @@ import { createBooking } from './repositories/bookingRepository';
 import { getCurrentTaxiTariffs } from './repositories/tariffRepository';
 import { routeFareRange } from './lib/taxiCalculation';
 import { taxiBudgetRange } from './lib/taxiBudget';
+import { taxiSearchUrl } from './lib/taxiSearch';
 import { taxiEstimateCopy, taxiDetailsCopy, taxiBudgetCopy, taxiIntroCopy } from './lib/taxiCopy';
 import { taxiErrorText, type TaxiErrorKey } from './lib/taxiErrors';
 import { regionalDescription } from './lib/regionalDescription';
@@ -600,8 +602,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
   const [selectedCityName, setSelectedCityName] = useState<string>(initialCity??'İstanbul');
   useEffect(() => {
     updateSectionSeo(activeTab, selectedCityName);
-    const guide=activeTab==='city'?cityGuides.find(city=>city.name===selectedCityName):undefined;
-    const path=guide?`/cities/${guide.slug}`:'/';
+    const path=activeTab==='city'?cityPath(selectedCityName):'/';
     if(initialCity)window.history.replaceState({},'',path);
     document.querySelector('link[rel="canonical"]')?.setAttribute('href',`https://www.safeinturkiye.com${path}`);
     document.querySelector('meta[property="og:url"]')?.setAttribute('content',`https://www.safeinturkiye.com${path}`);
@@ -803,7 +804,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
     const controller = new AbortController();
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(taxiOriginText)}&limit=5&lat=41.0082&lon=28.9784`,{signal:AbortSignal.any([controller.signal,AbortSignal.timeout(8000)])});
+        const res = await fetch(taxiSearchUrl(taxiOriginText),{signal:AbortSignal.any([controller.signal,AbortSignal.timeout(8000)])});
         if (!res.ok) return;
         const data = await res.json();
         if (!controller.signal.aborted && data.features) {
@@ -827,7 +828,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
     const controller = new AbortController();
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(taxiDestText)}&limit=5&lat=41.0082&lon=28.9784`,{signal:AbortSignal.any([controller.signal,AbortSignal.timeout(8000)])});
+        const res = await fetch(taxiSearchUrl(taxiDestText),{signal:AbortSignal.any([controller.signal,AbortSignal.timeout(8000)])});
         if (!res.ok) return;
         const data = await res.json();
         if (!controller.signal.aborted && data.features) {
@@ -1242,7 +1243,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
           lang={lang}
           cities={[...['İstanbul', 'Antalya', 'Cappadocia', 'Ankara', 'İzmir'].map(key => ({ key, name: citiesDetailedData[key].name, coverImage: key==='Antalya'?cityImages.antalya.thumbnail:citiesDetailedData[key].coverImage })),...cityGuides.map(city=>{const photo=cityImages[city.slug as keyof typeof cityImages];return {key:city.name,name:city.name,coverImage:'thumbnail' in photo?photo.thumbnail:photo.src};})]}
           onNavigate={setActiveTab}
-          onCity={city => { const guide=findCityGuide(city);if(guide){openCityGuide(guide.slug,lang);return;}setSelectedCityName(city);setActiveTab('city'); }}
+          onCity={city => { window.history.pushState({},'',cityPath(city));window.dispatchEvent(new PopStateEvent('popstate')); }}
           onSearch={query => { setSearchQuery(query); handleGlobalSearch(query); }}
           onCategory={category => { setActivityCategory(category); setActiveTab('experiences'); }}
         />}

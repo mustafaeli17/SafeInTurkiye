@@ -1,11 +1,7 @@
 {
   "cleanUrls": true,
+  "trailingSlash": false,
   "redirects": [
     { "source": "/favicon.svg", "destination": "/favicon-96x96.png", "permanent": true }
-  ],
-  "rewrites": [
-    { "source": "/hotels/:slug(.+--[a-f0-9-]{36})", "destination": "/index.html" },
-    { "source": "/restaurants/:slug(.+--[a-f0-9-]{36})", "destination": "/index.html" },
-    { "source": "/activities/:slug(.+--[a-f0-9-]{36})", "destination": "/index.html" }
   ]
 }

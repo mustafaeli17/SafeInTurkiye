@@ -4,6 +4,7 @@ import HomeButton from './HomeButton';
 import {translatedDescription,photoEditingCopy} from '../lib/contentTranslation';
 import type { DirectoryEntry } from '../lib/directory';
 import { entryPath } from '../lib/directory';
+import {localizedDetailPath} from '../lib/publicRoutes';
 import { entryPhotos,contextLabel,illustrativeLabel } from '../lib/directoryPhotos';
 import siteLogo from '../assets/safeinturkiye-logo.png';
 import { useDetailSeo } from '../lib/useDetailSeo';
@@ -28,18 +29,22 @@ export default function DirectoryDetail({entry,lang,onBack}:{entry:DirectoryEntr
   const [failed,setFailed]=useState<string[]>([]);
   const website=catalogWebsite(entry.website);
   const phone=safeTelephone(entry.phone);
-  useDetailSeo(`${entry.name} | SafeInTürkiye`,description,entryPath(entry));
+  const canonicalPath=localizedDetailPath(entryPath(entry),lang);
+  useDetailSeo(`${entry.name} | SafeInTürkiye`,description,canonicalPath);
   useEffect(() => {
     window.scrollTo(0,0);
-    const schema=document.createElement('script'); schema.type='application/ld+json';schema.dataset.directory='true';
-    schema.textContent=JSON.stringify({'@context':'https://schema.org','@type':entry.kind==='hotels'?'Hotel':entry.kind==='restaurants'?'Restaurant':'Place',name:entry.name,url:`https://www.safeinturkiye.com${entryPath(entry)}`,description,...(entry.address?{address:entry.address}:{}),...(phone?{telephone:phone.phone}:{}),...(website?{sameAs:website}:{})});
+    const existing=document.getElementById('public-page-schema');
+    const schema=existing instanceof HTMLScriptElement?existing:document.createElement('script'); schema.id='public-page-schema';schema.type='application/ld+json';schema.dataset.directory='true';
+    schema.textContent=JSON.stringify({'@context':'https://schema.org','@type':entry.kind==='hotels'?'Hotel':entry.kind==='restaurants'?'Restaurant':'Place',name:entry.name,url:`https://www.safeinturkiye.com${canonicalPath}`,description,...(entry.address?{address:entry.address}:{}),...(phone?{telephone:phone.phone}:{}),...(website?{sameAs:website}:{})});
+    document.documentElement.lang=lang;
     document.head.appendChild(schema);
     return () => { schema.remove(); };
-  },[entry,description,phone?.phone,website]);
+  },[entry,description,phone?.phone,website,canonicalPath,lang]);
   const current=gallery[selected]??gallery[0];
   return <main dir={lang==='ar'?'rtl':'ltr'} className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-6">
     <a href="/" aria-label="SafeInTürkiye"><img src={siteLogo} alt="SafeInTürkiye" className="w-40 h-auto" /></a>
     <HomeButton lang={lang} onClick={onBack}/>
+    {entry.description.tr&&<nav aria-label={lang==='tr'?'Dil':'Language'} className="flex gap-3 text-sm text-blue-700"><a href={entryPath(entry)} hrefLang="en" aria-current={lang==='en'?'page':undefined}>English</a><a href={`/tr${entryPath(entry)}`} hrefLang="tr" aria-current={lang==='tr'?'page':undefined}>Türkçe</a></nav>}
     <header><p className="text-sm font-bold text-blue-600">{entry.city}</p><h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900">{entry.name}</h1></header>
     <section aria-label={entry.name} className="rounded-2xl overflow-hidden border border-sky-100 bg-white">
       {current && !failed.includes(current.src) ? <div className="relative"><img src={current.src} srcSet={current.variants?.map(v=>`${v.src} ${v.width}w`).join(', ')} sizes="(max-width: 1024px) 100vw, 1024px" width={current.width} height={current.height} style={{objectPosition:`${current.focalX??50}% ${current.focalY??50}%`}} alt={lang==='en'?(current.alt??entry.name):entry.name} decoding="async" onError={()=>setFailed(previous=>[...previous,current.src])} className="w-full h-64 sm:h-96 object-cover" />{current.cityContext&&<p className="absolute bottom-0 inset-x-0 bg-slate-950/85 text-white text-xs px-4 py-2">{contextLabel(lang,current.cityContext)}</p>}</div> : <p className="p-8 text-sm text-slate-500">{t[8]}</p>}

@@ -1,6 +1,7 @@
 import { Hotel, Utensils, Ticket, BookOpen, ArrowRight, Search } from 'lucide-react'
 import { useState } from 'react'
 import hero from '../data/heroPhoto.json'
+import {cityPath} from '../lib/publicRoutes'
 
 
 type Destination = 'city' | 'taxi' | 'transit' | 'currency' | 'nearme' | 'safety' | 'stay' | 'food' | 'experiences' | 'assistant'
@@ -33,11 +34,11 @@ export default function TravelHome({ lang, cities, onNavigate, onCity, onSearch,
         <h1>{t[0]}<br />{' '}<span>{t[1]}</span></h1>
         <p>{t[2]}</p>
         <form onSubmit={event => { event.preventDefault(); onSearch(query) }} className="travel-search"><Search size={19} aria-hidden="true" /><input aria-label={t[3]} placeholder={t[3]} value={query} onChange={event => setQuery(event.target.value)} /><button type="submit">{t[4]}</button></form>
-        <div className="travel-city-chips">{cities.map(city => <button key={city.key} onClick={() => onCity(city.key)}>{city.name}</button>)}</div>
+        <div className="travel-city-chips">{cities.map(city => <a key={city.key} href={cityPath(city.key)} onClick={event=>{if(!event.ctrlKey&&!event.metaKey&&!event.shiftKey){event.preventDefault();onCity(city.key);}}}>{city.name}</a>)}</div>
       </div>
     </section>
     <section className="travel-section"><h2>{t[5]}</h2><div className="travel-quick-grid">{quick.map(({ label, emoji, page }) => <button key={page} onClick={() => onNavigate(page)} className="travel-tool"><span className="travel-tool-emoji" aria-hidden="true">{emoji}</span><span>{label}</span><ArrowRight size={14} aria-hidden="true" /></button>)}<a href="tel:112" className="travel-tool travel-emergency"><span className="travel-tool-emoji" aria-hidden="true">🚨</span><span>{t[15]}</span><strong>112</strong></a></div></section>
-    <section className="travel-section"><div className="travel-section-heading"><div><h2>{t[6]}</h2><p>{t[20]}</p></div><button onClick={() => onNavigate('city')}>{t[9]} <ArrowRight size={14} /></button></div><div className="travel-cities">{cities.map(city => <button key={city.key} onClick={() => onCity(city.key)}><img src={city.coverImage} alt={city.name} loading="lazy" /><span>{city.name}<ArrowRight size={16} /></span></button>)}</div></section>
+    <section className="travel-section"><div className="travel-section-heading"><div><h2>{t[6]}</h2><p>{t[20]}</p></div><button onClick={() => onNavigate('city')}>{t[9]} <ArrowRight size={14} /></button></div><div className="travel-cities">{cities.map(city => <a key={city.key} href={cityPath(city.key)} onClick={event=>{if(!event.ctrlKey&&!event.metaKey&&!event.shiftKey){event.preventDefault();onCity(city.key);}}}><img src={city.coverImage} alt={city.name} loading="lazy" /><span>{city.name}<ArrowRight size={16} /></span></a>)}</div></section>
     <section className="travel-section"><div className="travel-section-heading"><div><h2>{t[7]}</h2><p>{t[21]}</p></div></div><div className="travel-plan-grid">{plan.map(({ label, icon: Icon, page }) => <button key={page} onClick={() => onNavigate(page)} className="travel-tool"><Icon aria-hidden="true" /><span>{label}</span><ArrowRight size={14} aria-hidden="true" /></button>)}</div></section>
     <section className="travel-section"><div className="travel-section-heading"><h2>{t[18]}</h2><button onClick={() => onNavigate('experiences')}>{t[9]} <ArrowRight size={14} /></button></div><div className="travel-category-grid">{['Museum & Culture', 'Cinema', 'Entertainment', 'Summer', 'Winter'].map((category, index) => <button key={category} onClick={() => onCategory(category)}><span>{['🏛️', '🎬', '🎟️', '☀️', '❄️'][index]}</span>{t[23 + index]}<ArrowRight size={14} /></button>)}</div></section>
     <section className="travel-guide-banner"><BookOpen size={32} /><div><h2>{t[8]}</h2><p>{t[22]}</p></div><button onClick={() => onNavigate('assistant')}>{t[19]} <ArrowRight size={16} /></button></section>

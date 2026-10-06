@@ -1,0 +1,7 @@
+[
+ {"slug":"istanbul","name":"İstanbul","description":{"en":"Bridging continents with vibrant history, ferries and culture"}},
+ {"slug":"antalya","name":"Antalya","description":{"en":"Turquoise Mediterranean shores, waterfalls and Roman ruins"}},
+ {"slug":"cappadocia","name":"Cappadocia","description":{"en":"Fairy chimneys, volcanic valleys and sunrise balloon corridors"}},
+ {"slug":"ankara","name":"Ankara","description":{"en":"Türkiye’s capital: museums, historic streets and parks"}},
+ {"slug":"izmir","name":"İzmir","description":{"en":"Aegean breeze, Kordon promenade, and lively bazaar alleys"}}
+]

@@ -3,7 +3,7 @@ import App from './App';
 import { directoryEntry, registerPublishedEntry, photoCuratedCatalog } from './lib/directory';
 import type { DirectoryEntry } from './lib/directory';
 import { requireSupabase } from './lib/supabase';
-import cityGuides from './data/cityGuides.json';
+import {publicCities} from './lib/publicRoutes';
 const CityGuide=lazy(()=>import('./components/CityGuide'));
 const DirectoryDetail=lazy(()=>import('./components/DirectoryDetail'));
 export default function TravelApp() {
@@ -24,10 +24,13 @@ export default function TravelApp() {
     })();
     return()=>{cancelled=true;};
   },[path]);
-  const entry=match ? (remote?.path===path?remote.entry:undefined) : directoryEntry(path);
+  const localized=path.startsWith('/tr/');
+  const entryPath=localized?path.slice(3):path;
+  const candidate=match ? (remote?.path===path?remote.entry:undefined) : directoryEntry(entryPath);
+  const entry=localized&&!candidate?.description.tr?undefined:candidate;
   const back=()=>{window.history.pushState({},'','/');setPath('/');};
-  const language=localStorage.getItem('safeinturkiye-language') ?? 'en';
-  const city=cityGuides.find(item=>path.replace(/\/$/,'')===`/cities/${item.slug}`);
+  const language=entry?(localized?'tr':'en'):(localStorage.getItem('safeinturkiye-language') ?? 'en');
+  const city=publicCities.find(item=>path.replace(/\/$/,'')===`/cities/${item.slug}`);
   if(city)return <Suspense fallback={<main className="p-8" aria-busy="true">SafeInTürkiye…</main>}><CityGuide city={city} language={language} onBack={back}/></Suspense>;
   if(match && remote?.path!==path)return <main className="p-8" aria-busy="true">SafeInTürkiye…</main>;
   if(path!=='/'&&!entry)return <main className="max-w-xl mx-auto p-8 space-y-4"><h1 className="text-xl font-bold">{language==='tr'?'İçerik şu anda görüntülenemiyor':'This page is currently unavailable'}</h1><p>{language==='tr'?'Kayıt yayından kaldırılmış veya bağlantı geçici olarak kesilmiş olabilir.':'The entry may no longer be published, or the connection may be temporarily unavailable.'}</p><button className="text-blue-700 underline" onClick={back}>{language==='tr'?'Ana sayfaya dön':'Back to home'}</button></main>;
