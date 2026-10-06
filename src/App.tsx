@@ -8,7 +8,7 @@ import { findCityGuide, openCityGuide } from './lib/cityNavigation';
 import HomeButton from './components/HomeButton';
 import { getPublishedContent } from './repositories/contentRepository';
 import { detailLabel, hotelSummary } from './lib/directoryLabels';
-import { taxiCityFromAddress, taxiUnavailableText } from './lib/taxiCity';
+import { taxiCityFromAddress, taxiReferenceCity, taxiUnavailableText } from './lib/taxiCity';
 import PlacePhoto, { PhotoCredits } from './components/PlacePhoto';
 import { updateSectionSeo } from './lib/seo';
 import SafetyTips from './components/SafetyTips';
@@ -75,7 +75,8 @@ import { useSupabaseAuth } from './hooks/useSupabaseAuth';
 import { createBooking } from './repositories/bookingRepository';
 import { getCurrentTaxiTariffs } from './repositories/tariffRepository';
 import { routeFareRange } from './lib/taxiCalculation';
-import { taxiEstimateCopy, taxiDetailsCopy } from './lib/taxiCopy';
+import { taxiBudgetRange } from './lib/taxiBudget';
+import { taxiEstimateCopy, taxiDetailsCopy, taxiBudgetCopy, taxiIntroCopy } from './lib/taxiCopy';
 import { taxiErrorText, type TaxiErrorKey } from './lib/taxiErrors';
 import { regionalDescription } from './lib/regionalDescription';
 import { getAssistantReply } from './services/travelDataService';
@@ -761,19 +762,20 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
   const [isTaxiRouting, setIsTaxiRouting] = useState(false);
   const [taxiRouteError, setTaxiRouteError] = useState<TaxiErrorKey | 'unavailable' | null>(null);
   const [taxiTariffs, setTaxiTariffs] = useState<Record<string, TaxiTariff>>({});
+  const referenceTaxiCity = taxiReferenceCity(detectedTaxiCity);
 
   useEffect(() => {
     setTaxiTariffs({});
-    if (!supabaseConfigured || !detectedTaxiCity) return;
+    if (!supabaseConfigured || !referenceTaxiCity) return;
     let cancelled = false;
-    void getCurrentTaxiTariffs(detectedTaxiCity).then((tariffs) => {
+    void getCurrentTaxiTariffs(referenceTaxiCity).then((tariffs) => {
       if (cancelled) return;
       const next: Record<string, TaxiTariff> = {};
       for (const tariff of tariffs) next[tariff.vehicleClass] = { city: tariff.city, openingFare: tariff.openingFare, pricePerKm: tariff.perKm, minimumFare: tariff.minimumFare, waitingFarePerHour: tariff.waitingFare, source: tariff.sourceName + ' · ' + tariff.effectiveFrom, lastUpdated: tariff.lastVerified };
       setTaxiTariffs(next);
     }).catch(() => { if (!cancelled) setTaxiTariffs({}); });
     return () => { cancelled = true; };
-  }, [detectedTaxiCity]);
+  }, [referenceTaxiCity]);
 
   const [taxiRouteResult, setTaxiRouteResult] = useState<{
     distanceKm: number;
@@ -782,7 +784,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
     source: string;
   } | null>(null);
 
-  const [fareCalculation, setFareCalculation] = useState<{ amount: number; upper:number; hasRange:boolean; source: string } | null>(null);
+  const [fareCalculation, setFareCalculation] = useState<{ amount: number; upper:number; hasRange:boolean; source: string; sourceUrls?:string[] } | null>(null);
   const taxiRequest = useRef(0);
   useEffect(() => {
     taxiRequest.current++;
@@ -866,6 +868,8 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
             const data = await res.json();
             if (lookupId !== taxiOriginLookupId.current) return;
             setTaxiOriginText(data.display_name || `${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}`);
+            setTaxiOriginCoords(coords);
+            setDetectedTaxiCity(taxiCityFromAddress(data.address?.country_code, data.address?.province ?? data.address?.state));
           } else {
             setTaxiOriginText(`${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}`);
           }
@@ -891,10 +895,6 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
 
     if (!taxiOriginCoords || !taxiDestCoords) {
       setTaxiRouteError('missingPlaces');
-      return;
-    }
-    if(!detectedTaxiCity||!taxiTariffs[taxiClass.toUpperCase()]){
-      setTaxiRouteError('unavailable');
       return;
     }
 
@@ -936,8 +936,10 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
       });
 
       const selectedTariff = taxiTariffs[taxiClass.toUpperCase()];
-      const tariff = selectedTariff?.city === detectedTaxiCity ? selectedTariff : undefined;
+      const tariff = selectedTariff?.city === referenceTaxiCity ? selectedTariff : undefined;
       if (!tariff) {
+        const budget=taxiBudgetRange(referenceTaxiCity,data.routes.filter((route:{distance:number})=>Number.isFinite(route.distance)&&route.distance>0).map((route:{distance:number})=>route.distance/1000),taxiClass.toUpperCase());
+        if(budget){setFareCalculation(budget);setTaxiRouteError(null);setIsTaxiRouting(false);return;}
         setFareCalculation(null);
         setTaxiRouteError('unavailable');
         setIsTaxiRouting(false);
@@ -945,7 +947,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
       }
       setFareCalculation({
         ...routeFareRange(data.routes.filter((route:{distance:number})=>Number.isFinite(route.distance)&&route.distance>0).map((route:{distance:number})=>route.distance/1000), tariff.openingFare, tariff.pricePerKm, tariff.minimumFare),
-        source: detectedTaxiCity+' · '+taxiClass+' · '+tariff.source
+        source: tariff.city+' · '+taxiClass+' · '+tariff.source,
       });
     } catch {
       if (request !== taxiRequest.current) return;
@@ -1265,7 +1267,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
 
             <div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">{page('taxiTitle')}</h1>
-              <p className="text-[13px] text-slate-500">{page('taxiSub')}</p>
+              <p className="text-[13px] text-slate-500">{taxiIntroCopy[lang]}</p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -1273,7 +1275,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
 
                 <div className="relative">
                   <div className="flex justify-between items-center mb-1">
-                    <label className="text-[12px] font-bold text-slate-700">{page('origin')}</label>
+                    <label htmlFor="taxi-origin" className="text-[12px] font-bold text-slate-700">{page('origin')}</label>
                     <button
                       type="button"
                       onClick={handleTaxiCurrentLocation}
@@ -1285,6 +1287,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
                     </button>
                   </div>
                   <input
+                    id="taxi-origin"
                     type="text"
                     value={taxiOriginText}
                     onChange={(e) => {
@@ -1300,7 +1303,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
                   {taxiOriginSuggs.length > 0 && (
                     <div className="absolute top-full left-0 right-0 z-30 bg-white border border-slate-200 rounded-xl shadow-lg mt-1 max-h-48 overflow-y-auto">
                       {taxiOriginSuggs.map((s, idx) => (
-                        <div
+                        <button type="button"
                           key={idx}
                           onClick={() => {
                             taxiOriginLookupId.current++;
@@ -1310,19 +1313,20 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
                             setTaxiOriginSuggs([]);
                             setDetectedTaxiCity(s.city || '');
                           }}
-                          className="p-2.5 hover:bg-sky-50 cursor-pointer text-[12px] text-slate-700 border-b border-slate-100 last:border-none"
+                          className="w-full text-left p-2.5 hover:bg-sky-50 cursor-pointer text-[12px] text-slate-700 border-b border-slate-100 last:border-none"
                         >
                           <MapPin className="w-3.5 h-3.5 text-[#087FFF] inline mr-1.5" />
                           {s.label}
-                        </div>
+                        </button>
                       ))}
                     </div>
                   )}
                 </div>
 
                 <div className="relative">
-                  <label className="text-[12px] font-bold text-slate-700 block mb-1">{page('destination')}</label>
+                  <label htmlFor="taxi-destination" className="text-[12px] font-bold text-slate-700 block mb-1">{page('destination')}</label>
                   <input
+                    id="taxi-destination"
                     type="text"
                     value={taxiDestText}
                     onChange={(e) => {
@@ -1335,18 +1339,18 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
                   {taxiDestSuggs.length > 0 && (
                     <div className="absolute top-full left-0 right-0 z-30 bg-white border border-slate-200 rounded-xl shadow-lg mt-1 max-h-48 overflow-y-auto">
                       {taxiDestSuggs.map((s, idx) => (
-                        <div
+                        <button type="button"
                           key={idx}
                           onClick={() => {
                             setTaxiDestText(s.label);
                             setTaxiDestCoords({ lat: s.lat, lng: s.lng });
                             setTaxiDestSuggs([]);
                           }}
-                          className="p-2.5 hover:bg-sky-50 cursor-pointer text-[12px] text-slate-700 border-b border-slate-100 last:border-none"
+                          className="w-full text-left p-2.5 hover:bg-sky-50 cursor-pointer text-[12px] text-slate-700 border-b border-slate-100 last:border-none"
                         >
                           <MapPin className="w-3.5 h-3.5 text-red-500 inline mr-1.5" />
                           {s.label}
-                        </div>
+                        </button>
                       ))}
                     </div>
                   )}
@@ -1361,7 +1365,8 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
                   {isTaxiRouting ? <Loader2 className="w-4 h-4 animate-spin" /> : page('calculate')}
                 </button>
 
-                {taxiRouteError && <p role="alert" className="text-sm text-red-700 bg-red-50 rounded-xl p-3">{taxiRouteError === 'unavailable' ? taxiUnavailableText(lang) : taxiErrorText(lang, taxiRouteError)}</p>}
+                {taxiRouteError && <p role={taxiRouteError === 'unavailable' ? 'status' : 'alert'} className="text-sm text-slate-700 bg-sky-50 rounded-xl p-3">{taxiRouteError === 'unavailable' ? taxiUnavailableText(lang) : taxiErrorText(lang, taxiRouteError)}</p>}
+                {taxiRouteResult && !fareCalculation && <div className="grid grid-cols-2 gap-2 rounded-xl bg-sky-50 p-3 text-sm" aria-live="polite"><p>{page('distance')}<br /><strong>{taxiRouteResult.distanceKm.toLocaleString(lang,{maximumFractionDigits:1})} km</strong></p><p>{page('duration')}<br /><strong>~{taxiRouteResult.durationMinutes} min</strong></p></div>}
                 {taxiRouteResult && fareCalculation && (
                   <div className="pt-3 border-t border-slate-100 space-y-3">
                     <div className="p-4 bg-sky-50 rounded-2xl border border-sky-100 space-y-2">
@@ -1370,7 +1375,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
                         {taxiDetailsCopy[lang][1]} ₺{(fareCalculation.hasRange?Math.floor(fareCalculation.amount):Math.round(fareCalculation.amount)).toLocaleString(lang)}{fareCalculation.hasRange?` – ₺${Math.ceil(fareCalculation.upper).toLocaleString(lang)}`:''}
                       </span>
                       <span className="text-[11px] text-slate-500 block">{taxiEstimateCopy[lang][1]}</span>
-                      <details className="text-xs text-slate-500"><summary className="cursor-pointer min-h-8">{taxiDetailsCopy[lang][0]}</summary><p>{fareCalculation.source}</p><p>{taxiDetailsCopy[lang][2]}</p></details>
+                      <details className="text-xs text-slate-500"><summary className="cursor-pointer min-h-8">{taxiDetailsCopy[lang][0]}</summary><p>{fareCalculation.source}</p>{fareCalculation.sourceUrls?.map((url)=><a key={url} className="block underline py-1" href={url} target="_blank" rel="noopener noreferrer">{new URL(url).hostname} ↗</a>)}<p>{fareCalculation.sourceUrls?taxiBudgetCopy[lang]:taxiDetailsCopy[lang][2]}</p></details>
                       <div className="grid grid-cols-2 gap-2 pt-2 border-t border-sky-200/60 text-[12px]">
                         <div>
                           <span className="text-slate-400 block text-[10px]">{page('distance')}</span>

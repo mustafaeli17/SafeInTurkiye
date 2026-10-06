@@ -2,7 +2,22 @@ import {beforeEach,expect,it,vi} from 'vitest';
 const mock=vi.hoisted(()=>({rows:[] as unknown[],query:{} as Record<string,ReturnType<typeof vi.fn>>}));
 vi.mock('../lib/supabase',()=>({requireSupabase:()=>({from:()=>mock.query})}));
 import {getCurrentTaxiTariffs,eligibleTariffs} from '../repositories/tariffRepository';
+import {taxiCityFromAddress,taxiReferenceCity} from '../lib/taxiCity';
+import {distanceFare} from '../lib/taxiCalculation';
 const tariff={vehicle_class:'YELLOW',opening_fare:20,per_km:15,minimum_fare:50,waiting_fare:100,effective_from:'2020-01-01',effective_to:null,cities:{name:'İstanbul'},last_verified_at:new Date().toISOString(),data_sources:{name:'Municipality',url:'https://example.org/tariff',verification_status:'VERIFIED'}};
+// Synthetic test fixtures, not municipal rates or production seed data.
+it.each(['İstanbul','Antalya','İzmir','Ankara','Muğla','Aydın','Denizli','Trabzon','Bursa','Konya','Kayseri','Nevşehir'])('uses only %s own verified record across address, repository and calculation',async(city)=>{
+ const origin=taxiReferenceCity(taxiCityFromAddress('tr',city));
+ mock.rows=[{...tariff,cities:{name:city}},{...tariff,cities:{name:'Another city'}}];
+ const rows=await getCurrentTaxiTariffs(origin);
+ expect(rows).toHaveLength(1);
+ expect(rows[0].city).toBe(city);
+ expect(mock.query.eq).toHaveBeenCalledWith('cities.name',city);
+ expect(distanceFare(10,rows[0].openingFare,rows[0].perKm,rows[0].minimumFare)).toBe(170);
+ expect(distanceFare(1,rows[0].openingFare,rows[0].perKm,rows[0].minimumFare)).toBe(50);
+ mock.rows=[];
+ expect(await getCurrentTaxiTariffs(origin)).toEqual([]);
+});
 beforeEach(()=>{
  mock.rows=[];
  for(const method of ['select','eq','lte','or','order'])mock.query[method]=vi.fn(()=>mock.query);
