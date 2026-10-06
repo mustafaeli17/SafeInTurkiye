@@ -7,7 +7,7 @@ const types: Record<string, string[]> = {
   restaurant: ['restaurant'], hotel: ['hotel'], cafe: ['cafe'], attraction: ['tourist_attraction'], museum: ['museum'],
   pharmacy: ['pharmacy'], hospital: ['hospital'], atm: ['atm'], shopping: ['shopping_mall'], police: ['police'], taxi: ['taxi_stand'],
   activity: ['tourist_attraction', 'museum', 'historical_landmark', 'park', 'amusement_park', 'movie_theater', 'bowling_alley'],
-  park: ['park'], historical: ['historical_landmark'], entertainment: ['amusement_park', 'movie_theater', 'bowling_alley'],
+  park: ['park'], historical: ['historical_landmark'], entertainment: ['amusement_park', 'bowling_alley'], cinema: ['movie_theater'],
 }
 const limits = new Map<string, { count: number; until: number }>()
 export default async function handler(req: Request, res: Response) {
@@ -29,7 +29,8 @@ export default async function handler(req: Request, res: Response) {
     return res.status(429).json({ error: 'BUSY' })
   }
   limits.set(ip, { count: (limit?.count ?? 0) + 1, until: limit?.until ?? now + 60000 })
-  const circle = { center: { latitude: lat, longitude: lng }, radius: 2500 }
+  const radius = url.searchParams.get('scope') === 'city' ? 30000 : 2500
+  const circle = { center: { latitude: lat, longitude: lng }, radius }
   const exchange = category === 'bureau_de_change'
   try {
     const upstream = await fetch(`https://places.googleapis.com/v1/places:${exchange ? 'searchText' : 'searchNearby'}`, {

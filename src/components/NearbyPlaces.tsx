@@ -13,6 +13,7 @@ interface NearbyPlacesProps {
   center: NearbyCenter
   cityName: string
   fixedCategory?: NearbyCategory
+  initialCategory?: NearbyCategory
 }
 
 const categoryLabels: Record<NearbyCategory, [string, string]> = {
@@ -20,10 +21,10 @@ const categoryLabels: Record<NearbyCategory, [string, string]> = {
   hospital: ['Hastane', 'Hospital'], police: ['Polis', 'Police'], atm: ['ATM', 'ATM'],
   taxi: ['Taksi durağı', 'Taxi rank'], restaurant: ['Restoran', 'Restaurant'], cafe: ['Kafe', 'Café'],
   hotel: ['Otel', 'Hotel'], attraction: ['Gezilecek yer', 'Attraction'], museum: ['Müze', 'Museum'], shopping: ['Alışveriş', 'Shopping'],
-  activity: ['Gezilecek yerler ve etkinlikler', 'Things to do'], park: ['Park', 'Park'], historical: ['Tarihi yer', 'Historical place'], entertainment: ['Eğlence', 'Entertainment'],
+  activity: ['Gezilecek yerler ve etkinlikler', 'Things to do'], park: ['Park', 'Park'], historical: ['Tarihi yer', 'Historical place'], entertainment: ['Eğlence', 'Entertainment'], cinema: ['Sinema', 'Cinema'],
 }
 
-export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter, cityName: initialCityName, fixedCategory }: NearbyPlacesProps) {
+export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter, cityName: initialCityName, fixedCategory, initialCategory }: NearbyPlacesProps) {
   const cities: Record<string, NearbyCenter> = searchDestinations;
   const [selectedCity, setSelectedCity] = useState(initialCityName.startsWith('Cappadocia') ? 'Cappadocia' : initialCityName);
   const cityName = selectedCity;
@@ -43,8 +44,8 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
   const [state, setState] = useState<'idle' | 'locating' | 'loading' | 'ready' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
   const [origin, setOrigin] = useState<'location' | 'city'>('city')
-  const [filter, setFilter] = useState<'all' | NearbyCategory>(fixedCategory ?? 'all')
-  const [limit, setLimit] = useState(12)
+  const [filter, setFilter] = useState<'all' | NearbyCategory>(initialCategory ?? fixedCategory ?? 'all')
+  const [limit, setLimit] = useState(6)
   const controller = useRef<AbortController | null>(null)
   const generation = useRef(0)
   const locationTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -55,8 +56,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
     setResult(null)
     setState('idle')
     setError(null)
-    setFilter(fixedCategory ?? 'all')
-    setLimit(12)
+    setLimit(6)
     return () => { generation.current += 1; controller.current?.abort(); if (locationTimer.current) clearTimeout(locationTimer.current) }
   }, [kind, center.lat, center.lng, cityName, fixedCategory, locale])
 
@@ -74,9 +74,9 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
     setError(null)
     setResult(null)
     setOrigin(source)
-    setLimit(12)
+    setLimit(6)
     try {
-      const data = await fetchGoogleNearby(point, kind === 'exchange' ? 'bureau_de_change' : filter, locale, request.signal)
+      const data = await fetchGoogleNearby(point, kind === 'exchange' ? 'bureau_de_change' : filter, locale, request.signal, fixedCategory && source === 'city' ? 'city' : 'nearby')
       if (requestId !== generation.current || request.signal.aborted) return
       setResult(data)
       setState('ready')
@@ -88,6 +88,14 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
   }
 
   const searchCity = () => { void search(center, 'city', ++generation.current) }
+  // Directory pages load on entry and when their visible city/category changes.
+  // Near Me and exchange retain explicit consent-driven location searches.
+  useEffect(() => {
+    if (!fixedCategory) return
+    const timer = setTimeout(searchCity, 350)
+    return () => clearTimeout(timer)
+    // searchCity is deliberately captured only for the inputs that change a request.
+  }, [fixedCategory, center.lat, center.lng, cityName, filter, locale])
   const searchLocation = () => {
     const requestId = ++generation.current
     controller.current?.abort()
@@ -131,16 +139,19 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-extrabold text-slate-900">{fixedCategory ? `${categoryLabel(fixedCategory)} · Google Maps` : kind === 'exchange' ? text('Yakındaki döviz büroları', 'Nearby exchange bureaux') : text('Yakınımdaki yerler', 'Nearby places')}</h2>
-          <p className="text-xs text-slate-600 mt-1">{text('2,5 km içindeki kayıtlar; mesafeler kuş uçuşudur.', 'Published places within 2.5 km; distances are straight-line estimates.')}</p>
+          <p className="text-xs text-slate-600 mt-1">{fixedCategory ? text('Şehir ve çevresinden öne çıkan sonuçlar (30 km); tüm işletmelerin listesi değildir. Konum araması 2,5 km içindedir.', 'Selected results across the city area (30 km), not an exhaustive directory. Location searches cover 2.5 km.') : text('2,5 km içindeki kayıtlar; mesafeler kuş uçuşudur.', 'Published places within 2.5 km; distances are straight-line estimates.')}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <select aria-label={text('Aranacak şehir', 'Search city')} value={selectedCity} onChange={event => setSelectedCity(event.target.value)} className="rounded-xl border border-sky-200 bg-white px-3 py-2 text-xs">{Object.keys(cities).map(city => <option key={city}>{city}</option>)}</select>
           <button type="button" onClick={searchLocation} disabled={busy} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#00A3E0] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#0284C7] disabled:opacity-60 disabled:cursor-wait"><LocateFixed className="h-4 w-4" />{text('Konumumu kullan', 'Use my location')}</button>
-          <button type="button" onClick={searchCity} disabled={state === 'loading'} className="inline-flex items-center justify-center gap-2 rounded-xl border border-sky-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-sky-50 disabled:opacity-60"><Search className="h-4 w-4" />{cityName} {text('merkezinde ara', 'centre')}</button>
+          <button type="button" onClick={searchCity} disabled={state === 'loading'} className="inline-flex items-center justify-center gap-2 rounded-xl border border-sky-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-sky-50 disabled:opacity-60"><Search className="h-4 w-4" />{fixedCategory ? text('Yenile', 'Refresh') : `${cityName} ${text('merkezinde ara', 'centre')}`}</button>
         </div>
       </div>
       <p className="text-[11px] leading-relaxed text-slate-500">{text('Konumunuzu seçerseniz arama için yaklaşık koordinatlarınız harita veri sağlayıcısına gönderilir; bu sitede kalıcı olarak saklanmaz.', 'If you use your location, approximate coordinates are sent to the map data service to run the search; this site does not permanently store them.')}</p>
 
+      {fixedCategory === 'activity' && <div className="flex flex-wrap gap-2" aria-label={text('Aktivite kategorisi', 'Activity category')}>
+        {(['activity', 'museum', 'historical', 'cinema', 'entertainment', 'park'] as const).map(category => <button type="button" key={category} aria-pressed={filter === category} onClick={() => { generation.current += 1; controller.current?.abort(); setFilter(category); setResult(null); setError(null) }} className={`min-h-11 rounded-full border px-4 py-2 text-xs font-semibold ${filter === category ? 'border-[#087FFF] bg-[#087FFF] text-white' : 'border-sky-100 bg-white text-slate-700'}`}>{categoryLabel(category)}</button>)}
+      </div>}
       {kind === 'essential' && !fixedCategory && <div className="flex flex-wrap gap-2" aria-label={text('Yer türü', 'Place category')}>
         {(['all', 'restaurant', 'hotel', 'cafe', 'attraction', 'museum', 'pharmacy', 'hospital', 'atm', 'bureau_de_change', 'shopping', 'police', 'taxi'] as const).map(category => <button type="button" key={category} aria-pressed={filter === category} onClick={() => { generation.current += 1; controller.current?.abort(); setFilter(category); setResult(null); setState('idle'); setError(null); setLimit(12) }} className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${filter === category ? 'border-[#00A3E0] bg-[#00A3E0] text-white' : 'border-slate-200 bg-white text-slate-700 hover:bg-sky-50'}`}>{category === 'all' ? text('Tümü', 'All') : categoryLabel(category)}</button>)}
       </div>}
@@ -150,7 +161,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
         {state === 'loading' && text('Yakındaki yerler aranıyor…', 'Searching nearby places…')}
         {error && <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-amber-900">{error}</p>}
         {state === 'idle' && <p className="rounded-2xl border border-sky-100 bg-white p-5">{text('Konumunuzu kullanın veya şehir merkezinde arama yapın.', 'Use your location or search around the city centre.')}</p>}
-        {state === 'ready' && <p>{origin === 'location' ? text('Konumunuzun çevresi', 'Around your location') : `${cityName} ${text('merkezinin çevresi', 'city centre')}`} · {places.length} {text('kayıt', 'places')}{result && ` · ${text('Alındı', 'Retrieved')} ${new Date(result.fetchedAt).toLocaleTimeString(tr ? 'tr-TR' : 'en-GB', { hour: '2-digit', minute: '2-digit' })}`}</p>}
+        {state === 'ready' && <p>{origin === 'location' ? text('Konumunuzun çevresi', 'Around your location') : `${cityName} ${fixedCategory ? text('ve çevresi', 'area') : text('merkezinin çevresi', 'city centre')}`} · {places.length} {text('kayıt', 'places')}{result && ` · ${text('Alındı', 'Retrieved')} ${new Date(result.fetchedAt).toLocaleTimeString(tr ? 'tr-TR' : 'en-GB', { hour: '2-digit', minute: '2-digit' })}`}</p>}
       </div>
 
       {state === 'ready' && places.length === 0 && <div className="rounded-2xl border border-sky-100 bg-white p-5 text-sm text-slate-600">{text('Bu alanda ve kategoride kayıt bulunamadı. Bu, yakınlarda işletme olmadığı anlamına gelmez; harita kayıtları eksik olabilir.', 'No records were found in this area and category. This does not mean there are no places nearby; map coverage may be incomplete.')}</div>}
@@ -164,7 +175,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
           <dl className="mt-3 space-y-2.5 text-xs leading-relaxed text-slate-600">
             {place.address && <div className="flex gap-2"><dt className="shrink-0"><MapPin className="mt-0.5 h-4 w-4" /><span className="sr-only">{text('Adres', 'Address')}</span></dt><dd className="break-words">{place.address}</dd></div>}
             {place.telephoneUrl && <div className="flex gap-2"><dt className="shrink-0"><Phone className="mt-0.5 h-4 w-4" /><span className="sr-only">{text('Telefon', 'Phone')}</span></dt><dd><a href={place.telephoneUrl} className="font-semibold text-[#007EAD] underline underline-offset-2">{place.phone}</a></dd></div>}
-            {place.openingHours && <div className="flex gap-2"><dt className="shrink-0"><Clock3 className="mt-0.5 h-4 w-4" /><span className="sr-only">{text('Çalışma saatleri', 'Opening hours')}</span></dt><dd className="min-w-0 break-words">{place.openingHours}</dd></div>}
+            {place.openingHours && <div className="flex gap-2"><dt className="shrink-0"><Clock3 className="mt-0.5 h-4 w-4" /><span className="sr-only">{text('Çalışma saatleri', 'Opening hours')}</span></dt><dd className="min-w-0 break-words"><details><summary className="cursor-pointer">{text('Çalışma saatleri', 'Opening hours')}</summary>{place.openingHours}</details></dd></div>}
           </dl>
           {typeof place.openNow === 'boolean' && <p className="mt-2 text-xs">{place.openNow ? text('Şu an açık', 'Open now') : text('Şu an kapalı', 'Closed now')}</p>}
           {place.rating !== undefined && <p className="mt-2 text-xs">Google Maps · ★ {place.rating}{place.reviewCount !== undefined ? ` (${place.reviewCount})` : ''}</p>}

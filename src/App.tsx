@@ -1518,7 +1518,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
         {activeTab === 'stay' && (
           <main className="travel-catalog">
             <h1 className="text-3xl font-extrabold text-slate-900">{page('hotelsTitle')}</h1>
-            <NearbyPlaces kind="essential" fixedCategory="hotel" lang={lang} center={{lat:currentCityInfo.lat,lng:currentCityInfo.lng}} cityName={currentCityInfo.name} />
+            <details className="rounded-xl border border-sky-100 p-3"><summary className="cursor-pointer font-semibold text-sm">{lang === 'tr' ? 'SafeInTürkiye otel seçkisi' : 'SafeInTürkiye hotel collection'}</summary>
             {catalogFilters(hotelsList, filteredHotels.length)}
             <p className="catalog-editorial-note">{directoryText(lang, 2)}</p>
             <div className="travel-catalog-list">
@@ -1545,6 +1545,8 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
                 </div>
               ))}
             </div>
+            </details>
+            <NearbyPlaces key="hotels-discovery" kind="essential" fixedCategory="hotel" lang={lang} center={{lat:currentCityInfo.lat,lng:currentCityInfo.lng}} cityName={currentCityInfo.name} />
           </main>
         )}
 
@@ -1554,7 +1556,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
         {activeTab === 'food' && (
           <main className="travel-catalog">
             <h1 className="text-3xl font-extrabold text-slate-900">{page('diningTitle')}</h1>
-            <NearbyPlaces kind="essential" fixedCategory="restaurant" lang={lang} center={{lat:currentCityInfo.lat,lng:currentCityInfo.lng}} cityName={currentCityInfo.name} />
+            <details className="rounded-xl border border-sky-100 p-3"><summary className="cursor-pointer font-semibold text-sm">{lang === 'tr' ? 'SafeInTürkiye restoran seçkisi' : 'SafeInTürkiye restaurant collection'}</summary>
             {catalogFilters(restaurantsList, filteredRestaurants.length)}
             <p className="catalog-editorial-note">{directoryText(lang, 2)}</p>
             <div className="travel-catalog-list">
@@ -1581,6 +1583,8 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
                 </div>
               ))}
             </div>
+            </details>
+            <NearbyPlaces key="restaurants-discovery" kind="essential" fixedCategory="restaurant" lang={lang} center={{lat:currentCityInfo.lat,lng:currentCityInfo.lng}} cityName={currentCityInfo.name} />
           </main>
         )}
 
@@ -1590,8 +1594,8 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
         {activeTab === 'experiences' && (
           <main className="travel-catalog">
             <div><h1 className="text-3xl font-extrabold text-slate-900">{page('activitiesTitle')}</h1><p className="mt-1 text-sm text-slate-600">{page('activitiesSub')}</p></div>
-            <NearbyPlaces kind="essential" fixedCategory="activity" lang={lang} center={{lat:currentCityInfo.lat,lng:currentCityInfo.lng}} cityName={currentCityInfo.name} />
-            <div className="flex gap-2 overflow-x-auto pb-1" aria-label={lang === 'tr' ? 'Aktivite kategorisi' : 'Activity category'}>
+            <details open={activityCategory === 'Summer' || activityCategory === 'Winter' ? true : undefined} className="rounded-xl border border-sky-100 p-3"><summary className="cursor-pointer font-semibold text-sm">{lang === 'tr' ? 'SafeInTürkiye mevsimlik ve kültürel seçkisi' : 'SafeInTürkiye seasonal & cultural collection'}</summary>
+            <div className="flex flex-wrap gap-2 pb-1" aria-label={lang === 'tr' ? 'Aktivite kategorisi' : 'Activity category'}>
               {['All', 'Museum & Culture', 'Cinema', 'Entertainment', 'Summer', 'Winter'].map(category => <button type="button" key={category} aria-pressed={activityCategory === category} onClick={() => setActivityCategory(category)} className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs font-bold ${activityCategory === category ? 'border-[#087FFF] bg-[#087FFF] text-white' : 'border-sky-100 bg-white text-slate-700 hover:bg-sky-50'}`}>{activityLabel(category, lang)}</button>)}
             </div>
             {catalogFilters(activitiesList, filteredActivities.length)}
@@ -1620,6 +1624,8 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
                 </div>
               ))}
             </div>
+            </details>
+            <NearbyPlaces key={`activities-discovery-${activityCategory}`} kind="essential" fixedCategory="activity" initialCategory={activityCategory === 'Cinema' ? 'cinema' : activityCategory === 'Museum & Culture' ? 'museum' : activityCategory === 'Entertainment' ? 'entertainment' : 'activity'} lang={lang} center={{lat:currentCityInfo.lat,lng:currentCityInfo.lng}} cityName={currentCityInfo.name} />
           </main>
         )}
 

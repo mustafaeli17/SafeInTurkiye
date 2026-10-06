@@ -3,7 +3,7 @@ import type { NearbyCategory, NearbyCenter, NearbyPlaceRecord, NearbyResult } fr
 
 const mapping: [string, NearbyCategory][] = [['museum','museum'],['tourist_attraction','attraction'],['hotel','hotel'],['lodging','hotel'],['cafe','cafe'],['restaurant','restaurant'],['pharmacy','pharmacy'],['hospital','hospital'],['atm','atm'],['shopping_mall','shopping'],['police','police'],['taxi_stand','taxi']]
 const str = (value: unknown): string | null => typeof value === 'string' && value.trim() ? value.trim().slice(0, 2000) : null
-export function parseGooglePlaces(payload: unknown, center: NearbyCenter, category: NearbyCategory | 'all'): NearbyResult {
+export function parseGooglePlaces(payload: unknown, center: NearbyCenter, category: NearbyCategory | 'all', radius = 2500): NearbyResult {
   if (!payload || typeof payload !== 'object' || !('places' in payload) || !Array.isArray(payload.places)) throw new NearbyError('invalid-response')
   const records = new Map<string, NearbyPlaceRecord>()
   for (const p of payload.places) {
@@ -11,7 +11,7 @@ export function parseGooglePlaces(payload: unknown, center: NearbyCenter, catego
     const point = { lat: p.location?.latitude, lng: p.location?.longitude }
     if (!isValidCenter(point) || !str(p.displayName?.text)) continue
     const distance = distanceInMeters(center, point)
-    if (distance > 2500) continue
+    if (distance > radius) continue
     const matched = category === 'all' ? mapping.find(([type]) => Array.isArray(p.types) && p.types.includes(type))?.[1] : category
     if (!matched) continue
     const phone = safeTelephone(p.internationalPhoneNumber)
@@ -38,14 +38,15 @@ export function parseGooglePlaces(payload: unknown, center: NearbyCenter, catego
 }
 
 // Google responses stay only in the mounted view, never in localStorage or the OSM cache.
-export async function fetchGoogleNearby(center: NearbyCenter, category: NearbyCategory | 'all', lang: string, signal?: AbortSignal): Promise<NearbyResult> {
+export async function fetchGoogleNearby(center: NearbyCenter, category: NearbyCategory | 'all', lang: string, signal?: AbortSignal, scope: 'nearby' | 'city' = 'nearby'): Promise<NearbyResult> {
   if (!isValidCenter(center)) throw new NearbyError('invalid-location')
   const params = new URLSearchParams({ lat: String(center.lat), lng: String(center.lng), category, lang: ['en','tr','de','fr','ar','ru','zh'].includes(lang) ? lang : 'en' })
+  params.set('scope', scope)
   try {
     const response = await fetch(`/api/places?${params}`, { credentials: 'same-origin', cache: 'no-store', signal: AbortSignal.any([...(signal ? [signal] : []), AbortSignal.timeout(11000)]) })
     if (response.status === 429) throw new NearbyError('busy')
     if (!response.ok) throw new NearbyError('unavailable')
-    return parseGooglePlaces(await response.json(), center, category)
+    return parseGooglePlaces(await response.json(), center, category, scope === 'city' ? 30000 : 2500)
   } catch (error) {
     if (signal?.aborted) throw signal.reason
     if (error instanceof NearbyError) throw error
