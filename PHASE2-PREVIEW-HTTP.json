@@ -1,0 +1,135 @@
+{
+  "checkedAt": "2026-10-06T19:23:16.234Z",
+  "results": [
+    {
+      "requested": "https://safe-in-turkiye-p4o82r32s-eli-1196.vercel.app/",
+      "status": 302,
+      "finalUrl": null,
+      "redirect": "https://vercel.com/sso-api",
+      "blockedByAuthentication": true,
+      "canonical": null,
+      "title": null,
+      "bodyExcerpt": null
+    },
+    {
+      "requested": "https://safe-in-turkiye-p4o82r32s-eli-1196.vercel.app/cities/istanbul",
+      "status": 302,
+      "finalUrl": null,
+      "redirect": "https://vercel.com/sso-api",
+      "blockedByAuthentication": true,
+      "canonical": null,
+      "title": null,
+      "bodyExcerpt": null
+    },
+    {
+      "requested": "https://safe-in-turkiye-p4o82r32s-eli-1196.vercel.app/cities/aydin",
+      "status": 302,
+      "finalUrl": null,
+      "redirect": "https://vercel.com/sso-api",
+      "blockedByAuthentication": true,
+      "canonical": null,
+      "title": null,
+      "bodyExcerpt": null
+    },
+    {
+      "requested": "https://safe-in-turkiye-p4o82r32s-eli-1196.vercel.app/hotels/efe-kusadasi",
+      "status": 302,
+      "finalUrl": null,
+      "redirect": "https://vercel.com/sso-api",
+      "blockedByAuthentication": true,
+      "canonical": null,
+      "title": null,
+      "bodyExcerpt": null
+    },
+    {
+      "requested": "https://safe-in-turkiye-p4o82r32s-eli-1196.vercel.app/hotels/efe-kusadasi/",
+      "status": 302,
+      "finalUrl": null,
+      "redirect": "https://vercel.com/sso-api",
+      "blockedByAuthentication": true,
+      "canonical": null,
+      "title": null,
+      "bodyExcerpt": null
+    },
+    {
+      "requested": "https://safe-in-turkiye-p4o82r32s-eli-1196.vercel.app/tr/hotels/efe-kusadasi",
+      "status": 302,
+      "finalUrl": null,
+      "redirect": "https://vercel.com/sso-api",
+      "blockedByAuthentication": true,
+      "canonical": null,
+      "title": null,
+      "bodyExcerpt": null
+    },
+    {
+      "requested": "https://safe-in-turkiye-p4o82r32s-eli-1196.vercel.app/restaurants/beyti-florya",
+      "status": 302,
+      "finalUrl": null,
+      "redirect": "https://vercel.com/sso-api",
+      "blockedByAuthentication": true,
+      "canonical": null,
+      "title": null,
+      "bodyExcerpt": null
+    },
+    {
+      "requested": "https://safe-in-turkiye-p4o82r32s-eli-1196.vercel.app/activities/topkapi-palace",
+      "status": 302,
+      "finalUrl": null,
+      "redirect": "https://vercel.com/sso-api",
+      "blockedByAuthentication": true,
+      "canonical": null,
+      "title": null,
+      "bodyExcerpt": null
+    },
+    {
+      "requested": "https://safe-in-turkiye-p4o82r32s-eli-1196.vercel.app/cities/nonexistent-city",
+      "status": 302,
+      "finalUrl": null,
+      "redirect": "https://vercel.com/sso-api",
+      "blockedByAuthentication": true,
+      "canonical": null,
+      "title": null,
+      "bodyExcerpt": null
+    },
+    {
+      "requested": "https://safe-in-turkiye-p4o82r32s-eli-1196.vercel.app/hotels/nonexistent-hotel",
+      "status": 302,
+      "finalUrl": null,
+      "redirect": "https://vercel.com/sso-api",
+      "blockedByAuthentication": true,
+      "canonical": null,
+      "title": null,
+      "bodyExcerpt": null
+    },
+    {
+      "requested": "https://safe-in-turkiye-p4o82r32s-eli-1196.vercel.app/this-page-does-not-exist",
+      "status": 302,
+      "finalUrl": null,
+      "redirect": "https://vercel.com/sso-api",
+      "blockedByAuthentication": true,
+      "canonical": null,
+      "title": null,
+      "bodyExcerpt": null
+    },
+    {
+      "requested": "https://safe-in-turkiye-p4o82r32s-eli-1196.vercel.app/robots.txt",
+      "status": 302,
+      "finalUrl": null,
+      "redirect": "https://vercel.com/sso-api",
+      "blockedByAuthentication": true,
+      "canonical": null,
+      "title": null,
+      "bodyExcerpt": null
+    },
+    {
+      "requested": "https://safe-in-turkiye-p4o82r32s-eli-1196.vercel.app/sitemap.xml",
+      "status": 302,
+      "finalUrl": null,
+      "redirect": "https://vercel.com/sso-api",
+      "blockedByAuthentication": true,
+      "canonical": null,
+      "title": null,
+      "bodyExcerpt": null
+    }
+  ]
+}

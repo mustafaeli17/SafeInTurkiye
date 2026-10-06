@@ -29,7 +29,10 @@ export default function TravelApp() {
   const candidate=match ? (remote?.path===path?remote.entry:undefined) : directoryEntry(entryPath);
   const entry=localized&&!candidate?.description.tr?undefined:candidate;
   const back=()=>{window.location.assign('/');};
-  const language=entry?(localized?'tr':'en'):(localStorage.getItem('safeinturkiye-language') ?? 'en');
+  const preference=localStorage.getItem('safeinturkiye-language') ?? 'en';
+  // Keep existing non-indexed language preferences working; Turkish indexed
+  // routes are explicit and do not depend on a previous browser visit.
+  const language=entry?(localized?'tr':preference==='tr'?'en':preference):preference;
   const city=publicCities.find(item=>path.replace(/\/$/,'')===`/cities/${item.slug}`);
   if(city)return <Suspense fallback={<main className="p-8" aria-busy="true">SafeInTürkiye…</main>}><CityGuide city={city} language={language} onBack={back}/></Suspense>;
   if(match && remote?.path!==path)return <main className="p-8" aria-busy="true">SafeInTürkiye…</main>;

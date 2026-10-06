@@ -42,7 +42,8 @@ export function directoryEntry(path: string) {
 export function openDirectoryEntry(id: string) {
   const entry = directory.find(item => item.id === id);
   if (!entry) return false;
-  window.history.pushState({}, '', entryPath(entry));
+  const prefix=localStorage.getItem('safeinturkiye-language')==='tr'&&entry.description.tr?'/tr':'';
+  window.history.pushState({}, '', prefix+entryPath(entry));
   window.dispatchEvent(new PopStateEvent('popstate'));
   return true;
 }
