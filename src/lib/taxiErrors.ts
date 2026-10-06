@@ -1,0 +1,14 @@
+const messages = {
+  en: ['Your browser does not support location access.', 'Finding your address…', 'Location could not be obtained. Select a starting address instead.', 'Select a starting point and destination from the suggestions.', 'The route could not be calculated. Please try again.', 'No driving route was found between these places.', 'The routing service is unavailable. Please try again shortly.'],
+  tr: ['Tarayıcınız konum erişimini desteklemiyor.', 'Adresiniz bulunuyor…', 'Konum alınamadı. Bunun yerine bir başlangıç adresi seçin.', 'Önerilerden bir başlangıç noktası ve varış yeri seçin.', 'Rota hesaplanamadı. Lütfen tekrar deneyin.', 'Bu noktalar arasında araç rotası bulunamadı.', 'Rota hizmetine ulaşılamıyor. Lütfen biraz sonra tekrar deneyin.'],
+  de: ['Ihr Browser unterstützt keinen Standortzugriff.', 'Ihre Adresse wird ermittelt…', 'Der Standort konnte nicht ermittelt werden. Wählen Sie stattdessen eine Startadresse.', 'Wählen Sie Start und Ziel aus den Vorschlägen.', 'Die Route konnte nicht berechnet werden. Bitte versuchen Sie es erneut.', 'Zwischen diesen Orten wurde keine Fahrtroute gefunden.', 'Der Routendienst ist nicht erreichbar. Bitte versuchen Sie es später erneut.'],
+  fr: ['Votre navigateur ne permet pas la géolocalisation.', 'Recherche de votre adresse…', 'La position n’a pas pu être obtenue. Choisissez une adresse de départ.', 'Choisissez un départ et une destination parmi les suggestions.', 'Le trajet n’a pas pu être calculé. Veuillez réessayer.', 'Aucun itinéraire routier trouvé entre ces lieux.', 'Le service d’itinéraires est indisponible. Veuillez réessayer dans un instant.'],
+  ar: ['متصفحك لا يدعم تحديد الموقع.', 'جارٍ العثور على عنوانك…', 'تعذر تحديد الموقع. اختر عنوان الانطلاق بدلاً من ذلك.', 'اختر نقطة الانطلاق والوجهة من الاقتراحات.', 'تعذر حساب المسار. يرجى المحاولة مجدداً.', 'لم يتم العثور على طريق للسيارات بين هذين المكانين.', 'خدمة المسارات غير متاحة. يرجى المحاولة بعد قليل.'],
+  ru: ['Ваш браузер не поддерживает определение местоположения.', 'Определяем ваш адрес…', 'Не удалось определить местоположение. Выберите адрес отправления.', 'Выберите пункт отправления и назначения из подсказок.', 'Не удалось рассчитать маршрут. Попробуйте ещё раз.', 'Между этими местами не найден автомобильный маршрут.', 'Сервис маршрутов недоступен. Попробуйте немного позже.'],
+  zh: ['您的浏览器不支持定位。', '正在查找您的地址…', '无法获取位置，请选择出发地址。', '请从建议列表中选择出发地和目的地。', '无法计算路线，请重试。', '未找到这两个地点之间的驾车路线。', '路线服务暂时不可用，请稍后重试。'],
+} satisfies Record<string, [string, string, string, string, string, string, string]>;
+const keys = ['unsupported', 'locating', 'locationFailed', 'missingPlaces', 'routeFailed', 'noRoute', 'network'] as const;
+export type TaxiErrorKey = typeof keys[number];
+export function taxiErrorText(lang: string, key: TaxiErrorKey): string {
+  return (messages[lang as keyof typeof messages] ?? messages.en)[keys.indexOf(key)];
+}

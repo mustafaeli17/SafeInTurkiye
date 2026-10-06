@@ -76,6 +76,8 @@ import { createBooking } from './repositories/bookingRepository';
 import { getCurrentTaxiTariffs } from './repositories/tariffRepository';
 import { routeFareRange } from './lib/taxiCalculation';
 import { taxiEstimateCopy, taxiDetailsCopy } from './lib/taxiCopy';
+import { taxiErrorText } from './lib/taxiErrors';
+import { regionalDescription } from './lib/regionalDescription';
 import { getAssistantReply } from './services/travelDataService';
 import { supabaseConfigured } from './lib/supabase';
 import { WeatherCard } from './components/WeatherCard';
@@ -842,7 +844,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
   const handleTaxiCurrentLocation = () => {
     const lookupId = ++taxiOriginLookupId.current;
     if (!('geolocation' in navigator)) {
-      setTaxiRouteError('Geolocation is not supported by your browser.');
+      setTaxiRouteError(taxiErrorText(lang, 'unsupported'));
       return;
     }
     setIsTaxiLocating(true);
@@ -854,7 +856,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
         setIsTaxiLocating(false);
         const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         setTaxiOriginCoords(null);
-        setTaxiOriginText('Fetching address...');
+        setTaxiOriginText(taxiErrorText(lang, 'locating'));
         setDetectedTaxiCity('');
 
         try {
@@ -875,7 +877,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
       () => {
         if (lookupId !== taxiOriginLookupId.current) return;
         setIsTaxiLocating(false);
-        setTaxiRouteError('Location access was denied.');
+        setTaxiRouteError(taxiErrorText(lang, 'locationFailed'));
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
@@ -888,7 +890,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
     setFareCalculation(null);
 
     if (!taxiOriginCoords || !taxiDestCoords) {
-      setTaxiRouteError('Please select both a valid origin and destination from suggestions or use Current Location.');
+      setTaxiRouteError(taxiErrorText(lang, 'missingPlaces'));
       return;
     }
     if(!detectedTaxiCity||!taxiTariffs[taxiClass.toUpperCase()]){
@@ -905,14 +907,14 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
       setIsTaxiRouting(false);
 
       if (!res.ok) {
-        setTaxiRouteError('Could not calculate route. Please try again.');
+        setTaxiRouteError(taxiErrorText(lang, 'routeFailed'));
         return;
       }
 
       const data = await res.json();
       if (request !== taxiRequest.current) return;
       if (!data.routes || data.routes.length === 0) {
-        setTaxiRouteError('No drivable route found between these locations.');
+        setTaxiRouteError(taxiErrorText(lang, 'noRoute'));
         return;
       }
 
@@ -948,7 +950,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
     } catch {
       if (request !== taxiRequest.current) return;
       setIsTaxiRouting(false);
-      setTaxiRouteError('Routing service network error. Please check your internet connection.');
+      setTaxiRouteError(taxiErrorText(lang, 'network'));
     }
   };
 
@@ -1065,7 +1067,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
     name:regionalCity.name,tagline:regionalCity.focus,
     coverImage:cityImages[regionalCity.slug as keyof typeof cityImages].src,
     lat:regionalCity.lat,lng:regionalCity.lng,
-    localTip:regionalCity.description[lang==='tr'?'tr':'en'],
+    localTip:regionalDescription(regionalCity, lang),
     highlights:regionalCity.places.map(name=>({name,detail:''})),
   } : citiesDetailedData[selectedCityName] || citiesDetailedData['İstanbul'];
   const currentCityInfo=lang==='zh'?{...baseCityInfo,...citiesZh[selectedCityName as keyof typeof citiesZh]}:baseCityInfo;
