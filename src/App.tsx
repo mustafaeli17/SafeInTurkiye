@@ -1495,18 +1495,14 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
                     <p className="text-[11px] leading-relaxed text-slate-600 mt-1">{highlight.detail}</p>
                   </article>
                 ))}
+                {[
+                  ...restaurantsList.filter(item=>item.city===selectedCityName).map(item=>({id:item.id,name:item.name,type:'restaurant',label:tr('dining')})),
+                  ...activitiesList.filter(item=>item.city===selectedCityName).map(item=>({id:item.id,name:item.title,type:'activity',label:tr('activities')})),
+                  ...hotelsList.filter(item=>item.city===selectedCityName).map(item=>({id:item.id,name:item.name,type:'hotel',label:tr('hotels')})),
+                ].filter(item=>!currentCityInfo.highlights.some(highlight=>highlight.name===item.name)).slice(0,12).map(item=><button key={item.id} onClick={()=>handleOpenBooking(item,item.type)} className="text-left p-3.5 rounded-xl bg-sky-50/60 border border-sky-100 hover:border-blue-400"><h3 className="text-[13px] font-extrabold text-slate-900">{item.name}</h3><p className="text-[11px] leading-relaxed text-slate-600 mt-1">{item.label} · {directoryText(lang,0)} →</p></button>)}
               </div>
             </section>
 
-            {activitiesList.some(item => item.city === selectedCityName) && <section className="reference-photo-section">
-              <h2>{tr('activities')}</h2>
-              <div className="reference-photo-grid">{activitiesList.filter(item => item.city === selectedCityName).slice(0,4).map(item => { const activity = activityContent(item, lang); return <button key={item.id} onClick={() => handleOpenBooking(activity, 'activity')}><PlacePhoto id={item.id} name={activity.title} lang={lang} /><strong>{activity.title}</strong><span>{directoryText(lang, 0)} →</span></button>; })}</div>
-            </section>}
-            <section className="reference-photo-section">
-              <h2>{tr('hotels')}</h2>
-              <div className="reference-photo-grid">{hotelsList.filter(item => item.city === selectedCityName).map(item => <button key={item.id} onClick={() => handleOpenBooking(item, 'hotel')}><PlacePhoto id={item.id} name={item.name} lang={lang} /><strong>{item.name}</strong><span>{directoryText(lang, 0)} →</span></button>)}</div>
-              <button className="reference-outline-action" onClick={() => setActiveTab('stay')}>{page('hotelsTitle')} →</button>
-            </section>
             <TransportCardGuide city={selectedCityName} lang={lang} />
 
           </main>
@@ -1518,34 +1514,6 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
         {activeTab === 'stay' && (
           <main className="travel-catalog">
             <h1 className="text-3xl font-extrabold text-slate-900">{page('hotelsTitle')}</h1>
-            <details className="rounded-xl border border-sky-100 p-3"><summary className="cursor-pointer font-semibold text-sm">{lang === 'tr' ? 'SafeInTürkiye otel seçkisi' : 'SafeInTürkiye hotel collection'}</summary>
-            {catalogFilters(hotelsList, filteredHotels.length)}
-            <p className="catalog-editorial-note">{directoryText(lang, 2)}</p>
-            <div className="travel-catalog-list">
-              {filteredHotels.map(h => (
-                <div key={h.id} className="travel-catalog-row">
-                  <div className="travel-catalog-photo">
-                    <PlacePhoto id={h.id} name={h.name} lang={lang} />
-                  </div>
-                  <div className="travel-catalog-info">
-                    <span className="travel-catalog-label">{h.city}</span>
-                    <strong className="text-[14px] text-slate-900 block">{h.name}</strong><p>{hotelSummary(lang)}</p>
-                    <span className="text-[12px] text-[#087FFF] font-semibold">{h.roomType}</span>
-                    <p className="text-[11px] text-slate-500">{h.amenities}</p>
-                  </div>
-                  <div className="travel-catalog-action">
-                    <span className="font-bold text-[#087FFF]">{bookingText(lang, 0)}</span>
-                    <button
-                      onClick={() => handleOpenBooking(h, 'hotel')}
-                      className="px-4 py-1.5 bg-[#087FFF] hover:bg-[#0284C7] text-white rounded-xl text-[12px] font-bold cursor-pointer"
-                    >
-                      {detailLabel(lang)}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-            </details>
             <NearbyPlaces key="hotels-discovery" kind="essential" fixedCategory="hotel" lang={lang} center={{lat:currentCityInfo.lat,lng:currentCityInfo.lng}} cityName={currentCityInfo.name} />
           </main>
         )}
@@ -1556,34 +1524,6 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
         {activeTab === 'food' && (
           <main className="travel-catalog">
             <h1 className="text-3xl font-extrabold text-slate-900">{page('diningTitle')}</h1>
-            <details className="rounded-xl border border-sky-100 p-3"><summary className="cursor-pointer font-semibold text-sm">{lang === 'tr' ? 'SafeInTürkiye restoran seçkisi' : 'SafeInTürkiye restaurant collection'}</summary>
-            {catalogFilters(restaurantsList, filteredRestaurants.length)}
-            <p className="catalog-editorial-note">{directoryText(lang, 2)}</p>
-            <div className="travel-catalog-list">
-              {filteredRestaurants.map(r => (
-                <div key={r.id} className="travel-catalog-row">
-                  <div className="travel-catalog-photo">
-                    <PlacePhoto id={r.id} name={r.name} lang={lang} />
-                  </div>
-                  <div className="travel-catalog-info">
-                    <span className="travel-catalog-label">{r.city}</span>
-                    <strong className="text-[14px] text-slate-900 block">{r.name}</strong>
-                    <span className="text-[12px] text-[#087FFF] font-semibold">{r.cuisine}</span>
-                    <span className="text-[11px] text-slate-400 block">{r.city}</span>
-                  </div>
-                  <div className="travel-catalog-action">
-                    <span className="text-[12px] font-bold text-slate-600">{bookingText(lang, 0)}</span>
-                    <button
-                      onClick={() => handleOpenBooking(r, 'restaurant')}
-                      className="px-4 py-1.5 bg-[#087FFF] hover:bg-[#0284C7] text-white rounded-xl text-[12px] font-bold cursor-pointer"
-                    >
-                      {detailLabel(lang)}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-            </details>
             <NearbyPlaces key="restaurants-discovery" kind="essential" fixedCategory="restaurant" lang={lang} center={{lat:currentCityInfo.lat,lng:currentCityInfo.lng}} cityName={currentCityInfo.name} />
           </main>
         )}
@@ -1594,37 +1534,6 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
         {activeTab === 'experiences' && (
           <main className="travel-catalog">
             <div><h1 className="text-3xl font-extrabold text-slate-900">{page('activitiesTitle')}</h1><p className="mt-1 text-sm text-slate-600">{page('activitiesSub')}</p></div>
-            <details open={activityCategory === 'Summer' || activityCategory === 'Winter' ? true : undefined} className="rounded-xl border border-sky-100 p-3"><summary className="cursor-pointer font-semibold text-sm">{lang === 'tr' ? 'SafeInTürkiye mevsimlik ve kültürel seçkisi' : 'SafeInTürkiye seasonal & cultural collection'}</summary>
-            <div className="flex flex-wrap gap-2 pb-1" aria-label={lang === 'tr' ? 'Aktivite kategorisi' : 'Activity category'}>
-              {['All', 'Museum & Culture', 'Cinema', 'Entertainment', 'Summer', 'Winter'].map(category => <button type="button" key={category} aria-pressed={activityCategory === category} onClick={() => setActivityCategory(category)} className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs font-bold ${activityCategory === category ? 'border-[#087FFF] bg-[#087FFF] text-white' : 'border-sky-100 bg-white text-slate-700 hover:bg-sky-50'}`}>{activityLabel(category, lang)}</button>)}
-            </div>
-            {catalogFilters(activitiesList, filteredActivities.length)}
-            <p className="catalog-editorial-note">{directoryText(lang, 2)}</p>
-            <div className="travel-catalog-list">
-              {filteredActivities.map(a => (
-                <div key={a.id} className="travel-catalog-row">
-                  <div className="travel-catalog-photo">
-                    <PlacePhoto id={a.id} name={a.title} lang={lang} />
-                  </div>
-                  <div className="travel-catalog-info">
-                    <span className="travel-catalog-label">{activityLabel(a.category, lang)} • {a.city}</span>
-                    <strong className="text-[14px] text-slate-900 block">{a.title}</strong>
-                    <span className="text-[11px] text-slate-500">{directoryText(lang, 5)}</span>
-                    <p className="pt-2 text-[12px] leading-relaxed text-slate-600">{a.description || directoryText(lang, 1)}</p>
-                  </div>
-                  <div className="travel-catalog-action">
-                    <strong className="text-[12px] font-bold text-[#007EAD]">{activityText(a.price, lang)}</strong>
-                    <button
-                      onClick={() => handleOpenBooking(a, 'activity')}
-                      className="px-4 py-1.5 bg-[#087FFF] hover:bg-[#0284C7] text-white rounded-xl text-[12px] font-bold cursor-pointer"
-                    >
-                      {detailLabel(lang)}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-            </details>
             <NearbyPlaces key={`activities-discovery-${activityCategory}`} kind="essential" fixedCategory="activity" initialCategory={activityCategory === 'Cinema' ? 'cinema' : activityCategory === 'Museum & Culture' ? 'museum' : activityCategory === 'Entertainment' ? 'entertainment' : 'activity'} lang={lang} center={{lat:currentCityInfo.lat,lng:currentCityInfo.lng}} cityName={currentCityInfo.name} />
           </main>
         )}

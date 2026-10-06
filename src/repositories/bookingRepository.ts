@@ -12,6 +12,7 @@ export interface BookingRequest {
 }
 
 export async function createBooking(request: BookingRequest) {
+  if (!request.listingName.trim() || !request.guestName.trim() || request.guestName.length > 100 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(request.guestEmail) || !Number.isInteger(request.guestCount) || request.guestCount < 1 || request.guestCount > 20 || !/^\d{4}-\d{2}-\d{2}$/.test(request.visitDate) || Number.isNaN(Date.parse(request.visitDate)) || (request.notes?.length ?? 0) > 4000) throw new Error('Invalid booking request.')
   const client = requireSupabase()
   const { data: auth, error: authError } = await client.auth.getUser()
   if (authError || !auth.user) throw new Error('Sign in is required to create a booking request.')

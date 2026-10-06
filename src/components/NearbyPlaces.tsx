@@ -4,6 +4,7 @@ import { Clock3, ExternalLink, LocateFixed, MapPin, Phone, Search } from 'lucide
 import { NearbyError } from '../services/nearbyPlaces'
 import { fetchGoogleNearby } from '../services/googleNearby'
 import GooglePlacePhoto from './GooglePlacePhoto'
+import RestaurantRequest from './RestaurantRequest'
 import { searchDestinations, directionsText } from '../lib/searchDestinations'
 import type { NearbyCategory, NearbyCenter, NearbyKind, NearbyResult } from '../services/nearbyPlaces'
 
@@ -46,6 +47,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
   const [origin, setOrigin] = useState<'location' | 'city'>('city')
   const [filter, setFilter] = useState<'all' | NearbyCategory>(initialCategory ?? fixedCategory ?? 'all')
   const [limit, setLimit] = useState(6)
+  const [detailId, setDetailId] = useState<string | null>(null)
   const controller = useRef<AbortController | null>(null)
   const generation = useRef(0)
   const locationTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -53,6 +55,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
   useEffect(() => {
     generation.current += 1
     controller.current?.abort()
+    setDetailId(null)
     setResult(null)
     setState('idle')
     setError(null)
@@ -165,11 +168,12 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
       </div>
 
       {state === 'ready' && places.length === 0 && <div className="rounded-2xl border border-sky-100 bg-white p-5 text-sm text-slate-600">{text('Bu alanda ve kategoride kayıt bulunamadı. Bu, yakınlarda işletme olmadığı anlamına gelmez; harita kayıtları eksik olabilir.', 'No records were found in this area and category. This does not mean there are no places nearby; map coverage may be incomplete.')}</div>}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {places.slice(0, limit).map(place => <article key={place.id} className="min-w-0 rounded-2xl border border-sky-100 bg-white p-4 shadow-sm">
-          <GooglePlacePhoto key={place.photo?.url ?? place.id} place={place} />
+      {detailId && <button type="button" className="min-h-11 text-blue-700 font-semibold" onClick={() => setDetailId(null)}>{text('← Listeye dön', '← Back to results')}</button>}
+      <div className={detailId ? 'space-y-4' : 'grid grid-cols-1 gap-3 sm:grid-cols-2'}>
+        {places.slice(0, limit).map(place => <article key={place.id} hidden={!!detailId && detailId !== place.id} className="min-w-0 rounded-2xl border border-sky-100 bg-white p-4 shadow-sm">
+          <GooglePlacePhoto key={place.photo?.url ?? place.id} place={place} onOpen={() => setDetailId(place.id)} />
           <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0"><span className="text-[10px] font-bold uppercase tracking-wide text-[#007EAD]">{place.typeLabel ?? categoryLabel(place.category)}</span><h3 className="mt-1 break-words text-sm font-bold text-slate-900">{place.name || categoryLabel(place.category)}</h3></div>
+            <div className="min-w-0"><span className="text-[10px] font-bold uppercase tracking-wide text-[#007EAD]">{place.typeLabel ?? categoryLabel(place.category)}</span><h3 className="mt-1 break-words font-bold text-slate-900"><button className="text-left min-h-11 hover:text-blue-700" onClick={() => setDetailId(place.id)}>{place.name || categoryLabel(place.category)}</button></h3></div>
             <span className="shrink-0 rounded-lg bg-sky-50 px-2 py-1 text-xs font-bold text-[#007EAD]">{formatDistance(place.distanceMeters)}</span>
           </div>
           <dl className="mt-3 space-y-2.5 text-xs leading-relaxed text-slate-600">
@@ -185,6 +189,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
             <a href={`https://www.google.com/maps/dir/?api=1&destination=${place.coordinates.lat},${place.coordinates.lng}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-1">{directionsText[locale] ?? directionsText.en}<ExternalLink aria-hidden="true" className="h-3 w-3" /></a>
             {place.website && <a href={place.website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1">{text('Web sitesi', 'Website')}<ExternalLink className="h-3 w-3" /></a>}
           </div>
+          {detailId === place.id && place.category === 'restaurant' && <RestaurantRequest name={place.name ?? ''} source={place.sourceUrl} lang={locale} />}
         </article>)}
       </div>
       {state==='ready' && kind==='exchange' && <p className="text-xs text-slate-500">{text('Büro alış/satış kurları mevcut değil; işlemden önce net kur ve komisyonu işletmeden teyit edin.', 'Bureau buy/sell rates are not available; confirm the net rate and commission with the business before exchanging.')}</p>}
