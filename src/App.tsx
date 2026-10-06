@@ -602,7 +602,16 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
   const [selectedCityName, setSelectedCityName] = useState<string>(initialCity??'İstanbul');
   useEffect(() => {
     updateSectionSeo(activeTab, selectedCityName);
+    // State-only sections must not retain a detail/city schema or language
+    // alternates left by the server document they were opened from.
+    if(activeTab!=='city')document.getElementById('public-page-schema')?.remove();
+    document.querySelectorAll('link[rel="alternate"][hreflang]').forEach(link=>link.remove());
     const path=activeTab==='city'?cityPath(selectedCityName):'/';
+    if(activeTab==='city'){
+      let schema=document.getElementById('public-page-schema');
+      if(!schema){schema=document.createElement('script');schema.id='public-page-schema';schema.setAttribute('type','application/ld+json');document.head.appendChild(schema);}
+      schema.textContent=JSON.stringify({'@context':'https://schema.org','@type':'TouristDestination',name:selectedCityName,url:`https://www.safeinturkiye.com${path}`});
+    }
     if(initialCity)window.history.replaceState({},'',path);
     document.querySelector('link[rel="canonical"]')?.setAttribute('href',`https://www.safeinturkiye.com${path}`);
     document.querySelector('meta[property="og:url"]')?.setAttribute('content',`https://www.safeinturkiye.com${path}`);

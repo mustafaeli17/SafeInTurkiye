@@ -28,7 +28,7 @@ export default function TravelApp() {
   const entryPath=localized?path.slice(3):path;
   const candidate=match ? (remote?.path===path?remote.entry:undefined) : directoryEntry(entryPath);
   const entry=localized&&!candidate?.description.tr?undefined:candidate;
-  const back=()=>{window.history.pushState({},'','/');setPath('/');};
+  const back=()=>{window.location.assign('/');};
   const language=entry?(localized?'tr':'en'):(localStorage.getItem('safeinturkiye-language') ?? 'en');
   const city=publicCities.find(item=>path.replace(/\/$/,'')===`/cities/${item.slug}`);
   if(city)return <Suspense fallback={<main className="p-8" aria-busy="true">SafeInTürkiye…</main>}><CityGuide city={city} language={language} onBack={back}/></Suspense>;
