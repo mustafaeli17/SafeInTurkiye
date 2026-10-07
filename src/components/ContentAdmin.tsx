@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import { requireSupabase } from '../lib/supabase';
 import { photoCuratedCatalog } from '../lib/directory';
 import BookingAdmin from './BookingAdmin';
+import SponsorshipAdmin from './SponsorshipAdmin';
+import BusinessMetricsAdmin from './BusinessMetricsAdmin';
+import {foundationEnabled} from '../lib/foundationConfig';
 
 const sections = {
   hotels: ['Oteller', 'Otel adı', 'Oda türleri, giriş/çıkış saatleri, tesis olanakları, erişilebilirlik ve iptal koşulları.'],
@@ -64,6 +67,7 @@ export default function ContentAdmin({ role }: { role: string }) {
     <header><h1 className="text-2xl font-bold">İçerik yönetimi</h1><p className="text-sm text-slate-600 mt-2">Gerçek veritabanı kayıtları · {role}. Yayımlanan kayıtları canlı site de okuyabilir; denemeleri taslak kaydedin.</p></header>
     <section className="p-4 rounded-xl border border-sky-100 bg-white"><h2 className="font-bold">Ziyaretçi istatistikleri</h2><p className="text-sm text-slate-600 my-2">Ziyaretçi, görüntülenme, ülke, cihaz ve yönlendiren kaynak bilgilerini Vercel Analytics ekranında görebilirsiniz. Vercel proje erişimi gerekir. Ölçüm kurulmadan önceki ziyaretler geriye dönük hesaplanamaz. Ücretsiz planda bölüm tıklamaları ölçülmez.</p><a href="https://vercel.com/eli-1196/safe-in-turkiye/analytics" target="_blank" rel="noopener noreferrer" className="text-sky-700 underline font-semibold">İstatistikleri aç ↗</a></section>
     <BookingAdmin />
+    {foundationEnabled&&<><SponsorshipAdmin/><BusinessMetricsAdmin/></>}
     <p className="text-sm text-slate-600">Mevcut içerikleri aşağıdaki listeden seçerek düzenleyebilir, taslak veya arşiv durumuna alabilirsiniz. Google Maps kayıtları burada düzenlenmez. Çeviriler, tasarım ve reklam sıralaması henüz bu panele bağlı değildir.</p>
     {!writable && <p className="p-3 bg-amber-50 rounded-xl">Hesabınız görüntüleme yetkisine sahip. Düzenleme için editör veya yönetici rolü gerekir.</p>}
     <nav className="flex gap-2 flex-wrap">{Object.entries(sections).map(([key, value]) => <button disabled={saving} type="button" aria-pressed={table === key} key={key} onClick={() => setTable(key as Table)} className={`px-4 py-2 rounded-xl ${table === key ? 'bg-sky-600 text-white' : 'bg-white border border-sky-100'}`}>{value[0]}</button>)}</nav>

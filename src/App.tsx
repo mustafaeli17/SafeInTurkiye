@@ -1,7 +1,9 @@
 import { officialLinks, directoryText, sourcedActivities, cityPhotos } from './lib/visitorDirectory';
 import { cityTransportText } from './lib/cityTransportCopy';
 import { openDirectoryEntry, registerPublishedEntry, photoCuratedCatalog } from './lib/directory';
-import { curatedDirectory as directoryRecords } from './lib/directory';
+import { directory as directoryRecords } from './lib/directory';
+import SponsoredBusinesses from './components/SponsoredBusinesses';
+import EditorialBusinesses from './components/EditorialBusinesses';
 import cityGuides from './data/cityGuides.json';
 import {cityPath} from './lib/publicRoutes';
 import citiesZh from './data/citiesZh.json';
@@ -1062,6 +1064,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
     if (photoCuratedCatalog || !supabaseConfigured || !['stay','food','experiences','city'].includes(activeTab)) return;
     let cancelled=false;
     setCatalogError(false);
+    directoryRecords.splice(0,directoryRecords.length);
     setHotelsList([]); setRestaurantsList([]); setActivitiesList([]);
     void Promise.all(['hotels','restaurants','activities'].map(async table => {
       const rows=await getPublishedContent(table as 'hotels'|'restaurants'|'activities');
@@ -1258,6 +1261,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
         {/* ====================================================================
             PAGE 1: EXPLORE
         ==================================================================== */}
+        {['city','stay','food','experiences'].includes(activeTab)&&<SponsoredBusinesses context={activeTab==='stay'?'hotels':activeTab==='food'?'restaurants':activeTab==='experiences'?'activities':'city'} city={activeTab==='city'?selectedCityName:undefined} lang={lang}/>}
         {activeTab === 'home' && <TravelHome
           lang={lang}
           cities={[...['İstanbul', 'Antalya', 'Cappadocia', 'Ankara', 'İzmir'].map(key => ({ key, name: citiesDetailedData[key].name, coverImage: key==='Antalya'?cityImages.antalya.thumbnail:citiesDetailedData[key].coverImage })),...cityGuides.map(city=>{const photo=cityImages[city.slug as keyof typeof cityImages];return {key:city.name,name:city.name,coverImage:'thumbnail' in photo?photo.thumbnail:photo.src};})]}
@@ -1515,6 +1519,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
         {activeTab === 'stay' && (
           <main className="travel-catalog">
             <h1 className="text-3xl font-extrabold text-slate-900">{page('hotelsTitle')}</h1>
+            <EditorialBusinesses entries={directoryRecords.filter(entry=>entry.kind==='hotels')} lang={lang}/>
             <NearbyPlaces key="hotels-discovery" kind="essential" fixedCategory="hotel" lang={lang} center={{lat:currentCityInfo.lat,lng:currentCityInfo.lng}} cityName={currentCityInfo.name} />
           </main>
         )}
@@ -1525,6 +1530,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
         {activeTab === 'food' && (
           <main className="travel-catalog">
             <h1 className="text-3xl font-extrabold text-slate-900">{page('diningTitle')}</h1>
+            <EditorialBusinesses entries={directoryRecords.filter(entry=>entry.kind==='restaurants')} lang={lang}/>
             <NearbyPlaces key="restaurants-discovery" kind="essential" fixedCategory="restaurant" lang={lang} center={{lat:currentCityInfo.lat,lng:currentCityInfo.lng}} cityName={currentCityInfo.name} />
           </main>
         )}
@@ -1535,6 +1541,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
         {activeTab === 'experiences' && (
           <main className="travel-catalog">
             <div><h1 className="text-3xl font-extrabold text-slate-900">{page('activitiesTitle')}</h1><p className="mt-1 text-sm text-slate-600">{page('activitiesSub')}</p></div>
+            <EditorialBusinesses entries={directoryRecords.filter(entry=>entry.kind==='activities')} lang={lang}/>
             <NearbyPlaces key={`activities-discovery-${activityCategory}`} kind="essential" fixedCategory="activity" initialCategory={activityCategory === 'Cinema' ? 'cinema' : activityCategory === 'Museum & Culture' ? 'museum' : activityCategory === 'Entertainment' ? 'entertainment' : 'activity'} lang={lang} center={{lat:currentCityInfo.lat,lng:currentCityInfo.lng}} cityName={currentCityInfo.name} />
           </main>
         )}

@@ -7,6 +7,7 @@ import photoAlternatives from '../data/photoAlternatives.json';
 import publication from '../data/photoPublication.json';
 import cinemas from '../data/cinemas.json';
 import { safeWebsite } from '../services/nearbyPlaces';
+import { foundationEnabled } from './foundationConfig';
 export interface DirectoryEntry {
   id:string; kind:string; slug:string; name:string; city:string;
   description:Record<string,string>; website:string; sourceUrl:string;
@@ -17,19 +18,20 @@ editorialArchive.push(...cinemas.map(cinema=>({...cinema,id:cinema.slug,kind:'ac
 for(const entry of editorialArchive)if(entry.id.startsWith('cinema'))entry.category='Cinema';
 editorialArchive.push(...regionalRestaurants.map(restaurant=>({...restaurant,id:restaurant.slug,kind:'restaurants',sourceUrl:restaurant.website,lastVerified:'2026-09-28',gallery:[]})));
 const galleries:Record<string,string[]>=publication.galleries;
-export const photoCuratedCatalog = publication.source === 'photo-curated';
+export const photoCuratedCatalog = !foundationEnabled && publication.source === 'photo-curated';
 // Recoverable editorial archive remains on disk. One explicit publication list
 // governs listing, city pages, detail routes and generated sitemap.
 export const curatedDirectory:DirectoryEntry[]=editorialArchive.filter(entry=>galleries[entry.id]?.length).map(entry=>({...entry,gallery:galleries[entry.id]}));
-export const directory: DirectoryEntry[] = [...curatedDirectory];
+export const directory: DirectoryEntry[] = foundationEnabled ? [] : [...curatedDirectory];
 for(const slug of ['koza-han','karatay-tile-museum']){
  const entry=curatedDirectory.find(item=>item.slug===slug);
  if(entry)entry.gallery=[slug];
 }
-export function registerPublishedEntry(row: {id:string;name:string;description?:string|null;address?:string|null;website?:string|null;image_url?:string|null;city?:{name?:string}|null}, kind:string): DirectoryEntry {
+export function registerPublishedEntry(row: {id:string;name:string;description?:string|null;address?:string|null;website?:string|null;image_url?:string|null;public_slug?:string|null;editorial_metadata?:Partial<DirectoryEntry>|null;city?:{name?:string}|null}, kind:string): DirectoryEntry {
   const slugName=row.name.normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/ı/g,'i').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'') || 'place';
   const website=safeWebsite(row.website)??'';
-  const entry:DirectoryEntry={id:row.id,kind,slug:`${slugName}--${row.id}`,name:row.name,city:row.city?.name??'',description:{en:row.description??''},website,sourceUrl:website,lastVerified:null,gallery:[],address:row.address??undefined};
+  const metadata=row.editorial_metadata??{};
+  const entry:DirectoryEntry={id:row.id,kind,slug:row.public_slug??`${slugName}--${row.id}`,name:row.name,city:row.city?.name??metadata.city??'',description:{...metadata.description,en:row.description??''},website,sourceUrl:safeWebsite(metadata.sourceUrl)??website,lastVerified:metadata.lastVerified??null,gallery:Array.isArray(metadata.gallery)?metadata.gallery.filter(value=>typeof value==='string'):[],address:row.address??undefined,phone:metadata.phone,openingHours:metadata.openingHours,category:metadata.category};
   if(row.image_url){try{const image=new URL(row.image_url);if(image.protocol==='https:'&&!image.username&&!image.password)entry.imageUrl=image.href;}catch{/* Invalid image URLs are not rendered. */}}
   const existing=directory.findIndex(item=>item.id===row.id);
   if(existing>=0)directory[existing]=entry;else directory.push(entry);

@@ -4,20 +4,23 @@ import { directoryEntry, registerPublishedEntry, photoCuratedCatalog } from './l
 import type { DirectoryEntry } from './lib/directory';
 import { requireSupabase } from './lib/supabase';
 import {publicCities} from './lib/publicRoutes';
+import {foundationEnabled} from './lib/foundationConfig';
 const CityGuide=lazy(()=>import('./components/CityGuide'));
 const DirectoryDetail=lazy(()=>import('./components/DirectoryDetail'));
 export default function TravelApp() {
   const [path,setPath]=useState(window.location.pathname);
   const [remote,setRemote]=useState<{path:string;entry?:DirectoryEntry;error?:boolean}|null>(null);
   useEffect(()=>{ const update=()=>setPath(window.location.pathname); window.addEventListener('popstate',update);return()=>window.removeEventListener('popstate',update); },[]);
-  const match=path.match(/^\/(hotels|restaurants|activities)\/[a-z0-9-]+--([a-f0-9-]{36})\/?$/);
+  const cmsPattern=/^(?:\/tr)?\/(hotels|restaurants|activities)\/([a-z0-9-]+)\/?$/;
+  const legacyPattern=/^\/(hotels|restaurants|activities)\/[a-z0-9-]+--([a-f0-9-]{36})\/?$/;
+  const match=path.match(foundationEnabled?cmsPattern:legacyPattern);
   useEffect(()=>{
-    const route=path.match(/^\/(hotels|restaurants|activities)\/[a-z0-9-]+--([a-f0-9-]{36})\/?$/);
+    const route=path.match(foundationEnabled?/^(?:\/tr)?\/(hotels|restaurants|activities)\/([a-z0-9-]+)\/?$/:/^\/(hotels|restaurants|activities)\/[a-z0-9-]+--([a-f0-9-]{36})\/?$/);
     if(!route||photoCuratedCatalog){if(route)setRemote({path});return;}
     let cancelled=false;
     void (async()=>{
       try {
-        const {data,error}=await requireSupabase().from(route[1]).select('*, city:cities(name)').eq('id',route[2]).eq('active',true).eq('status','PUBLISHED').abortSignal(AbortSignal.timeout(12000)).maybeSingle();
+        const {data,error}=await requireSupabase().from(route[1]).select('*, city:cities(name)').eq(foundationEnabled?'public_slug':'id',route[2]).eq('active',true).eq('status','PUBLISHED').abortSignal(AbortSignal.timeout(12000)).maybeSingle();
         if(cancelled)return;
         setRemote({path,...(error?{error:true}:data?{entry:registerPublishedEntry(data,route[1])}:{})});
       }catch { if(!cancelled)setRemote({path,error:true}); }
