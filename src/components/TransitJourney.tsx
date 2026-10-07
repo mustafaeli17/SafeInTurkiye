@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { LocateFixed } from 'lucide-react'
+import TransitAddressInput from './TransitAddressInput'
 import GoogleDirectionsMap from './GoogleDirectionsMap'
 import { requestTransitLocation, transitDeparture, transitFare, transitRequestTime, transitRoutes, type TransitRoute } from '../lib/transit'
 import { transitCopy, transitVehicle } from '../lib/transitCopy'
@@ -9,6 +10,9 @@ export default function TransitJourney({ lang }: { lang: string }) {
   const t = transitCopy[locale]
   const [origin, setOrigin] = useState(''), [destination, setDestination] = useState('')
   const [coordinates, setCoordinates] = useState<{lat:number;lng:number} | null>(null)
+  const [destinationCoordinates,setDestinationCoordinates]=useState<{lat:number;lng:number}|null>(null)
+  const [scheduled,setScheduled]=useState(false)
+  const timing:Record<string,[string,string]>={en:['Now','Choose another time'],tr:['Şimdi','Başka saat seç'],de:['Jetzt','Andere Uhrzeit wählen'],fr:['Maintenant','Choisir une autre heure'],ar:['الآن','اختر وقتًا آخر'],ru:['Сейчас','Выбрать другое время'],zh:['现在','选择其他时间']}
   const [departure, setDeparture] = useState(''), [preference, setPreference] = useState('RECOMMENDED')
   const [busy, setBusy] = useState(false), [locating, setLocating] = useState(false)
   const [message, setMessage] = useState<keyof typeof t | ''>('')
@@ -21,16 +25,16 @@ export default function TransitJourney({ lang }: { lang: string }) {
 
   const search = async (event: React.FormEvent) => {
     event.preventDefault(); reset()
-    const time = transitDeparture(departure)
+    const time = transitDeparture(scheduled?departure:'')
     if (!origin.trim() || !destination.trim() || !time) { setMessage('invalid'); return }
-    const key=JSON.stringify([coordinates??origin.trim(),destination.trim(),departure,preference,locale])
+    const key=JSON.stringify([coordinates??origin.trim(),destinationCoordinates??destination.trim(),scheduled?departure:'',preference,locale])
     if(recent.current?.key===key && transitRequestTime()-recent.current.time<30000){setRoutes(recent.current.routes);return}
     setBusy(true)
     const id = generation.current, controller = new AbortController()
     request.current = controller
     const timeout = setTimeout(() => controller.abort(), 20000)
     try {
-      const response = await fetch('/api/transit', { method:'POST', signal:controller.signal, headers:{'Content-Type':'application/json'}, body:JSON.stringify({origin:coordinates ?? origin.trim(),destination:destination.trim(),departure:time,preference,language:locale}) })
+      const response = await fetch('/api/transit', { method:'POST', signal:controller.signal, headers:{'Content-Type':'application/json'}, body:JSON.stringify({origin:coordinates ?? origin.trim(),destination:destinationCoordinates??destination.trim(),departure:time,preference,language:locale}) })
       if (id !== generation.current) return
       if (!response.ok) { setMessage(response.status === 429 ? 'busy' : response.status === 400 ? 'invalid' : 'error'); return }
       const data = await response.json()
@@ -54,9 +58,9 @@ export default function TransitJourney({ lang }: { lang: string }) {
   return <section aria-label={t.title} dir={locale==='ar'?'rtl':undefined} className="mb-6 space-y-4 rounded-2xl border border-sky-100 bg-white p-4 sm:p-6">
     <h2 className="text-xl font-extrabold text-slate-900">{t.title}</h2><p className="text-sm text-slate-600">{t.intro}</p>
     <form onSubmit={search} className="grid min-w-0 gap-3 sm:grid-cols-2">
-      <label className="min-w-0 text-sm font-semibold">{t.from}<span className="flex gap-2"><input required minLength={3} maxLength={250} value={origin} onChange={e=>{reset();setCoordinates(null);setOrigin(e.target.value)}} className={input} placeholder="Taksim, İstanbul"/><button type="button" onClick={useLocation} disabled={locating||busy} aria-label={t.locate} title={t.locate} className="mt-1 min-h-11 min-w-11 rounded-xl border border-sky-200 bg-sky-50 p-3 text-sky-700 disabled:opacity-50"><LocateFixed size={20}/></button></span></label>
-      <label className="min-w-0 text-sm font-semibold">{t.to}<input required minLength={3} maxLength={250} value={destination} onChange={e=>{reset();setDestination(e.target.value)}} className={input} placeholder="Sultanahmet, İstanbul"/></label>
-      <label className="min-w-0 text-sm font-semibold">{t.departure}<input type="datetime-local" value={departure} onChange={e=>{reset();setDeparture(e.target.value)}} className={input}/></label>
+      <div className="flex min-w-0 items-end gap-2"><TransitAddressInput label={t.from} locale={locale} value={origin} selected={!!coordinates} onChange={value=>{reset();setCoordinates(null);setOrigin(value)}} onSelect={place=>{reset();setCoordinates(place);setOrigin(place.label)}} placeholder="Taksim, İstanbul"/><button type="button" onClick={useLocation} disabled={locating||busy} aria-label={t.locate} title={t.locate} className="min-h-11 min-w-11 rounded-xl border border-sky-200 bg-sky-50 p-3 text-sky-700 disabled:opacity-50"><LocateFixed size={20}/></button></div>
+      <TransitAddressInput label={t.to} locale={locale} value={destination} selected={!!destinationCoordinates} onChange={value=>{reset();setDestinationCoordinates(null);setDestination(value)}} onSelect={place=>{reset();setDestinationCoordinates(place);setDestination(place.label)}} placeholder="Sultanahmet, İstanbul"/>
+      <div className="min-w-0"><div className="flex flex-wrap gap-2"><button type="button" aria-pressed={!scheduled} onClick={()=>{reset();setScheduled(false);setDeparture('')}} className={`min-h-11 rounded-xl border px-3 text-sm ${!scheduled?'bg-sky-100 text-sky-800':'bg-white'}`}>{timing[locale][0]}</button><button type="button" aria-pressed={scheduled} onClick={()=>{reset();setScheduled(true)}} className="min-h-11 rounded-xl border px-3 text-sm">{timing[locale][1]}</button></div>{scheduled&&<label className="text-sm font-semibold">{t.departure.split(/[（(]/)[0].trim()}<input required type="datetime-local" value={departure} onChange={e=>{reset();setDeparture(e.target.value)}} className={input}/></label>}</div>
       <label className="min-w-0 text-sm font-semibold">{t.preference}<select value={preference} onChange={e=>{reset();setPreference(e.target.value)}} className={input}><option value="RECOMMENDED">{t.recommended}</option><option value="LESS_WALKING">{t.walking}</option><option value="FEWER_TRANSFERS">{t.transfers}</option></select></label>
       <button disabled={busy||locating} className="min-h-11 rounded-xl bg-[#087FFF] p-3 font-bold text-white disabled:opacity-50 sm:col-span-2">{busy?t.loading:t.search}</button>
     </form>
