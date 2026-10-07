@@ -1,12 +1,16 @@
+import { lazy, Suspense } from 'react'
+const TransitRouteMap = lazy(() => import('./TransitRouteMap'))
 interface GoogleDirectionsMapProps {
   origin: string
   destination: string
   mode: 'driving' | 'transit'
   title: string
   fallback?: React.ReactNode
+  routePolyline?: string
 }
 
-export default function GoogleDirectionsMap({ origin, destination, mode, title, fallback }: GoogleDirectionsMapProps) {
+export default function GoogleDirectionsMap({ origin, destination, mode, title, fallback, routePolyline }: GoogleDirectionsMapProps) {
+  if (routePolyline !== undefined) return <Suspense fallback={fallback}><TransitRouteMap encoded={routePolyline} title={title} fallback={fallback}/></Suspense>
   const browserKey = import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY?.trim()
   const ready = Boolean(browserKey && origin.trim() && destination.trim())
 
