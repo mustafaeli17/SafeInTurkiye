@@ -1,4 +1,5 @@
 import { officialLinks, directoryText, sourcedActivities, cityPhotos } from './lib/visitorDirectory';
+import { cityTransportText } from './lib/cityTransportCopy';
 import { openDirectoryEntry, registerPublishedEntry, photoCuratedCatalog } from './lib/directory';
 import { curatedDirectory as directoryRecords } from './lib/directory';
 import cityGuides from './data/cityGuides.json';
@@ -1477,7 +1478,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
               <WeatherCard lat={currentCityInfo.lat} lng={currentCityInfo.lng} cityName={currentCityInfo.name} lang={lang} />
               <div className="p-5 bg-white rounded-2xl border border-sky-100 shadow-sm space-y-3">
                 <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider block">{page('cityTransport')}</span>
-                <p className="text-sm text-slate-700">{currentCityInfo.localTip}</p>
+                <p className="text-sm text-slate-700">{cityTransportText(selectedCityName,lang,currentCityInfo.localTip)}</p>
                 <p className="text-xs text-slate-500">{page('noTraffic')}</p>
                 <button onClick={() => setActiveTab('transit')} className="px-4 py-2 bg-sky-50 text-sky-800 rounded-xl text-sm font-bold">{tr('transit')}</button>
               </div>
