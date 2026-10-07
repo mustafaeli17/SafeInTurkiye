@@ -2,6 +2,19 @@
 
 Status: IN PROGRESS, not production-ready approval.
 
+## Additional closure checks
+- 178 tests / 39 files; typecheck, lint and default build pass.
+- CMS-mode build reads the public publication view, refuses fallback on failure,
+  and uses that snapshot for detail HTML and sitemap. Tested against the actual
+  isolated project: 2 business URLs, 11 city pages, no orphan business URLs.
+- Admin browser: received the visitor request and confirmed it; confirmation
+  success state verified. Real metrics displayed in the admin screen.
+- Admin browser edit/save changed the restaurant description; fresh public
+  detail displayed exactly the updated description.
+- Request history now clears on auth changes and ignores stale in-flight results.
+- Static prerender/sitemap are build-time snapshots, not automatically rebuilt
+  by a CMS edit. A publishing/rebuild procedure is still required before rollout.
+
 ## Verified
 - Migrations 0001–0005 applied only to qctltygvdxpzdaliczig (foundation test).
 - Real Supabase Auth/PostgREST: visitor insert defaults PENDING; a different

@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import {supabase} from '../lib/supabase'
 import { getOwnBookingRequests } from '../repositories/bookingRepository'
 import { reservationStatusCopy, reservationStatusIndex } from '../lib/reservationStatusCopy'
 
@@ -8,15 +9,22 @@ export default function MyReservationRequests({ lang }: { lang: string }) {
   const [rows, setRows] = useState<Rows>([])
   const [message, setMessage] = useState<number | null>(null)
   const [busy, setBusy] = useState(false)
+  const generation=useRef(0)
+  useEffect(()=>{
+    const subscription=supabase?.auth.onAuthStateChange(()=>{generation.current++;setRows([]);setMessage(null);setBusy(false)})
+    return()=>{generation.current++;subscription?.data.subscription.unsubscribe()}
+  },[])
   async function load() {
     if (busy) return
     setBusy(true); setMessage(null); setRows([])
+    const requestGeneration=generation.current
     try {
       const result = await getOwnBookingRequests()
+      if(requestGeneration!==generation.current)return
       if (result === null) setMessage(3)
       else { setRows(result); if (!result.length) setMessage(2) }
-    } catch { setMessage(4) }
-    finally { setBusy(false) }
+    } catch { if(requestGeneration===generation.current)setMessage(4) }
+    finally { if(requestGeneration===generation.current)setBusy(false) }
   }
   return <section dir={lang === 'ar' ? 'rtl' : 'ltr'} className="mt-4 rounded-xl border border-sky-100 p-4 space-y-3">
     <h4 className="font-bold">{t[0]}</h4>

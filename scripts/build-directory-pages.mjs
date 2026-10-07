@@ -1,4 +1,5 @@
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
+import {publishedEditorialSnapshot} from './published-editorial-snapshot.mjs';
 const entries=JSON.parse(await readFile('src/data/directory.json','utf8'));
 const publication=JSON.parse(await readFile('src/data/photoPublication.json','utf8'));
 const alternatives=JSON.parse(await readFile('src/data/photoAlternatives.json','utf8'));
@@ -14,6 +15,10 @@ entries.push(...alternatives);
 const cinemas=JSON.parse(await readFile('src/data/cinemas.json','utf8'));
 entries.push(...cinemas.map(cinema=>({...cinema,kind:'activities',description:{en:'Check current films, screening times and languages on the cinema’s official page. Ticket purchases take place on the operator’s website.',tr:'Güncel filmleri, seansları ve gösterim dilini sinemanın resmî sayfasından kontrol edin. Bilet işlemleri işletmenin sitesinde yapılır.'}})));
 for(let i=entries.length-1;i>=0;i--)if(!publication.galleries[entries[i].id||entries[i].slug]?.length)entries.splice(i,1);
+if(process.env.VITE_PLATFORM_FOUNDATION==='true'){
+ const cms=await publishedEditorialSnapshot(process.env.VITE_SUPABASE_URL,process.env.VITE_SUPABASE_ANON_KEY);
+ entries.splice(0,entries.length,...cms);
+}
 entries.push(...[...originalCities,...cities].map(city=>({kind:'cities',slug:city.slug,name:city.name,description:city.description,website:city.source})));
 const base=await readFile('dist/index.html','utf8');
 const escape=value=>value.replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;').replaceAll('>','&gt;');
