@@ -1,7 +1,6 @@
 import {useEffect,useState} from 'react'
 import {requireSupabase} from '../lib/supabase'
 import {foundationEnabled} from '../lib/foundationConfig'
-import {trackBusinessEvent} from '../lib/businessEvents'
 type Item={id:string;name:string;kind:string;slug:string;city_id:string}
 const label:Record<string,string>={en:'Sponsored',tr:'Sponsorlu',de:'Gesponsert',fr:'Sponsorisé',ar:'إعلان ممول',ru:'Реклама',zh:'赞助推广'}
 export default function SponsoredBusinesses({context,lang,city}:{context:string;lang:string;city?:string}){
@@ -25,5 +24,5 @@ export default function SponsoredBusinesses({context,lang,city}:{context:string;
   return()=>{cancelled=true}
  },[context,city])
  if(!rows.length)return null
- return <section className="max-w-6xl mx-auto px-4 py-3 flex flex-wrap gap-3" aria-label={label[lang]??label.en}>{rows.map(row=><a key={`${row.kind}/${row.id}`} className="rounded-xl border border-sky-100 bg-white p-4" href={`/${row.kind}/${row.slug}`} onClick={()=>trackBusinessEvent(`${row.kind}/${row.id}`,'detail_open',context)}><span className="block text-xs text-slate-500">{label[lang]??label.en}</span><strong>{row.name}</strong></a>)}</section>
+ return <section className="max-w-6xl mx-auto px-4 py-3 flex flex-wrap gap-3" aria-label={label[lang]??label.en}>{rows.map(row=><a key={`${row.kind}/${row.id}`} className="rounded-xl border border-sky-100 bg-white p-4" href={`/${row.kind}/${row.slug}`}><span className="block text-xs text-slate-500">{label[lang]??label.en}</span><strong>{row.name}</strong></a>)}</section>
 }

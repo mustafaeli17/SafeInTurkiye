@@ -1,55 +1,46 @@
-# Platform Foundation — isolated verification, 2026-10-07
+# Platform Foundation — closure, 2026-10-07
 
-Status: IN PROGRESS, not production-ready approval.
-
-## Additional closure checks
-- 178 tests / 39 files; typecheck, lint and default build pass.
-- CMS-mode build reads the public publication view, refuses fallback on failure,
-  and uses that snapshot for detail HTML and sitemap. Tested against the actual
-  isolated project: 2 business URLs, 11 city pages, no orphan business URLs.
-- Admin browser: received the visitor request and confirmed it; confirmation
-  success state verified. Real metrics displayed in the admin screen.
-- Admin browser edit/save changed the restaurant description; fresh public
-  detail displayed exactly the updated description.
-- Request history now clears on auth changes and ignores stale in-flight results.
-- Static prerender/sitemap are build-time snapshots, not automatically rebuilt
-  by a CMS edit. A publishing/rebuild procedure is still required before rollout.
+Status: DEVELOPMENT CHECKPOINT READY; production activation remains approval-gated.
 
 ## Verified
-- Migrations 0001–0005 applied only to qctltygvdxpzdaliczig (foundation test).
-- Real Supabase Auth/PostgREST: visitor insert defaults PENDING; a different
-  user cannot read that booking; staff confirmation is visible to its owner.
-- Real published view excludes DRAFT/ARCHIVED and includes PUBLISHED.
-- Real local event endpoint → test database → staff metrics; ordinary users
-  cannot read metrics. Fixed local middleware ordering (404 before fix).
-- Browser: test visitor login, restaurant detail, request submission with a
-  generated reference, request history with pending/confirmed entries.
-- Mobile request history at 390px viewport: no horizontal overflow.
-- Earlier browser check: test editorial listing and explicit Sponsored label.
-- 175 tests / 38 files pass (PGlite tests enabled), typecheck/lint/build pass.
-- Existing static build produces 70 detail pages. Initial JS 710.73 kB,
-  gzip 219.52 kB; known bundle warning remains.
-- Server credential absent from dist. Local env and test-user file ignored.
+- 179 tests / 39 files pass, including isolated PostgreSQL/PGlite tests.
+- Typecheck, lint, default build and foundation-mode build pass.
+- Default build: 70 pages; initial JS 711.52 kB (219.84 kB gzip).
+- Foundation test-project build: 13 pages (2 fixture businesses + 11 cities).
+  Public CMS snapshot supplies detail HTML and sitemap; no silent JSON fallback.
+- Server service-role value absent from foundation build assets.
+- Real test Supabase: own pending booking insert, cross-user RLS isolation,
+  staff confirmation visible to owner, draft/archive visibility rules.
+- Real event intake → test DB → staff metrics; ordinary users cannot read metrics.
+- Browser visitor submission/reference/history and mobile 390px without overflow
+  verified earlier. Admin edit/save appeared in fresh public detail; admin
+  confirmation and metrics verified earlier.
+- Browser sponsor creation persisted; restaurant listing showed explicit
+  Sponsored label on new fixture.
+- All 59 existing eligible routes prepared for migration. Seed executed three
+  times in PostgreSQL: no duplicate, no overwritten CMS edit, no draft accidentally
+  published; explicit publication preserves all 59 slugs.
 
-## Implemented but not fully browser-E2E verified
-- Opt-in foundation CMS mode preserving public_slug and gallery metadata.
-- Contacted reservation stage, seven-language visitor history.
-- Sponsorship management/public placement, metrics administration.
-- Editorial impression/detail/phone/site/directions/reservation events.
+## Closure fixes
+- Guarded deterministic catalog seed and controlled publication procedure.
+- Removed duplicate sponsor-click + detail-mount count.
+- Google discovery event wiring stores place ID only, not Google business content.
+- Completed remaining transit helper/mode labels in seven languages.
+- Corrected obsolete admin instructions and explained build/sitemap refresh.
 
-## Required before approval
-- Complete actual admin browser edit/status/sponsorship/metrics flows.
-- Finish canonical CMS publication snapshot integration with prerender/sitemap;
-  default production remains legacy static and MUST NOT enable the foundation
-  flag until existing catalog migration and URL parity have been verified.
-- Complete remaining important city/transport translations and Google discovery
-  interaction instrumentation (currently editorial events only).
-- Full desktop/mobile regression against configured Google and Exchange preview.
-  The isolated local launcher intentionally has no Google API proxy configured.
-- Test authenticated history after logout/session changes and account navigation.
+## Known limitations / rollout gates
+- No production deploy, production database mutation or credential change.
+- Catalog seed tested locally; production export reconciliation, approved import,
+  publication and flag activation remain. Follow FOUNDATION-ROLLOUT.md.
+- Isolated browser server intentionally lacks Google API proxies. New Google
+  event wiring has validation/code checks, not a fresh real-provider browser E2E.
+  Existing configured preview was not changed.
+- HTML/sitemap require an approved rebuild after CMS publication changes; no
+  automatic deployment hook or realtime update of already-open tabs.
+- 500 kB bundle warning remains. Metrics count events, not unique visitors.
+  Instance-local limiting is not distributed abuse protection.
+- Targeted foundation/transit translations are covered; this does not claim
+  all third-party descriptions are human-translated into every language.
 
-No production deployment or production database mutation performed.
-No production credential changed. Test records are explicitly labelled fixtures.
-No Google business data copied into the CMS. Analytics are event counts, not
-unique visitors or physical visits. Rate limiting is instance-local, not a
-distributed billing/abuse guarantee. No email/SMS/payment integration.
+Next API work can start from this development checkpoint in a separate request.
+Production readiness is contingent on the explicit rollout gates above.

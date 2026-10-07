@@ -14,7 +14,7 @@ export default async function handler(req:Request,res:Response){
  if(!url||!key)return res.status(503).json({error:'NOT_CONFIGURED'})
  let data:Record<string,unknown>
  try{const raw=typeof req.body==='string'?req.body:JSON.stringify(req.body);if(!raw||raw.length>512)throw Error();data=JSON.parse(raw)}catch{return res.status(400).json({error:'INVALID_INPUT'})}
- if(!data||typeof data!=='object'||typeof data.businessKey!=='string'||!/^(hotels|restaurants|activities)\/[a-zA-Z0-9_-]{1,140}$/.test(data.businessKey)||!events.has(String(data.eventType))||!contexts.has(String(data.context)))return res.status(400).json({error:'INVALID_INPUT'})
+ if(!data||typeof data!=='object'||typeof data.businessKey!=='string'||!/^(hotels|restaurants|activities|google)\/[a-zA-Z0-9_-]{1,140}$/.test(data.businessKey)||!events.has(String(data.eventType))||!contexts.has(String(data.context)))return res.status(400).json({error:'INVALID_INPUT'})
  // Instance-local abuse guard, NOT a distributed cost guarantee. Only salted,
  // ephemeral identifiers are held in memory; no IP is sent to Supabase.
  const now=Date.now();for(const [id,row]of limits)if(row.until<=now)limits.delete(id)

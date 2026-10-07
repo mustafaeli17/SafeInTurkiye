@@ -8,6 +8,7 @@ async function call(body:unknown,origin='http://127.0.0.1:5193'){
  await handler({method:'POST',headers:{origin},body},response);return response
 }
 it('rejects cross-origin submissions',async()=>{const res=await call({},'https://other.invalid');expect(res.status).toHaveBeenCalledWith(403);expect(fetchMock).not.toHaveBeenCalled()})
+it('stores Google place identity and our event only, never Google content',async()=>{const res=await call({businessKey:'google/ChIJ_test',eventType:'impression',context:'nearby',name:'Discard',rating:5});expect(res.status).toHaveBeenCalledWith(200);expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({business_key:'google/ChIJ_test',event_type:'impression',context:'nearby'})})
 it('accepts only the bounded event schema',async()=>{const res=await call({businessKey:'bad key',eventType:'detail_open',context:'detail'});expect(res.status).toHaveBeenCalledWith(400)})
 it('does not forward contact details or user supplied timestamps',async()=>{
  const res=await call({businessKey:'restaurants/test-id',eventType:'detail_open',context:'detail',email:'discard@example.test',created_at:'1900-01-01'})

@@ -2,6 +2,8 @@ import {readFile,readdir} from 'node:fs/promises'
 import {pathToFileURL} from 'node:url'
 import {expect,it} from 'vitest'
 import {cityTransportCopy} from '../lib/cityTransportCopy'
+// @ts-expect-error Node-only seed preparation module
+import {foundationCatalog,catalogSeed} from '../../scripts/foundation-catalog.mjs'
 it('provides the five original city transport descriptions in every supported language',()=>{
  for(const copy of Object.values(cityTransportCopy))for(const lang of ['tr','en','de','fr','ar','ru','zh'])expect(copy[lang]?.length).toBeGreaterThan(20)
 })
@@ -47,5 +49,19 @@ it.skipIf(!process.env.PGLITE_MODULE)('foundation migration enforces publication
   expect((await db.query('select event_type,total from business_metrics')).rows).toEqual([{event_type:'detail_open',total:1}])
   await db.exec('reset role')
   await expect(db.exec(`update restaurants set public_slug='new-route' where id='${business}'`)).rejects.toThrow()
+  const catalog=await foundationCatalog()
+  expect(catalog).toHaveLength(59)
+  const seed=catalogSeed(catalog)
+  await db.exec(seed)
+  await db.exec(seed)
+  const imported=(await db.query(`select kind,slug from (select 'hotels' kind,public_slug slug,editorial_key from hotels union all select 'restaurants',public_slug,editorial_key from restaurants union all select 'activities',public_slug,editorial_key from activities) e where editorial_key is not null`)).rows
+  expect(imported.map((e:{kind:string;slug:string})=>`${e.kind}/${e.slug}`).sort()).toEqual(catalog.map((e:{kind:string;slug:string})=>`${e.kind}/${e.slug}`).sort())
+  // Re-running cannot overwrite editorial changes or publish drafts.
+  await db.exec(`update hotels set description='CMS edit' where editorial_key is not null`)
+  await db.exec(seed)
+  expect((await db.query(`select distinct description from hotels where editorial_key is not null`)).rows).toEqual([{description:'CMS edit'}])
+  expect((await db.query('select * from published_editorial_businesses')).rows).toHaveLength(1)
+  await db.exec(`update hotels set status='PUBLISHED' where editorial_key is not null;update restaurants set status='PUBLISHED' where editorial_key is not null;update activities set status='PUBLISHED' where editorial_key is not null;set role anon`)
+  expect((await db.query('select * from published_editorial_businesses')).rows).toHaveLength(60)
  }finally{await db.close()}
 },60000)

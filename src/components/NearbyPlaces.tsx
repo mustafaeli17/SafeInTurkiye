@@ -5,6 +5,8 @@ import { NearbyError } from '../services/nearbyPlaces'
 import { fetchGoogleNearby } from '../services/googleNearby'
 import GooglePlacePhoto from './GooglePlacePhoto'
 import RestaurantRequest from './RestaurantRequest'
+import {trackBusinessEvent} from '../lib/businessEvents'
+import {foundationEnabled} from '../lib/foundationConfig'
 import { searchDestinations, directionsText } from '../lib/searchDestinations'
 import type { NearbyCategory, NearbyCenter, NearbyKind, NearbyResult } from '../services/nearbyPlaces'
 
@@ -26,6 +28,10 @@ const categoryLabels: Record<NearbyCategory, [string, string]> = {
 }
 
 export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter, cityName: initialCityName, fixedCategory, initialCategory }: NearbyPlacesProps) {
+  const eventRoot=useRef<HTMLElement>(null)
+  const seenEvents=useRef(new Set<string>())
+  const eventContext=kind==='exchange'?'exchange':fixedCategory==='restaurant'?'restaurants':fixedCategory==='hotel'?'hotels':fixedCategory==='activity'?'activities':'nearby'
+  const businessKey=(id:string)=>id.startsWith('google:')?`google/${id.slice(7)}`:undefined
   const cities: Record<string, NearbyCenter> = searchDestinations;
   const [selectedCity, setSelectedCity] = useState(initialCityName.startsWith('Cappadocia') ? 'Cappadocia' : initialCityName);
   const cityName = selectedCity;
@@ -135,10 +141,17 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
 
   const busy = state === 'locating' || state === 'loading'
   const places = (result?.places ?? []).filter(place => filter === 'all' || place.category === filter)
+  useEffect(()=>{
+    if(!foundationEnabled||!eventRoot.current||!('IntersectionObserver' in window))return
+    const observer=new IntersectionObserver(items=>{for(const item of items){const key=(item.target as HTMLElement).dataset.businessKey;if(item.isIntersecting&&key&&!seenEvents.current.has(key)){seenEvents.current.add(key);trackBusinessEvent(key,'impression',eventContext)}}},{threshold:0.5})
+    eventRoot.current.querySelectorAll('[data-business-key]').forEach(node=>observer.observe(node))
+    return()=>observer.disconnect()
+  },[result,limit,detailId,eventContext])
+  const openPlace=(id:string)=>{setDetailId(id);const key=businessKey(id);if(key&&id!==detailId)trackBusinessEvent(key,'detail_open',eventContext)}
   const formatDistance = (meters: number) => meters < 1000 ? `${Math.round(meters)} m` : `${(meters / 1000).toLocaleString(tr ? 'tr-TR' : 'en-GB', { maximumFractionDigits: 1 })} km`
 
   return (
-    <section className="space-y-4" aria-label={kind === 'exchange' ? text('Yakındaki döviz büroları', 'Nearby exchange bureaux') : text('Yakınımdaki yerler', 'Nearby places')}>
+    <section ref={eventRoot} onClickCapture={event=>{const link=(event.target as HTMLElement).closest('a');const key=link?.closest('[data-business-key]')?.getAttribute('data-business-key');if(!link||!key)return;const href=link.getAttribute('href')??'';const type=href.startsWith('tel:')?'phone_click':href.includes('/maps/dir/')?'directions_click':link.dataset.event==='website'?'website_click':null;if(type)trackBusinessEvent(key,type,eventContext)}} className="space-y-4" aria-label={kind === 'exchange' ? text('Yakındaki döviz büroları', 'Nearby exchange bureaux') : text('Yakınımdaki yerler', 'Nearby places')}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-extrabold text-slate-900">{fixedCategory ? `${categoryLabel(fixedCategory)} · Google Maps` : kind === 'exchange' ? text('Yakındaki döviz büroları', 'Nearby exchange bureaux') : text('Yakınımdaki yerler', 'Nearby places')}</h2>
@@ -170,10 +183,10 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
       {state === 'ready' && places.length === 0 && <div className="rounded-2xl border border-sky-100 bg-white p-5 text-sm text-slate-600">{text('Bu alanda ve kategoride kayıt bulunamadı. Bu, yakınlarda işletme olmadığı anlamına gelmez; harita kayıtları eksik olabilir.', 'No records were found in this area and category. This does not mean there are no places nearby; map coverage may be incomplete.')}</div>}
       {detailId && <button type="button" className="min-h-11 text-blue-700 font-semibold" onClick={() => setDetailId(null)}>{text('← Listeye dön', '← Back to results')}</button>}
       <div className={detailId ? 'space-y-4' : 'grid grid-cols-1 gap-3 sm:grid-cols-2'}>
-        {places.slice(0, limit).map(place => <article key={place.id} hidden={!!detailId && detailId !== place.id} className="min-w-0 rounded-2xl border border-sky-100 bg-white p-4 shadow-sm">
-          <GooglePlacePhoto key={place.photo?.url ?? place.id} place={place} onOpen={() => setDetailId(place.id)} />
+        {places.slice(0, limit).map(place => <article data-business-key={businessKey(place.id)} key={place.id} hidden={!!detailId && detailId !== place.id} className="min-w-0 rounded-2xl border border-sky-100 bg-white p-4 shadow-sm">
+          <GooglePlacePhoto key={place.photo?.url ?? place.id} place={place} onOpen={() => openPlace(place.id)} />
           <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0"><span className="text-[10px] font-bold uppercase tracking-wide text-[#007EAD]">{place.typeLabel ?? categoryLabel(place.category)}</span><h3 className="mt-1 break-words font-bold text-slate-900"><button className="text-left min-h-11 hover:text-blue-700" onClick={() => setDetailId(place.id)}>{place.name || categoryLabel(place.category)}</button></h3></div>
+            <div className="min-w-0"><span className="text-[10px] font-bold uppercase tracking-wide text-[#007EAD]">{place.typeLabel ?? categoryLabel(place.category)}</span><h3 className="mt-1 break-words font-bold text-slate-900"><button className="text-left min-h-11 hover:text-blue-700" onClick={() => openPlace(place.id)}>{place.name || categoryLabel(place.category)}</button></h3></div>
             <span className="shrink-0 rounded-lg bg-sky-50 px-2 py-1 text-xs font-bold text-[#007EAD]">{formatDistance(place.distanceMeters)}</span>
           </div>
           <dl className="mt-3 space-y-2.5 text-xs leading-relaxed text-slate-600">
@@ -187,9 +200,9 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
           <div className="mt-3 flex flex-wrap gap-4 border-t border-slate-100 pt-3 text-xs font-semibold text-[#007EAD]">
             <a href={place.sourceUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1">{text('Harita kaydı ve kaynak', 'Map record & source')}<ExternalLink className="h-3 w-3" /></a>
             <a href={`https://www.google.com/maps/dir/?api=1&destination=${place.coordinates.lat},${place.coordinates.lng}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-1">{directionsText[locale] ?? directionsText.en}<ExternalLink aria-hidden="true" className="h-3 w-3" /></a>
-            {place.website && <a href={place.website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1">{text('Web sitesi', 'Website')}<ExternalLink className="h-3 w-3" /></a>}
+            {place.website && <a data-event="website" href={place.website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1">{text('Web sitesi', 'Website')}<ExternalLink className="h-3 w-3" /></a>}
           </div>
-          {detailId === place.id && place.category === 'restaurant' && <RestaurantRequest name={place.name ?? ''} source={place.sourceUrl} lang={locale} />}
+          {detailId === place.id && place.category === 'restaurant' && <RestaurantRequest businessKey={businessKey(place.id)} name={place.name ?? ''} source={place.sourceUrl} lang={locale} />}
         </article>)}
       </div>
       {state==='ready' && kind==='exchange' && <p className="text-xs text-slate-500">{text('Büro alış/satış kurları mevcut değil; işlemden önce net kur ve komisyonu işletmeden teyit edin.', 'Bureau buy/sell rates are not available; confirm the net rate and commission with the business before exchanging.')}</p>}
