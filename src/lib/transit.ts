@@ -4,6 +4,13 @@ export function transitDeparture(value: string, now = Date.now()): string | null
   const time = value ? Date.parse(`${value}:00+03:00`) : now
   return Number.isFinite(time) && time >= now - 60000 && time <= now + 7 * 86400000 ? new Date(time).toISOString() : null
 }
+export function transitRequestTime() { return Date.now() }
+export function requestTransitLocation(location: Pick<Geolocation,'getCurrentPosition'> | undefined): Promise<{lat:number;lng:number}> {
+  return new Promise((resolve,reject)=>{
+    if(!location){reject(new Error('noLocation'));return}
+    location.getCurrentPosition(position=>resolve({lat:position.coords.latitude,lng:position.coords.longitude}),error=>reject(new Error(error.code===1?'denied':'noLocation')),{enableHighAccuracy:false,timeout:12000,maximumAge:60000})
+  })
+}
 export function transitRoutes(value: unknown): TransitRoute[] {
   if (!Array.isArray(value)) return []
   return value.filter(route => route && /^\d+(\.\d+)?s$/.test(route.duration) && Array.isArray(route.legs) && route.legs.every((leg: any) => Array.isArray(leg.steps) && leg.steps.every((step: any) => step && typeof step === 'object'))).slice(0, 4)

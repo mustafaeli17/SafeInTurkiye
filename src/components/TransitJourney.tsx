@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { LocateFixed } from 'lucide-react'
 import GoogleDirectionsMap from './GoogleDirectionsMap'
-import { transitDeparture, transitFare, transitRoutes, type TransitRoute } from '../lib/transit'
-import { transitCopy } from '../lib/transitCopy'
+import { requestTransitLocation, transitDeparture, transitFare, transitRequestTime, transitRoutes, type TransitRoute } from '../lib/transit'
+import { transitCopy, transitVehicle } from '../lib/transitCopy'
 
 export default function TransitJourney({ lang }: { lang: string }) {
   const locale = lang.toLowerCase() in transitCopy ? lang.toLowerCase() : 'en'
@@ -15,6 +15,7 @@ export default function TransitJourney({ lang }: { lang: string }) {
   const [routes, setRoutes] = useState<TransitRoute[]>([]), [selected, setSelected] = useState(0)
   const request = useRef<AbortController | null>(null)
   const generation = useRef(0)
+  const recent = useRef<{key:string;time:number;routes:TransitRoute[]} | null>(null)
   const reset = () => { generation.current++; request.current?.abort(); setBusy(false); setRoutes([]); setMessage(''); setSelected(0) }
   useEffect(() => { reset(); return () => { generation.current++; request.current?.abort() } }, [locale])
 
@@ -22,6 +23,8 @@ export default function TransitJourney({ lang }: { lang: string }) {
     event.preventDefault(); reset()
     const time = transitDeparture(departure)
     if (!origin.trim() || !destination.trim() || !time) { setMessage('invalid'); return }
+    const key=JSON.stringify([coordinates??origin.trim(),destination.trim(),departure,preference,locale])
+    if(recent.current?.key===key && transitRequestTime()-recent.current.time<30000){setRoutes(recent.current.routes);return}
     setBusy(true)
     const id = generation.current, controller = new AbortController()
     request.current = controller
@@ -34,15 +37,15 @@ export default function TransitJourney({ lang }: { lang: string }) {
       if (id !== generation.current) return
       const found = transitRoutes(data.routes)
       if (!Array.isArray(data.routes) || (data.routes.length && !found.length)) { setMessage('error'); return }
-      setRoutes(found); if (!found.length) setMessage('empty')
+      setRoutes(found); if (!found.length) setMessage('empty'); else recent.current={key,time:transitRequestTime(),routes:found}
     } catch (error) { if (id === generation.current) setMessage(error instanceof Error && error.name === 'AbortError' ? 'timeout' : 'error') }
     finally { clearTimeout(timeout); if (id === generation.current) setBusy(false) }
   }
   const useLocation = () => {
-    reset(); if (!navigator.geolocation) { setMessage('noLocation'); return }
+    reset()
     const id = generation.current
     setLocating(true)
-    navigator.geolocation.getCurrentPosition(position => { setLocating(false); if(id!==generation.current)return; setCoordinates({lat:position.coords.latitude,lng:position.coords.longitude}); setOrigin(t.location) }, error => { setLocating(false); if(id===generation.current)setMessage(error.code===1?'denied':'noLocation') }, {enableHighAccuracy:false,timeout:12000,maximumAge:60000})
+    requestTransitLocation(navigator.geolocation).then(point=>{if(id===generation.current){setCoordinates(point);setOrigin(t.location)}}).catch(error=>{if(id===generation.current)setMessage(error instanceof Error&&error.message==='denied'?'denied':'noLocation')}).finally(()=>setLocating(false))
   }
   const input = 'mt-1 w-full min-w-0 rounded-xl border border-sky-100 bg-slate-50 p-3 text-sm text-slate-900'
   const route = routes[selected]
@@ -62,7 +65,17 @@ export default function TransitJourney({ lang }: { lang: string }) {
     {route&&<>
       <div className="flex flex-wrap gap-4 text-sm text-slate-700"><span>{Math.max(0,steps.filter(s=>s.transitDetails).length-1)} {t.change}</span>{typeof route.distanceMeters==='number'&&<span>{t.distance}: {new Intl.NumberFormat(locale,{maximumFractionDigits:1}).format(route.distanceMeters/1000)} km</span>}<span>{t.fare}: {transitFare(route,locale)??t.noFare}</span></div>
       <GoogleDirectionsMap origin={origin} destination={destination} mode="transit" title={t.map} routePolyline={route.polyline?.encodedPolyline??''} fallback={<p className="rounded-xl bg-slate-50 p-4 text-sm">{t.noMap}</p>}/>
-      <h3 className="font-bold">{t.details}</h3><ol className="space-y-2">{steps.map((step,i)=>{const d=step.transitDetails;return <li key={i} className="break-words rounded-xl bg-slate-50 p-3 text-sm text-slate-700">{d?<><strong>{d.transitLine?.nameShort||d.transitLine?.name||t.transit}{d.headsign?` · ${d.headsign}`:''}</strong><p>{d.stopDetails?.departureStop?.name} → {d.stopDetails?.arrivalStop?.name}</p><p>{time(d.stopDetails?.departureTime)} → {time(d.stopDetails?.arrivalTime)}{typeof d.stopCount==='number'?` · ${d.stopCount} ${t.stops}`:''}</p></>:<><strong>{t.walk}</strong>{step.navigationInstruction?.instructions&&<p>{step.navigationInstruction.instructions}</p>}{step.staticDuration&&<span>{Math.ceil(parseFloat(step.staticDuration)/60)} {t.minutes}</span>}</>}</li>})}</ol>
+      <p className="flex gap-4 text-xs"><span className="text-green-700">● {t.from}</span><span className="text-rose-700">● {t.to}</span></p>
+      <h3 className="font-bold">{t.details}</h3>
+      <ol className="space-y-2">{steps.map((step,i)=>{
+        const d=step.transitDetails
+        return <li key={i} className="break-words rounded-xl bg-slate-50 p-3 text-sm text-slate-700">{d?<>
+          <p className="text-xs font-semibold text-sky-700">{transitVehicle(d.transitLine?.vehicle?.type,locale)}</p>
+          <strong>{d.transitLine?.nameShort||d.transitLine?.name||t.transit}{d.headsign?` · ${d.headsign}`:''}</strong>
+          <p>{d.stopDetails?.departureStop?.name} → {d.stopDetails?.arrivalStop?.name}</p>
+          <p>{time(d.stopDetails?.departureTime)} → {time(d.stopDetails?.arrivalTime)}{typeof d.stopCount==='number'?` · ${d.stopCount} ${t.stops}`:''}</p>
+        </>:<><strong>{t.walk}</strong>{step.navigationInstruction?.instructions&&<p>{step.navigationInstruction.instructions}</p>}{step.staticDuration&&<span>{Math.ceil(parseFloat(step.staticDuration)/60)} {t.minutes}</span>}{typeof step.distanceMeters==='number'&&<span> · {new Intl.NumberFormat(locale).format(step.distanceMeters)} m</span>}</>}</li>
+      })}</ol>
       <p className="text-xs leading-relaxed text-slate-500">Google Maps · {t.notice}</p>
     </>}
   </section>

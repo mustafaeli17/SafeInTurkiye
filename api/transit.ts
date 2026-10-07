@@ -30,7 +30,7 @@ export default async function handler(req:Request,res:Response){
  limits.set(id,{count:(row?.count??0)+1,until:row?.until??now+60000})
  try{
   const upstream=await fetch('https://routes.googleapis.com/directions/v2:computeRoutes',{method:'POST',signal:AbortSignal.timeout(15000),headers:{'Content-Type':'application/json','X-Goog-Api-Key':key,'X-Goog-FieldMask':transitFields},body:JSON.stringify({origin:from,destination:to,travelMode:'TRANSIT',departureTime:new Date(time).toISOString(),computeAlternativeRoutes:true,...(preference==='RECOMMENDED'?{}:{transitPreferences:{routingPreference:preference}}),languageCode:language==='zh'?'zh-CN':language,regionCode:'TR',units:'METRIC'})})
-  if(!upstream.ok)return res.status(upstream.status===429?429:502).json({error:upstream.status===429?'BUSY':'UNAVAILABLE'})
+  if(!upstream.ok)return res.status(upstream.status===429?429:upstream.status===400?400:502).json({error:upstream.status===429?'BUSY':upstream.status===400?'INVALID_INPUT':'UNAVAILABLE'})
   const data=await upstream.json()
   if(!data||typeof data!=='object'||(data.routes!==undefined&&!Array.isArray(data.routes)))return res.status(502).json({error:'UNAVAILABLE'})
   return res.status(200).json({routes:data.routes??[],source:'Google Maps',retrievedAt:new Date().toISOString()})
