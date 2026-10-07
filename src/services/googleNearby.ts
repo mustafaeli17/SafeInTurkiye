@@ -34,7 +34,9 @@ export function parseGooglePlaces(payload: unknown, center: NearbyCenter, catego
       } : undefined,
     })
   }
-  return { provider: 'Google Maps', places: [...records.values()].sort((a,b) => a.distanceMeters-b.distanceMeters), fetchedAt: new Date().toISOString(), mapDataAt: null }
+  const places = [...records.values()]
+  if (radius <= 2500) places.sort((a,b) => a.distanceMeters-b.distanceMeters)
+  return { provider: 'Google Maps', places, fetchedAt: new Date().toISOString(), mapDataAt: null }
 }
 
 // Google responses stay only in the mounted view, never in localStorage or the OSM cache.
