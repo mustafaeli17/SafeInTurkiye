@@ -44,8 +44,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .travel-emergency > svg, .travel-emergency > strong { color: #e5243b; }
 .travel-emergency > strong { font-size: 11px; }
 .travel-cities { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 10px; }
-.travel-cities a { position: relative; min-width: 0; aspect-ratio: 4 / 3; border-radius: 14px; overflow: hidden; background: #164e63; text-align: start; cursor: pointer; }
-.travel-cities img { width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.travel-cities a { display: block; position: relative; min-width: 0; width: 100%; aspect-ratio: 4 / 3; border-radius: 14px; overflow: hidden; background: #164e63; text-align: start; cursor: pointer; }
+.travel-cities img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; }
 .travel-cities a:hover img { filter: brightness(1.03); }
 .travel-cities span { position: absolute; inset-inline: 0; bottom: 0; display: flex; align-items: center; justify-content: space-between; gap: 4px; background: linear-gradient(transparent,#092a46e8); padding: 35px 12px 14px; color: white; font-weight: 800; font-size: 13px; }
 .travel-category-grid { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 10px; }
@@ -72,8 +72,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .travel-tool > span { font-size: 11px; }
   .travel-section h2, .travel-guide-banner h2 { font-size: 18px; }
   .travel-cities { grid-template-columns: repeat(2,minmax(0,1fr)); }
-  .travel-cities a { height: 180px; }
- .travel-cities a:last-child { height: 180px; }
+  .travel-cities a { height: 180px; aspect-ratio: auto; }
   .travel-category-grid { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }
   .travel-guide-banner { flex-wrap: wrap; padding: 18px; }
   .travel-guide-banner > div { flex-basis: calc(100% - 52px); }
