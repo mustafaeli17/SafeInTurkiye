@@ -1,0 +1,48 @@
+{
+  "phase": "3.2 Google Transit",
+  "date": "2026-10-07",
+  "status": "READY FOR PHASE 3.2 APPROVAL",
+  "baseline": "85f9bb0",
+  "implementation_checkpoint": "5afe282",
+  "preview": "https://safe-in-turkiye-git-codex-phase3-places-preview-eli-1196.vercel.app/",
+  "production_deployed": false,
+  "database_mutated": false,
+  "api": {
+    "routing": "POST https://routes.googleapis.com/directions/v2:computeRoutes; travelMode TRANSIT",
+    "map": "Maps JavaScript API; renders returned selected-route polyline",
+    "documentation": [
+      "https://developers.google.com/maps/documentation/routes/transit-route",
+      "https://developers.google.com/maps/documentation/routes/policies",
+      "https://developers.google.com/maps/documentation/javascript/load-maps-js-api"
+    ],
+    "server_environment": "GOOGLE_TRANSIT_API_KEY, Preview only, Routes API restriction",
+    "browser_environment": "VITE_GOOGLE_TRANSIT_MAP_KEY, Preview only, Maps JavaScript API restriction and exact preview-host HTTP referrer",
+    "existing_keys_changed": false,
+    "configuration_note": "The new public map variable initially included Production scope; it was corrected to Preview only before any deployment using it. No production deploy occurred.",
+    "controls": ["Same-origin allowlist", "Input and date validation", "15-second upstream timeout", "No raw upstream errors", "Per-instance hashed-IP request throttle", "Submit-only requests", "30-second reuse of last displayed successful result in component memory", "Explicit response field mask", "No database or persistent route cache", "Google map attribution retained"],
+    "cost_limit": "Application throttle is best effort across serverless instances, not a guaranteed billing cap. Google Cloud quota/budget monitoring remains advisable."
+  },
+  "automated": {"test_files": 40, "tests_passed": 193, "failed": 0, "build": "PASS", "typecheck": "PASS", "lint": "PASS", "targeted_initial_tests": "15 passed; final suite includes 14 new Transit tests", "initial_js_kb": 711.55, "initial_js_gzip_kb": 219.86, "transit_chunk_kb": 45.33, "map_chunk_kb": 1.35},
+  "browser": {
+    "desktop": "1440x1000; map, alternatives, form and navigation checked; no horizontal overflow",
+    "mobile": "390x844; form, alternatives, selected map and instructions checked; no horizontal overflow",
+    "real_api_routes": [
+      {"query": "Taksim to Grand Bazaar, Istanbul", "result": "Four alternatives; Google fare supplied; selecting alternative changed fare, steps and map"},
+      {"query": "Istanbul Airport to Sultanahmet", "result": "Four alternatives; actual airport bus/tram connection and Google fare"},
+      {"query": "Kadikoy pier to Sultanahmet", "result": "Four alternatives; ferry/tram stops and times; final build vehicle labels and polyline verified"},
+      {"query": "Konak Square to Bornova Metro, Izmir", "result": "Three alternatives; M1 metro; Chinese route instructions; provider omitted fare"},
+      {"query": "Kizilay to ASTI, Ankara", "result": "Four alternatives; provider routes and fare returned"},
+      {"query": "Antalya Airport to Ismetpasa tram stop", "result": "Four alternatives; T1A; provider omitted fare"},
+      {"query": "Goreme bus station to Uchisar Castle", "result": "Genuine zero results; friendly message; editorial guide retained"}
+    ],
+    "translations": "All seven planner language switches checked; Chinese real route instructions checked; proper line/stop names retained",
+    "geolocation": "Browser could not obtain real GPS; manual address fallback verified. Granted/denied/unavailable branches covered by automated test. Physical-device granted GPS not claimed as browser-verified.",
+    "regression": ["Taxi actual address search, fare result and existing Google Embed map", "Exchange reference rates and converter rendered", "Near Me, Restaurants, Hotels, Activities navigation and headings", "Back to home", "Existing Foundation, reservation, SEO, canonical/sitemap and other tests passed"],
+    "raw_http": "Unauthenticated Preview POST returned Vercel protection 401. Actual Google results were verified through authenticated Preview browser; protection unchanged.",
+    "errors": "Timeout, quota, provider failure, invalid inputs, malformed response and missing fare automated; no-route and unavailable GPS exercised in browser"
+  },
+  "limitations": ["Fares are not supplied by Google for every city or journey; no invented fare fallback", "Coverage and schedules depend on Google Transit", "Browser GPS success requires physical-device verification", "Map provider UI language is selected when its script first loads; planner UI updates immediately"],
+  "backlog": ["Existing greater-than-500-kB initial bundle warning", "Distributed abuse protection and Google quota/budget monitoring before broader traffic"],
+  "changed_files": [".env.example", "api/transit.ts", "src/components/GoogleDirectionsMap.tsx", "src/components/TransitJourney.tsx", "src/components/TransitPlanner.tsx", "src/components/TransitRouteMap.tsx", "src/lib/transit.ts", "src/lib/transitCopy.ts", "src/test/transitJourney.test.ts", "PHASE3-2-VALIDATION.json"],
+  "unrelated_worktree_changes": "Pre-existing READINESS-SPRINT.md modification and untracked files were preserved, not included in commits."
+}
