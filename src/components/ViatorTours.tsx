@@ -20,7 +20,7 @@ export default function ViatorTours({ lang }: { lang:string }) {
     controller.current?.abort(); const current=new AbortController();controller.current=current
     setState('loading');setResult(null)
     try {
-      const r=await fetch(`/api/viator?${new URLSearchParams({city,lang,currency:'EUR',start:String(offset)})}`,{signal:current.signal,cache:'no-store'})
+      const r=await fetch(`/api/viator?${new URLSearchParams({city,lang,currency:'EUR',start:String(offset)})}`,{signal:AbortSignal.any([current.signal,AbortSignal.timeout(20000)]),cache:'no-store'})
       if(!r.ok) throw new Error('unavailable')
       const data=await r.json() as Result
       if(!Array.isArray(data.products)) throw new Error('invalid')

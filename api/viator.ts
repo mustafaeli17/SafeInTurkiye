@@ -42,7 +42,11 @@ export default async function handler(req: Request, res: Response) {
   try {
     const request = async (path: string, body?: unknown) => {
       const r = await fetch(`${base}${path}`, { method: body ? 'POST' : 'GET', headers, signal, ...(body ? { body: JSON.stringify(body) } : {}) })
-      if (!r.ok) throw new Error(r.status === 401 || r.status === 403 ? 'ACCESS_PENDING' : r.status === 429 ? 'BUSY' : 'PROVIDER_UNAVAILABLE')
+      if (!r.ok) {
+        // Diagnostics contain only endpoint/status, never response bodies or credentials.
+        console.warn('Viator upstream request failed', { path, status: r.status, sandbox })
+        throw new Error(r.status === 401 || r.status === 403 ? 'ACCESS_PENDING' : r.status === 429 ? 'BUSY' : 'PROVIDER_UNAVAILABLE')
+      }
       return r.json()
     }
     if (!taxonomy || taxonomy.base !== base || taxonomy.expires <= now) {
