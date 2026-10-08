@@ -4,6 +4,7 @@ import { openDirectoryEntry, registerPublishedEntry, photoCuratedCatalog } from 
 import { directory as directoryRecords } from './lib/directory';
 import SponsoredBusinesses from './components/SponsoredBusinesses';
 import EditorialBusinesses from './components/EditorialBusinesses';
+import ViatorTours from './components/ViatorTours';
 import cityGuides from './data/cityGuides.json';
 import {cityPath} from './lib/publicRoutes';
 import citiesZh from './data/citiesZh.json';
@@ -1542,6 +1543,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
           <main className="travel-catalog">
             <div><h1 className="text-3xl font-extrabold text-slate-900">{page('activitiesTitle')}</h1><p className="mt-1 text-sm text-slate-600">{page('activitiesSub')}</p></div>
             <EditorialBusinesses entries={directoryRecords.filter(entry=>entry.kind==='activities')} lang={lang}/>
+            <ViatorTours lang={lang}/>
             <NearbyPlaces key={`activities-discovery-${activityCategory}`} kind="essential" fixedCategory="activity" initialCategory={activityCategory === 'Cinema' ? 'cinema' : activityCategory === 'Museum & Culture' ? 'museum' : activityCategory === 'Entertainment' ? 'entertainment' : 'activity'} lang={lang} center={{lat:currentCityInfo.lat,lng:currentCityInfo.lng}} cityName={currentCityInfo.name} />
           </main>
         )}
