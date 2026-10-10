@@ -28,8 +28,11 @@ export default async function handler(req: Request, res: Response) {
   const currency = url.searchParams.get('currency') ?? 'EUR'
   const start = Number(url.searchParams.get('start') ?? 1)
   if (!Object.hasOwn(destinations, city) || !Object.hasOwn(languages, lang) || !['EUR','USD','GBP','TRY','AED','CNY'].includes(currency) || !Number.isInteger(start) || start < 1 || start > 97 || (start - 1) % 12) return res.status(400).json({ error: 'INVALID_INPUT' })
-  const key = process.env.VIATOR_API_KEY
-  if (!key) return res.status(503).json({ error: 'NOT_CONFIGURED' })
+  const key = process.env.VIATOR_API_KEY?.trim()
+  if (!key || /[^\x21-\x7e]/.test(key)) {
+    console.warn('Viator configuration unavailable', { reason: key ? 'INVALID_KEY_FORMAT' : 'MISSING_KEY' })
+    return res.status(503).json({ error: 'NOT_CONFIGURED' })
+  }
   const now = Date.now(), ip = String(req.headers['x-forwarded-for'] ?? 'unknown').split(',')[0].trim()
   for (const [id, item] of limits) if (item.until <= now) limits.delete(id)
   const limit = limits.get(ip)
@@ -81,6 +84,7 @@ export default async function handler(req: Request, res: Response) {
     return res.status(200).json({ products, totalCount: Number.isFinite(data.totalCount) ? data.totalCount : products.length, destination: destination.name, sandbox, language: languages[lang] })
   } catch (error) {
     const code = error instanceof Error && ['ACCESS_PENDING','BUSY'].includes(error.message) ? error.message : signal.aborted ? 'TIMEOUT' : 'PROVIDER_UNAVAILABLE'
+    console.warn('Viator search failed', { code, errorType: error instanceof Error ? error.name : 'UnknownError' })
     return res.status(code === 'BUSY' ? 429 : 503).json({ error: code })
   }
 }
