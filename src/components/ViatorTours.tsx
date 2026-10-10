@@ -21,7 +21,13 @@ export default function ViatorTours({ lang }: { lang:string }) {
     setState('loading');setResult(null)
     try {
       const r=await fetch(`/api/viator?${new URLSearchParams({city,lang,currency:'EUR',start:String(offset)})}`,{signal:AbortSignal.any([current.signal,AbortSignal.timeout(20000)]),cache:'no-store'})
-      if(!r.ok) throw new Error('unavailable')
+      if(!r.ok) {
+        const failure=await r.json().catch(()=>null)
+        const known=['NOT_CONFIGURED','ACCESS_PENDING','BUSY','PROVIDER_UNAVAILABLE','TIMEOUT','INVALID_INPUT']
+        // Log only our allowlisted diagnostic code, never the upstream response or key.
+        console.warn('Viator request unavailable',{status:r.status,code:known.includes(failure?.error)?failure.error:'UNKNOWN'})
+        throw new Error('unavailable')
+      }
       const data=await r.json() as Result
       if(!Array.isArray(data.products)) throw new Error('invalid')
       if(current.signal.aborted) return
