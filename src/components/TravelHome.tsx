@@ -1,4 +1,4 @@
-import { Hotel, Utensils, Ticket, BookOpen, ArrowRight, Search } from 'lucide-react'
+import { Hotel, Utensils, Ticket, Compass, BookOpen, ArrowRight, Search } from 'lucide-react'
 import { useState } from 'react'
 import hero from '../data/heroPhoto.json'
 import {cityPath} from '../lib/publicRoutes'
@@ -27,7 +27,7 @@ export default function TravelHome({ lang, cities, onNavigate, onCity, onSearch,
   const t = translations[lang as keyof typeof translations] ?? translations.en
   const [query, setQuery] = useState('')
   const quick = [{ label: t[10], emoji: '🚕', page: 'taxi' }, { label: t[11], emoji: '💵', page: 'currency' }, { label: t[12], emoji: '🚌', page: 'transit' }, { label: t[13], emoji: '📍', page: 'nearme' }, { label: t[14], emoji: '🛡️', page: 'safety' }] as const
-  const plan = [{ label: t[16], icon: Hotel, page: 'stay' }, { label: t[17], icon: Utensils, page: 'food' }, { label: t[18], icon: Ticket, page: 'experiences' }, { label: toursLabel(lang), icon: Ticket, page: 'tours' }, { label: t[19], icon: BookOpen, page: 'assistant' }] as const
+  const plan = [{ label: t[16], icon: Hotel, page: 'stay' }, { label: t[17], icon: Utensils, page: 'food' }, { label: t[18], icon: Ticket, page: 'experiences' }, { label: toursLabel(lang), icon: Compass, page: 'tours' }, { label: t[19], icon: BookOpen, page: 'assistant' }] as const
   return <main className="travel-home">
     <section className="travel-hero">
       <img className="travel-hero-photo" src={hero.src} width={hero.width} height={hero.height} alt="" fetchPriority="high" />

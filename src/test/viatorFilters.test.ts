@@ -20,7 +20,7 @@ describe('Viator full-catalog filters',()=>{
  })
  it('provides home and city entry points, removes the activities promotion',()=>{
   const app=readFileSync('src/App.tsx','utf8'),home=readFileSync('src/components/TravelHome.tsx','utf8')
-  expect(home).toContain("label: toursLabel(lang), icon: Ticket, page: 'tours'")
+  expect(home).toContain("label: toursLabel(lang), icon: Compass, page: 'tours'")
   expect(app).toContain("tab:'tours',label:toursLabel(lang),icon:'🧭'")
   expect(app).toContain('initialCity={publicCities.find(c=>c.name===selectedCityName)?.slug}')
   expect(app).not.toContain('{toursLabel(lang)} →')

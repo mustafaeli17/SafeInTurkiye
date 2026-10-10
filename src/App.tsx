@@ -45,7 +45,6 @@ import {
   Trash2,
   AlertCircle,
   Loader2,
-  ArrowLeft,
   Sun,
   Sparkles,
   Ticket,
@@ -1267,7 +1266,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
             {isStaff && <button type="button" onClick={() => { setActiveTab('admin'); setMobileMenuOpen(false); }} className="rounded-xl px-3 py-2 text-left bg-slate-900 text-white">CMS Studio</button>}
           </nav>}
         </header>
-        {activeTab!=='home' && <div className="max-w-6xl mx-auto px-4 pt-3"><HomeButton lang={lang} onClick={()=>{window.history.replaceState({},'','/');setActiveTab('home');setMobileMenuOpen(false);window.scrollTo(0,0);}}/></div>}
+        {activeTab!=='home' && activeTab!=='taxi' && <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-3"><HomeButton lang={lang} currentPage={({assistant:tr('assistant'),transit:tr('transit'),currency:tr('currency'),city:selectedCityName,nearme:tr('nearMe'),stay:page('hotelsTitle'),food:page('diningTitle'),experiences:page('activitiesTitle'),tours:toursLabel(lang),safety:page('safety'),admin:'CMS Studio'} as Record<string,string>)[activeTab]} onClick={()=>{window.history.replaceState({},'','/');setActiveTab('home');setMobileMenuOpen(false);window.scrollTo(0,0);}}/></div>}
 
         {/* ====================================================================
             PAGE 1: EXPLORE
@@ -1292,13 +1291,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
         ==================================================================== */}
         {activeTab === 'taxi' && (
           <main className="reference-page reference-taxi max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
-            <div className="flex items-center gap-2 text-[12px] text-slate-500">
-              <button onClick={() => setActiveTab('home')} className="flex items-center gap-1 font-bold text-[#087FFF] hover:underline cursor-pointer">
-                <ArrowLeft className="w-3.5 h-3.5" /> {page('back')}
-              </button>
-              <span>/</span>
-              <span className="text-slate-800 font-bold">{page('taxiTitle')}</span>
-            </div>
+            <HomeButton lang={lang} currentPage={page('taxiTitle')} onClick={()=>{window.history.replaceState({},'','/');setActiveTab('home');setMobileMenuOpen(false);window.scrollTo(0,0);}}/>
 
             <div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">{page('taxiTitle')}</h1>

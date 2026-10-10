@@ -48,7 +48,7 @@ export default function DirectoryDetail({entry,lang,onBack}:{entry:DirectoryEntr
   const current=gallery[selected]??gallery[0];
   return <main onClickCapture={event=>{const link=(event.target as HTMLElement).closest('a');if(!link)return;const href=link.getAttribute('href')??'';const type=href.startsWith('tel:')?'phone_click':href.includes('google.com/maps/dir/')?'directions_click':href===website?'website_click':null;if(type)trackBusinessEvent(`${entry.kind}/${entry.id}`,type)}} dir={lang==='ar'?'rtl':'ltr'} className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-6">
     <a href="/" aria-label="SafeInTürkiye"><img src={siteLogo} alt="SafeInTürkiye" className="w-40 h-auto" /></a>
-    <HomeButton lang={lang} onClick={onBack}/>
+    <HomeButton lang={lang} currentPage={entry.name} onClick={onBack}/>
     {entry.description.tr&&<nav aria-label={lang==='tr'?'Dil':'Language'} className="flex gap-3 text-sm text-blue-700"><a href={entryPath(entry)} hrefLang="en" onClick={()=>localStorage.setItem('safeinturkiye-language','en')} aria-current={lang==='en'?'page':undefined}>English</a><a href={`/tr${entryPath(entry)}`} hrefLang="tr" onClick={()=>localStorage.setItem('safeinturkiye-language','tr')} aria-current={lang==='tr'?'page':undefined}>Türkçe</a></nav>}
     <header><p className="text-sm font-bold text-blue-600">{entry.city}</p><h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900">{entry.name}</h1></header>
     <section aria-label={entry.name} className="rounded-2xl overflow-hidden border border-sky-100 bg-white">
