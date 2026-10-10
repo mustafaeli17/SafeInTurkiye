@@ -38,7 +38,11 @@ export default async function handler(req: Request, res: Response) {
   const limit = limits.get(ip)
   if ((limit?.count ?? 0) >= 12 || limits.size >= 2000) { res.setHeader('Retry-After', '60'); return res.status(429).json({ error: 'BUSY' }) }
   limits.set(ip, { count: (limit?.count ?? 0) + 1, until: limit?.until ?? now + 60000 })
-  const sandbox = process.env.VERCEL_ENV !== 'production'
+  // Preview can read the real catalog without deploying the website to production.
+  // This setting must be paired with the matching provider credential.
+  const environment = process.env.VIATOR_ENVIRONMENT ?? (process.env.VERCEL_ENV === 'production' ? 'production' : 'sandbox')
+  if (!['production','sandbox'].includes(environment)) return res.status(503).json({ error: 'NOT_CONFIGURED' })
+  const sandbox = environment === 'sandbox'
   const base = sandbox ? 'https://api.sandbox.viator.com/partner' : 'https://api.viator.com/partner'
   const headers = { 'exp-api-key': key, Accept: 'application/json;version=2.0', 'Accept-Language': languages[lang], 'Content-Type': 'application/json' }
   const signal = AbortSignal.timeout(12000)

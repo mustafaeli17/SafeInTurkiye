@@ -8,6 +8,7 @@ const sections: Record<string, [string, string]> = {
  stay: ['Hotels in Türkiye', 'Explore selected hotels in Türkiye and contact their official websites directly for availability and reservations.'],
  food: ['Restaurants in Türkiye', 'Discover selected restaurants in Türkiye with official links for menus, contact details and reservations.'],
  experiences: ['Attractions & Activities', 'Explore museums, cinemas, cultural events and seasonal activities in Türkiye with official visitor and ticket information.'],
+ tours: ['Tours & Experiences', 'Find tours and experiences in Türkiye. View current options and complete your booking on Viator.'],
  safety: ['Travel Safety Guide', 'Read practical travel safety advice for Türkiye, emergency information and tips for safer journeys.'],
  assistant: ['Travel Questions & Answers', 'Find practical answers about transport cards, taxis, money and travel in Türkiye.'],
  admin: ['Administration', 'Authorized content management for SafeInTürkiye.'],

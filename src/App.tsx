@@ -4,7 +4,7 @@ import { openDirectoryEntry, registerPublishedEntry, photoCuratedCatalog } from 
 import { directory as directoryRecords } from './lib/directory';
 import SponsoredBusinesses from './components/SponsoredBusinesses';
 import EditorialBusinesses from './components/EditorialBusinesses';
-import ViatorTours from './components/ViatorTours';
+import ViatorTours, { toursLabel } from './components/ViatorTours';
 import cityGuides from './data/cityGuides.json';
 import {cityPath} from './lib/publicRoutes';
 import citiesZh from './data/citiesZh.json';
@@ -610,7 +610,7 @@ function SafeRouteMap({
 export default function App({initialCity,initialLanguage}:{initialCity?:string;initialLanguage?:string} = {}) {
   const { session, isStaff, role, signIn, signOut } = useSupabaseAuth();
   const mockDataEnabled = import.meta.env.VITE_ENABLE_MOCK_DATA === 'true';
-  const [activeTab, setActiveTab] = useState<'home' | 'city' | 'taxi' | 'transit' | 'currency' | 'nearme' | 'safety' | 'stay' | 'food' | 'experiences' | 'admin' | 'assistant'>(initialCity?'city':'home');
+  const [activeTab, setActiveTab] = useState<'home' | 'city' | 'taxi' | 'transit' | 'currency' | 'nearme' | 'safety' | 'stay' | 'food' | 'experiences' | 'tours' | 'admin' | 'assistant'>(initialCity?'city':'home');
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }); }, [activeTab]);
   const [selectedCityName, setSelectedCityName] = useState<string>(initialCity??'İstanbul');
   useEffect(() => {
@@ -1204,6 +1204,9 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
                     <button onClick={() => { setActiveTab('experiences'); setMoreDropdownOpen(false); }} className="w-full text-left px-3 py-2 rounded-xl hover:bg-sky-50 text-slate-700 font-bold flex items-center gap-2">
                       <Ticket className="w-4 h-4 text-[#087FFF]" /> {tr('activities')}
                     </button>
+                    <button onClick={() => { setActiveTab('tours'); setMoreDropdownOpen(false); }} className="w-full text-left px-3 py-2 rounded-xl hover:bg-sky-50 text-slate-700 font-bold flex items-center gap-2">
+                      <Ticket className="w-4 h-4 text-[#087FFF]" /> {toursLabel(lang)}
+                    </button>
                     <button onClick={() => { setActiveTab('nearme'); setMoreDropdownOpen(false); }} className="w-full text-left px-3 py-2 rounded-xl hover:bg-sky-50 text-slate-700 font-bold flex items-center gap-2">
                       <Navigation2 className="w-4 h-4 text-[#087FFF]" /> {tr('nearMe')}
                     </button>
@@ -1252,7 +1255,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
           </div>
           {mobileMenuOpen && <nav className="lg:hidden border-t border-sky-100 bg-white px-4 py-3 grid grid-cols-2 gap-2 text-[12px] font-bold">
             {([
-              ['assistant', tr('assistant')], ['taxi', tr('taxi')], ['transit', tr('transit')], ['currency', tr('currency')], ['city', tr('cityWeather')], ['nearme', tr('nearMe')], ['stay', tr('hotels')], ['food', tr('dining')], ['experiences', tr('activities')], ['safety', page('safety')],
+              ['assistant', tr('assistant')], ['taxi', tr('taxi')], ['transit', tr('transit')], ['currency', tr('currency')], ['city', tr('cityWeather')], ['nearme', tr('nearMe')], ['stay', tr('hotels')], ['food', tr('dining')], ['experiences', tr('activities')], ['tours',toursLabel(lang)], ['safety', page('safety')],
             ] as const).map(([tab, label]) => <button key={tab} type="button" onClick={() => { setActiveTab(tab); setMobileMenuOpen(false); }} className={`rounded-xl px-3 py-2 text-left ${activeTab === tab ? 'bg-sky-50 text-[#087FFF]' : 'bg-slate-50 text-slate-700'}`}>{label}</button>)}
             {isStaff && <button type="button" onClick={() => { setActiveTab('admin'); setMobileMenuOpen(false); }} className="rounded-xl px-3 py-2 text-left bg-slate-900 text-white">CMS Studio</button>}
           </nav>}
@@ -1543,10 +1546,12 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
           <main className="travel-catalog">
             <div><h1 className="text-3xl font-extrabold text-slate-900">{page('activitiesTitle')}</h1><p className="mt-1 text-sm text-slate-600">{page('activitiesSub')}</p></div>
             <EditorialBusinesses entries={directoryRecords.filter(entry=>entry.kind==='activities')} lang={lang}/>
-            <ViatorTours lang={lang}/>
+            <button onClick={()=>setActiveTab('tours')} className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white">{toursLabel(lang)} →</button>
             <NearbyPlaces key={`activities-discovery-${activityCategory}`} kind="essential" fixedCategory="activity" initialCategory={activityCategory === 'Cinema' ? 'cinema' : activityCategory === 'Museum & Culture' ? 'museum' : activityCategory === 'Entertainment' ? 'entertainment' : 'activity'} lang={lang} center={{lat:currentCityInfo.lat,lng:currentCityInfo.lng}} cityName={currentCityInfo.name} />
           </main>
         )}
+
+        {activeTab === 'tours' && <main className="travel-catalog"><ViatorTours lang={lang}/></main>}
 
         {/* ====================================================================
             PAGE 10: NEAR ME

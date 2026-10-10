@@ -11,6 +11,8 @@ const copy: Record<string, string[]> = {
   zh: ['旅游与体验 · Viator','目的地','搜索行程','搜索中…','未找到该目的地的行程。','行程暂时无法加载，请稍后重试。','起价','在 Viator 查看','符合条件的预订可能为我们带来佣金。最终价格和可订情况以 Viator 为准。','测试预览——不代表实际可订情况。','下一页','上一页','此语言的产品信息以英语提供。'],
 }
 type Result = { products: { code:string; title:string; productUrl:string; photo?:string; fromPrice?:number; currency?:string }[]; totalCount:number; sandbox:boolean; language:string }
+export const toursLabel = (lang:string) => ({en:'Tours & experiences',tr:'Turlar ve deneyimler',de:'Touren & Erlebnisse',fr:'Excursions et expériences',ar:'الجولات والتجارب',ru:'Экскурсии и впечатления',zh:'旅游与体验',es:'Excursiones y experiencias'}[lang] ?? 'Tours & experiences')
+const affiliateLabel = (lang:string) => ({en:'Affiliate link',tr:'İş ortağı bağlantısı',de:'Affiliate-Link',fr:'Lien affilié',ar:'رابط تسويق بالعمولة',ru:'Партнёрская ссылка',zh:'联盟推广链接',es:'Enlace de afiliado'}[lang] ?? 'Affiliate link')
 export default function ViatorTours({ lang }: { lang:string }) {
   const t=copy[lang] ?? copy.en
   const [city,setCity]=useState('istanbul'), [result,setResult]=useState<Result|null>(null), [state,setState]=useState('idle'), [start,setStart]=useState(1)
@@ -35,8 +37,7 @@ export default function ViatorTours({ lang }: { lang:string }) {
     } catch {if(!current.signal.aborted) setState('error')}
   }
   return <section aria-labelledby="viator-heading" className="my-6 rounded-2xl border border-blue-100 bg-white p-4 sm:p-6">
-    <h2 id="viator-heading" className="text-xl font-bold text-slate-900">{t[0]}</h2>
-    <p className="my-3 text-sm text-slate-600">{t[8]}</p>
+    <h1 id="viator-heading" className="mb-4 text-3xl font-extrabold text-slate-900">{toursLabel(lang)}</h1>
     <form onSubmit={e=>{e.preventDefault();void search()}} className="flex flex-wrap items-end gap-3">
       <label className="grid gap-1 text-sm">{t[1]}<select value={city} onChange={e=>setCity(e.target.value)} className="rounded-xl border border-blue-200 p-3">
         {publicCities.map(c=><option key={c.slug} value={c.slug}>{c.name}{c.slug==='mugla'?' · Bodrum':c.slug==='aydin'?' · Kuşadası':c.slug==='denizli'?' · Pamukkale':''}</option>)}
@@ -51,6 +52,7 @@ export default function ViatorTours({ lang }: { lang:string }) {
       <div className="travel-catalog-info"><h3 className="font-semibold">{p.title}</h3><span className="text-sm text-slate-600">Viator</span></div>
       <div className="travel-catalog-action">{p.fromPrice!==undefined&&p.currency&&<span>{t[6]} {new Intl.NumberFormat(lang,{style:'currency',currency:p.currency}).format(p.fromPrice)}</span>}
         <a href={p.productUrl} target="_blank" rel="sponsored noopener noreferrer" className="rounded-xl border border-blue-200 px-4 py-3 font-semibold text-blue-700">{t[7]} ↗</a>
+        <small className="block text-xs text-slate-500">{affiliateLabel(lang)} · Viator</small>
       </div>
     </article>)}
     {result&&<div className="mt-3 flex gap-3">{start>1&&<button className="rounded-xl border p-3" onClick={()=>void search(start-12)}>{t[11]}</button>}{result.products.length>0&&start+12<=result.totalCount&&start<97&&<button className="rounded-xl border p-3" onClick={()=>void search(start+12)}>{t[10]}</button>}</div>}
