@@ -1,7 +1,7 @@
 import { expect, it } from 'vitest'
 import { restaurantRequestCopy } from '../lib/restaurantRequestCopy'
-it('supplies every reservation field and status in all seven supported languages',()=>{
-  expect(Object.keys(restaurantRequestCopy).sort()).toEqual(['ar','de','en','fr','ru','tr','zh'])
+it('supplies every reservation field and status in all eight supported languages',()=>{
+  expect(Object.keys(restaurantRequestCopy).sort()).toEqual(['ar','de','en','es','fr','ru','tr','zh'])
   for(const [lang,copy] of Object.entries(restaurantRequestCopy)){
     expect(copy).toHaveLength(14)
     expect(copy.every(text=>text.trim().length>0)).toBe(true)

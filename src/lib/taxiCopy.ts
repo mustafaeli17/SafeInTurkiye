@@ -1,4 +1,5 @@
 export const taxiEstimateCopy: Record<string, [string,string]> = {
+ es:['Estimación según la distancia','No incluye esperas, peajes ni suplementos.'],
  tr:['Mesafeye göre tahmini ücret','Bekleme, geçiş ücretleri ve ek ücretler dahil değildir.'],
  en:['Distance-based fare estimate','Waiting, tolls and extras are not included.'],
  de:['Entfernungsbasierte Preisschätzung','Wartezeit, Maut und Zuschläge sind nicht enthalten.'],
@@ -8,6 +9,7 @@ export const taxiEstimateCopy: Record<string, [string,string]> = {
  zh:['按距离估算车费','不含等候费、通行费和附加费用。'],
 };
 export const taxiDetailsCopy:Record<string,[string,string,string]>={
+ es:['Detalles del cálculo','Aproximadamente','Intervalo según rutas alternativas, sin tráfico ni meteorología en directo. El taxímetro determina el precio final.'],
  tr:['Hesaplama detayları','Yaklaşık','Alternatif yol mesafelerine göre aralık; canlı trafik veya hava tahmini değildir. Son ücret taksimetreye göre belirlenir.'],
  en:['Calculation details','Approximately','Range across alternative road routes, not live traffic or weather. Final fare is determined by the meter.'],
  de:['Berechnungsdetails','Ungefähr','Spanne alternativer Straßenrouten, keine Live-Verkehrs- oder Wetterprognose. Der Taxameter bestimmt den Endpreis.'],
@@ -18,6 +20,7 @@ export const taxiDetailsCopy:Record<string,[string,string,string]>={
 };
 
 export const taxiBudgetCopy:Record<string,string>={
+ es:'Presupuesto estimado según ejemplos de precios locales y la distancia por carretera. Puede variar según la zona, el taxi y la ruta; el taxímetro determina el precio final.',
  tr:'Yerel fiyat örnekleri ve yol mesafesine göre bütçe tahmini. İlçe, taksi ve güzergâha göre değişebilir; son ücret taksimetreye göre belirlenir.',
  en:'Budget estimate based on local price examples and road distance. District, taxi and route can affect the fare; the meter determines the final price.',
  de:'Budgetschätzung aus lokalen Preisbeispielen und Straßenentfernung. Bezirk, Taxi und Route können den Preis beeinflussen; maßgeblich ist der Taxameter.',
@@ -27,6 +30,7 @@ export const taxiBudgetCopy:Record<string,string>={
  zh:'根据当地价格示例和道路距离估算预算。区域、车辆和路线可能影响车费，最终以计价器为准。',
 };
 export const taxiIntroCopy:Record<string,string>={
+ es:'Elige el punto de partida y el destino para estimar la tarifa del taxi.',
  tr:'Başlangıç ve varış noktasını seçin, yolculuğun tahmini ücretini görün.',
  en:'Choose your starting point and destination to estimate your taxi fare.',
  de:'Start und Ziel wählen und den ungefähren Taxipreis berechnen.',

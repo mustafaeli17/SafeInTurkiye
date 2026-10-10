@@ -2,10 +2,12 @@ import { Hotel, Utensils, Ticket, BookOpen, ArrowRight, Search } from 'lucide-re
 import { useState } from 'react'
 import hero from '../data/heroPhoto.json'
 import {cityPath} from '../lib/publicRoutes'
+import {toursLabel} from '../lib/viatorCopy'
 
 
-type Destination = 'city' | 'taxi' | 'transit' | 'currency' | 'nearme' | 'safety' | 'stay' | 'food' | 'experiences' | 'assistant'
+type Destination = 'city' | 'taxi' | 'transit' | 'currency' | 'nearme' | 'safety' | 'stay' | 'food' | 'experiences' | 'assistant' | 'tours'
 const translations = {
+  es: ['Türkiye,', 'más fácil.', 'Información local práctica para un viaje más seguro, sencillo y agradable.', '¿Adónde vas o qué necesitas?', 'Buscar', '¿Lo necesitas ahora?', 'Explora Türkiye', 'Planifica tu viaje', 'Antes de viajar', 'Ver todo', 'Tarifa de taxi', 'Tipos de cambio', 'Transporte', 'Cerca de mí', 'Seguridad', 'Emergencias', 'Hoteles', 'Restaurantes', 'Actividades', 'Guías de viaje', 'Ciudades, costas y experiencias inolvidables.', 'Todo lo que necesitas en un solo lugar.', 'Tarjetas de transporte, dinero y respuestas útiles.', 'Museos y cultura', 'Cine', 'Ocio', 'Verano', 'Invierno'],
   en: ['Türkiye,', 'made easier.', 'Practical local information for a safer, smarter and more enjoyable trip.', 'Where are you going or what do you need?', 'Search', 'Need it now?', 'Explore Türkiye', 'Plan your trip', 'Know before you go', 'View all', 'Taxi fare', 'Exchange rates', 'Getting around', 'Near me', 'Safety', 'Emergency', 'Hotels', 'Restaurants', 'Activities', 'Travel guides', 'Cities, coastlines and unforgettable experiences.', 'Everything you need, in one place.', 'Transport cards, money and useful travel answers.', 'Museums & culture', 'Cinema', 'Entertainment', 'Summer', 'Winter'],
   tr: ['Türkiye,', 'şimdi daha kolay.', 'Daha güvenli, bilinçli ve keyifli bir gezi için pratik yerel bilgiler.', 'Nereye gitmek veya ne bulmak istiyorsun?', 'Ara', 'Hemen lazım mı?', 'Türkiye’yi keşfet', 'Gezini planla', 'Gitmeden önce', 'Tümünü gör', 'Taksi ücreti', 'Döviz kurları', 'Toplu taşıma', 'Yakınımda', 'Güvenlik', 'Acil durum', 'Oteller', 'Restoranlar', 'Aktiviteler', 'Seyahat rehberi', 'Şehirler, sahiller ve unutulmaz deneyimler.', 'İhtiyacın olan her şey bir arada.', 'Ulaşım kartları, para ve pratik seyahat cevapları.', 'Müze ve kültür', 'Sinema', 'Eğlence', 'Yaz', 'Kış'],
   de: ['Türkiye,', 'einfach entdecken.', 'Praktische lokale Informationen für eine sichere und schöne Reise.', 'Wohin möchten Sie oder was suchen Sie?', 'Suchen', 'Jetzt gebraucht?', 'Türkiye entdecken', 'Reise planen', 'Vor der Reise', 'Alle ansehen', 'Taxipreis', 'Wechselkurse', 'Nahverkehr', 'In der Nähe', 'Sicherheit', 'Notfall', 'Hotels', 'Restaurants', 'Aktivitäten', 'Reisefragen', 'Städte, Küsten und unvergessliche Erlebnisse.', 'Alles für Ihre Reise an einem Ort.', 'Verkehrskarten, Geld und praktische Antworten.', 'Museen & Kultur', 'Kino', 'Unterhaltung', 'Sommer', 'Winter'],
@@ -25,7 +27,7 @@ export default function TravelHome({ lang, cities, onNavigate, onCity, onSearch,
   const t = translations[lang as keyof typeof translations] ?? translations.en
   const [query, setQuery] = useState('')
   const quick = [{ label: t[10], emoji: '🚕', page: 'taxi' }, { label: t[11], emoji: '💵', page: 'currency' }, { label: t[12], emoji: '🚌', page: 'transit' }, { label: t[13], emoji: '📍', page: 'nearme' }, { label: t[14], emoji: '🛡️', page: 'safety' }] as const
-  const plan = [{ label: t[16], icon: Hotel, page: 'stay' }, { label: t[17], icon: Utensils, page: 'food' }, { label: t[18], icon: Ticket, page: 'experiences' }, { label: t[19], icon: BookOpen, page: 'assistant' }] as const
+  const plan = [{ label: t[16], icon: Hotel, page: 'stay' }, { label: t[17], icon: Utensils, page: 'food' }, { label: t[18], icon: Ticket, page: 'experiences' }, { label: toursLabel(lang), icon: Ticket, page: 'tours' }, { label: t[19], icon: BookOpen, page: 'assistant' }] as const
   return <main className="travel-home">
     <section className="travel-hero">
       <img className="travel-hero-photo" src={hero.src} width={hero.width} height={hero.height} alt="" fetchPriority="high" />

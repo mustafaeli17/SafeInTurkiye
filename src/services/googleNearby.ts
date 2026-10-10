@@ -42,7 +42,7 @@ export function parseGooglePlaces(payload: unknown, center: NearbyCenter, catego
 // Google responses stay only in the mounted view, never in localStorage or the OSM cache.
 export async function fetchGoogleNearby(center: NearbyCenter, category: NearbyCategory | 'all', lang: string, signal?: AbortSignal, scope: 'nearby' | 'city' = 'nearby'): Promise<NearbyResult> {
   if (!isValidCenter(center)) throw new NearbyError('invalid-location')
-  const params = new URLSearchParams({ lat: String(center.lat), lng: String(center.lng), category, lang: ['en','tr','de','fr','ar','ru','zh'].includes(lang) ? lang : 'en' })
+  const params = new URLSearchParams({ lat: String(center.lat), lng: String(center.lng), category, lang: ['en','tr','de','fr','ar','ru','zh','es'].includes(lang) ? lang : 'en' })
   params.set('scope', scope)
   try {
     const response = await fetch(`/api/places?${params}`, { credentials: 'same-origin', cache: 'no-store', signal: AbortSignal.any([...(signal ? [signal] : []), AbortSignal.timeout(11000)]) })

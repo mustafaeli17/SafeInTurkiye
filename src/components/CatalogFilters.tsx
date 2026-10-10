@@ -1,4 +1,5 @@
 const labels: Record<string, string[]> = {
+  es:['Buscar por nombre, ciudad o interés','Todas las ciudades','Borrar filtros','Sin resultados. Prueba otra ciudad o borra los filtros.','resultados'],
   en: ['Search by name, city or interest', 'All cities', 'Clear filters', 'No matches. Try another city or clear the filters.', 'results'],
   tr: ['İsim, şehir veya ilgi alanı ara', 'Tüm şehirler', 'Filtreleri temizle', 'Sonuç bulunamadı. Başka şehir deneyin veya filtreleri temizleyin.', 'sonuç'],
   de: ['Name, Stadt oder Interesse suchen', 'Alle Städte', 'Filter löschen', 'Keine Treffer. Andere Stadt wählen oder Filter löschen.', 'Ergebnisse'],

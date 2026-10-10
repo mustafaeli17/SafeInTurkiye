@@ -2,7 +2,7 @@ import {useEffect,useState} from 'react'
 import {requireSupabase} from '../lib/supabase'
 import {foundationEnabled} from '../lib/foundationConfig'
 type Item={id:string;name:string;kind:string;slug:string;city_id:string}
-const label:Record<string,string>={en:'Sponsored',tr:'Sponsorlu',de:'Gesponsert',fr:'Sponsorisé',ar:'إعلان ممول',ru:'Реклама',zh:'赞助推广'}
+const label:Record<string,string>={es:'Patrocinado',en:'Sponsored',tr:'Sponsorlu',de:'Gesponsert',fr:'Sponsorisé',ar:'إعلان ممول',ru:'Реклама',zh:'赞助推广'}
 export default function SponsoredBusinesses({context,lang,city}:{context:string;lang:string;city?:string}){
  const [rows,setRows]=useState<Item[]>([])
  useEffect(()=>{

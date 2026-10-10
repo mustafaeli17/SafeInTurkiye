@@ -17,7 +17,7 @@ export default async function handler(req: Request, res: Response) {
   const lat = Number(url.searchParams.get('lat')), lng = Number(url.searchParams.get('lng'))
   const category = url.searchParams.get('category') ?? 'all'
   const lang = url.searchParams.get('lang') ?? 'en'
-  if (!url.searchParams.get('lat')?.trim() || !url.searchParams.get('lng')?.trim() || !Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180 || !(Object.hasOwn(types, category) || category === 'bureau_de_change') || !['en','tr','de','fr','ar','ru','zh'].includes(lang)) return res.status(400).json({ error: 'INVALID_INPUT' })
+  if (!url.searchParams.get('lat')?.trim() || !url.searchParams.get('lng')?.trim() || !Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180 || !(Object.hasOwn(types, category) || category === 'bureau_de_change') || !['en','tr','de','fr','ar','ru','zh','es'].includes(lang)) return res.status(400).json({ error: 'INVALID_INPUT' })
   const key = process.env.GOOGLE_PLACES_API_KEY
   if (!key) return res.status(503).json({ error: 'NOT_CONFIGURED' })
   const ip = String(req.headers['x-forwarded-for'] ?? 'unknown').split(',')[0].trim()

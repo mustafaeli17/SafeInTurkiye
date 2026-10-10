@@ -1,5 +1,6 @@
 // All visitor-facing request history states share the existing seven locales.
 export const reservationStatusCopy: Record<string, readonly string[]> = {
+  es:['Mis solicitudes de reserva','Actualizar','Aún no hay solicitudes.','Inicia sesión para ver tus solicitudes.','No se pudieron cargar las solicitudes. Inténtalo de nuevo.','Pendiente','Restaurante contactado','Confirmada','Rechazada','Cancelada'],
   en: ['My reservation requests', 'Refresh', 'No requests yet.', 'Sign in to see your requests.', 'Requests could not be loaded. Please try again.', 'Pending', 'Restaurant contacted', 'Confirmed', 'Declined', 'Cancelled'],
   tr: ['Rezervasyon taleplerim', 'Yenile', 'Henüz talebiniz yok.', 'Taleplerinizi görmek için giriş yapın.', 'Talepler yüklenemedi. Lütfen tekrar deneyin.', 'Bekliyor', 'Restoranla görüşüldü', 'Onaylandı', 'Reddedildi', 'İptal edildi'],
   de: ['Meine Reservierungsanfragen', 'Aktualisieren', 'Noch keine Anfragen.', 'Melden Sie sich an, um Ihre Anfragen zu sehen.', 'Anfragen konnten nicht geladen werden. Bitte versuchen Sie es erneut.', 'Ausstehend', 'Restaurant kontaktiert', 'Bestätigt', 'Abgelehnt', 'Storniert'],

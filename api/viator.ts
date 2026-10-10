@@ -1,4 +1,5 @@
 // Affiliate search only: no bookings, payment data, reviews text or catalog ingestion.
+import { viatorFilters } from '../src/services/viatorFilters.js'
 type Request = { method?: string; url?: string; headers: Record<string, string | string[] | undefined> }
 type Response = { status: (code: number) => Response; setHeader: (name: string, value: string) => void; json: (body: unknown) => void }
 type Destination = { destinationId: number; parentDestinationId?: number; name: string }
@@ -7,7 +8,7 @@ const destinations: Record<string, string[]> = {
   cappadocia: ['Cappadocia'], mugla: ['Bodrum'], aydin: ['Kusadasi'], denizli: ['Pamukkale'],
   trabzon: ['Trabzon'], konya: ['Konya'], bursa: ['Bursa'],
 }
-const languages: Record<string, string> = { en: 'en', tr: 'en', de: 'de', fr: 'fr', ar: 'en', ru: 'en', zh: 'zh', es: 'es' }
+const languages: Record<string, string> = { en: 'en', tr: 'en', de: 'de', fr: 'fr', ar: 'en', ru: 'en', zh: 'zh-CN', es: 'es' }
 const limits = new Map<string, { count: number; until: number }>()
 let taxonomy: { base: string; expires: number; items: Destination[] } | undefined
 const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ı/g, 'i')
@@ -28,6 +29,8 @@ export default async function handler(req: Request, res: Response) {
   const currency = url.searchParams.get('currency') ?? 'EUR'
   const start = Number(url.searchParams.get('start') ?? 1)
   if (!Object.hasOwn(destinations, city) || !Object.hasOwn(languages, lang) || !['EUR','USD','GBP','TRY','AED','CNY'].includes(currency) || !Number.isInteger(start) || start < 1 || start > 97 || (start - 1) % 12) return res.status(400).json({ error: 'INVALID_INPUT' })
+  let filters: ReturnType<typeof viatorFilters>
+  try { filters = viatorFilters(url.searchParams) } catch { return res.status(400).json({ error: 'INVALID_INPUT' }) }
   const key = process.env.VIATOR_API_KEY?.trim()
   if (!key || /[^\x21-\x7e]/.test(key)) {
     console.warn('Viator configuration unavailable', { reason: key ? 'INVALID_KEY_FORMAT' : 'MISSING_KEY' })
@@ -73,7 +76,7 @@ export default async function handler(req: Request, res: Response) {
     }
     const destination = items.find(d => destinations[city].some(name => normalize(name) === normalize(d.name)) && inTurkey(d))
     if (!destination) return res.status(200).json({ products: [], totalCount: 0, sandbox, language: languages[lang] })
-    const data = await request('/products/search', { filtering: { destination: String(destination.destinationId) }, sorting: { sort: 'DEFAULT' }, pagination: { start, count: 12 }, currency })
+    const data = await request('/products/search', { ...filters, filtering: { destination: String(destination.destinationId), ...filters.filtering }, pagination: { start, count: 12 }, currency })
     if (!Array.isArray(data.products)) throw new Error('PROVIDER_UNAVAILABLE')
     const products = data.products.flatMap((p: any) => {
       const productUrl = safeUrl(p.productUrl)
@@ -82,6 +85,7 @@ export default async function handler(req: Request, res: Response) {
       const variants = (p.images?.find((i: any) => i.isCover) ?? p.images?.[0])?.variants
       const photo = Array.isArray(variants) ? [...variants].filter(v => safeUrl(v.url, true) && v.width >= 320).sort((a,b) => Math.abs(a.width-720)-Math.abs(b.width-720))[0]?.url : undefined
       return [{ code: p.productCode, title: p.title, productUrl, photo,
+        description: typeof p.description === 'string' ? p.description.slice(0,1500) : undefined,
         fromPrice: Number.isFinite(p.pricing?.summary?.fromPrice) && p.pricing.summary.fromPrice >= 0 ? p.pricing.summary.fromPrice : undefined,
         currency: p.pricing?.currency === currency ? currency : undefined }]
     })

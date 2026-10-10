@@ -18,6 +18,7 @@ export const searchDestinationSources = {
   Bursa:'node/289534897', 'Çeşme':'relation/1268454', 'Alaçatı':'relation/10911859',
 };
 export const directionsText: Record<string,string> = {
+  es:'Cómo llegar',
   tr:'Yol tarifi', en:'Directions', de:'Wegbeschreibung', fr:'Itinéraire',
   ar:'الاتجاهات', ru:'Как добраться', zh:'路线',
 };

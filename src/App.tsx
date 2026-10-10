@@ -7,7 +7,7 @@ import EditorialBusinesses from './components/EditorialBusinesses';
 import ViatorTours from './components/ViatorTours';
 import { toursLabel } from './lib/viatorCopy';
 import cityGuides from './data/cityGuides.json';
-import {cityPath} from './lib/publicRoutes';
+import {cityPath, publicCities} from './lib/publicRoutes';
 import citiesZh from './data/citiesZh.json';
 import cityImages from './lib/placePhotos.json';
 import { findCityGuide, openCityGuide } from './lib/cityNavigation';
@@ -101,7 +101,7 @@ import siteLogo from './assets/safeinturkiye-logo.png';
 // ============================================================================
 // 1. TİP TANIMLARI & 6 DİLLİ SÖZLÜK SİSTEMİ
 // ============================================================================
-type SupportedLang = 'en' | 'tr' | 'de' | 'fr' | 'ar' | 'ru' | 'zh';
+type SupportedLang = 'en' | 'tr' | 'de' | 'fr' | 'ar' | 'ru' | 'zh' | 'es';
 
 interface Coordinates {
   lat: number;
@@ -184,6 +184,7 @@ interface TaxiTariff {
 
 // Tam Çalışan Çeviri Sözlüğü
 const dict: Record<SupportedLang, Record<string, string>> = {
+  es: {heroTitle:'Explora Türkiye con confianza',heroSub:'Información local práctica para viajar por Türkiye.',searchPlaceholder:'¿Qué necesitas? Taxi, metro, farmacia…',popCities:'Ciudades populares',popCitiesSub:'Descubre los destinos de Türkiye',viewAll:'Ver todo',aiHelpTitle:'¿Necesitas ayuda?',aiHelpSub:'Consulta nuestras guías y preguntas frecuentes.',startChat:'Ver preguntas',explore:'Explorar',assistant:'Preguntas frecuentes',taxi:'Tarifa de taxi',transit:'Transporte',currency:'Cambio de divisas',cityWeather:'Ciudades y tiempo',hotels:'Hoteles',dining:'Restaurantes',activities:'Actividades',nearMe:'Cerca de mí',emergency:'112 Emergencias'},
   en: {
     heroTitle: 'Explore Türkiye with confidence',
     heroSub: 'Taxi estimates, station guides, dated reference rates, and practical city information.',
@@ -328,6 +329,7 @@ const dict: Record<SupportedLang, Record<string, string>> = {
 };
 
 const pageCopy: Record<SupportedLang, Record<string, string>> = {
+  es: { more:'Más',safety:'Guía de seguridad',back:'Volver al inicio',taxiTitle:'Calculadora de taxi',taxiSub:'Calcula una estimación según la distancia por carretera y la tarifa de referencia.',origin:'Desde',destination:'Hasta',locate:'Usar mi ubicación',calculate:'Calcular ruta y tarifa',estimate:'Precio estimado',distance:'Distancia por carretera',duration:'Duración estimada',miss:'No te pierdas en',hotelsTitle:'Hoteles',night:'noche',book:'Solicitar estancia',diningTitle:'Restaurantes en Türkiye',hours:'Horario',average:'Promedio',reserve:'Solicitar mesa',activitiesTitle:'Actividades',activitiesSub:'Explora museos, cine, ocio y propuestas para el verano y el invierno.',details:'Información / solicitud',safetySub:'Consejos prácticos para un viaje más seguro y tranquilo.',emergencyTitle:'Emergencias',emergencyText:'En Türkiye, llama al 112 para ambulancias, bomberos y policía.',taxiSafety:'Pide que usen el taxímetro y guarda el recibo.',useful:'Lugares útiles',usefulText:'Encuentra farmacias, comisarías, cajeros y paradas de taxi cercanos.',cityTransport:'Transporte urbano',noTraffic:'No hay datos de tráfico en directo conectados.' },
   en: { more: 'More', safety: 'Safety guide', back: 'Back to home', taxiTitle: 'Taxi fare calculator', taxiSub: 'Estimate the fare with road distance and the dated official municipal tariff.', origin: 'From (origin)', destination: 'To (destination)', locate: 'Use current location', calculate: 'Calculate route & fare', estimate: 'Estimated fare range', distance: 'Road distance', duration: 'Estimated duration', miss: "Don't miss in", hotelsTitle: 'Hotels', night: 'night', book: 'Request stay', diningTitle: 'Restaurants in Türkiye', hours: 'Hours', average: 'Average', reserve: 'Request table', activitiesTitle: 'Activities & tours', activitiesSub: 'Browse museums, cinema, entertainment, summer and winter ideas separately.', details: 'Details / request', safetySub: 'Practical essentials for a safer, calmer trip.', emergencyTitle: 'Emergency', emergencyText: 'Call 112 for ambulance, fire and police emergencies in Türkiye.', taxiSafety: 'Ask for the meter to be used and keep your receipt.', useful: 'Useful places', usefulText: 'Find published pharmacies, police desks, ATMs and taxi ranks nearby.', cityTransport: 'Getting around', noTraffic: 'Live traffic data is not connected; no fixed traffic percentage is shown.' },
   tr: { more: 'Daha fazla', safety: 'Güvenlik rehberi', back: 'Ana sayfaya dön', taxiTitle: 'Taksi ücreti hesaplama', taxiSub: 'Yol mesafesi ve tarihli resmî belediye tarifesiyle tahmini ücret hesaplayın.', origin: 'Nereden', destination: 'Nereye', locate: 'Konumumu kullan', calculate: 'Rota ve ücreti hesapla', estimate: 'Tahmini ücret aralığı', distance: 'Yol mesafesi', duration: 'Tahmini süre', miss: 'Kaçırmayın:', hotelsTitle: 'Oteller', night: 'gece', book: 'Konaklama talebi', diningTitle: 'Türkiye’de restoranlar', hours: 'Saatler', average: 'Ortalama', reserve: 'Masa talebi', activitiesTitle: 'Aktiviteler ve turlar', activitiesSub: 'Müze, sinema, eğlence, yaz ve kış seçeneklerini ayrı inceleyin.', details: 'Bilgi / talep', safetySub: 'Daha güvenli ve sakin bir gezi için temel bilgiler.', emergencyTitle: 'Acil durum', emergencyText: 'Türkiye’de ambulans, itfaiye ve polis için 112’yi arayın.', taxiSafety: 'Taksimetrenin açılmasını isteyin ve fişinizi saklayın.', useful: 'Yararlı yerler', usefulText: 'Yakındaki kayıtlı eczane, polis noktası, ATM ve taksi duraklarını bulun.', cityTransport: 'Şehir içi ulaşım', noTraffic: 'Canlı trafik verisi bağlı değil; sabit trafik yüzdesi gösterilmiyor.' },
   de: { more: 'Mehr', safety: 'Sicherheit', back: 'Zur Startseite', taxiTitle: 'Taxipreis berechnen', taxiSub: 'Schätzung mit Straßenentfernung und datiertem amtlichem Tarif.', origin: 'Von', destination: 'Nach', locate: 'Standort verwenden', calculate: 'Route & Preis berechnen', estimate: 'Geschätzter Preis', distance: 'Straßenentfernung', duration: 'Geschätzte Dauer', miss: 'Nicht verpassen in', hotelsTitle: 'Hotels', night: 'Nacht', book: 'Unterkunft anfragen', diningTitle: 'Restaurants in Türkiye', hours: 'Öffnungszeiten', average: 'Durchschnitt', reserve: 'Tisch anfragen', activitiesTitle: 'Aktivitäten & Touren', activitiesSub: 'Museen, Kino, Unterhaltung sowie Sommer- und Winterideen.', details: 'Details / Anfrage', safetySub: 'Praktische Grundlagen für eine sichere Reise.', emergencyTitle: 'Notfall', emergencyText: 'Rufen Sie in Türkiye für Rettung, Feuerwehr und Polizei 112 an.', taxiSafety: 'Taxameter einschalten lassen und Beleg aufbewahren.', useful: 'Nützliche Orte', usefulText: 'Apotheken, Polizei, Geldautomaten und Taxistände in der Nähe finden.', cityTransport: 'Nahverkehr', noTraffic: 'Keine Live-Verkehrsdaten; es wird kein fester Prozentsatz angezeigt.' },
@@ -338,6 +340,7 @@ const pageCopy: Record<SupportedLang, Record<string, string>> = {
 };
 
 const footerCopy: Record<SupportedLang, { signIn: string; source: string; privacy: string; terms: string; rights: string }> = {
+  es: {signIn:'Iniciar sesión',source:'Tarifas de taxi, guías de transporte, tipos de cambio de referencia e información de ciudades con sus fuentes.',privacy:'Política de privacidad',terms:'Condiciones de uso',rights:'Todos los derechos reservados.'},
   en: { signIn: 'Sign in', source: 'Source-labelled taxi tariffs, transit guides, reference rates and city information.', privacy: 'Privacy policy', terms: 'Terms of service', rights: 'All rights reserved.' },
   tr: { signIn: 'Giriş yap', source: 'Kaynağı belirtilmiş taksi tarifeleri, ulaşım rehberleri, referans kurlar ve şehir bilgileri.', privacy: 'Gizlilik politikası', terms: 'Kullanım koşulları', rights: 'Tüm hakları saklıdır.' },
   de: { signIn: 'Anmelden', source: 'Taxitarife, Verkehrshinweise, Referenzkurse und Stadtinformationen mit Quellen.', privacy: 'Datenschutz', terms: 'Nutzungsbedingungen', rights: 'Alle Rechte vorbehalten.' },
@@ -360,6 +363,7 @@ function offlineAssistantReply(prompt: string, language: SupportedLang): string 
     return 'Bu konuda şehir, taksi, toplu taşıma, hava durumu veya döviz sayfalarındaki kaynaklı bilgileri kontrol edebilirim.';
   }
   const replies: Record<SupportedLang, string> = {
+    es:'Consulta las páginas de taxis, transporte, cambio de divisas y ciudades. Solo mostramos datos en tiempo real cuando los proporciona una fuente conectada.',
     en: 'I can help with the Taxi Fare, Transit Navigator, Exchange and Cities & Weather pages. Live departures, traffic percentages and bureau quotes are shown only when a connected source provides them.',
     tr: 'Taksi Ücreti, Toplu Taşıma, Döviz ve Şehirler & Hava sayfalarında yardımcı olabilirim. Canlı sefer, trafik ve büro kurları yalnızca bağlı bir kaynak varsa gösterilir.',
     de: 'Ich helfe bei Taxi, öffentlichem Verkehr, Wechselkursen und Städten. Live-Daten werden nur angezeigt, wenn eine Quelle verbunden ist.',
@@ -632,14 +636,14 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
   }, [activeTab, selectedCityName,initialCity]);
   const [lang, setLang] = useState<SupportedLang>(() => {
     const candidate = initialLanguage || localStorage.getItem('safeinturkiye-language') || 'en';
-    return ['en','tr','de','fr','ar','ru','zh'].includes(candidate) ? candidate as SupportedLang : 'en';
+    return ['en','tr','de','fr','ar','ru','zh','es'].includes(candidate) ? candidate as SupportedLang : 'en';
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Dil Metinleri Helper Fonksiyonu
-  const tr = useCallback((k: string) => k === 'assistant' ? ({ en: 'Travel FAQ', tr: 'Sık Sorulan Sorular', de: 'Reisefragen', fr: 'Questions fréquentes', ar: 'الأسئلة الشائعة', zh: '常见问题', ru: 'Частые вопросы' }[lang]) : dict[lang]?.[k] || dict.en[k] || k, [lang]);
+  const tr = useCallback((k: string) => k === 'assistant' ? ({ es:'Preguntas frecuentes',en: 'Travel FAQ', tr: 'Sık Sorulan Sorular', de: 'Reisefragen', fr: 'Questions fréquentes', ar: 'الأسئلة الشائعة', zh: '常见问题', ru: 'Частые вопросы' }[lang]) : dict[lang]?.[k] || dict.en[k] || k, [lang]);
   const page = useCallback((key: string) => pageCopy[lang]?.[key] ?? pageCopy.en[key] ?? key, [lang]);
 
   useEffect(() => {
@@ -1243,6 +1247,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
                 <option value="ar">العربية (AR)</option>
                 <option value="ru">Русский (RU)</option>
                 <option value="zh">中文 (简体)</option>
+                <option value="es">Español (ES)</option>
               </select>
 
               <a
@@ -1444,7 +1449,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
         ==================================================================== */}
         {activeTab === 'currency' && (
           <main className="reference-page max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
-            <h1 className="text-3xl font-extrabold text-slate-900">{({ en: 'Currency and exchange bureaux', tr: 'Döviz ve döviz büroları', de: 'Wechselkurse und Wechselstuben', fr: 'Change et bureaux de change', ar: 'العملات ومكاتب الصرافة', ru: 'Валюта и обменные пункты', zh: '汇率与附近兑换点' } as Record<SupportedLang, string>)[lang]}</h1>
+            <h1 className="text-3xl font-extrabold text-slate-900">{({ es:'Divisas y casas de cambio', en: 'Currency and exchange bureaux', tr: 'Döviz ve döviz büroları', de: 'Wechselkurse und Wechselstuben', fr: 'Change et bureaux de change', ar: 'العملات ومكاتب الصرافة', ru: 'Валюта и обменные пункты', zh: '汇率与附近兑换点' } as Record<SupportedLang, string>)[lang]}</h1>
             <CurrencyRates lang={lang} />
             <NearbyPlaces kind="exchange" lang={lang} center={{ lat: currentCityInfo.lat, lng: currentCityInfo.lng }} cityName={currentCityInfo.name} />
           </main>
@@ -1479,7 +1484,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
             </div>
 
             <nav className="reference-city-nav" aria-label={currentCityInfo.name}>
- {([{tab:'experiences',label:tr('activities'),icon:'🎟️'},{tab:'stay',label:tr('hotels'),icon:'🛏️'},{tab:'food',label:tr('dining'),icon:'🍽️'},{tab:'transit',label:tr('transit'),icon:'🚇'},{tab:'safety',label:page('safety'),icon:'🛡️'}] as const).map(item=><button key={item.tab} onClick={()=>setActiveTab(item.tab)}><span aria-hidden="true">{item.icon}</span>{item.label}</button>)}
+ {([{tab:'experiences',label:tr('activities'),icon:'🎟️'},{tab:'stay',label:tr('hotels'),icon:'🛏️'},{tab:'food',label:tr('dining'),icon:'🍽️'},{tab:'tours',label:toursLabel(lang),icon:'🧭'},{tab:'transit',label:tr('transit'),icon:'🚇'},{tab:'safety',label:page('safety'),icon:'🛡️'}] as const).map(item=><button key={item.tab} onClick={()=>setActiveTab(item.tab)}><span aria-hidden="true">{item.icon}</span>{item.label}</button>)}
  </nav>
 
 
@@ -1547,12 +1552,11 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
           <main className="travel-catalog">
             <div><h1 className="text-3xl font-extrabold text-slate-900">{page('activitiesTitle')}</h1><p className="mt-1 text-sm text-slate-600">{page('activitiesSub')}</p></div>
             <EditorialBusinesses entries={directoryRecords.filter(entry=>entry.kind==='activities')} lang={lang}/>
-            <button onClick={()=>setActiveTab('tours')} className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white">{toursLabel(lang)} →</button>
             <NearbyPlaces key={`activities-discovery-${activityCategory}`} kind="essential" fixedCategory="activity" initialCategory={activityCategory === 'Cinema' ? 'cinema' : activityCategory === 'Museum & Culture' ? 'museum' : activityCategory === 'Entertainment' ? 'entertainment' : 'activity'} lang={lang} center={{lat:currentCityInfo.lat,lng:currentCityInfo.lng}} cityName={currentCityInfo.name} />
           </main>
         )}
 
-        {activeTab === 'tours' && <main className="travel-catalog"><ViatorTours lang={lang}/></main>}
+        {activeTab === 'tours' && <main className="travel-catalog"><ViatorTours lang={lang} initialCity={publicCities.find(c=>c.name===selectedCityName)?.slug}/></main>}
 
         {/* ====================================================================
             PAGE 10: NEAR ME

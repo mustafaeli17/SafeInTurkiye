@@ -1,9 +1,11 @@
 const labels: Record<string, string> = {
+  es:'Detalles',
   en: 'Details', tr: 'Detaylar', de: 'Details', fr: 'Détails',
   ar: 'التفاصيل', ru: 'Подробнее', zh: '详情',
 };
 export const detailLabel = (language: string) => labels[language] ?? labels.en;
 const hotelSummaries: Record<string, string> = {
+  es:'Consulta la información y los datos de contacto del hotel. Confirma las habitaciones, los servicios y la disponibilidad en su sitio web oficial.',
   en: 'View hotel information and contact details. Confirm rooms, facilities and availability on the official website.',
   tr: 'Otel bilgilerini ve iletişim seçeneklerini inceleyin. Oda, olanak ve müsaitliği resmî siteden teyit edin.',
   de: 'Hotelinformationen und Kontakt ansehen. Zimmer, Ausstattung und Verfügbarkeit auf der offiziellen Website prüfen.',

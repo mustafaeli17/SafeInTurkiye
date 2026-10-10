@@ -4,7 +4,7 @@ import {entryPath} from '../lib/directory'
 import {foundationEnabled} from '../lib/foundationConfig'
 import {entryPhotos} from '../lib/directoryPhotos'
 import {trackBusinessEvent} from '../lib/businessEvents'
-const copy:Record<string,string>={en:'Selected places',tr:'Seçili yerler',de:'Ausgewählte Orte',fr:'Lieux sélectionnés',ar:'أماكن مختارة',ru:'Избранные места',zh:'精选地点'}
+const copy:Record<string,string>={es:'Lugares seleccionados',en:'Selected places',tr:'Seçili yerler',de:'Ausgewählte Orte',fr:'Lieux sélectionnés',ar:'أماكن مختارة',ru:'Избранные места',zh:'精选地点'}
 export default function EditorialBusinesses({entries,lang}:{entries:DirectoryEntry[];lang:string}){
  const root=useRef<HTMLElement>(null)
  useEffect(()=>{

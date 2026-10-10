@@ -21,7 +21,7 @@ export default async function handler(req:Request,res:Response){
  try{input=typeof req.body==='string'?JSON.parse(req.body):req.body;if(JSON.stringify(input).length>1500)throw Error()}catch{return res.status(400).json({error:'INVALID_INPUT'})}
  const from=transitWaypoint(input?.origin),to=transitWaypoint(input?.destination)
  const preference=input?.preference??'RECOMMENDED',language=input?.language??'en'
- if(!from||!to||!['RECOMMENDED','LESS_WALKING','FEWER_TRANSFERS'].includes(preference)||!['en','tr','de','fr','ar','ru','zh'].includes(language))return res.status(400).json({error:'INVALID_INPUT'})
+ if(!from||!to||!['RECOMMENDED','LESS_WALKING','FEWER_TRANSFERS'].includes(preference)||!['en','tr','de','fr','ar','ru','zh','es'].includes(language))return res.status(400).json({error:'INVALID_INPUT'})
  const now=Date.now(),time=input.departure?Date.parse(input.departure):now
  if(!Number.isFinite(time)||time<now-60000||time>now+7*86400000)return res.status(400).json({error:'INVALID_DEPARTURE'})
  for(const [id,row]of limits)if(row.until<=now)limits.delete(id)
