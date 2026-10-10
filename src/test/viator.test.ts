@@ -8,7 +8,7 @@ describe('Viator affiliate boundary', () => {
     const r = response(); await handler({ method: 'GET', url: '/?city=istanbul', headers: {} }, r)
     expect(r.json).toHaveBeenCalledWith({ error: 'NOT_CONFIGURED' }); expect(f).not.toHaveBeenCalled()
   })
-  it.each(['city=unknown', 'city=istanbul&start=0', 'city=istanbul&start=2', 'city=istanbul&currency=FAKE', 'city=istanbul&lang=xx'])('rejects invalid input %s', async query => {
+  it.each(['city=unknown', 'city=istanbul&start=0', 'city=istanbul&start=2', 'city=istanbul&start=10009', 'city=istanbul&currency=FAKE', 'city=istanbul&lang=xx'])('rejects invalid input %s', async query => {
     const r=response(); await handler({ method: 'GET', url: `/?${query}`, headers: {} }, r); expect(r.status).toHaveBeenCalledWith(400)
   })
   it('uses sandbox, real taxonomy and preserves affiliate links; omits unsafe URLs', async () => {

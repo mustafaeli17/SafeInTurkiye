@@ -9,6 +9,7 @@ import { toursLabel } from './lib/viatorCopy';
 import cityGuides from './data/cityGuides.json';
 import {cityPath, publicCities} from './lib/publicRoutes';
 import citiesZh from './data/citiesZh.json';
+import citiesEs from './data/citiesEs.json';
 import cityImages from './lib/placePhotos.json';
 import { findCityGuide, openCityGuide } from './lib/cityNavigation';
 import HomeButton from './components/HomeButton';
@@ -1101,7 +1102,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
     localTip:regionalDescription(regionalCity, lang),
     highlights:regionalCity.places.map(name=>({name,detail:''})),
   } : citiesDetailedData[selectedCityName] || citiesDetailedData['İstanbul'];
-  const currentCityInfo=lang==='zh'?{...baseCityInfo,...citiesZh[selectedCityName as keyof typeof citiesZh]}:baseCityInfo;
+  const currentCityInfo=lang==='zh'?{...baseCityInfo,...citiesZh[selectedCityName as keyof typeof citiesZh]}:lang==='es'?{...baseCityInfo,...citiesEs[selectedCityName as keyof typeof citiesEs]}:baseCityInfo;
 
   if (!supabaseConfigured && !mockDataEnabled) {
     return (

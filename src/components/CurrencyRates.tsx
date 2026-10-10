@@ -7,6 +7,7 @@ const currencies = supportedCurrencies;
 
 export default function CurrencyRates({ lang = 'en' }: { lang?: string }) {
   const labels: Record<string, { title: string; ref: string; converter: string; unavailable: string; loading: string; tryAgain: string; disclaimer: string }> = {
+    es:{title:'Tipos de cambio de referencia diarios',ref:'Referencia',converter:'Conversor de referencia',unavailable:'Los tipos de cambio no están disponibles ahora.',loading:'Cargando tipos de cambio…',tryAgain:'Intentar de nuevo',disclaimer:'No son cotizaciones de compra o venta de una casa de cambio.'},
     en: { title: 'Daily reference rates', ref: 'Reference', converter: 'Reference converter', unavailable: 'Reference rates are unavailable right now.', loading: 'Loading daily reference rates…', tryAgain: 'Try again', disclaimer: 'This is not a bureau buy/sell offer.' },
     tr: { title: 'Günlük referans kurları', ref: 'Referans', converter: 'Referans çevirici', unavailable: 'Kur verisi şu anda alınamıyor.', loading: 'Günlük referans kurları yükleniyor…', tryAgain: 'Tekrar dene', disclaimer: 'Bu, döviz bürosu alış/satış teklifi değildir.' },
     de: { title: 'Tägliche Referenzkurse', ref: 'Referenz', converter: 'Referenzumrechner', unavailable: 'Referenzkurse sind derzeit nicht verfügbar.', loading: 'Referenzkurse werden geladen…', tryAgain: 'Erneut versuchen', disclaimer: 'Kein An- oder Verkaufskurs einer Wechselstube.' },

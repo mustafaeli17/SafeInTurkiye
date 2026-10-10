@@ -28,7 +28,7 @@ export default async function handler(req: Request, res: Response) {
   const city = url.searchParams.get('city') ?? '', lang = url.searchParams.get('lang') ?? 'en'
   const currency = url.searchParams.get('currency') ?? 'EUR'
   const start = Number(url.searchParams.get('start') ?? 1)
-  if (!Object.hasOwn(destinations, city) || !Object.hasOwn(languages, lang) || !['EUR','USD','GBP','TRY','AED','CNY'].includes(currency) || !Number.isInteger(start) || start < 1 || start > 97 || (start - 1) % 12) return res.status(400).json({ error: 'INVALID_INPUT' })
+  if (!Object.hasOwn(destinations, city) || !Object.hasOwn(languages, lang) || !['EUR','USD','GBP','TRY','AED','CNY'].includes(currency) || !Number.isInteger(start) || start < 1 || start > 9997 || (start - 1) % 12) return res.status(400).json({ error: 'INVALID_INPUT' })
   let filters: ReturnType<typeof viatorFilters>
   try { filters = viatorFilters(url.searchParams) } catch { return res.status(400).json({ error: 'INVALID_INPUT' }) }
   const key = process.env.VIATOR_API_KEY?.trim()
