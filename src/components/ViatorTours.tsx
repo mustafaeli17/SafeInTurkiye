@@ -25,7 +25,7 @@ export default function ViatorTours({ lang }: { lang:string }) {
         const failure=await r.json().catch(()=>null)
         const known=['NOT_CONFIGURED','ACCESS_PENDING','BUSY','PROVIDER_UNAVAILABLE','TIMEOUT','INVALID_INPUT']
         // Log only our allowlisted diagnostic code, never the upstream response or key.
-        console.warn('Viator request unavailable',{status:r.status,code:known.includes(failure?.error)?failure.error:'UNKNOWN'})
+        console.warn(`Viator request unavailable: HTTP ${r.status}; ${known.includes(failure?.error)?failure.error:'UNKNOWN'}`)
         throw new Error('unavailable')
       }
       const data=await r.json() as Result
