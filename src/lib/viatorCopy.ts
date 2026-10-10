@@ -1,0 +1,1 @@
+export const toursLabel = (lang:string) => ({en:'Tours & experiences',tr:'Turlar ve deneyimler',de:'Touren & Erlebnisse',fr:'Excursions et expériences',ar:'الجولات والتجارب',ru:'Экскурсии и впечатления',zh:'旅游与体验',es:'Excursiones y experiencias'}[lang] ?? 'Tours & experiences')

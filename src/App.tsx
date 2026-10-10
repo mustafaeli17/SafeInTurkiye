@@ -4,7 +4,8 @@ import { openDirectoryEntry, registerPublishedEntry, photoCuratedCatalog } from 
 import { directory as directoryRecords } from './lib/directory';
 import SponsoredBusinesses from './components/SponsoredBusinesses';
 import EditorialBusinesses from './components/EditorialBusinesses';
-import ViatorTours, { toursLabel } from './components/ViatorTours';
+import ViatorTours from './components/ViatorTours';
+import { toursLabel } from './lib/viatorCopy';
 import cityGuides from './data/cityGuides.json';
 import {cityPath} from './lib/publicRoutes';
 import citiesZh from './data/citiesZh.json';

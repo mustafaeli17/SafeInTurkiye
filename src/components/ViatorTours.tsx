@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { publicCities } from '../lib/publicRoutes'
+import { toursLabel } from '../lib/viatorCopy'
 const copy: Record<string, string[]> = {
   en: ['Tours & experiences · Viator','Destination','Find tours','Searching…','No tours found for this destination.','Tours are temporarily unavailable. Please try again later.','From','View on Viator','We may earn a commission from qualifying bookings. Final price and availability are confirmed on Viator.','Sandbox preview — test results, not live availability.','Next','Previous','Product information is provided in English for this language.'],
   tr: ['Turlar ve deneyimler · Viator','Destinasyon','Turları bul','Aranıyor…','Bu destinasyonda tur bulunamadı.','Turlara şu an ulaşılamıyor. Lütfen daha sonra tekrar deneyin.','Başlangıç fiyatı','Viator’da incele','Uygun rezervasyonlardan komisyon kazanabiliriz. Son fiyat ve müsaitlik Viator’da doğrulanır.','Test önizlemesi — sonuçlar canlı müsaitlik bilgisi değildir.','Sonraki','Önceki','Bu dil için ürün bilgileri İngilizce sunulmaktadır.'],
@@ -11,7 +12,6 @@ const copy: Record<string, string[]> = {
   zh: ['旅游与体验 · Viator','目的地','搜索行程','搜索中…','未找到该目的地的行程。','行程暂时无法加载，请稍后重试。','起价','在 Viator 查看','符合条件的预订可能为我们带来佣金。最终价格和可订情况以 Viator 为准。','测试预览——不代表实际可订情况。','下一页','上一页','此语言的产品信息以英语提供。'],
 }
 type Result = { products: { code:string; title:string; productUrl:string; photo?:string; fromPrice?:number; currency?:string }[]; totalCount:number; sandbox:boolean; language:string }
-export const toursLabel = (lang:string) => ({en:'Tours & experiences',tr:'Turlar ve deneyimler',de:'Touren & Erlebnisse',fr:'Excursions et expériences',ar:'الجولات والتجارب',ru:'Экскурсии и впечатления',zh:'旅游与体验',es:'Excursiones y experiencias'}[lang] ?? 'Tours & experiences')
 const affiliateLabel = (lang:string) => ({en:'Affiliate link',tr:'İş ortağı bağlantısı',de:'Affiliate-Link',fr:'Lien affilié',ar:'رابط تسويق بالعمولة',ru:'Партнёрская ссылка',zh:'联盟推广链接',es:'Enlace de afiliado'}[lang] ?? 'Affiliate link')
 export default function ViatorTours({ lang }: { lang:string }) {
   const t=copy[lang] ?? copy.en
