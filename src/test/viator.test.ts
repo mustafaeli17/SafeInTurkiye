@@ -19,6 +19,7 @@ describe('Viator affiliate boundary', () => {
     vi.stubGlobal('fetch',f); const r=response()
     await handler({method:'GET',url:'/?city=istanbul&lang=es&maxPrice=100&private=true&sort=priceAsc',headers:{'x-forwarded-for':'success'}},r)
     expect(f.mock.calls[0][0]).toBe('https://api.sandbox.viator.com/partner/destinations')
+    expect(f.mock.calls[0][1].headers['Accept-Language']).toBe('en')
     expect(JSON.parse(f.mock.calls[1][1].body).filtering.destination).toBe('2')
     expect(JSON.parse(f.mock.calls[1][1].body).filtering.highestPrice).toBe(100)
     expect(JSON.parse(f.mock.calls[1][1].body).filtering.flags).toEqual(['PRIVATE_TOUR'])

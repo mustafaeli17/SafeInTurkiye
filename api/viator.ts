@@ -51,7 +51,10 @@ export default async function handler(req: Request, res: Response) {
   const signal = AbortSignal.timeout(12000)
   try {
     const request = async (path: string, body?: unknown) => {
-      const r = await fetch(`${base}${path}`, { method: body ? 'POST' : 'GET', headers, signal, ...(body ? { body: JSON.stringify(body) } : {}) })
+      // Destination matching uses stable English taxonomy names; product text
+      // remains localized. Do not cache translated names across user languages.
+      const requestHeaders = path === '/destinations' ? { ...headers, 'Accept-Language':'en' } : headers
+      const r = await fetch(`${base}${path}`, { method: body ? 'POST' : 'GET', headers: requestHeaders, signal, ...(body ? { body: JSON.stringify(body) } : {}) })
       if (!r.ok) {
         // Diagnostics contain only endpoint/status, never response bodies or credentials.
         console.warn('Viator upstream request failed', { path, status: r.status, sandbox })
