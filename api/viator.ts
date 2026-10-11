@@ -8,7 +8,10 @@ const destinations: Record<string, string[]> = {
   cappadocia: ['Cappadocia'], mugla: ['Bodrum'], aydin: ['Kusadasi'], denizli: ['Pamukkale'],
   trabzon: ['Trabzon'], konya: ['Konya'], bursa: ['Bursa'],
 }
-const languages: Record<string, string> = { en: 'en', tr: 'en', de: 'de', fr: 'fr', ar: 'en', ru: 'en', zh: 'zh-CN', es: 'es' }
+// Affiliate accounts cannot request zh-CN (merchant-only in Viator's API).
+// Keep the UI in Chinese; report English content so its existing notice is shown.
+// https://docs.viator.com/partner-api/technical/#section/Localization
+const languages: Record<string, string> = { en: 'en', tr: 'en', de: 'de', fr: 'fr', ar: 'en', ru: 'en', zh: 'en', es: 'es' }
 const limits = new Map<string, { count: number; until: number }>()
 let taxonomy: { base: string; expires: number; items: Destination[] } | undefined
 const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ı/g, 'i')

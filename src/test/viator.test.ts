@@ -45,6 +45,21 @@ describe('Viator affiliate boundary', () => {
     expect(r.json.mock.calls[0][0].sandbox).toBe(false)
     expect(JSON.stringify(r.json.mock.calls)).not.toContain('production-test')
   })
+  it('serves Chinese UI requests using affiliate-supported English content and CNY',async()=>{
+    vi.stubEnv('VIATOR_API_KEY','secret-test');vi.stubEnv('VIATOR_ENVIRONMENT','production');
+    const productUrl='https://www.viator.com/tours/Istanbul/test?pid=P123&mcid=42383&medium=api';
+    const f=vi.fn().mockImplementation(async(input:string,init:RequestInit)=>{
+      expect((init.headers as Record<string,string>)['Accept-Language']).toBe('en');
+      if(input.endsWith('/destinations'))return {ok:true,json:async()=>({destinations:[{destinationId:1,name:'Turkey'},{destinationId:2,name:'Istanbul',parentDestinationId:1}]})};
+      const body=JSON.parse(init.body as string);
+      expect(body.currency).toBe('CNY');expect(body.filtering.highestPrice).toBe(1000);
+      return {ok:true,json:async()=>({products:[{productCode:'1P1',title:'Istanbul tour',productUrl,pricing:{currency:'CNY',summary:{fromPrice:500}}}],totalCount:1})};
+    });
+    vi.stubGlobal('fetch',f);const r=response();
+    await handler({method:'GET',url:'/?city=istanbul&lang=zh&currency=CNY&maxPrice=1000',headers:{'x-forwarded-for':'chinese-regression'}},r);
+    expect(r.status).toHaveBeenCalledWith(200);
+    expect(r.json.mock.calls[0][0]).toMatchObject({language:'en',products:[{title:'Istanbul tour',currency:'CNY',fromPrice:500,productUrl}]});
+  })
   it('fails closed for an invalid provider environment',async()=>{
     vi.stubEnv('VIATOR_API_KEY','test');vi.stubEnv('VIATOR_ENVIRONMENT','other')
     const f=vi.fn();vi.stubGlobal('fetch',f);const r=response()
