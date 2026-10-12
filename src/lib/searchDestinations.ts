@@ -1,6 +1,7 @@
 // Search anchors, not administrative boundaries or taxi tariff jurisdictions.
 // New anchors checked against OSM/Photon on 2026-09-24. Districts stay distinct.
 export const searchDestinations = {
+  Gaziantep:{lat:37.0662,lng:37.3833},
   'İstanbul': { lat:41.0082, lng:28.9784 }, Ankara:{lat:39.9334,lng:32.8597},
   'İzmir':{lat:38.4237,lng:27.1428}, Antalya:{lat:36.8969,lng:30.7133},
   Cappadocia:{lat:38.6431,lng:34.8289},

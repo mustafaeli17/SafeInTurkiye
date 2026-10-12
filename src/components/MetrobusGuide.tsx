@@ -1,6 +1,7 @@
 import { Bus, ExternalLink } from 'lucide-react';
 
 const copy: Record<string, [string, string, string]> = {
+  es: ['Metrobús: autobús rápido, no metro', 'El Metrobús conecta las dos orillas de İstanbul por el corredor Beylikdüzü–Söğütlüçeşme. Comprueba el destino del vehículo: no todos recorren la línea completa. Consulta las condiciones de İstanbulkart y las tarifas actuales antes de viajar.', 'İETT: paradas, recorrido y salidas'],
   tr: ['Metrobüs — metrodan farklı bir ulaşım türü', 'Metrobüs, İstanbul’un iki yakasını Beylikdüzü–Söğütlüçeşme koridorunda bağlayan hızlı otobüs sistemidir. Bineceğiniz aracın son durağını kontrol edin; her sefer bütün koridoru gitmez. İstanbulkart ve güncel ücret koşullarını yolculuktan önce kontrol edin.', 'İETT: duraklar, hat ve hareket saatleri'],
   en: ['Metrobüs — bus rapid transit, not a metro', 'Metrobüs links the two sides of İstanbul along the Beylikdüzü–Söğütlüçeşme corridor. Check the destination on the bus; not every service covers the whole corridor. Check İstanbulkart and current fare conditions before travelling.', 'İETT: stops, route and departures'],
   de: ['Metrobüs — Schnellbus, keine Metro', 'Der Metrobüs verbindet beide Seiten Istanbuls auf dem Korridor Beylikdüzü–Söğütlüçeşme. Prüfen Sie das Fahrtziel: Nicht jede Fahrt bedient die gesamte Strecke. Informieren Sie sich vorab über İstanbulkart und aktuelle Tarife.', 'İETT: Haltestellen, Strecke und Abfahrten'],

@@ -1,5 +1,6 @@
 // Official operator discovery checked 2026-10-07. No inferred timetables or fares.
 export const additionalTransitCities = {
+  Gaziantep: {card:'Gaziantep Kart',url:'https://gaziantepkart.com.tr/',operator:'GAZİULAŞ',modes:['bus','tram']},
   'Muğla': {card:'MuğlaKart',url:'https://www.mugla.bel.tr/birim/ulasim-dairesi-baskanligi',operator:'MUTTAŞ',modes:['bus']},
   'Aydın': {card:'Aykart',url:'https://www.aykart.com.tr/sefer-saatleri/',operator:'AYULAŞ',modes:['bus']},
   'Denizli': {card:'Denizli Kart',url:'https://ulasim.denizli.bel.tr/',operator:'Denizli Ulaşım',modes:['bus']},

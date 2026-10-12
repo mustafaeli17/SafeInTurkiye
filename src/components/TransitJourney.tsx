@@ -12,7 +12,7 @@ export default function TransitJourney({ lang }: { lang: string }) {
   const [coordinates, setCoordinates] = useState<{lat:number;lng:number} | null>(null)
   const [destinationCoordinates,setDestinationCoordinates]=useState<{lat:number;lng:number}|null>(null)
   const [scheduled,setScheduled]=useState(false)
-  const timing:Record<string,[string,string]>={en:['Now','Choose another time'],tr:['Şimdi','Başka saat seç'],de:['Jetzt','Andere Uhrzeit wählen'],fr:['Maintenant','Choisir une autre heure'],ar:['الآن','اختر وقتًا آخر'],ru:['Сейчас','Выбрать другое время'],zh:['现在','选择其他时间']}
+  const timing:Record<string,[string,string]>={es:['Ahora','Elegir otra hora'],en:['Now','Choose another time'],tr:['Şimdi','Başka saat seç'],de:['Jetzt','Andere Uhrzeit wählen'],fr:['Maintenant','Choisir une autre heure'],ar:['الآن','اختر وقتًا آخر'],ru:['Сейчас','Выбрать другое время'],zh:['现在','选择其他时间']}
   const [departure, setDeparture] = useState(''), [preference, setPreference] = useState('RECOMMENDED')
   const [busy, setBusy] = useState(false), [locating, setLocating] = useState(false)
   const [message, setMessage] = useState<keyof typeof t | ''>('')

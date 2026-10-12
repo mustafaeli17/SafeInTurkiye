@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import cities from '../data/cityGuides.json';
 describe('sourced city guides',()=>{
   it('includes all six requested new destinations with unique routes',()=>{
-    expect(cities.map(city=>city.slug).sort()).toEqual(['aydin','bursa','denizli','konya','mugla','trabzon']);
+    expect(cities.map(city=>city.slug).sort()).toEqual(['aydin','bursa','denizli','gaziantep','konya','mugla','trabzon']);
     expect(new Set(cities.map(city=>city.slug)).size).toBe(cities.length);
   });
   it('requires official source, verification date and bilingual factual content',()=>{

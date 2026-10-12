@@ -1,7 +1,9 @@
 import { useState } from 'react';
 
 import {photoEditingCopy} from '../lib/contentTranslation';
-import photos from '../lib/reviewedPhotos.json';
+import reviewedPhotos from '../lib/reviewedPhotos.json';
+import cityPhotos from '../lib/placePhotos.json';
+const photos = {...reviewedPhotos,gaziantep:cityPhotos.gaziantep};
 import { publishedPhoto,contextLabel,illustrativeLabel,type DirectoryPhoto } from '../lib/directoryPhotos';
 const labels: Record<string,string> = {tr:'Mekân fotoğrafı henüz eklenmedi',en:'Venue photo not yet available',de:'Foto des Ortes noch nicht verfügbar',fr:'Photo du lieu pas encore disponible',ar:'صورة المكان غير متوفرة بعد',ru:'Фото места пока недоступно',zh:'暂无场所照片'};
 const errorLabels: Record<string,string> = {tr:'Fotoğraf yüklenemedi',en:'Photo could not load',de:'Foto konnte nicht geladen werden',fr:'Impossible de charger la photo',ar:'تعذر تحميل الصورة',ru:'Не удалось загрузить фото',zh:'照片加载失败'};

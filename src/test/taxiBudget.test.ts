@@ -2,7 +2,7 @@ import {expect,it} from 'vitest';
 import cityGuides from '../data/cityGuides.json';
 import {taxiBudgetRange,taxiBudgets} from '../lib/taxiBudget';
 
-it.each(['İstanbul','Antalya','Nevşehir','Ankara','İzmir',...cityGuides.map(c=>c.name)])('%s returns a sourced standard-taxi budget without CMS data',city=>{
+it.each(['İstanbul','Antalya','Nevşehir','Ankara','İzmir',...cityGuides.filter(c=>c.slug!=='gaziantep').map(c=>c.name)])('%s returns a sourced standard-taxi budget without CMS data',city=>{
  const result=taxiBudgetRange(city,[10,12]);
  expect(result).not.toBeNull();
  expect(result!.amount).toBeGreaterThan(0);
@@ -11,6 +11,7 @@ it.each(['İstanbul','Antalya','Nevşehir','Ankara','İzmir',...cityGuides.map(c
  expect(result!.amount%10).toBe(0);
 });
 it('does not borrow from another province or invent premium class prices',()=>{
+ expect(taxiBudgetRange('Gaziantep',[10])).toBeNull();
  expect(taxiBudgetRange('Kayseri',[10])).toBeNull();
  expect(taxiBudgetRange('Unknown',[10])).toBeNull();
  expect(taxiBudgetRange('Ankara',[10],'BLACK')).toBeNull();

@@ -4,6 +4,7 @@ type Request = { method?: string; url?: string; headers: Record<string, string |
 type Response = { status: (code: number) => Response; setHeader: (name: string, value: string) => void; json: (body: unknown) => void }
 type Destination = { destinationId: number; parentDestinationId?: number; name: string }
 const destinations: Record<string, string[]> = {
+  gaziantep: ['Gaziantep'],
   istanbul: ['Istanbul'], antalya: ['Antalya'], izmir: ['Izmir'], ankara: ['Ankara'],
   cappadocia: ['Cappadocia'], mugla: ['Bodrum'], aydin: ['Kusadasi'], denizli: ['Pamukkale'],
   trabzon: ['Trabzon'], konya: ['Konya'], bursa: ['Bursa'],

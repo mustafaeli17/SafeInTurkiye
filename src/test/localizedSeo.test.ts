@@ -17,8 +17,8 @@ it('genuine Turkish detail pages have reciprocal alternates and self canonicals'
   expect(schema.url).toBe('https://www.safeinturkiye.com/tr'+path);
  }
 });
-it('all eleven existing city destinations have generated routes',()=>{
- expect(publicCities).toHaveLength(11);
+it('all twelve existing city destinations have generated routes',()=>{
+ expect(publicCities).toHaveLength(12);
  for(const city of publicCities)expect(read(cityPath(city.name))).toContain(`${city.name} Travel Guide`);
 });
 it('sitemap contains only canonical generated variants and no fictional locales',()=>{

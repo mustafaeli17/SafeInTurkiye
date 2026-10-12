@@ -5,6 +5,7 @@ import cities from '../data/cityGuides.json';
 import photos from '../lib/placePhotos.json';
 import reviewed from '../lib/reviewedPhotos.json';
 import publication from '../data/photoPublication.json';
+import {searchDestinations} from '../lib/searchDestinations';
 describe('regional content',()=>{
  it('resolves destination aliases without hijacking generic searches',()=>{
   expect(findCityGuide('Bodrum')?.slug).toBe('mugla');
@@ -19,7 +20,9 @@ describe('regional content',()=>{
    expect(reviewed).toHaveProperty(id);
    expect(reviewed[id as keyof typeof reviewed].rightsStatus).toBe('verified-open');
   }
-  for(const city of cities)expect(curatedDirectory.some(e=>e.city===city.name&&e.kind==='activities')).toBe(true);
+  // New destinations can use real Places results without fabricating curated records.
+  for(const city of cities)expect(searchDestinations).toHaveProperty(city.name);
+  for(const city of cities.filter(c=>c.slug!=='gaziantep'))expect(curatedDirectory.some(e=>e.city===city.name&&e.kind==='activities')).toBe(true);
   expect(curatedDirectory.some(e=>e.slug==='colossae-pamukkale')).toBe(false);
  });
  it('provides licensed regional photographs with listing thumbnails',()=>{

@@ -1,4 +1,5 @@
 {
+  "gaziantep": {"src":"/photos/gaziantep.jpg","thumbnail":"/photos/gaziantep-small.jpg","source":"https://commons.wikimedia.org/wiki/File:Gaziantep_Kalesi_4465.jpg","author":"Dosseman","license":"CC BY-SA 4.0","licenseUrl":"https://creativecommons.org/licenses/by-sa/4.0/","width":1280,"height":853,"alt":"Gaziantep Castle, photographed in September 2019","changes":"Wikimedia resized versions; displayed with responsive cropping"},
   "izmir": {
     "src": "/photos/izmir.jpg",
     "source": "https://commons.wikimedia.org/wiki/File:Izmir_square_clock_tower.jpg",

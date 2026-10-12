@@ -1,6 +1,6 @@
 import cities from '../data/cityGuides.json';
 import { normalizeSearch } from './catalog';
-const aliases:Record<string,string[]>={mugla:['Bodrum'],aydin:['Kuşadası','Didim'],denizli:['Pamukkale','Hierapolis'],trabzon:['Sümela','Uzungöl'],konya:[],bursa:['Uludağ']};
+const aliases:Record<string,string[]>={gaziantep:['Antep'],mugla:['Bodrum'],aydin:['Kuşadası','Didim'],denizli:['Pamukkale','Hierapolis'],trabzon:['Sümela','Uzungöl'],konya:[],bursa:['Uludağ']};
 export function findCityGuide(query:string){
  const normalized=normalizeSearch(query.trim());
  return cities.find(city=>[city.name,city.slug,...(aliases[city.slug]??[])].some(alias=>normalizeSearch(alias)===normalized));
