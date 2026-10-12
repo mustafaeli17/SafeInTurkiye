@@ -5,10 +5,11 @@ import { distanceFare } from './taxiCalculation';
  * No invented effective dates, waiting charges or vehicle-class multipliers.
  */
 type Sample = { opening:number; km:number; minimum:number; after5?:number };
-type Budget = { samples:Sample[]; sources:string[]; scope:string };
+type Budget = { samples:Sample[]; sources:string[]; scope:string; reviewedAt?:string };
 const sample=(opening:number,km:number,minimum:number,after5?:number):Sample=>({opening,km,minimum,after5});
 export const budgetReviewedAt='2026-10-06';
 export const taxiBudgets:Record<string,Budget>={
+ 'Gaziantep':{samples:[sample(50,50,200)],sources:['https://www.i24haber.com/3515-gaziantep'],scope:'Gaziantep standard taxi; published local report, not a verified CMS tariff',reviewedAt:'2026-10-13'},
  'İstanbul':{samples:[sample(71.94,47.92,230)],sources:['https://tuhim.ibb.gov.tr/media/27494/taksi-ta%C5%9F%C4%B1mac%C4%B1l%C4%B1%C4%9F%C4%B1-%C3%BCcret-tarifesi.pdf'],scope:'Standard taxi'},
  'Ankara':{samples:[sample(65,40,200)],sources:['https://taksibartin.com/ankara-taksi-ucreti-hesaplama/'],scope:'Standard taxi'},
  'Antalya':{samples:[sample(40,50,200),sample(50,50,200)],sources:['https://www.antalyakorfez.com/taksimetreye-zam-yeni-tarifeler-bu-gece-yururluge-giriyor','https://www.dha.com.tr/amp/yerel-haberler/antalya/antalyada-taksi-ve-otobus-ucretlerine-zam-bel-2836074'],scope:'Central Antalya; published opening amounts differ'},
@@ -32,5 +33,5 @@ export function taxiBudgetRange(city:string,distances:number[],vehicle='YELLOW')
  // Outward rounding to readable ten-lira amounts, not a traffic surcharge.
  const amount=Math.floor(Math.min(...fares)/10)*10;
  const upper=Math.ceil(Math.max(...fares)/10)*10;
- return {amount,upper,hasRange:upper>amount,source:city+' · '+budgetReviewedAt,sourceUrls:budget.sources};
+ return {amount,upper,hasRange:upper>amount,source:city+' · '+(budget.reviewedAt??budgetReviewedAt),sourceUrls:budget.sources};
 }

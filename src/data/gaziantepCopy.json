@@ -1,0 +1,8 @@
+{
+ "en":{"tagline":"Zeugma mosaics, historic bazaars and local cuisine","places":["Zeugma Mosaic Museum","Gaziantep Archaeology Museum","Coppersmiths’ Bazaar","Emine Göğüş Culinary Museum"]},
+ "tr":{"tagline":"Zeugma mozaikleri, tarihi çarşılar ve yöresel lezzetler","places":["Zeugma Mozaik Müzesi","Gaziantep Arkeoloji Müzesi","Bakırcılar Çarşısı","Emine Göğüş Mutfak Müzesi"]},
+ "de":{"tagline":"Zeugma-Mosaike, historische Basare und regionale Küche","places":["Zeugma-Mosaikmuseum","Archäologisches Museum Gaziantep","Kupferschmiedebasar","Emine-Göğüş-Küchenmuseum"]},
+ "fr":{"tagline":"Mosaïques de Zeugma, bazars historiques et cuisine locale","places":["Musée des mosaïques de Zeugma","Musée archéologique de Gaziantep","Bazar des dinandiers","Musée culinaire Emine Göğüş"]},
+ "ar":{"tagline":"فسيفساء زيوغما والأسواق التاريخية والمأكولات المحلية","places":["متحف زيوغما للفسيفساء","متحف غازي عنتاب للآثار","سوق النحاسين","متحف أمينة غوغوش للمطبخ"]},
+ "ru":{"tagline":"Мозаики Зевгмы, исторические базары и местная кухня","places":["Музей мозаик Зевгмы","Археологический музей Газиантепа","Базар медников","Кулинарный музей Эмине Гёгюш"]}
+}

@@ -75,10 +75,10 @@ const modeNames:Record<Exclude<Lang,'en'>,Record<Mode['icon'],string>>={
  ru:{metro:'Метро',tram:'Трамвай',bus:'Автобус',rail:'Пригородный поезд',ferry:'Паром'},
  zh:{metro:'地铁',tram:'有轨电车',bus:'公交车',rail:'市郊铁路',ferry:'轮渡'},
 }
-export default function TransitPlanner({ lang }: { lang: string }) {
+export default function TransitPlanner({ lang, initialCity = 'İstanbul' }: { lang: string; initialCity?: string }) {
   const locale = (lang.toLowerCase() in copy ? lang.toLowerCase() : 'en') as Lang
   const t = copy[locale]
-  const [city, setCity] = useState<City>('İstanbul')
+  const [city, setCity] = useState<City>(initialCity in data ? initialCity as City : 'İstanbul')
   const selected = data[city]
   const scheduleText = (value: string) => value === 'varies by line' ? ({ es:'Según la línea y el día del viaje', en: 'By line and travel date', tr: 'Hat ve seyahat gününe göre', de: 'Je nach Linie und Reisetag', fr: 'Selon la ligne et le jour', ar: 'حسب الخط ويوم السفر', ru: 'Зависит от линии и дня', zh: '因线路与出行日期而异' }[locale]) : value
   return <main dir={locale === 'ar' ? 'rtl' : 'ltr'} className="reference-page reference-transit max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-5 pb-24">

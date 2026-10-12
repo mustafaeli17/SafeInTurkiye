@@ -86,6 +86,7 @@ import { taxiSearchUrl } from './lib/taxiSearch';
 import { taxiEstimateCopy, taxiDetailsCopy, taxiBudgetCopy, taxiIntroCopy } from './lib/taxiCopy';
 import { taxiErrorText, type TaxiErrorKey } from './lib/taxiErrors';
 import { regionalDescription } from './lib/regionalDescription';
+import gaziantepCopy from './data/gaziantepCopy.json';
 import { getAssistantReply } from './services/travelDataService';
 import { supabaseConfigured } from './lib/supabase';
 import { WeatherCard } from './components/WeatherCard';
@@ -1094,12 +1095,13 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
 
 
   const regionalCity=cityGuides.find(city=>city.name===selectedCityName);
+  const localizedGaziantep = regionalCity?.slug==='gaziantep' ? gaziantepCopy[lang as keyof typeof gaziantepCopy] : undefined;
   const baseCityInfo = regionalCity ? {
-    name:regionalCity.name,tagline:regionalCity.focus,
+    name:regionalCity.name,tagline:localizedGaziantep?.tagline??regionalCity.focus,
     coverImage:cityImages[regionalCity.slug as keyof typeof cityImages].src,
     lat:regionalCity.lat,lng:regionalCity.lng,
     localTip:regionalDescription(regionalCity, lang),
-    highlights:regionalCity.places.map(name=>({name,detail:''})),
+    highlights:(localizedGaziantep?.places??regionalCity.places).map(name=>({name,detail:''})),
   } : citiesDetailedData[selectedCityName] || citiesDetailedData['İstanbul'];
   const currentCityInfo=lang==='zh'?{...baseCityInfo,...citiesZh[selectedCityName as keyof typeof citiesZh]}:lang==='es'?{...baseCityInfo,...citiesEs[selectedCityName as keyof typeof citiesEs]}:baseCityInfo;
 
@@ -1436,7 +1438,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
         {/* ====================================================================
             PAGE 4: TOPLU TAŞIMA (TRANSIT - DÜZELTİLDİ VE AKTİF)
         ==================================================================== */}
-        {activeTab === 'transit' && <Suspense fallback={<main aria-busy="true" className="p-8">SafeInTürkiye…</main>}><TransitPlanner lang={lang} /></Suspense>}
+        {activeTab === 'transit' && <Suspense fallback={<main aria-busy="true" className="p-8">SafeInTürkiye…</main>}><TransitPlanner lang={lang} initialCity={selectedCityName} /></Suspense>}
 
         {/* ====================================================================
             PAGE 5: EXCHANGE (CANLI KURLAR + YAKINLARDAKİ DÖVİZCİLER - DÜZELTİLDİ)
