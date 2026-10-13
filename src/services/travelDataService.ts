@@ -69,7 +69,7 @@ export function parseReferenceRates(payload: unknown, now = new Date()): Referen
 }
 
 export function referencePublicationAge(date: string, now = new Date()): number {
-  const parts = new Intl.DateTimeFormat('en', { timeZone: 'Europe/Berlin', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(now);
+  const parts = new Intl.DateTimeFormat('en', { timeZone: 'Europe/Istanbul', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(now);
   const part = (name: string) => parts.find(value => value.type === name)?.value;
   const today = Date.parse(`${part('year')}-${part('month')}-${part('day')}T00:00:00Z`);
   return Math.round((today - Date.parse(`${publicationDate(date)}T00:00:00Z`)) / 86400000);
@@ -129,7 +129,7 @@ export async function fetchTravelJson(url: string, signal: AbortSignal, timeoutM
 }
 
 export async function getReferenceRates(signal: AbortSignal): Promise<ReferenceRates> {
-  const data = await fetchTravelJson('https://api.frankfurter.dev/v2/providers/tcmb/rates?base=EUR&quotes=TRY,USD,GBP,CHF,AED,SAR,CNY', signal);
+  const data = await fetchTravelJson('/api/reference-rates', signal);
   return parseReferenceRates(data);
 }
 

@@ -1,9 +1,29 @@
 import { useEffect, useState } from 'react';
 import { Calculator, Loader2, RefreshCw } from 'lucide-react';
-import { convertReferenceAmount, getReferenceRates, TravelDataError, supportedCurrencies } from '../services/travelDataService';
+import { convertReferenceAmount, getReferenceRates, referencePublicationAge, TravelDataError, supportedCurrencies } from '../services/travelDataService';
 import type { CurrencyCode, ReferenceRates } from '../services/travelDataService';
 
 const currencies = supportedCurrencies;
+export function CurrencyResult({ amount, from, to, converted, lang, label }: { amount: number; from: CurrencyCode; to: CurrencyCode; converted: number; lang: string; label: string }) {
+  return <output className="block min-w-0 rounded-2xl border border-sky-200 bg-gradient-to-br from-sky-50 to-blue-50 p-5 sm:p-6" aria-live="polite" aria-atomic="true">
+    <span className="block text-sm font-semibold text-slate-600" dir="ltr">{amount.toLocaleString(lang, { maximumFractionDigits: 8 })} {from} ≈</span>
+    <strong className="mt-1 flex flex-wrap items-baseline gap-x-2 text-3xl sm:text-4xl font-extrabold tracking-tight text-[#087FFF]" dir="ltr">
+      <span className="min-w-0 break-all tabular-nums">{converted.toLocaleString(lang, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      <span className="text-xl font-bold">{to === 'TRY' ? 'TL' : to}</span>
+    </strong>
+    <span className="mt-2 block text-xs font-medium text-slate-500">{label}</span>
+  </output>;
+}
+const converterLabels: Record<string, [string, string, string, string]> = {
+  en: ['Amount', 'From currency', 'To currency', 'These rates are over 7 days old. Check a current quote before exchanging.'],
+  tr: ['Tutar', 'Kaynak para birimi', 'Hedef para birimi', 'Bu kurlar 7 günden eski. İşlem öncesinde güncel fiyatı kontrol edin.'],
+  es: ['Importe', 'Moneda de origen', 'Moneda de destino', 'Estos tipos tienen más de 7 días. Comprueba la cotización actual antes de cambiar dinero.'],
+  de: ['Betrag', 'Ausgangswährung', 'Zielwährung', 'Diese Kurse sind über 7 Tage alt. Prüfen Sie vor dem Umtausch den aktuellen Kurs.'],
+  fr: ['Montant', 'Devise de départ', 'Devise d’arrivée', 'Ces cours datent de plus de 7 jours. Vérifiez le cours actuel avant de changer votre argent.'],
+  ar: ['المبلغ', 'من العملة', 'إلى العملة', 'هذه الأسعار أقدم من 7 أيام. تحقق من السعر الحالي قبل الصرف.'],
+  ru: ['Сумма', 'Исходная валюта', 'Целевая валюта', 'Этим курсам больше 7 дней. Перед обменом уточните текущий курс.'],
+  zh: ['金额', '原币种', '目标币种', '这些汇率已超过7天。兑换前请确认当前报价。'],
+};
 
 export default function CurrencyRates({ lang = 'en' }: { lang?: string }) {
   const labels: Record<string, { title: string; ref: string; converter: string; unavailable: string; loading: string; tryAgain: string; disclaimer: string }> = {
@@ -17,6 +37,7 @@ export default function CurrencyRates({ lang = 'en' }: { lang?: string }) {
     zh: { title: '每日参考汇率', ref: '参考', converter: '参考换算器', unavailable: '当前无法获取参考汇率。', loading: '正在加载每日参考汇率…', tryAgain: '重试', disclaimer: '这不是兑换点的实际买入或卖出报价。' },
   };
   const t = labels[lang.toLowerCase()] ?? labels.en;
+  const fields = converterLabels[lang.toLowerCase()] ?? converterLabels.en;
   const [rates, setRates] = useState<ReferenceRates | null>(null);
   const [error, setError] = useState<'unavailable' | 'timeout' | 'unconfigured' | null>(null);
   const [retry, setRetry] = useState(0);
@@ -36,7 +57,7 @@ export default function CurrencyRates({ lang = 'en' }: { lang?: string }) {
     return () => controller.abort();
   }, [retry]);
 
-  const converted = rates ? convertReferenceAmount(Number(amount), from, to, rates) : null;
+  const converted = rates && amount.trim() ? convertReferenceAmount(Number(amount), from, to, rates) : null;
   return <section className="space-y-4" aria-live="polite">
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
       {rates ? currencies.filter(currency => currency !== 'TRY').map((currency) => {
@@ -46,6 +67,15 @@ export default function CurrencyRates({ lang = 'en' }: { lang?: string }) {
     </div>
     {error && <button onClick={() => setRetry(value => value + 1)} className="inline-flex gap-2 items-center px-3 py-2 rounded-xl border border-sky-200 text-[12px] font-bold text-sky-700"><RefreshCw className="w-3.5 h-3.5" />{t.tryAgain}</button>}
     {rates && <p className="text-[11px] text-slate-500">{t.title}: {rates.date} · <a href={rates.sourceUrl} target="_blank" rel="noreferrer" className="underline">{rates.source}</a>. {t.disclaimer}</p>}
-    <div className="bg-white p-5 rounded-2xl border border-sky-100 shadow-sm space-y-3"><div className="flex gap-2 items-center font-extrabold text-[15px] text-slate-900"><Calculator className="w-5 h-5 text-[#00A3E0]" />{t.converter}</div><div className="grid grid-cols-1 sm:grid-cols-3 gap-2"><input aria-label="Amount" type="number" min="0" value={amount} onChange={e => setAmount(e.target.value)} className="h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px]" /><select value={from} onChange={e => setFrom(e.target.value as CurrencyCode)} className="h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px]">{currencies.map(c => <option key={c}>{c}</option>)}</select><select value={to} onChange={e => setTo(e.target.value as CurrencyCode)} className="h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px]">{currencies.map(c => <option key={c}>{c}</option>)}</select></div>{converted !== null && <p className="text-sm text-slate-700"><strong>{amount || '0'} {from} ≈ {converted.toFixed(2)} {to}</strong> <span className="text-slate-500">{t.ref}</span></p>}</div>
+    {rates && referencePublicationAge(rates.date) > 7 && <p role="status" className="text-sm text-amber-800">{fields[3]}</p>}
+    <div className="bg-white p-5 rounded-2xl border border-sky-100 shadow-sm space-y-3">
+      <div className="flex gap-2 items-center font-extrabold text-[15px] text-slate-900"><Calculator className="w-5 h-5 text-[#00A3E0]" />{t.converter}</div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <input aria-label={fields[0]} type="number" min="0" step="any" value={amount} onChange={e => setAmount(e.target.value)} className="h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px]" />
+        <select aria-label={fields[1]} value={from} onChange={e => setFrom(e.target.value as CurrencyCode)} className="h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px]">{currencies.map(c => <option key={c}>{c}</option>)}</select>
+        <select aria-label={fields[2]} value={to} onChange={e => setTo(e.target.value as CurrencyCode)} className="h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px]">{currencies.map(c => <option key={c}>{c}</option>)}</select>
+      </div>
+      {converted !== null && <CurrencyResult amount={Number(amount)} from={from} to={to} converted={converted} lang={lang} label={t.ref} />}
+    </div>
   </section>;
 }
