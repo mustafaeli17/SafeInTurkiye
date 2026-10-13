@@ -1,4 +1,4 @@
-import { parseReferenceRates } from '../src/services/travelDataService.ts';
+import { parseReferenceRates } from '../src/services/travelDataService.js';
 
 type RequestLike = { method?: string };
 type ResponseLike = { status(code: number): ResponseLike; setHeader(name: string, value: string): void; json(body: unknown): void };
