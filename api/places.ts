@@ -1,4 +1,5 @@
 import { photoSignature } from '../src/server/placePhotoToken.js'
+import { createRequestBudget } from '../src/server/requestBudget.js'
 // Places API (New). Deliberately no persistent cache or CDN caching of Google data.
 type Request = { method?: string; url?: string; headers: Record<string, string | string[] | undefined> }
 type Response = { status: (code: number) => Response; setHeader: (name: string, value: string) => void; json: (body: unknown) => void }
@@ -9,7 +10,7 @@ const types: Record<string, string[]> = {
   activity: ['tourist_attraction', 'museum', 'historical_landmark', 'park', 'amusement_park', 'movie_theater', 'bowling_alley'],
   park: ['park'], historical: ['historical_landmark'], entertainment: ['amusement_park', 'bowling_alley'], cinema: ['movie_theater'],
 }
-const limits = new Map<string, { count: number; until: number }>()
+const consumePlacesBudget = createRequestBudget(12)
 export default async function handler(req: Request, res: Response) {
   res.setHeader('Cache-Control', 'private, no-store')
   if (req.method !== 'GET') return res.status(405).json({ error: 'METHOD_NOT_ALLOWED' })
@@ -20,15 +21,11 @@ export default async function handler(req: Request, res: Response) {
   if (!url.searchParams.get('lat')?.trim() || !url.searchParams.get('lng')?.trim() || !Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180 || !(Object.hasOwn(types, category) || category === 'bureau_de_change') || !['en','tr','de','fr','ar','ru','zh','es'].includes(lang)) return res.status(400).json({ error: 'INVALID_INPUT' })
   const key = process.env.GOOGLE_PLACES_API_KEY
   if (!key) return res.status(503).json({ error: 'NOT_CONFIGURED' })
-  const ip = String(req.headers['x-forwarded-for'] ?? 'unknown').split(',')[0].trim()
-  const now = Date.now()
-  for (const [id, entry] of limits) if (entry.until <= now) limits.delete(id)
-  const limit = limits.get(ip)
-  if ((limit && limit.count >= 12) || limits.size >= 2000) {
-    res.setHeader('Retry-After', '60')
+  const retryAfter = consumePlacesBudget(req.headers)
+  if (retryAfter) {
+    res.setHeader('Retry-After', String(retryAfter))
     return res.status(429).json({ error: 'BUSY' })
   }
-  limits.set(ip, { count: (limit?.count ?? 0) + 1, until: limit?.until ?? now + 60000 })
   const radius = url.searchParams.get('scope') === 'city' ? 30000 : 2500
   const circle = { center: { latitude: lat, longitude: lng }, radius }
   const exchange = category === 'bureau_de_change'

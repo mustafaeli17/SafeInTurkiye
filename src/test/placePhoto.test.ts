@@ -11,6 +11,17 @@ const request = () => {
 }
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs() })
 describe('Places photo security and failure handling', () => {
+  it('blocks excessive signed requests before the billable upstream call', async () => {
+    vi.stubEnv('GOOGLE_PLACES_API_KEY', key)
+    const fetcher = vi.fn().mockResolvedValue({ok:true,json:async()=>({photoUri:'https://lh3.googleusercontent.com/example'})})
+    vi.stubGlobal('fetch',fetcher)
+    const req = {...request(),headers:{'x-forwarded-for':'192.0.2.120'}}
+    for(let i=0;i<120;i++) await handler(req,response())
+    const res=response(); await handler(req,res)
+    expect(res.status).toHaveBeenCalledWith(429)
+    expect(res.setHeader).toHaveBeenCalledWith('Retry-After',expect.any(String))
+    expect(fetcher).toHaveBeenCalledTimes(120)
+  })
   it('accepts only fresh signed photo references', () => {
     const expires = Date.now() + 60000
     const signature = photoSignature(name, expires, key)

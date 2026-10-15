@@ -1,7 +1,9 @@
 import { validPhotoToken } from '../src/server/placePhotoToken.js'
-type Request = { method?: string; url?: string }
+import { createRequestBudget } from '../src/server/requestBudget.js'
+type Request = { method?: string; url?: string; headers?: Record<string,string|string[]|undefined> }
 type Response = { status: (code: number) => Response; setHeader: (name: string, value: string) => void; end: () => void }
 // Only fresh, server-signed references can reach Google's billable photo endpoint.
+const consumePhotoBudget = createRequestBudget(120)
 export default async function handler(req: Request, res: Response) {
   res.setHeader('Cache-Control', 'private, no-store')
   if (req.method !== 'GET') return res.status(405).end()
@@ -10,6 +12,11 @@ export default async function handler(req: Request, res: Response) {
   const key = process.env.GOOGLE_PLACES_API_KEY
   if (!key) return res.status(503).end()
   if (!validPhotoToken(name, expires, signature, key)) return res.status(400).end()
+  const retryAfter = consumePhotoBudget(req.headers)
+  if (retryAfter) {
+    res.setHeader('Retry-After', String(retryAfter))
+    return res.status(429).end()
+  }
   try {
     const result = await fetch(`https://places.googleapis.com/v1/${name}/media?maxWidthPx=640&skipHttpRedirect=true`, {
       headers: { 'X-Goog-Api-Key': key }, signal: AbortSignal.timeout(8000), redirect: 'error',
