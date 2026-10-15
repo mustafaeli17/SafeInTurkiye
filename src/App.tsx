@@ -10,6 +10,7 @@ import cityGuides from './data/cityGuides.json';
 import {cityPath, publicCities} from './lib/publicRoutes';
 import citiesZh from './data/citiesZh.json';
 import citiesEs from './data/citiesEs.json';
+import citiesTr from './data/citiesTr.json';
 import cityImages from './lib/placePhotos.json';
 import { findCityGuide, openCityGuide } from './lib/cityNavigation';
 import HomeButton from './components/HomeButton';
@@ -1105,7 +1106,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
     localTip:regionalDescription(regionalCity, lang),
     highlights:(localizedGaziantep?.places??regionalCity.places).map(name=>({name,detail:''})),
   } : citiesDetailedData[selectedCityName] || citiesDetailedData['İstanbul'];
-  const currentCityInfo=lang==='zh'?{...baseCityInfo,...citiesZh[selectedCityName as keyof typeof citiesZh]}:lang==='es'?{...baseCityInfo,...citiesEs[selectedCityName as keyof typeof citiesEs]}:baseCityInfo;
+  const currentCityInfo=lang==='tr'?{...baseCityInfo,...citiesTr[selectedCityName as keyof typeof citiesTr]}:lang==='zh'?{...baseCityInfo,...citiesZh[selectedCityName as keyof typeof citiesZh]}:lang==='es'?{...baseCityInfo,...citiesEs[selectedCityName as keyof typeof citiesEs]}:baseCityInfo;
 
   if (!supabaseConfigured && !mockDataEnabled) {
     return (

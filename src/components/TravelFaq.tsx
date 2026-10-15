@@ -19,6 +19,22 @@ const questions = [
 ];
 
 const localized: Record<string, [string, string][]> = {
+  es: [
+    ['¿Cómo consigo una İstanbulkart?', 'Consulta los puntos oficiales de venta y recarga. El precio de la tarjeta y el saldo para viajar son independientes; comprueba las condiciones de transbordo de tu tarjeta.'],
+    ['¿Cómo consigo una tarjeta de transporte en Ankara?', 'Acude a un centro EGO o a un distribuidor autorizado de Başkent Kart Ulaşım. Como visitante, pide una tarjeta de tarifa completa. Recárgala y pásala por el lector al subir.'],
+    ['¿Cómo consigo una İzmirim Kart?', 'Consulta los puntos oficiales de venta y recarga. Las tarjetas de tarifa completa y las bonificadas tienen requisitos diferentes. Comprueba las reglas de cobro y devolución de İZBAN.'],
+    ['¿Cómo consigo una Antalyakart?', 'Puedes comprarla y recargarla en máquinas, centros y distribuidores autorizados. También se admiten tarjetas bancarias sin contacto; comprueba la tarifa aplicable.'],
+    ['¿Cómo consulto los transbordos y la última salida?', 'Las tarifas dependen de la tarjeta, la línea y el intervalo de transbordo. Usa el planificador y comprueba los horarios y avisos del operador para la fecha del viaje.'],
+    ['¿Por qué puede variar el precio estimado del taxi?', 'La espera, el tráfico, los cambios de ruta y los peajes pueden modificar el total. Comprueba la fecha de la tarifa y pide un recibo.'],
+    ['¿El tipo de referencia es el de la casa de cambio?', 'No. Es orientativo; cada establecimiento fija sus precios de compra y venta. Pregunta cuánto recibirás después de cualquier comisión.'],
+    ['¿Qué hago si no se encuentra mi ubicación?', 'Revisa el permiso de ubicación del navegador o busca una dirección o zona. Los horarios publicados pueden estar incompletos; llama antes de ir.'],
+    ['¿Una solicitud de reserva confirma la reserva?', 'No. La solicitud no garantiza disponibilidad ni aceptación. Espera la confirmación del establecimiento.'],
+    ['¿Por qué debo iniciar sesión?', 'El inicio de sesión vincula las solicitudes a tu cuenta. Sin conexión al servicio de cuentas no se pueden guardar solicitudes.'],
+    ['¿Los establecimientos cercanos están abiertos ahora?', 'Mostramos los horarios publicados por la fuente. Pueden cambiar en festivos; confirma con el establecimiento antes de ir.'],
+    ['¿Cómo elijo los lugares que visitar?', 'Empieza por la sección de ciudades. Agrupa los lugares cercanos y consulta los horarios, las entradas y la accesibilidad oficiales.'],
+    ['¿Vuelan los globos de Capadocia todos los días?', 'Los vuelos dependen del tiempo y de la autorización de vuelo. No se garantiza una fecha concreta; consulta con tu operador.'],
+    ['¿Las fotos y los precios garantizan disponibilidad?', 'No. Confirma la disponibilidad y el precio final directamente con el establecimiento o proveedor.'],
+  ],
   de: [
     ['Wie erhalte ich eine İstanbulkart?', 'Verkaufs- und Aufladestellen stehen auf der offiziellen İstanbulkart-Seite. Kartenpreis und Fahrguthaben sind getrennt.'], ['Wie erhalte ich eine Verkehrskarte in Ankara?', 'Nutzen Sie EGO-Servicezentren oder autorisierte Händler. Besucher fragen nach der Karte zum Normaltarif.'], ['Wie erhalte ich eine İzmirim Kart?', 'Prüfen Sie offizielle Verkaufs- und Aufladestellen. Für İZBAN gelten besondere Abbuchungs- und Erstattungsregeln.'], ['Wie erhalte ich eine Antalyakart?', 'Kaufen und laden Sie die Karte an Automaten, Zentren oder Händlern. Kontaktlose Bankkarten werden ebenfalls unterstützt.'], ['Wo finde ich Umstiege und letzte Abfahrten?', 'Tarife und letzte Fahrten hängen von Linie und Tag ab. Prüfen Sie den offiziellen Betreiber für Ihr Reisedatum.'], ['Warum kann der Taxipreis abweichen?', 'Wartezeit, Verkehr, Umwege und Maut können den Taxameterpreis verändern. Lassen Sie sich eine Quittung geben.'], ['Ist der Referenzkurs der Wechselstubenkurs?', 'Nein. Wechselstuben haben eigene An- und Verkaufskurse. Fragen Sie vorab nach Endbetrag und Provision.'], ['Was tun, wenn mein Standort nicht gefunden wird?', 'Prüfen Sie die Browserfreigabe oder suchen Sie rund um das Stadtzentrum. Rufen Sie vor einem Besuch an.'], ['Ist eine Buchungsanfrage bestätigt?', 'Nein. Erst die Bestätigung des Betriebs macht die Buchung verbindlich.'], ['Warum muss ich mich anmelden?', 'Die Anmeldung ordnet Anfragen Ihrem Konto zu. Eine nicht verbundene Vorschau kann keine Anfrage speichern.'], ['Sind Orte in der Nähe jetzt geöffnet?', 'Angezeigt werden veröffentlichte Zeiten. Feiertage können abweichen; rufen Sie vorher an.'], ['Wie wähle ich Sehenswürdigkeiten?', 'Bündeln Sie nahe Orte für einen Tag und prüfen Sie Öffnungszeiten, Tickets und Barrierefreiheit.'], ['Fliegen Ballons in Kappadokien täglich?', 'Flüge hängen von Wetter und Freigabe ab. Fragen Sie den gebuchten Anbieter.'], ['Garantieren Fotos und Preise Verfügbarkeit?', 'Nein. Bestätigen Sie Verfügbarkeit und Endpreis direkt beim Betrieb.'],
   ],
@@ -62,6 +78,7 @@ const localized: Record<string, [string, string][]> = {
   ],
 };
 const ui: Record<string, string[]> = {
+  es: ['Información práctica sobre transporte, dinero, ubicación y reservas.', 'Buscar preguntas…', 'Información oficial', 'No hay preguntas que coincidan con tu búsqueda.'],
   tr: ['Ulaşım, para, konum ve rezervasyon hakkında pratik rehber.', 'Sorularda ara…', 'Resmî bilgi', 'Bu arama için soru bulunamadı.'],
   en: ['Practical guidance on transport, money, location and bookings.', 'Search questions…', 'Official information', 'No questions match your search.'],
   zh: ['交通、换汇、定位和预订实用指南。', '搜索问题…', '官方信息', '未找到匹配的问题。'],
@@ -82,11 +99,11 @@ export function TransportCardGuide({ city, lang }: { city: string; lang: string 
 export default function TravelFaq({ lang, initialQuery = '' }: { lang: string; initialQuery?: string }) {
   const [query, setQuery] = useState(initialQuery);
   const [topic, setTopic] = useState(-1);
-  const topicLabels = ({ en: ['Transport', 'Money', 'Near me', 'Bookings', 'Activities'], tr: ['Ulaşım', 'Para', 'Yakınımda', 'Rezervasyon', 'Aktiviteler'], de: ['Verkehr', 'Geld', 'In der Nähe', 'Buchungen', 'Aktivitäten'], fr: ['Transports', 'Argent', 'À proximité', 'Réservations', 'Activités'], ar: ['المواصلات', 'المال', 'بالقرب مني', 'الحجوزات', 'الأنشطة'], ru: ['Транспорт', 'Деньги', 'Рядом', 'Бронирования', 'Развлечения'], zh: ['交通', '换汇', '附近', '预订', '活动'] } as Record<string, string[]>)[lang] ?? ['Transport', 'Money', 'Near me', 'Bookings', 'Activities'];
+  const topicLabels = ({ es: ['Transporte', 'Dinero', 'Cerca de mí', 'Reservas', 'Actividades'], en: ['Transport', 'Money', 'Near me', 'Bookings', 'Activities'], tr: ['Ulaşım', 'Para', 'Yakınımda', 'Rezervasyon', 'Aktiviteler'], de: ['Verkehr', 'Geld', 'In der Nähe', 'Buchungen', 'Aktivitäten'], fr: ['Transports', 'Argent', 'À proximité', 'Réservations', 'Activités'], ar: ['المواصلات', 'المال', 'بالقرب مني', 'الحجوزات', 'الأنشطة'], ru: ['Транспорт', 'Деньги', 'Рядом', 'Бронирования', 'Развлечения'], zh: ['交通', '换汇', '附近', '预订', '活动'] } as Record<string, string[]>)[lang] ?? ['Transport', 'Money', 'Near me', 'Bookings', 'Activities'];
   const topicRows = [[0,1,2,3,4,5], [6], [7,10], [8,9,13], [11,12]];
   const tr = lang === 'tr';
   const labels = ui[lang] ?? ui.en;
-  const title = ({ tr: 'Sık sorulan sorular', en: 'Frequently asked questions', de: 'Häufige Fragen', fr: 'Questions fréquentes', ar: 'الأسئلة الشائعة', zh: '常见问题', ru: 'Частые вопросы' } as Record<string,string>)[lang] ?? 'Frequently asked questions';
+  const title = ({ es: 'Preguntas frecuentes', tr: 'Sık sorulan sorular', en: 'Frequently asked questions', de: 'Häufige Fragen', fr: 'Questions fréquentes', ar: 'الأسئلة الشائعة', zh: '常见问题', ru: 'Частые вопросы' } as Record<string,string>)[lang] ?? 'Frequently asked questions';
   const rows = questions.map((row, index) => localized[lang]?.[index] ? [localized[lang][index][0], localized[lang][index][0], localized[lang][index][1], localized[lang][index][1], row[4]] : row);
   const items = rows.map((row,index) => index === 8 || index === 13 ? [row[0],row[1],directoryText(lang,2),directoryText(lang,2),''] : row).filter((row, index) => index !== 9 && (topic === -1 || topicRows[topic].includes(index)) && row.slice(0,4).join(' ').toLocaleLowerCase().includes(query.toLocaleLowerCase()));
   return <main dir={lang === 'ar' ? 'rtl' : 'ltr'} className="reference-page reference-guides max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-4 pb-24">
