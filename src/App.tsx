@@ -5,7 +5,6 @@ import { openDirectoryEntry, registerPublishedEntry, photoCuratedCatalog } from 
 import { directory as directoryRecords } from './lib/directory';
 import SponsoredBusinesses from './components/SponsoredBusinesses';
 import EditorialBusinesses from './components/EditorialBusinesses';
-import ViatorTours from './components/ViatorTours';
 import { toursLabel } from './lib/viatorCopy';
 import cityGuides from './data/cityGuides.json';
 import {cityPath, publicCities} from './lib/publicRoutes';
@@ -94,7 +93,9 @@ import { WeatherCard } from './components/WeatherCard';
 import CurrencyRates from './components/CurrencyRates';
 import NearbyPlaces from './components/NearbyPlaces';
 const TransitPlanner = lazy(()=>import('./components/TransitPlanner'));
-import TravelFaq, { TransportCardGuide } from './components/TravelFaq';
+const ViatorTours = lazy(()=>import('./components/ViatorTours'));
+const TravelFaq = lazy(()=>import('./components/TravelFaq'));
+const TransportCardGuide = lazy(()=>import('./components/TravelFaq').then(module=>({default:module.TransportCardGuide})));
 const ContentAdmin = lazy(()=>import('./components/ContentAdmin'));
 import TravelHome from './components/TravelHome';
 import { activityLabel, activityText, activityContent } from './lib/activityLabels';
@@ -1287,7 +1288,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
         {/* ====================================================================
             PAGE 2: AI TRAVEL ASSISTANT
         ==================================================================== */}
-        {activeTab === 'assistant' && <TravelFaq lang={lang} initialQuery={searchQuery} />}
+        {activeTab === 'assistant' && <Suspense fallback={<main aria-busy="true" className="p-8">SafeInTürkiye…</main>}><TravelFaq lang={lang} initialQuery={searchQuery} /></Suspense>}
 
         {/* ====================================================================
             PAGE 3: TAKİ HESAPLAYICI
@@ -1515,7 +1516,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
               </div>
             </section>
 
-            <TransportCardGuide city={selectedCityName} lang={lang} />
+            <Suspense fallback={<div aria-busy="true">SafeInTürkiye…</div>}><TransportCardGuide city={selectedCityName} lang={lang} /></Suspense>
 
           </main>
         )}
@@ -1553,7 +1554,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
           </main>
         )}
 
-        {activeTab === 'tours' && <main className="travel-catalog"><ViatorTours lang={lang} initialCity={publicCities.find(c=>c.name===selectedCityName)?.slug}/></main>}
+        {activeTab === 'tours' && <main className="travel-catalog"><Suspense fallback={<div aria-busy="true" className="p-8">SafeInTürkiye…</div>}><ViatorTours lang={lang} initialCity={publicCities.find(c=>c.name===selectedCityName)?.slug}/></Suspense></main>}
 
         {/* ====================================================================
             PAGE 10: NEAR ME

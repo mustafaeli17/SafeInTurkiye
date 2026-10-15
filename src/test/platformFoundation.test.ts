@@ -1,5 +1,5 @@
 import {readFile,readdir} from 'node:fs/promises'
-import {pathToFileURL} from 'node:url'
+import {PGlite} from '@electric-sql/pglite'
 import {expect,it} from 'vitest'
 import {cityTransportCopy} from '../lib/cityTransportCopy'
 // @ts-expect-error Node-only seed preparation module
@@ -7,8 +7,7 @@ import {foundationCatalog,catalogSeed} from '../../scripts/foundation-catalog.mj
 it('provides the five original city transport descriptions in every supported language',()=>{
  for(const copy of Object.values(cityTransportCopy))for(const lang of ['tr','en','de','fr','ar','ru','zh'])expect(copy[lang]?.length).toBeGreaterThan(20)
 })
-it.skipIf(!process.env.PGLITE_MODULE)('foundation migration enforces publication, ownership and sponsorship visibility in isolated PostgreSQL',async()=>{
- const {PGlite}=await import(/* @vite-ignore */ pathToFileURL(process.env.PGLITE_MODULE!).href)
+it('foundation migration enforces publication, ownership and sponsorship visibility in isolated PostgreSQL',async()=>{
  const db=new PGlite()
  try{
   await db.exec(`create role anon; create role authenticated; create schema auth; create schema storage;
@@ -17,11 +16,11 @@ it.skipIf(!process.env.PGLITE_MODULE)('foundation migration enforces publication
   create table storage.buckets(id text primary key,name text,public boolean);
   create table storage.objects(id uuid primary key default gen_random_uuid(),bucket_id text);`)
   for(const file of (await readdir('supabase/migrations')).filter(f=>/^000[1-4]_/.test(f)).sort())await db.exec((await readFile('supabase/migrations/'+file,'utf8')).replace('create extension if not exists pgcrypto;',''))
-  await db.exec(`grant usage on schema public,auth to anon,authenticated; grant select on all tables in schema public to anon,authenticated; grant insert,update on public.bookings to authenticated; grant usage on sequence public.booking_reference_seq to authenticated;`)
+  await db.exec(`grant usage on schema public,auth to anon,authenticated; grant select on all tables in schema public to anon,authenticated; grant insert,update on public.bookings to authenticated; grant update on public.profiles to authenticated; grant usage on sequence public.booking_reference_seq to authenticated;`)
   await db.exec(await readFile('supabase/migrations/0005_platform_foundation.sql','utf8'))
   const admin='00000000-0000-0000-0000-000000000001',one='00000000-0000-0000-0000-000000000002',two='00000000-0000-0000-0000-000000000003'
   await db.exec(`insert into auth.users(id,email,raw_user_meta_data) values('${admin}','admin@example.test','{}'),('${one}','one@example.test','{}'),('${two}','two@example.test','{}');update profiles set role='admin' where id='${admin}';`)
-  const business=(await db.query(`insert into restaurants(name,status,active,public_slug) values('Isolated test','PUBLISHED',true,'legacy-route') returning id`)).rows[0].id
+  const business=(await db.query<{id:string}>(`insert into restaurants(name,status,active,public_slug) values('Isolated test','PUBLISHED',true,'legacy-route') returning id`)).rows[0].id
   await db.exec(`insert into sponsored_placements(business_kind,business_id,context,starts_at,ends_at,active) values('restaurants','${business}','city',now()-interval '1 day',now()+interval '1 day',true);set role anon;`)
   expect((await db.query('select slug from published_editorial_businesses')).rows).toEqual([{slug:'legacy-route'}])
   expect((await db.query('select * from sponsored_placements')).rows).toHaveLength(1)
@@ -34,6 +33,9 @@ it.skipIf(!process.env.PGLITE_MODULE)('foundation migration enforces publication
   await db.exec(`reset role;update restaurants set status='PUBLISHED',name='Updated test' where id='${business}';set role anon;`)
   expect((await db.query('select name,slug from published_editorial_businesses')).rows).toEqual([{name:'Updated test',slug:'legacy-route'}])
   await db.exec(`reset role;set role authenticated;select set_config('request.jwt.claim.sub','${one}',false);`)
+  await expect(db.exec(`update profiles set role='admin' where id='${one}'`)).rejects.toThrow(/Only an admin/)
+  expect((await db.query(`select role from profiles where id='${one}'`)).rows).toEqual([{role:'user'}])
+  expect((await db.query(`update profiles set display_name='tampered' where id='${two}' returning id`)).rows).toHaveLength(0)
   await db.exec(`insert into bookings(user_id,listing_type,listing_name,guest_name,guest_email,visit_date,guest_count,visit_time,guest_phone) values('${one}','restaurant','Test','One','one@example.test','2030-01-01',2,'19:00','+900000000000');`)
   expect((await db.query('select status from bookings')).rows).toEqual([{status:'PENDING'}])
   await expect(db.exec(`insert into bookings(user_id,listing_type,listing_name,guest_name,guest_email,visit_date,guest_count,contact_stage) values('${one}','restaurant','Test','One','one@example.test','2030-01-01',2,'CONTACTED')`)).rejects.toThrow()
@@ -54,7 +56,7 @@ it.skipIf(!process.env.PGLITE_MODULE)('foundation migration enforces publication
   const seed=catalogSeed(catalog)
   await db.exec(seed)
   await db.exec(seed)
-  const imported=(await db.query(`select kind,slug from (select 'hotels' kind,public_slug slug,editorial_key from hotels union all select 'restaurants',public_slug,editorial_key from restaurants union all select 'activities',public_slug,editorial_key from activities) e where editorial_key is not null`)).rows
+  const imported=(await db.query<{kind:string;slug:string}>(`select kind,slug from (select 'hotels' kind,public_slug slug,editorial_key from hotels union all select 'restaurants',public_slug,editorial_key from restaurants union all select 'activities',public_slug,editorial_key from activities) e where editorial_key is not null`)).rows
   expect(imported.map((e:{kind:string;slug:string})=>`${e.kind}/${e.slug}`).sort()).toEqual(catalog.map((e:{kind:string;slug:string})=>`${e.kind}/${e.slug}`).sort())
   // Re-running cannot overwrite editorial changes or publish drafts.
   await db.exec(`update hotels set description='CMS edit' where editorial_key is not null`)
