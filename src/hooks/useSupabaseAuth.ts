@@ -21,13 +21,22 @@ export function useSupabaseAuth() {
         if (active) setRole('user')
         return
       }
-      const { data } = await client.from('profiles').select('role').eq('id', userId).maybeSingle()
-      if (active && request === generation) setRole((data?.role as AppRole | undefined) ?? 'user')
+      let nextRole: AppRole = 'user'
+      try {
+        const { data, error } = await client.from('profiles').select('role').eq('id', userId).abortSignal(AbortSignal.timeout(12000)).maybeSingle()
+        if (!error && ['admin', 'editor', 'moderator'].includes(data?.role ?? '')) nextRole = data!.role as AppRole
+      } catch { /* Network failures never grant staff privileges. */ }
+      if (active && request === generation) setRole(nextRole)
     }
     client.auth.getSession().then(({ data }) => {
       if (!active) return
       setSession(data.session)
       void loadRole(data.session?.user.id)
+      setLoading(false)
+    }).catch(() => {
+      if (!active) return
+      setSession(null)
+      setRole('user')
       setLoading(false)
     })
     const { data: listener } = client.auth.onAuthStateChange((_event, nextSession) => {

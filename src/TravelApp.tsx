@@ -1,5 +1,6 @@
 import { useEffect, useState, lazy, Suspense } from 'react';
 import App from './App';
+import { readLanguagePreference } from './lib/languagePreference';
 import { directoryEntry, registerPublishedEntry, photoCuratedCatalog } from './lib/directory';
 import type { DirectoryEntry } from './lib/directory';
 import { requireSupabase } from './lib/supabase';
@@ -32,7 +33,7 @@ export default function TravelApp() {
   const candidate=match ? (remote?.path===path?remote.entry:undefined) : directoryEntry(entryPath);
   const entry=localized&&!candidate?.description.tr?undefined:candidate;
   const back=()=>{window.location.assign('/');};
-  const preference=localStorage.getItem('safeinturkiye-language') ?? 'en';
+  const preference=readLanguagePreference();
   // Keep existing non-indexed language preferences working; Turkish indexed
   // routes are explicit and do not depend on a previous browser visit.
   const language=entry?(localized?'tr':preference==='tr'?'en':preference):preference;

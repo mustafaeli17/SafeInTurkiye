@@ -1,4 +1,5 @@
 import records from '../data/directory.json';
+import { readLanguagePreference } from './languagePreference';
 import regionalHotels from '../data/regionalHotels.json';
 import regionalRestaurants from '../data/regionalRestaurants.json';
 import regionalActivities from '../data/regionalActivities.json';
@@ -44,7 +45,7 @@ export function directoryEntry(path: string) {
 export function openDirectoryEntry(id: string) {
   const entry = directory.find(item => item.id === id);
   if (!entry) return false;
-  const prefix=localStorage.getItem('safeinturkiye-language')==='tr'&&entry.description.tr?'/tr':'';
+  const prefix=readLanguagePreference()==='tr'&&entry.description.tr?'/tr':'';
   window.history.pushState({}, '', prefix+entryPath(entry));
   window.dispatchEvent(new PopStateEvent('popstate'));
   return true;

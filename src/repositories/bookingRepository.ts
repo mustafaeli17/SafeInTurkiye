@@ -29,6 +29,8 @@ export async function getOwnBookingRequests() {
 }
 
 export async function createBooking(request: BookingRequest) {
+  const date = new Date(`${request.visitDate}T00:00:00Z`)
+  if (!Number.isFinite(date.getTime()) || date.toISOString().slice(0, 10) !== request.visitDate) throw new Error('Invalid booking request.')
   if (request.visitTime && !/^([01]\d|2[0-3]):[0-5]\d$/.test(request.visitTime)) throw new Error('Invalid time.')
   if (request.guestPhone && (request.guestPhone.length > 40 || !/^[+\d ()-]{5,40}$/.test(request.guestPhone))) throw new Error('Invalid phone.')
   if (!request.listingName.trim() || !request.guestName.trim() || request.guestName.length > 100 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(request.guestEmail) || !Number.isInteger(request.guestCount) || request.guestCount < 1 || request.guestCount > 20 || !/^\d{4}-\d{2}-\d{2}$/.test(request.visitDate) || Number.isNaN(Date.parse(request.visitDate)) || (request.notes?.length ?? 0) > 4000) throw new Error('Invalid booking request.')

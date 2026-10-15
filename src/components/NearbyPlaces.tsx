@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import {locationErrorText} from '../lib/locationError'
+import { nearbyNotice } from '../lib/nearbyNotice'
 import { Clock3, ExternalLink, LocateFixed, MapPin, Phone, Search } from 'lucide-react'
 import { NearbyError } from '../services/nearbyPlaces'
 import { fetchGoogleNearby } from '../services/googleNearby'
@@ -216,7 +217,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
       </div>
       {state==='ready' && kind==='exchange' && <p className="text-xs text-slate-500">{text('Büro alış/satış kurları mevcut değil; işlemden önce net kur ve komisyonu işletmeden teyit edin.', 'Bureau buy/sell rates are not available; confirm the net rate and commission with the business before exchanging.')}</p>}
       {places.length > limit && <button type="button" onClick={() => setLimit(value => value + 12)} className="rounded-xl border border-sky-200 bg-white px-4 py-2 text-xs font-bold text-[#007EAD]">{text('Daha fazla göster', 'Show more')}</button>}
-      {result && <div className="text-xs text-slate-600"><p className="text-sm font-medium" translate="no">Google Maps</p><p>{text('Bilgiler değişebilir; gitmeden önce işletmeyi arayın. Nöbetçi eczane bilgisi değildir.', 'Information may change; call before visiting. This is not an on-duty pharmacy service.')}</p><a className="underline" href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google Privacy Policy</a> · <a className="underline" href="https://maps.google.com/help/terms_maps/" target="_blank" rel="noopener noreferrer">Google Maps Terms</a></div>}
+      {result && <div className="text-xs text-slate-600"><p className="text-sm font-medium" translate="no">Google Maps</p><p>{nearbyNotice(lang, filter === 'pharmacy' || filter === 'all' && !fixedCategory && kind !== 'exchange')}</p><a className="underline" href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google Privacy Policy</a> · <a className="underline" href="https://maps.google.com/help/terms_maps/" target="_blank" rel="noopener noreferrer">Google Maps Terms</a></div>}
     </section>
   )
 }

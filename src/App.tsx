@@ -1,4 +1,5 @@
 import { officialLinks, directoryText, sourcedActivities, cityPhotos } from './lib/visitorDirectory';
+import { readLanguagePreference, saveLanguagePreference } from './lib/languagePreference';
 import { cityTransportText } from './lib/cityTransportCopy';
 import { openDirectoryEntry, registerPublishedEntry, photoCuratedCatalog } from './lib/directory';
 import { directory as directoryRecords } from './lib/directory';
@@ -636,7 +637,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
     document.querySelector('meta[property="og:url"]')?.setAttribute('content',`https://www.safeinturkiye.com${path}`);
   }, [activeTab, selectedCityName,initialCity]);
   const [lang, setLang] = useState<SupportedLang>(() => {
-    const candidate = initialLanguage || localStorage.getItem('safeinturkiye-language') || 'en';
+    const candidate = initialLanguage || readLanguagePreference();
     return ['en','tr','de','fr','ar','ru','zh','es'].includes(candidate) ? candidate as SupportedLang : 'en';
   });
   const [searchQuery, setSearchQuery] = useState('');
@@ -650,7 +651,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
   useEffect(() => {
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = lang;
-    localStorage.setItem('safeinturkiye-language',lang);
+    saveLanguagePreference(lang);
   }, [lang]);
 
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -773,7 +774,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
 
   // Referral-only: never submit booking requests from the public directory.
   const handleOpenBooking = (item: {id: string}, _listingType: string) => {
-    localStorage.setItem('safeinturkiye-language', lang);
+    saveLanguagePreference(lang);
     openDirectoryEntry(item.id);
   };
 
