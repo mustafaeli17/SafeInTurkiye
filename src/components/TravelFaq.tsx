@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { directoryText } from '../lib/visitorDirectory';
+import { practicalFaq, practicalSources } from '../data/practicalFaq';
 
 const questions = [
   ['İstanbul’da ulaşım kartını nasıl alırım?', 'How do I get an Istanbul transport card?', 'İstanbulkart satış ve dolum noktalarını resmî siteden bulun. Kart bedeli ile yolculuk bakiyesi ayrıdır. Aktarma indirimi ve kişiselleştirme koşullarını kart türünüz için kontrol edin.', 'Find İstanbulkart sales and top-up points on the official website. Card cost and travel balance are separate. Check transfer and personalisation conditions for your card type.', 'https://istanbulkart.istanbul/'],
@@ -100,12 +100,13 @@ export default function TravelFaq({ lang, initialQuery = '' }: { lang: string; i
   const [query, setQuery] = useState(initialQuery);
   const [topic, setTopic] = useState(-1);
   const topicLabels = ({ es: ['Transporte', 'Dinero', 'Cerca de mí', 'Reservas', 'Actividades'], en: ['Transport', 'Money', 'Near me', 'Bookings', 'Activities'], tr: ['Ulaşım', 'Para', 'Yakınımda', 'Rezervasyon', 'Aktiviteler'], de: ['Verkehr', 'Geld', 'In der Nähe', 'Buchungen', 'Aktivitäten'], fr: ['Transports', 'Argent', 'À proximité', 'Réservations', 'Activités'], ar: ['المواصلات', 'المال', 'بالقرب مني', 'الحجوزات', 'الأنشطة'], ru: ['Транспорт', 'Деньги', 'Рядом', 'Бронирования', 'Развлечения'], zh: ['交通', '换汇', '附近', '预订', '活动'] } as Record<string, string[]>)[lang] ?? ['Transport', 'Money', 'Near me', 'Bookings', 'Activities'];
-  const topicRows = [[0,1,2,3,4,5], [6], [7,10], [8,9,13], [11,12]];
+  const topicRows = [[0,1,2,3,4,5,19], [6,16], [7,10,14,15,18], [8,9,13,17], [11,12,18]];
   const tr = lang === 'tr';
   const labels = ui[lang] ?? ui.en;
   const title = ({ es: 'Preguntas frecuentes', tr: 'Sık sorulan sorular', en: 'Frequently asked questions', de: 'Häufige Fragen', fr: 'Questions fréquentes', ar: 'الأسئلة الشائعة', zh: '常见问题', ru: 'Частые вопросы' } as Record<string,string>)[lang] ?? 'Frequently asked questions';
   const rows = questions.map((row, index) => localized[lang]?.[index] ? [localized[lang][index][0], localized[lang][index][0], localized[lang][index][1], localized[lang][index][1], row[4]] : row);
-  const items = rows.map((row,index) => index === 8 || index === 13 ? [row[0],row[1],directoryText(lang,2),directoryText(lang,2),''] : row).filter((row, index) => index !== 9 && (topic === -1 || topicRows[topic].includes(index)) && row.slice(0,4).join(' ').toLocaleLowerCase().includes(query.toLocaleLowerCase()));
+  const extra = (practicalFaq[lang] ?? practicalFaq.en).map(([question, answer], index) => [question, question, answer, answer, practicalSources[index] ?? '']);
+  const items = [...rows, ...extra].filter((row, index) => index !== 9 && (topic === -1 || topicRows[topic].includes(index)) && row.slice(0,4).join(' ').toLocaleLowerCase().includes(query.toLocaleLowerCase()));
   return <main dir={lang === 'ar' ? 'rtl' : 'ltr'} className="reference-page reference-guides max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-4 pb-24">
     <h1 className="text-3xl font-extrabold">{title}</h1>
     <p className="text-sm text-slate-600">{labels[0]}</p>
