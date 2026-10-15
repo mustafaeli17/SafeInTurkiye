@@ -11,6 +11,7 @@ export interface ReferenceRates {
 }
 
 export interface CurrentWeather {
+  updatedAt?: number;
   temperature: number;
   humidity: number;
   windSpeed: number;
@@ -138,14 +139,29 @@ export async function getCurrentWeather(lat: number, lng: number, signal: AbortS
   numberInRange(lng, -180, 180);
   const params = new URLSearchParams({
     latitude: String(lat), longitude: String(lng),
-    current: 'temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,is_day',
-    timeformat: 'unixtime', timezone: 'Europe/Istanbul', temperature_unit: 'celsius', wind_speed_unit: 'kmh',
   });
-  // Open-Meteo's free endpoint permits non-commercial use. A commercial deployment
-  // must supply a server-side /api/weather proxy with its licensed provider key.
-  // The key must never be placed in VITE_* variables or browser code.
-  const endpoint = import.meta.env.DEV ? 'https://api.open-meteo.com/v1/forecast' : '/api/weather';
-  return parseCurrentWeather(await fetchTravelJson(`${endpoint}?${params}`, signal));
+  return parseMetForecast(await fetchTravelJson(`/api/weather?${params}`, signal));
+}
+
+/** MET instant values are model forecasts, not live station measurements. */
+export function parseMetForecast(payload: unknown, now = Date.now()): CurrentWeather {
+  const properties = record(record(payload).properties);
+  const meta = record(properties.meta);
+  const units = record(meta.units);
+  const updatedAt = typeof meta.updated_at === 'string' ? Date.parse(meta.updated_at) : NaN;
+  if (!Number.isFinite(updatedAt) || updatedAt > now + 900000 || now - updatedAt > 36 * 3600000 || units.air_temperature !== 'celsius' || units.relative_humidity !== '%' || units.wind_speed !== 'm/s' || !Array.isArray(properties.timeseries)) throw new TravelDataError('invalid');
+  const candidates = properties.timeseries.map(value => record(value)).filter(row => typeof row.time === 'string' && Date.parse(row.time) <= now && now - Date.parse(row.time) < 90 * 60000);
+  candidates.sort((a,b)=>Date.parse(String(b.time))-Date.parse(String(a.time)));
+  if (!candidates.length) throw new TravelDataError('unavailable');
+  const row = candidates[0];
+  const data = record(row.data);
+  const details = record(record(data.instant).details);
+  const summary = data.next_1_hours && record(data.next_1_hours).summary;
+  const rawSymbol = summary && record(summary).symbol_code;
+  const symbol = typeof rawSymbol === 'string' ? rawSymbol : '';
+  // Map the provider's symbols to the card's existing condition groups.
+  const code = symbol.includes('thunder') ? 95 : /snow|sleet/.test(symbol) ? 71 : /rain/.test(symbol) ? 61 : symbol === 'fog' ? 45 : /^(clearsky|fair)_/.test(symbol) ? 0 : /cloudy/.test(symbol) ? 3 : 40;
+  return {temperature:numberInRange(details.air_temperature,-100,70), humidity:numberInRange(details.relative_humidity,0,100),windSpeed:Math.round(numberInRange(details.wind_speed,0,150)*36)/10,code,isDay:!symbol.endsWith('_night'),time:Date.parse(String(row.time)),updatedAt};
 }
 
 export async function getAssistantReply(prompt: string, language: string, signal: AbortSignal): Promise<string | null> {
