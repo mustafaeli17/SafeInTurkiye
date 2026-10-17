@@ -8,7 +8,7 @@ const links=html.match(/<link\b[^>]+>/g).filter(tag=>/rel="(?:icon|apple-touch-i
 assert.equal(links.length,6);
 for(const tag of links){
  const href=tag.match(/href="([^"]+)"/)[1];
- assert(href.endsWith('?v=landmarks-1'));
+ assert(href.endsWith('?v=landmarks-rounded-2'));
  assert(fs.statSync('dist'+href.split('?')[0]).size>0);
 }
 for(const [file,size] of [['favicon-32x32.png',32],['favicon-48x48.png',48],['favicon-96x96.png',96],['apple-touch-icon.png',180],['icon-192.png',192],['icon-512.png',512]]){
@@ -25,6 +25,12 @@ for(const [i,size] of [16,32,48].entries()){
  assert(offset+length<=ico.length);assert.equal(ico.readUInt32LE(offset),40);
  assert.equal(ico.readInt32LE(offset+4),size);assert.equal(ico.readInt32LE(offset+8),size*2);
  assert.equal(ico.readUInt16LE(offset+14),32);
+ // Bottom-up DIB: both outer corners transparent, artwork centre opaque.
+ const pixels=offset+40;
+ assert.equal(ico[pixels+3],0);
+ assert.equal(ico[pixels+(size*size-1)*4+3],0);
+ assert.equal(ico[pixels+(Math.floor(size/2)*size+Math.floor(size/2))*4+3],255);
+ assert(ico[pixels+size*size*4]&0x80, 'Legacy AND mask must preserve corner transparency');
 }
 const manifest=JSON.parse(fs.readFileSync('dist/site.webmanifest','utf8'));
 for(const icon of manifest.icons){

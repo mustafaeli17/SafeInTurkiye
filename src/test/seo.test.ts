@@ -23,7 +23,7 @@ describe('SEO and real public assets',()=>{
   expect(config.redirects).toContainEqual({source:'/favicon.svg',destination:'/favicon-96x96.png',permanent:true});
   const html=readFileSync('index.html','utf8');
   expect(html).not.toContain('/favicon.svg');
-  expect(html).toContain('/favicon-96x96.png?v=landmarks-1');
+  expect(html).toContain('/favicon-96x96.png?v=landmarks-rounded-2');
   const manifest=JSON.parse(readFileSync('public/site.webmanifest','utf8'));
   for(const icon of manifest.icons) expect(icon.src).not.toContain('.svg');
  });

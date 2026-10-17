@@ -6,20 +6,30 @@ const require = createRequire(import.meta.url);
 const sharp = require(process.argv[2] || 'sharp');
 const root = new URL('../public/', import.meta.url);
 const svg = await readFile(process.argv[3] || new URL('../assets/brand/favicon-source.png', import.meta.url));
+// Preserve the supplied artwork exactly; only mask the outside corners.
+function rounded(size) {
+ const mask=Buffer.from(`<svg width="${size}" height="${size}"><rect width="${size}" height="${size}" rx="${size*0.22}" fill="white"/></svg>`);
+ return sharp(svg).resize(size,size).ensureAlpha().composite([{input:mask,blend:'dest-in'}]);
+}
 for (const [size, name] of [[32,'favicon-32x32.png'],[48,'favicon-48x48.png'],[96,'favicon-96x96.png'],[180,'apple-touch-icon.png'],[192,'icon-192.png'],[512,'icon-512.png']]) {
- await sharp(svg).resize(size,size).png().toFile(new URL(name,root).pathname.replace(/^\/([A-Z]:)/i,'$1'));
+ // iOS applies its own rounded mask to an opaque touch icon.
+ const icon=name==='apple-touch-icon.png'?sharp(svg).resize(size,size):rounded(size);
+ await icon.png().toFile(new URL(name,root).pathname.replace(/^\/([A-Z]:)/i,'$1'));
 }
 const sizes=[16,32,48];
 // Classic uncompressed BGRA DIB frames, including the legacy AND mask.
 // Avoid requiring support for PNG-compressed ICO frames in small favicon sizes.
 const frames=await Promise.all(sizes.map(async size=>{
- const rgba=await sharp(svg).resize(size,size).ensureAlpha().raw().toBuffer();
+ const rgba=await rounded(size).raw().toBuffer();
  const pixels=Buffer.alloc(size*size*4);
  for(let y=0;y<size;y++)for(let x=0;x<size;x++){
   const src=(y*size+x)*4,dst=((size-1-y)*size+x)*4;
   pixels[dst]=rgba[src+2];pixels[dst+1]=rgba[src+1];pixels[dst+2]=rgba[src];pixels[dst+3]=rgba[src+3];
  }
  const mask=Buffer.alloc(Math.ceil(size/32)*4*size);
+ for(let y=0;y<size;y++)for(let x=0;x<size;x++){
+  if(rgba[(y*size+x)*4+3]===0) mask[(size-1-y)*Math.ceil(size/32)*4+(x>>3)]|=0x80>>(x%8);
+ }
  const dib=Buffer.alloc(40);dib.writeUInt32LE(40,0);dib.writeInt32LE(size,4);dib.writeInt32LE(size*2,8);
  dib.writeUInt16LE(1,12);dib.writeUInt16LE(32,14);dib.writeUInt32LE(pixels.length+mask.length,20);
  return Buffer.concat([dib,pixels,mask]);
