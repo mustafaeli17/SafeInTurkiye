@@ -4,6 +4,14 @@ import { parseGooglePlaces, fetchGoogleNearby } from '../services/googleNearby'
 const response = () => ({ status: vi.fn().mockReturnThis(), setHeader: vi.fn(), json: vi.fn() })
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs() })
 describe('Google Places boundary', () => {
+  it.each([['barber',['barber_shop']],['hair_salon',['hair_salon','hair_care']]] as const)('requests supported grooming types for %s',async(category,types)=>{
+    vi.stubEnv('GOOGLE_PLACES_API_KEY','test-only')
+    const f=vi.fn().mockResolvedValue({ok:true,json:async()=>({places:[]})});vi.stubGlobal('fetch',f)
+    await handler({method:'GET',url:`/?lat=41&lng=29&category=${category}`,headers:{'x-forwarded-for':`grooming-${category}`}},response())
+    expect(JSON.parse(f.mock.calls[0][1].body).includedTypes).toEqual(types)
+    const p={id:category,displayName:{text:'Salon'},location:{latitude:41,longitude:29},types:[types[0]],googleMapsUri:'https://maps.google.com/?cid=1'}
+    expect(parseGooglePlaces({places:[p]},{lat:41,lng:29},'all').places[0].category).toBe(category)
+  })
   it('separates city discovery from the 2.5km nearby radius', async () => {
     vi.stubEnv('GOOGLE_PLACES_API_KEY','test-only')
     const f=vi.fn().mockResolvedValue({ok:true,json:async()=>({places:[]})}); vi.stubGlobal('fetch',f)

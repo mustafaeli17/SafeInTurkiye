@@ -1,7 +1,7 @@
 import { distanceInMeters, isValidCenter, NearbyError, safeTelephone, safeWebsite } from './nearbyPlaces'
 import type { NearbyCategory, NearbyCenter, NearbyPlaceRecord, NearbyResult } from './nearbyPlaces'
 
-const mapping: [string, NearbyCategory][] = [['museum','museum'],['tourist_attraction','attraction'],['hotel','hotel'],['lodging','hotel'],['cafe','cafe'],['restaurant','restaurant'],['pharmacy','pharmacy'],['hospital','hospital'],['atm','atm'],['shopping_mall','shopping'],['police','police'],['taxi_stand','taxi']]
+const mapping: [string, NearbyCategory][] = [['barber_shop','barber'],['hair_salon','hair_salon'],['hair_care','hair_salon'],['museum','museum'],['tourist_attraction','attraction'],['hotel','hotel'],['lodging','hotel'],['cafe','cafe'],['restaurant','restaurant'],['pharmacy','pharmacy'],['hospital','hospital'],['atm','atm'],['shopping_mall','shopping'],['police','police'],['taxi_stand','taxi']]
 const str = (value: unknown): string | null => typeof value === 'string' && value.trim() ? value.trim().slice(0, 2000) : null
 export function parseGooglePlaces(payload: unknown, center: NearbyCenter, category: NearbyCategory | 'all', radius = 2500): NearbyResult {
   if (!payload || typeof payload !== 'object' || !('places' in payload) || !Array.isArray(payload.places)) throw new NearbyError('invalid-response')

@@ -4,7 +4,8 @@ import { createRequestBudget } from '../src/server/requestBudget.js'
 type Request = { method?: string; url?: string; headers: Record<string, string | string[] | undefined> }
 type Response = { status: (code: number) => Response; setHeader: (name: string, value: string) => void; json: (body: unknown) => void }
 const types: Record<string, string[]> = {
-  all: ['restaurant', 'hotel', 'cafe', 'tourist_attraction', 'museum', 'pharmacy', 'hospital', 'atm', 'shopping_mall'],
+  all: ['restaurant', 'hotel', 'cafe', 'tourist_attraction', 'museum', 'pharmacy', 'hospital', 'atm', 'shopping_mall', 'barber_shop', 'hair_salon'],
+  barber: ['barber_shop'], hair_salon: ['hair_salon', 'hair_care'],
   restaurant: ['restaurant'], hotel: ['hotel'], cafe: ['cafe'], attraction: ['tourist_attraction'], museum: ['museum'],
   pharmacy: ['pharmacy'], hospital: ['hospital'], atm: ['atm'], shopping: ['shopping_mall'], police: ['police'], taxi: ['taxi_stand'],
   activity: ['tourist_attraction', 'museum', 'historical_landmark', 'park', 'amusement_park', 'movie_theater', 'bowling_alley'],

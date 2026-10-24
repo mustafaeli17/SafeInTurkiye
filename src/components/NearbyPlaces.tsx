@@ -1,3 +1,4 @@
+import { groomingCategoryLabel } from '../lib/groomingCopy'
 import { useEffect, useRef, useState } from 'react'
 import {locationErrorText} from '../lib/locationError'
 import { nearbyNotice } from '../lib/nearbyNotice'
@@ -22,6 +23,7 @@ interface NearbyPlacesProps {
 }
 
 const categoryLabels: Record<NearbyCategory, [string, string]> = {
+  barber: ['Berber', 'Barber'], hair_salon: ['Kuaför / saç salonu', 'Hair salon'],
   bureau_de_change: ['Döviz bürosu', 'Exchange bureau'], pharmacy: ['Eczane', 'Pharmacy'],
   hospital: ['Hastane', 'Hospital'], police: ['Polis', 'Police'], atm: ['ATM', 'ATM'],
   taxi: ['Taksi durağı', 'Taxi rank'], restaurant: ['Restoran', 'Restaurant'], cafe: ['Kafe', 'Café'],
@@ -52,7 +54,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
     zh: { 'Nearby exchange bureaux': '附近兑换点', 'Nearby places': '附近地点', 'Use my location': '使用当前位置', centre: '搜索市中心', 'Published places within 2.5 km; distances are straight-line estimates.': '显示2.5公里内的公开地点；距离为直线估算。', 'Use your location or search around the city centre.': '使用当前位置或搜索市中心附近。', All: '全部', Pharmacy: '药房', Hospital: '医院', Police: '警察', ATM: 'ATM', 'Taxi rank': '出租车站', Restaurant: '餐厅', Café: '咖啡馆', 'Exchange bureau': '兑换点', Address: '地址', Phone: '电话', 'Opening hours': '营业时间', Website: '网站', 'Show more': '显示更多', 'Searching nearby places…': '正在搜索附近地点…', 'Waiting for your location…': '正在等待位置信息…', places: '个地点', Retrieved: '获取时间', 'Address not listed in the source.': '来源未提供地址。', 'Phone not listed.': '来源未提供电话。', 'Opening hours not listed.': '来源未提供营业时间。', 'Published opening hours': '来源公布的营业时间', 'No sourced visitor rating available.': '暂无有来源的用户评分。', 'Map record & source': '地图记录与来源' },
   }
   const text = (turkish: string, english: string) => tr ? turkish : translated[locale]?.[english] ?? english
-  const categoryLabel = (category: NearbyCategory) => tr ? categoryLabels[category][0] : translated[locale]?.[categoryLabels[category][1]] ?? categoryLabels[category][1]
+  const categoryLabel = (category: NearbyCategory) => groomingCategoryLabel(category,locale) ?? (tr ? categoryLabels[category][0] : translated[locale]?.[categoryLabels[category][1]] ?? categoryLabels[category][1])
   const [result, setResult] = useState<NearbyResult | null>(null)
   const [state, setState] = useState<'idle' | 'locating' | 'loading' | 'ready' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
@@ -179,7 +181,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
         {(['activity', 'museum', 'historical', 'cinema', 'entertainment', 'park'] as const).map(category => <button type="button" key={category} aria-pressed={filter === category} onClick={() => { generation.current += 1; controller.current?.abort(); setFilter(category); setResult(null); setError(null) }} className={`min-h-11 rounded-full border px-4 py-2 text-xs font-semibold ${filter === category ? 'border-[#087FFF] bg-[#087FFF] text-white' : 'border-sky-100 bg-white text-slate-700'}`}>{categoryLabel(category)}</button>)}
       </div>}
       {kind === 'essential' && !fixedCategory && <div className="flex flex-wrap gap-2" aria-label={text('Yer türü', 'Place category')}>
-        {(['all', 'restaurant', 'hotel', 'cafe', 'attraction', 'museum', 'pharmacy', 'hospital', 'atm', 'bureau_de_change', 'shopping', 'police', 'taxi'] as const).map(category => <button type="button" key={category} aria-pressed={filter === category} onClick={() => { generation.current += 1; controller.current?.abort(); setFilter(category); setResult(null); setState('idle'); setError(null); setLimit(12) }} className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${filter === category ? 'border-[#00A3E0] bg-[#00A3E0] text-white' : 'border-slate-200 bg-white text-slate-700 hover:bg-sky-50'}`}>{category === 'all' ? text('Tümü', 'All') : categoryLabel(category)}</button>)}
+        {(['all', 'restaurant', 'hotel', 'cafe', 'attraction', 'museum', 'pharmacy', 'hospital', 'atm', 'bureau_de_change', 'shopping', 'barber', 'hair_salon', 'police', 'taxi'] as const).map(category => <button type="button" key={category} aria-pressed={filter === category} onClick={() => { generation.current += 1; controller.current?.abort(); setFilter(category); setResult(null); setState('idle'); setError(null); setLimit(12) }} className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${filter === category ? 'border-[#00A3E0] bg-[#00A3E0] text-white' : 'border-slate-200 bg-white text-slate-700 hover:bg-sky-50'}`}>{category === 'all' ? text('Tümü', 'All') : categoryLabel(category)}</button>)}
       </div>}
 
       <div aria-live="polite" role="status" className="text-xs text-slate-600">

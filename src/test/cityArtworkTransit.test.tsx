@@ -8,6 +8,18 @@ import {cityArtworkNotice} from '../lib/cityArtworkCopy';
 import TransitPlanner from '../components/TransitPlanner';
 import RailTravelGuide from '../components/RailTravelGuide';
 import {railCopy} from '../lib/railTravelCopy';
+import LocalTransportTips from '../components/LocalTransportTips';
+import {groomingCategoryLabel} from '../lib/groomingCopy';
+
+it.each(['tr','en','es','de','fr','ar','ru','zh'])('keeps local transport guidance collapsed and grooming labels localized: %s',locale=>{
+ const html=renderToString(<LocalTransportTips locale={locale}/>);
+ expect(html.match(/<details/g)).toHaveLength(2);
+ expect(html.match(/<summary/g)).toHaveLength(2);
+ expect(html).not.toMatch(/<details[^>]*\bopen/);
+ expect(groomingCategoryLabel('barber',locale)).toBeTruthy();
+ expect(groomingCategoryLabel('hair_salon',locale)).toBeTruthy();
+ expect(groomingCategoryLabel('restaurant',locale)).toBeUndefined();
+});
 
 it('provides local small and large artwork for every public city without changing venue photos',()=>{
  expect(artwork.map(p=>p.slug).sort()).toEqual(publicCities.map(p=>p.slug).sort());
