@@ -1,0 +1,21 @@
+{
+  "createdAt": "2026-10-24",
+  "generator": "OpenAI imagegen",
+  "scope": "Decorative city covers only; not real venue photography. Homepage search hero preserved.",
+  "promptStyle": "Premium photorealistic travel editorial landscape, one coherent scene, horizontal 3:2, natural refined colors, soft daylight, crisp realistic detail, balanced crop. No text, borders, logos, watermark or collage. Not a documentary or business photo.",
+  "subjects": {
+    "istanbul": "Ortaköy mosque, Bosphorus bridge, white ferry and seagulls in late afternoon.",
+    "antalya": "Turquoise Konyaaltı beach, Mediterranean sea and mountains.",
+    "cappadocia": "Göreme fairy chimneys and restrained hot-air balloons at sunrise.",
+    "ankara": "Anıtkabir colonnade and limestone plaza in afternoon light.",
+    "izmir": "Alaçatı cobblestone street, stone houses, blue shutters and bougainvillea.",
+    "mugla": "Bodrum/Yalıkavak marina, yachts, white coastal homes and blue bay.",
+    "aydin": "Kuşadası Güvercinada-inspired island castle, causeway and olive branches.",
+    "denizli": "Pamukkale white travertine terraces and pale blue pools.",
+    "trabzon": "Sümela-inspired cliff monastery in a green misty valley.",
+    "konya": "Mevlana-inspired green dome and historic courtyard.",
+    "bursa": "Uludağ snowy slopes, fir trees and cable car in winter sunlight.",
+    "gaziantep": "Baklava and copperware in a honey-stone historic courtyard."
+  },
+  "output": "640px and 1536px WebP, quality 80; original generated PNGs retained outside repository."
+}

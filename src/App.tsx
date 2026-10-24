@@ -1,3 +1,4 @@
+import CityArtwork from './components/CityArtwork';
 import { officialLinks, directoryText, sourcedActivities, cityPhotos } from './lib/visitorDirectory';
 import { readLanguagePreference, saveLanguagePreference } from './lib/languagePreference';
 import { cityTransportText } from './lib/cityTransportCopy';
@@ -1474,7 +1475,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
             </div>
 
             <div className="city-photo-banner relative rounded-3xl overflow-hidden shadow-md flex items-end p-6 text-white">
-              {currentCityInfo.coverImage && <img src={currentCityInfo.coverImage} alt={currentCityInfo.name} className="absolute inset-0 w-full h-full object-cover" />}
+              <CityArtwork city={selectedCityName} lang={lang} hero className="absolute inset-0 w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-transparent" />
               <div className="relative z-10">
                 <h1 className="text-3xl font-black">{currentCityInfo.name}</h1>

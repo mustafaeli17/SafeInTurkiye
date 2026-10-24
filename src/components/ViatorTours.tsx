@@ -13,7 +13,6 @@ const copy: Record<string, string[]> = {
 }
 type Result = { products: { code:string; title:string; description?:string; productUrl:string; photo?:string; fromPrice?:number; currency?:string }[]; totalCount:number; sandbox:boolean; language:string }
 const emptyFilters = { minPrice:'',maxPrice:'',duration:'any',rating:'any',date:'',sort:'recommended',currency:'EUR',private:false,freeCancellation:false,skipLine:false }
-const affiliateLabel = (lang:string) => ({en:'Affiliate link',tr:'İş ortağı bağlantısı',de:'Affiliate-Link',fr:'Lien affilié',ar:'رابط تسويق بالعمولة',ru:'Партнёрская ссылка',zh:'联盟推广链接',es:'Enlace de afiliado'}[lang] ?? 'Affiliate link')
 export default function ViatorTours({ lang, initialCity='istanbul' }: { lang:string; initialCity?:string }) {
   const t=copy[lang] ?? copy.en
   const f=tourFilterCopy(lang)
@@ -66,12 +65,12 @@ export default function ViatorTours({ lang, initialCity='istanbul' }: { lang:str
     {result?.sandbox&&<p className="mb-3 text-sm text-amber-800">{t[9]}</p>}
     {result?.language==='en'&&lang!=='en'&&<p className="mb-3 text-sm text-slate-600">{t[12]}</p>}
     {result&&result.products.length>0&&<p className="my-3 text-sm text-slate-600">{f[19]}: {new Intl.NumberFormat(lang).format(result.totalCount)} · {start}–{start+result.products.length-1}</p>}
+    {result&&result.products.length>0&&<p className="mb-4 text-xs leading-relaxed text-slate-500">{t[8]}</p>}
     {result?.products.map(p=><article key={p.code} className="travel-catalog-row">
       <div className="travel-catalog-photo">{p.photo&&<img src={p.photo} alt={p.title} width={720} height={480} loading="lazy" referrerPolicy="no-referrer" onError={e=>{e.currentTarget.style.visibility='hidden'}}/>}</div>
       <div className="travel-catalog-info"><h2 className="font-semibold">{p.title}</h2><span className="text-sm text-slate-600">Viator</span>{p.description&&<details className="mt-2 text-sm text-slate-600"><summary className="min-h-11 cursor-pointer py-2 text-blue-700">{f[21]}</summary><p>{p.description}</p></details>}</div>
       <div className="travel-catalog-action">{p.fromPrice!==undefined&&p.currency&&<span>{t[6]} {new Intl.NumberFormat(lang,{style:'currency',currency:p.currency}).format(p.fromPrice)}</span>}
-        <a href={p.productUrl} target="_blank" rel="sponsored noopener noreferrer" className="rounded-xl border border-blue-200 px-4 py-3 font-semibold text-blue-700">{t[7]} ↗</a>
-        <small className="block text-xs text-slate-500">{affiliateLabel(lang)} · Viator</small>
+        <a href={p.productUrl} target="_blank" rel="sponsored noopener noreferrer" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#087FFF] px-5 py-3 text-center text-sm font-bold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">{t[7]} <span aria-hidden="true">↗</span></a>
       </div>
     </article>)}
     {result&&<div className="mt-3 flex gap-3">{start>1&&<button className="rounded-xl border p-3" onClick={()=>void search(start-12)}>{t[11]}</button>}{result.products.length>0&&start+12<=result.totalCount&&start<9997&&<button className="rounded-xl border p-3" onClick={()=>void search(start+12)}>{t[10]}</button>}</div>}

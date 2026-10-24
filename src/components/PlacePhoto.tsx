@@ -1,3 +1,4 @@
+import {cityArtworkNotice} from '../lib/cityArtworkCopy';
 import { useState } from 'react';
 
 import {photoEditingCopy} from '../lib/contentTranslation';
@@ -18,5 +19,5 @@ export default function PlacePhoto({id,name,lang='en'}:{id:string;name:string;la
 }
 export function PhotoCredits({lang='en'}:{lang?:string}){
  const title:Record<string,string>={en:'Image credits',tr:'Görsel bilgileri',zh:'图片来源',de:'Bildnachweise',fr:'Crédits photo',ar:'مصادر الصور',ru:'Авторы фотографий'};
- return <details className="mt-2 text-[10px] text-slate-400"><summary className="cursor-pointer underline">{title[lang]??title.en}</summary><p>{lang==='tr'?'İstanbul panoraması: yapay zekâ ile oluşturulmuş dekoratif görsel.':lang==='zh'?'伊斯坦布尔全景：AI 生成的装饰图像。':'Istanbul panorama: AI-generated decorative image.'}</p><ul className="mt-2 space-y-1">{Object.entries(photos).map(([id,p])=><li key={id}><a href={p.source} target="_blank" rel="noreferrer" className="underline">{names[id]||p.alt} — {p.author}</a> · <a href={p.licenseUrl} target="_blank" rel="noreferrer">{p.license}</a></li>)}</ul><p>{photoEditingCopy[lang]??photoEditingCopy.en}</p></details>;
+ return <details className="mt-2 text-[10px] text-slate-400"><summary className="cursor-pointer underline">{title[lang]??title.en}</summary><p>{cityArtworkNotice[lang]??cityArtworkNotice.en}</p><ul className="mt-2 space-y-1">{Object.entries(photos).map(([id,p])=><li key={id}><a href={p.source} target="_blank" rel="noreferrer" className="underline">{names[id]||p.alt} — {p.author}</a> · <a href={p.licenseUrl} target="_blank" rel="noreferrer">{p.license}</a></li>)}</ul><p>{photoEditingCopy[lang]??photoEditingCopy.en}</p></details>;
 }

@@ -1,0 +1,134 @@
+[
+  {
+    "slug": "istanbul",
+    "name": "İstanbul",
+    "sourceFile": "exec-318aef0f-932f-4928-9044-cb1f7c65d2c6.png",
+    "generatedAt": "2026-10-24",
+    "kind": "AI-generated decorative destination artwork",
+    "thumbnail": "/photos/cities-2026/istanbul-640.webp",
+    "src": "/photos/cities-2026/istanbul-1536.webp",
+    "width": 1536,
+    "height": 1024
+  },
+  {
+    "slug": "antalya",
+    "name": "Antalya",
+    "sourceFile": "exec-00344a60-b24f-4482-988d-95820781e00f.png",
+    "generatedAt": "2026-10-24",
+    "kind": "AI-generated decorative destination artwork",
+    "thumbnail": "/photos/cities-2026/antalya-640.webp",
+    "src": "/photos/cities-2026/antalya-1536.webp",
+    "width": 1536,
+    "height": 1024
+  },
+  {
+    "slug": "cappadocia",
+    "name": "Cappadocia",
+    "sourceFile": "exec-abbc00e4-9817-493a-bb0f-b62a3ba24481.png",
+    "generatedAt": "2026-10-24",
+    "kind": "AI-generated decorative destination artwork",
+    "thumbnail": "/photos/cities-2026/cappadocia-640.webp",
+    "src": "/photos/cities-2026/cappadocia-1536.webp",
+    "width": 1536,
+    "height": 1024
+  },
+  {
+    "slug": "ankara",
+    "name": "Ankara",
+    "sourceFile": "exec-725ac84f-02a3-4a98-8709-1d789a163343.png",
+    "generatedAt": "2026-10-24",
+    "kind": "AI-generated decorative destination artwork",
+    "thumbnail": "/photos/cities-2026/ankara-640.webp",
+    "src": "/photos/cities-2026/ankara-1536.webp",
+    "width": 1536,
+    "height": 1024
+  },
+  {
+    "slug": "izmir",
+    "name": "İzmir",
+    "sourceFile": "exec-8dd57bc2-5d24-408c-8445-d118b0df6f31.png",
+    "generatedAt": "2026-10-24",
+    "kind": "AI-generated decorative destination artwork",
+    "thumbnail": "/photos/cities-2026/izmir-640.webp",
+    "src": "/photos/cities-2026/izmir-1536.webp",
+    "width": 1536,
+    "height": 1024
+  },
+  {
+    "slug": "mugla",
+    "name": "Muğla",
+    "sourceFile": "exec-f2761e2a-9d90-4500-b92e-b5afa3cb85eb.png",
+    "generatedAt": "2026-10-24",
+    "kind": "AI-generated decorative destination artwork",
+    "thumbnail": "/photos/cities-2026/mugla-640.webp",
+    "src": "/photos/cities-2026/mugla-1536.webp",
+    "width": 1536,
+    "height": 1024
+  },
+  {
+    "slug": "aydin",
+    "name": "Aydın",
+    "sourceFile": "exec-c8a02640-24b8-4688-82e0-f12f7fd573d3.png",
+    "generatedAt": "2026-10-24",
+    "kind": "AI-generated decorative destination artwork",
+    "thumbnail": "/photos/cities-2026/aydin-640.webp",
+    "src": "/photos/cities-2026/aydin-1536.webp",
+    "width": 1536,
+    "height": 1024
+  },
+  {
+    "slug": "denizli",
+    "name": "Denizli",
+    "sourceFile": "exec-fb7483bf-4e6e-47ce-a670-401cbcba0fa8.png",
+    "generatedAt": "2026-10-24",
+    "kind": "AI-generated decorative destination artwork",
+    "thumbnail": "/photos/cities-2026/denizli-640.webp",
+    "src": "/photos/cities-2026/denizli-1536.webp",
+    "width": 1536,
+    "height": 1024
+  },
+  {
+    "slug": "trabzon",
+    "name": "Trabzon",
+    "sourceFile": "exec-e49e637d-a6c1-41fa-8ce6-078139f71e1c.png",
+    "generatedAt": "2026-10-24",
+    "kind": "AI-generated decorative destination artwork",
+    "thumbnail": "/photos/cities-2026/trabzon-640.webp",
+    "src": "/photos/cities-2026/trabzon-1536.webp",
+    "width": 1536,
+    "height": 1024
+  },
+  {
+    "slug": "konya",
+    "name": "Konya",
+    "sourceFile": "exec-3f94068f-7f17-4d69-b36a-a3aedcdd8c65.png",
+    "generatedAt": "2026-10-24",
+    "kind": "AI-generated decorative destination artwork",
+    "thumbnail": "/photos/cities-2026/konya-640.webp",
+    "src": "/photos/cities-2026/konya-1536.webp",
+    "width": 1536,
+    "height": 1024
+  },
+  {
+    "slug": "bursa",
+    "name": "Bursa",
+    "sourceFile": "exec-d131acf8-2fb5-4ea2-868b-49e35113ada9.png",
+    "generatedAt": "2026-10-24",
+    "kind": "AI-generated decorative destination artwork",
+    "thumbnail": "/photos/cities-2026/bursa-640.webp",
+    "src": "/photos/cities-2026/bursa-1536.webp",
+    "width": 1536,
+    "height": 1024
+  },
+  {
+    "slug": "gaziantep",
+    "name": "Gaziantep",
+    "sourceFile": "exec-723f4dec-280d-4c70-88e8-6b767143ffb2.png",
+    "generatedAt": "2026-10-24",
+    "kind": "AI-generated decorative destination artwork",
+    "thumbnail": "/photos/cities-2026/gaziantep-640.webp",
+    "src": "/photos/cities-2026/gaziantep-1536.webp",
+    "width": 1536,
+    "height": 1024
+  }
+]

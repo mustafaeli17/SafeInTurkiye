@@ -11,12 +11,14 @@ const copy: Record<string, [string, string, string]> = {
   zh: ['Metrobüs — 快速公交，并非地铁', 'Metrobüs 沿 Beylikdüzü–Söğütlüçeşme 走廊连接伊斯坦布尔两岸。请确认车辆终点，并非每班车都行驶全程。出行前请查询 İstanbulkart 使用条件和最新票价。', 'İETT：车站、线路与发车时间'],
 };
 
-export default function MetrobusGuide({ lang }: { lang: string }) {
+export const metrobusStopsUrl = 'https://iett.istanbul/icerik/metrobus-hatlari';
+export default function MetrobusGuide({ lang, inline = false, stopsLabel = '' }: { lang: string; inline?: boolean; stopsLabel?: string }) {
   const t = copy[lang.toLowerCase()] ?? copy.en;
-  return <section className="rounded-2xl border border-sky-100 bg-white p-5 space-y-3">
+  const content = <section className="rounded-2xl border border-sky-100 bg-white p-5 space-y-3">
     <h2 className="flex items-center gap-2 font-extrabold text-slate-900"><Bus aria-hidden="true" className="h-5 w-5 text-[#087FFF]" />{t[0]}</h2>
     <p className="text-sm leading-relaxed text-slate-600">{t[1]}</p>
     <a className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-blue-700 underline" href="https://www.iett.istanbul/RouteDetail?hkod=34G" target="_blank" rel="noreferrer">{t[2]}<ExternalLink aria-hidden="true" className="h-4 w-4" /></a>
-    <p className="text-xs text-slate-500">İETT · 2026-09-24 · <a className="underline" href="https://www.iett.istanbul/icerik/Metrobus" target="_blank" rel="noreferrer">Metrobüs</a> · <a className="underline" href="https://www.istanbulkart.istanbul/" target="_blank" rel="noreferrer">İstanbulkart</a></p>
+    <p className="text-xs text-slate-500">İETT · <a className="underline" href={metrobusStopsUrl} target="_blank" rel="noreferrer">Metrobüs</a> · <a className="underline" href="https://www.istanbulkart.istanbul/" target="_blank" rel="noreferrer">İstanbulkart</a></p>
   </section>;
+  return inline ? <details className="reference-transit-row"><summary><Bus aria-hidden="true" className="h-5 w-5"/><strong>Metrobüs · İETT</strong><span>{stopsLabel}</span></summary>{content}</details> : content;
 }
