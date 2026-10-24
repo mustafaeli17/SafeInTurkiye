@@ -5,6 +5,14 @@ import { readFileSync } from 'node:fs'
 
 const parse=(s:string)=>viatorFilters(new URLSearchParams(s),'2026-10-10')
 describe('Viator full-catalog filters',()=>{
+ it('keeps one readable disclosure after results and preserves sponsored tracking links',()=>{
+  const source=readFileSync('src/components/ViatorTours.tsx','utf8')
+  expect(source.match(/\{t\[8\]\}/g)).toHaveLength(1)
+  expect(source.indexOf('data-testid="tour-disclosure"')).toBeGreaterThan(source.indexOf('search(start+12)'))
+  expect(source).toContain('href={p.productUrl}')
+  expect(source).toContain('rel="sponsored noopener noreferrer"')
+  expect(source).not.toContain('affiliateLabel')
+ })
  it('keeps the existing unfiltered request unchanged',()=>expect(parse('')).toEqual({filtering:{},sorting:{sort:'DEFAULT'}}))
  it('maps documented price, duration, rating, date and flags',()=>{
   expect(parse('minPrice=20&maxPrice=100&duration=short&rating=4&date=2026-10-12&private=true&freeCancellation=true&skipLine=true&sort=priceAsc')).toEqual({

@@ -65,7 +65,6 @@ export default function ViatorTours({ lang, initialCity='istanbul' }: { lang:str
     {result?.sandbox&&<p className="mb-3 text-sm text-amber-800">{t[9]}</p>}
     {result?.language==='en'&&lang!=='en'&&<p className="mb-3 text-sm text-slate-600">{t[12]}</p>}
     {result&&result.products.length>0&&<p className="my-3 text-sm text-slate-600">{f[19]}: {new Intl.NumberFormat(lang).format(result.totalCount)} · {start}–{start+result.products.length-1}</p>}
-    {result&&result.products.length>0&&<p className="mb-4 text-xs leading-relaxed text-slate-500">{t[8]}</p>}
     {result?.products.map(p=><article key={p.code} className="travel-catalog-row">
       <div className="travel-catalog-photo">{p.photo&&<img src={p.photo} alt={p.title} width={720} height={480} loading="lazy" referrerPolicy="no-referrer" onError={e=>{e.currentTarget.style.visibility='hidden'}}/>}</div>
       <div className="travel-catalog-info"><h2 className="font-semibold">{p.title}</h2><span className="text-sm text-slate-600">Viator</span>{p.description&&<details className="mt-2 text-sm text-slate-600"><summary className="min-h-11 cursor-pointer py-2 text-blue-700">{f[21]}</summary><p>{p.description}</p></details>}</div>
@@ -74,5 +73,6 @@ export default function ViatorTours({ lang, initialCity='istanbul' }: { lang:str
       </div>
     </article>)}
     {result&&<div className="mt-3 flex gap-3">{start>1&&<button className="rounded-xl border p-3" onClick={()=>void search(start-12)}>{t[11]}</button>}{result.products.length>0&&start+12<=result.totalCount&&start<9997&&<button className="rounded-xl border p-3" onClick={()=>void search(start+12)}>{t[10]}</button>}</div>}
+    {result&&result.products.length>0&&<p className="mt-8 border-t border-slate-200 pt-4 text-xs leading-relaxed text-slate-600" data-testid="tour-disclosure">{t[8]}</p>}
   </section>
 }
