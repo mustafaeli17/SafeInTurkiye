@@ -1,6 +1,7 @@
 import {afterEach,beforeEach,describe,expect,it,vi} from 'vitest';
 import {navigateTo,updateLocationQuery} from '../lib/browserNavigation';
 import {destinationSlug,discoveryCity} from '../lib/discoveryNavigation';
+import {readDiscoveryArea,saveDiscoveryArea} from '../lib/discoveryState';
 
 function setup(start='https://www.safeinturkiye.com/'){
  const target=new EventTarget(),entries=[{url:new URL(start),state:null as unknown}];let index=0;
@@ -40,5 +41,19 @@ describe('browser navigation',()=>{
  it('round-trips every supported search anchor including Turkish letters',()=>{
   for(const city of ['İstanbul','İzmir','Muğla','Bodrum','Kuşadası','Çeşme','Alaçatı','Cappadocia'])expect(discoveryCity(`city=${destinationSlug(city)}`,'Ankara')).toBe(city);
   expect(discoveryCity('city=unknown','Antalya')).toBe('Antalya');
+ });
+ it('restores a selected area from tab history without exposing its address in URLs',()=>{
+  navigateTo('/restaurants?city=aydin');const area={label:'Beşiktaş, İstanbul',lat:41.04,lng:29};
+  saveDiscoveryArea(area,1000);expect(readDiscoveryArea(2000)).toEqual(area);
+  updateLocationQuery({place:'google:Example'},{state:{placeList:'/restaurants?city=aydin'}});
+  expect(readDiscoveryArea(2000)).toEqual(area);expect(window.location.href).not.toContain('Beşiktaş');
+  window.history.back();expect(readDiscoveryArea(2000)).toEqual(area);
+  expect(readDiscoveryArea(1801001)).toBeNull();
+  updateLocationQuery({city:'antalya'});expect(readDiscoveryArea(2000)).toBeNull();
+ });
+ it('clears a saved area and rejects malformed stored locations',()=>{
+  saveDiscoveryArea({label:'Test',lat:41,lng:29});saveDiscoveryArea(null);expect(readDiscoveryArea()).toBeNull();
+  window.history.replaceState({discoveryArea:{scope:'/?city=',until:Date.now()+10000,place:{label:'Unsafe',lat:999,lng:29}}},'',window.location.href);
+  expect(readDiscoveryArea()).toBeNull();
  });
 });

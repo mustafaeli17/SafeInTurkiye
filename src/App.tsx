@@ -1,3 +1,5 @@
+import AccessibleDialog from './components/AccessibleDialog';
+import {authCopy} from './lib/authCopy';
 import {
 Bot,
 Building2,
@@ -16,10 +18,12 @@ Utensils,
 X
 } from 'lucide-react';
 import { lazy,Suspense,useCallback,useEffect,useRef,useState } from 'react';
-import siteLogo from './assets/safeinturkiye-logo.png';
+const siteLogo='/brand-logo.webp';
 import CityArtwork from './components/CityArtwork';
 import HomeButton from './components/HomeButton';
-import NearbyPlaces from './components/NearbyPlaces';
+import type {ComponentProps} from 'react';
+const NearbyPlacesComponent=lazy(()=>import('./components/NearbyPlaces'));
+function NearbyPlaces(props:ComponentProps<typeof NearbyPlacesComponent>){return <Suspense fallback={<PageLoading lang={props.lang}/>}><NearbyPlacesComponent {...props}/></Suspense>;}
 import PageLoading from './components/PageLoading';
 import PhotoCredits from './components/PhotoCredits';
 import SponsoredBusinesses from './components/SponsoredBusinesses';
@@ -1296,10 +1300,6 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
               ))}
             </div>
             <SafetyTips lang={lang} />
-            <section className="reference-safety-banner">
-              <div><h2>{page('safety')}</h2><p><span aria-hidden="true">✅</span> {page('taxiSafety')}</p><p><span aria-hidden="true">✅</span> {page('usefulText')}</p><a href="tel:112"><span aria-hidden="true">🚨</span> {page('emergencyTitle')} · 112</a></div>
-              <CityArtwork city="Antalya" lang={lang} />
-            </section>
          </main>
         )}
 
@@ -1307,55 +1307,52 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
             PAGE 11: ROLE-PROTECTED ADMIN CMS
         ==================================================================== */}
         {activeTab === 'admin' && isStaff && <Suspense fallback={<PageLoading lang={lang}/>}><ContentAdmin role={role} /></Suspense>}
-        {activeTab === 'admin' && !isStaff && <main className="max-w-xl mx-auto p-6 my-8 rounded-2xl bg-white border border-sky-100 space-y-4"><h1 className="text-xl font-bold">Yönetici girişi</h1><p>{session ? 'Hesabınızın içerik yönetimi yetkisi kontrol ediliyor. Yetki verilmemişse bu bölüm açılamaz.' : 'Yönetim panelini açmak için yetkili hesabınızla giriş yapın.'}</p>{!session && <button onClick={() => setAuthModalOpen(true)} className="bg-sky-600 text-white rounded-xl px-5 py-3">Giriş yap</button>}</main>}
+        {activeTab === 'admin' && !isStaff && <main className="max-w-xl mx-auto p-6 my-8 rounded-2xl bg-white border border-sky-100 space-y-4"><h1 className="text-xl font-bold">{authCopy[lang][0]}</h1><p>{authCopy[lang][session?8:1]}</p>{!session && <button onClick={() => setAuthModalOpen(true)} className="bg-sky-600 text-white rounded-xl px-5 py-3">{footerCopy[lang].signIn}</button>}</main>}
 
       </div>
 
       {authModalOpen && (
-        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <AccessibleDialog label={authCopy[lang][0]} onClose={()=>setAuthModalOpen(false)}>
           <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-4 text-center">
             <div className="w-12 h-12 rounded-2xl bg-sky-50 text-[#087FFF] flex items-center justify-center mx-auto">
               <Lock className="w-6 h-6" />
             </div>
             <div>
               <h3 className="font-extrabold text-[17px] text-slate-900">{footerCopy[lang].signIn}</h3>
-              <p className="text-[12px] text-slate-500">CMS access is granted only by your Supabase role.</p>
+              <p className="text-[12px] text-slate-500">{authCopy[lang][1]}</p>
             </div>
             <input
-              type="email" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} placeholder="Email"
+              type="email" aria-label={authCopy[lang][2]} autoComplete="username" autoFocus value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} placeholder={authCopy[lang][2]}
               className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] focus:outline-none focus:border-[#087FFF]"
             />
-            <input type="password" value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} placeholder="Password" className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] focus:outline-none focus:border-[#087FFF]" />
+            <input type="password" aria-label={authCopy[lang][3]} autoComplete="current-password" value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} placeholder={authCopy[lang][3]} className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] focus:outline-none focus:border-[#087FFF]" />
             {authError && <p className="text-[12px] text-red-600">{authError}</p>}
             <div className="flex gap-2">
-              <button onClick={() => setAuthModalOpen(false)} className="flex-1 h-10 bg-slate-100 text-slate-600 font-bold rounded-xl text-[12px]">Cancel</button>
+              <button onClick={() => setAuthModalOpen(false)} className="flex-1 h-11 bg-slate-100 text-slate-600 font-bold rounded-xl text-[12px]">{authCopy[lang][4]}</button>
               <button
                 disabled={authBusy}
                 onClick={async () => {
                   if (authBusy) return;
-                  if (!supabaseConfigured) { setAuthError('Bu yerel önizleme Supabase hesabına bağlı değil. Giriş için geçerli Publishable/anon anahtarı yerel ortamda yapılandırılmalı.'); return; }
+                  if (!supabaseConfigured) { setAuthError(authCopy[lang][6]); return; }
                   setAuthBusy(true); setAuthError(null);
                   try {
                   const result = await signIn(authEmail, authPassword);
                   if (result?.error) {
-                    const raw = result.error.message || '';
-                    setAuthError(/invalid api key|apikey/i.test(raw)
-                      ? 'Supabase bağlantısı geçersiz. Vercel Production ortamındaki URL ve Publishable/anon key aynı Supabase projesine ait olmalı.'
-                      : raw);
+                    setAuthError(result.error.code==='invalid_credentials'?authCopy[lang][7]:authCopy[lang][6]);
                     return;
                   }
                   setAuthModalOpen(false); setAuthError(null);
                   setAuthPassword('');
-                  } catch { setAuthError('Giriş hizmetine ulaşılamadı. Lütfen yeniden deneyin.'); }
+                  } catch { setAuthError(authCopy[lang][6]); }
                   finally { setAuthBusy(false); }
                 }}
-                className="flex-1 h-10 bg-[#087FFF] hover:bg-[#0284C7] text-white font-bold rounded-xl text-[12px]"
+                className="flex-1 h-11 bg-[#087FFF] hover:bg-[#0284C7] text-white font-bold rounded-xl text-[12px]"
               >
-                {authBusy ? (lang === 'tr' ? 'Giriş yapılıyor…' : 'Please wait…') : footerCopy[lang].signIn}
+                {authBusy ? authCopy[lang][5] : footerCopy[lang].signIn}
               </button>
             </div>
           </div>
-        </div>
+        </AccessibleDialog>
       )}
 
       {/* FOOTER */}

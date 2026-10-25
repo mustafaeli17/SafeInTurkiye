@@ -23,9 +23,14 @@ export const taxiBudgets:Record<string,Budget>={
  'Nevşehir':{samples:[sample(52,65,200)],sources:['https://cappadociareviews.com/cappadocia-taxi-prices/'],scope:'Nevşehir / Göreme / Ürgüp; not Kayseri'},
 };
 
-export function taxiBudgetRange(city:string,distances:number[],vehicle='YELLOW'){
+export const BUDGET_RECHECK_DAYS=30;
+export function budgetIsCurrent(reviewedAt:string,now=Date.now()){
+ const date=Date.parse(reviewedAt+'T00:00:00Z');
+ return /^\d{4}-\d{2}-\d{2}$/.test(reviewedAt)&&Number.isFinite(date)&&new Date(date).toISOString().slice(0,10)===reviewedAt&&date<=now&&now-date<=BUDGET_RECHECK_DAYS*86400000;
+}
+export function taxiBudgetRange(city:string,distances:number[],vehicle='YELLOW',now=Date.now()){
  const budget=taxiBudgets[city];
- if(!budget||vehicle!=='YELLOW')return null;
+ if(!budget||vehicle!=='YELLOW'||!budgetIsCurrent(budget.reviewedAt??budgetReviewedAt,now))return null;
  if(!distances.length||distances.some(km=>!Number.isFinite(km)||km<=0))throw new Error('INVALID_FARE_INPUT');
  const fares=budget.samples.flatMap(s=>distances.map(km=>s.after5!==undefined
   ? Math.max(s.minimum,s.opening+Math.min(km,5)*s.km+Math.max(0,km-5)*s.after5)

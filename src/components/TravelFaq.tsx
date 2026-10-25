@@ -1,5 +1,6 @@
 import SearchAlternatives from './SearchAlternatives';
 import { useState } from 'react';
+import {restaurantRequestsEnabled,reservationUnavailable} from '../lib/reservationAvailability';
 import { practicalFaq, practicalSources } from '../data/practicalFaq';
 
 const questions = [
@@ -105,7 +106,11 @@ export default function TravelFaq({ lang, initialQuery = '' }: { lang: string; i
   const tr = lang === 'tr';
   const labels = ui[lang] ?? ui.en;
   const title = ({ es: 'Preguntas frecuentes', tr: 'Sık sorulan sorular', en: 'Frequently asked questions', de: 'Häufige Fragen', fr: 'Questions fréquentes', ar: 'الأسئلة الشائعة', zh: '常见问题', ru: 'Частые вопросы' } as Record<string,string>)[lang] ?? 'Frequently asked questions';
-  const rows = questions.map((row, index) => localized[lang]?.[index] ? [localized[lang][index][0], localized[lang][index][0], localized[lang][index][1], localized[lang][index][1], row[4]] : row);
+  const rows = questions.map((row, index) => {
+    const translated=localized[lang]?.[index] ? [localized[lang][index][0], localized[lang][index][0], localized[lang][index][1], localized[lang][index][1], row[4]] : [...row];
+    if(index===8&&!restaurantRequestsEnabled){const notice=reservationUnavailable[lang]??reservationUnavailable.en;translated[2]=notice+' '+translated[2];translated[3]=notice+' '+translated[3];}
+    return translated;
+  });
   const extra = (practicalFaq[lang] ?? practicalFaq.en).map(([question, answer], index) => [question, question, answer, answer, practicalSources[index] ?? '']);
   const items = [...rows, ...extra].filter((row, index) => index !== 9 && (topic === -1 || topicRows[topic].includes(index)) && row.slice(0,4).join(' ').toLocaleLowerCase().includes(query.toLocaleLowerCase()));
   return <main dir={lang === 'ar' ? 'rtl' : 'ltr'} className="reference-page reference-guides max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-4 pb-24">

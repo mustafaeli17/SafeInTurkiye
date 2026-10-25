@@ -1,6 +1,8 @@
-import {expect,it} from 'vitest';
+import {expect,it,beforeEach,afterEach,vi} from 'vitest';
 import cityGuides from '../data/cityGuides.json';
 import {taxiBudgetRange,taxiBudgets} from '../lib/taxiBudget';
+beforeEach(()=>vi.useFakeTimers({now:new Date('2026-10-25T12:00:00Z')}));
+afterEach(()=>vi.useRealTimers());
 
 it.each(['İstanbul','Antalya','Nevşehir','Ankara','İzmir',...cityGuides.map(c=>c.name)])('%s returns a sourced standard-taxi budget without CMS data',city=>{
  const result=taxiBudgetRange(city,[10,12]);

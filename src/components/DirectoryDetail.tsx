@@ -7,7 +7,7 @@ import type { DirectoryEntry } from '../lib/directory';
 import { entryPath } from '../lib/directory';
 import {localizedDetailPath} from '../lib/publicRoutes';
 import { entryPhotos,contextLabel,illustrativeLabel } from '../lib/directoryPhotos';
-import siteLogo from '../assets/safeinturkiye-logo.png';
+const siteLogo='/brand-logo.webp';
 import { useDetailSeo } from '../lib/useDetailSeo';
 import { safeTelephone } from '../services/nearbyPlaces';
 import {catalogWebsite} from '../lib/catalogLinks';

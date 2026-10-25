@@ -1,0 +1,2 @@
+export const currencyInputCopy:Record<string,string>={en:'Enter a valid amount of zero or more.',tr:'Sıfır veya daha büyük geçerli bir tutar girin.',de:'Geben Sie einen gültigen Betrag ab null ein.',fr:'Saisissez un montant valide supérieur ou égal à zéro.',es:'Introduce un importe válido igual o mayor que cero.',ar:'أدخل مبلغًا صالحًا يساوي صفرًا أو أكثر.',ru:'Введите корректную сумму не меньше нуля.',zh:'请输入大于或等于零的有效金额。'};
+export const invalidCurrencyAmount=(value:string)=>!value.trim()||!Number.isFinite(Number(value))||Number(value)<0;

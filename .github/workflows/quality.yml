@@ -1,0 +1,24 @@
+name: Quality checks
+on:
+  pull_request:
+  push:
+    branches: [main, codex/phase3-places-preview]
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test -- --maxWorkers=2
+      - run: npm run build
+      - run: node scripts/check-photo-assets.mjs
+      - run: node scripts/check-favicon-build.mjs
+      - run: node scripts/check-seo-build.mjs

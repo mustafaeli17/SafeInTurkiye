@@ -22,5 +22,5 @@ export function navigateTo(path:string,{replace=false,scroll=true,state={}}:{rep
 export function updateLocationQuery(values:Record<string,string|null>,options:{replace?:boolean;state?:Record<string,unknown>}={}){
  const url=new URL(window.location.href);
  for(const [key,value] of Object.entries(values)){if(value===null)url.searchParams.delete(key);else url.searchParams.set(key,value);}
- navigateTo(url.pathname+url.search,{...options,scroll:false});
+ navigateTo(url.pathname+url.search,{...options,state:{...window.history.state,...options.state},scroll:false});
 }

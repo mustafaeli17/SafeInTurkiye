@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import {currencyInputCopy,invalidCurrencyAmount} from '../lib/currencyInput';
 import { Calculator, Loader2, RefreshCw } from 'lucide-react';
 import { convertReferenceAmount, getReferenceRates, referencePublicationAge, TravelDataError, supportedCurrencies } from '../services/travelDataService';
 import type { CurrencyCode, ReferenceRates } from '../services/travelDataService';
@@ -71,10 +72,11 @@ export default function CurrencyRates({ lang = 'en' }: { lang?: string }) {
     <div className="bg-white p-5 rounded-2xl border border-sky-100 shadow-sm space-y-3">
       <div className="flex gap-2 items-center font-extrabold text-[15px] text-slate-900"><Calculator className="w-5 h-5 text-[#00A3E0]" />{t.converter}</div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-        <input aria-label={fields[0]} type="number" min="0" step="any" value={amount} onChange={e => setAmount(e.target.value)} className="h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px]" />
+        <input aria-label={fields[0]} aria-invalid={invalidCurrencyAmount(amount)} aria-describedby={invalidCurrencyAmount(amount)?'currency-input-error':undefined} type="number" min="0" step="any" value={amount} onChange={e => setAmount(e.target.value)} className="h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px]" />
         <select aria-label={fields[1]} value={from} onChange={e => setFrom(e.target.value as CurrencyCode)} className="h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px]">{currencies.map(c => <option key={c}>{c}</option>)}</select>
         <select aria-label={fields[2]} value={to} onChange={e => setTo(e.target.value as CurrencyCode)} className="h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px]">{currencies.map(c => <option key={c}>{c}</option>)}</select>
       </div>
+      {invalidCurrencyAmount(amount)&&<p id="currency-input-error" role="status" className="text-sm text-red-700">{currencyInputCopy[lang]??currencyInputCopy.en}</p>}
       {converted !== null && <CurrencyResult amount={Number(amount)} from={from} to={to} converted={converted} lang={lang} label={t.ref} />}
     </div>
   </section>;
