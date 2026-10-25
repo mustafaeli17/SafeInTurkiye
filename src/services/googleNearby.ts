@@ -8,6 +8,9 @@ export function parseGooglePlaces(payload: unknown, center: NearbyCenter, catego
   const records = new Map<string, NearbyPlaceRecord>()
   for (const p of payload.places) {
     if (!p || typeof p !== 'object' || typeof p.id !== 'string' || !p.id || p.businessStatus === 'CLOSED_PERMANENTLY') continue
+    // A parent hotel/mall may list restaurant as a secondary service. Do not
+    // advertise the whole parent property as an independently named restaurant.
+    if(category==='restaurant' && ['hotel','lodging','shopping_mall'].includes(p.primaryType))continue
     const point = { lat: p.location?.latitude, lng: p.location?.longitude }
     if (!isValidCenter(point) || !str(p.displayName?.text)) continue
     const distance = distanceInMeters(center, point)

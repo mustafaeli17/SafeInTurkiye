@@ -34,7 +34,7 @@ export default async function handler(req: Request, res: Response) {
     const upstream = await fetch(`https://places.googleapis.com/v1/places:${exchange ? 'searchText' : 'searchNearby'}`, {
       method: 'POST', signal: AbortSignal.timeout(8000),
       headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': key,
-        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.location,places.types,places.primaryTypeDisplayName,places.photos,places.googleMapsUri,places.businessStatus,places.rating,places.userRatingCount,places.currentOpeningHours,places.regularOpeningHours,places.internationalPhoneNumber,places.websiteUri,places.attributions' },
+        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.location,places.types,places.primaryType,places.primaryTypeDisplayName,places.photos,places.googleMapsUri,places.businessStatus,places.rating,places.userRatingCount,places.currentOpeningHours,places.regularOpeningHours,places.internationalPhoneNumber,places.websiteUri,places.attributions' },
       body: JSON.stringify(exchange
         ? { textQuery: 'döviz bürosu currency exchange', locationBias: { circle }, pageSize: 20, languageCode: lang === 'zh' ? 'zh-CN' : lang }
         : { includedTypes: types[category], locationRestriction: { circle }, maxResultCount: 20, rankPreference: 'POPULARITY', languageCode: lang === 'zh' ? 'zh-CN' : lang }),

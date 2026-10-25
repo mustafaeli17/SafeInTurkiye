@@ -9,14 +9,14 @@ export const taxiEstimateCopy: Record<string, [string,string]> = {
  zh:['按距离估算车费','不含等候费、通行费和附加费用。'],
 };
 export const taxiDetailsCopy:Record<string,[string,string,string]>={
- es:['Detalles del cálculo','Aproximadamente','Intervalo según rutas alternativas, sin tráfico ni meteorología en directo. El taxímetro determina el precio final.'],
- tr:['Hesaplama detayları','Yaklaşık','Alternatif yol mesafelerine göre aralık; canlı trafik veya hava tahmini değildir. Son ücret taksimetreye göre belirlenir.'],
- en:['Calculation details','Approximately','Range across alternative road routes, not live traffic or weather. Final fare is determined by the meter.'],
- de:['Berechnungsdetails','Ungefähr','Spanne alternativer Straßenrouten, keine Live-Verkehrs- oder Wetterprognose. Der Taxameter bestimmt den Endpreis.'],
- fr:['Détails du calcul','Environ','Fourchette selon les itinéraires, sans trafic ni météo en direct. Le compteur détermine le prix final.'],
- ar:['تفاصيل الحساب','تقريبًا','النطاق حسب الطرق البديلة، وليس حركة المرور أو الطقس المباشر. العداد يحدد الأجرة النهائية.'],
- ru:['Детали расчёта','Примерно','Диапазон по альтернативным маршрутам, без текущего трафика и погоды. Итог определяет таксометр.'],
- zh:['计算详情','约','区间基于不同道路路线，不含实时交通或天气影响。最终车费以计价器为准。'],
+ es:['Detalles del cálculo','Aproximadamente','Cálculo según la ruta indicada, sin tráfico ni meteorología en directo. El taxímetro determina el precio final.'],
+ tr:['Hesaplama detayları','Yaklaşık','Gösterilen hesaplama rotasına göre tahmin; canlı trafik veya hava tahmini değildir. Son ücret taksimetreye göre belirlenir.'],
+ en:['Calculation details','Approximately','Estimate for the stated calculation route, not live traffic or weather. Final fare is determined by the meter.'],
+ de:['Berechnungsdetails','Ungefähr','Schätzung für die angegebene Berechnungsroute, keine Live-Verkehrs- oder Wetterprognose. Der Taxameter bestimmt den Endpreis.'],
+ fr:['Détails du calcul','Environ','Estimation pour le trajet de calcul indiqué, sans trafic ni météo en direct. Le compteur détermine le prix final.'],
+ ar:['تفاصيل الحساب','تقريبًا','تقدير لمسار الحساب الموضح، وليس حركة المرور أو الطقس المباشر. العداد يحدد الأجرة النهائية.'],
+ ru:['Детали расчёта','Примерно','Оценка для указанного расчётного маршрута, без текущего трафика и погоды. Итог определяет таксометр.'],
+ zh:['计算详情','约','估算基于所示计算路线，不含实时交通或天气影响。最终车费以计价器为准。'],
 };
 
 export const taxiBudgetCopy:Record<string,string>={

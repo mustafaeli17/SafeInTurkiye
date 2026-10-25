@@ -1,5 +1,8 @@
+import PageLoading from './components/PageLoading';
 import { useEffect, useState, lazy, Suspense } from 'react';
 import App from './App';
+import {sectionFromPath} from './lib/sectionNavigation';
+import SiteInformation from './components/SiteInformation';
 import { readLanguagePreference } from './lib/languagePreference';
 import { directoryEntry, registerPublishedEntry, photoCuratedCatalog } from './lib/directory';
 import type { DirectoryEntry } from './lib/directory';
@@ -38,8 +41,11 @@ export default function TravelApp() {
   // routes are explicit and do not depend on a previous browser visit.
   const language=entry?(localized?'tr':preference==='tr'?'en':preference):preference;
   const city=publicCities.find(item=>path.replace(/\/$/,'')===`/cities/${item.slug}`);
-  if(city)return <Suspense fallback={<main className="p-8" aria-busy="true">SafeInTürkiye…</main>}><CityGuide city={city} language={language} onBack={back}/></Suspense>;
-  if(match && remote?.path!==path)return <main className="p-8" aria-busy="true">SafeInTürkiye…</main>;
+  const section=sectionFromPath(path);
+  if(['/privacy','/terms','/about','/contact'].includes(path))return <SiteInformation page={path.slice(1) as 'privacy'|'terms'|'about'|'contact'}/>;
+  if(section)return <App initialSection={section}/>;
+  if(city)return <Suspense fallback={<PageLoading lang={language}/>}><CityGuide city={city} language={language} onBack={back}/></Suspense>;
+  if(match && remote?.path!==path)return <PageLoading lang={language}/>;
   if(path!=='/'&&!entry)return <main className="max-w-xl mx-auto p-8 space-y-4"><h1 className="text-xl font-bold">{language==='tr'?'İçerik şu anda görüntülenemiyor':'This page is currently unavailable'}</h1><p>{language==='tr'?'Kayıt yayından kaldırılmış veya bağlantı geçici olarak kesilmiş olabilir.':'The entry may no longer be published, or the connection may be temporarily unavailable.'}</p><button className="text-blue-700 underline" onClick={back}>{language==='tr'?'Ana sayfaya dön':'Back to home'}</button></main>;
-  return entry ? <Suspense fallback={<main className="p-8" aria-busy="true">SafeInTürkiye…</main>}><DirectoryDetail key={entry.id} entry={entry} lang={language} onBack={back}/></Suspense> : <App/>;
+  return entry ? <Suspense fallback={<PageLoading lang={language}/>}><DirectoryDetail key={entry.id} entry={entry} lang={language} onBack={back}/></Suspense> : <App/>;
 }

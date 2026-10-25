@@ -1,0 +1,12 @@
+{
+  "taxi": {"path":"/taxi","title":"Taxi Fare Estimates","description":"Estimate a taxi journey with route distance, tariff sources and clearly stated limitations."},
+  "transit": {"path":"/transport","title":"Public Transport","description":"Plan public transport journeys and find official operators in Türkiye."},
+  "currency": {"path":"/exchange","title":"Exchange Rates","description":"Convert reference currencies and find exchange offices near a selected location."},
+  "nearme": {"path":"/near-me","title":"Nearby Places","description":"Find businesses and useful places near your chosen city or address."},
+  "stay": {"path":"/hotels","title":"Hotel Discovery","description":"Discover hotels and contact their official websites. Room prices and availability are not provided here."},
+  "food": {"path":"/restaurants","title":"Restaurants","description":"Explore restaurants, addresses, contact details and official websites in Türkiye."},
+  "experiences": {"path":"/activities","title":"Attractions and Activities","description":"Discover museums, attractions and entertainment in Türkiye."},
+  "tours": {"path":"/tours","title":"Tours and Experiences","description":"Explore tours and transfers. Booking and payment take place on Viator."},
+  "safety": {"path":"/safety","title":"Travel Safety","description":"Practical safety guidance and emergency information for visitors to Türkiye."},
+  "assistant": {"path":"/guides","title":"Travel Questions and Guides","description":"Practical answers about transport, money and visiting Türkiye."}
+}

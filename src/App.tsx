@@ -1,4 +1,9 @@
+import PageLoading from './components/PageLoading';
 import CityArtwork from './components/CityArtwork';
+import {sectionFromPath,sectionPath,transferIntent,type Section} from './lib/sectionNavigation';
+import {taxiRouteNotice} from './lib/taxiRouteNotice';
+import {siteInformation} from './lib/siteInformation';
+import {cityLocale,cityDisplayName} from './lib/cityLocale';
 import { officialLinks, directoryText, sourcedActivities, cityPhotos } from './lib/visitorDirectory';
 import { readLanguagePreference, saveLanguagePreference } from './lib/languagePreference';
 import { cityTransportText } from './lib/cityTransportCopy';
@@ -184,6 +189,7 @@ interface TaxiTariff {
   waitingFarePerHour: number;
   source: string;
   lastUpdated: string;
+  sourceUrl?: string;
 }
 
 
@@ -617,25 +623,33 @@ function SafeRouteMap({
 // ============================================================================
 // 4. ANA BİLEŞEN
 // ============================================================================
-export default function App({initialCity,initialLanguage}:{initialCity?:string;initialLanguage?:string} = {}) {
+export default function App({initialCity,initialLanguage,initialSection}:{initialCity?:string;initialLanguage?:string;initialSection?:Section} = {}) {
   const { session, isStaff, role, signIn, signOut } = useSupabaseAuth();
   const mockDataEnabled = import.meta.env.VITE_ENABLE_MOCK_DATA === 'true';
-  const [activeTab, setActiveTab] = useState<'home' | 'city' | 'taxi' | 'transit' | 'currency' | 'nearme' | 'safety' | 'stay' | 'food' | 'experiences' | 'tours' | 'admin' | 'assistant'>(initialCity?'city':'home');
+  const [activeTab, setTab] = useState<'home' | 'city' | Section | 'admin'>(initialCity?'city':initialSection??'home');
+  const setActiveTab = (tab:typeof activeTab) => {
+    const path=tab==='city'?cityPath(selectedCityName):sectionPath(tab);
+    const city=publicCities.find(c=>c.name===selectedCityName)?.slug;
+    const target=tab!=='home'&&tab!=='city'&&city?path+'?city='+city:path;
+    if(window.location.pathname+window.location.search!==target)window.history.pushState({},'',target);
+    setTab(tab);
+  };
+  useEffect(()=>{const restore=()=>setTab(window.location.pathname.startsWith('/cities/')?'city':sectionFromPath(window.location.pathname)??'home');window.addEventListener('popstate',restore);return()=>window.removeEventListener('popstate',restore);},[]);
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }); }, [activeTab]);
-  const [selectedCityName, setSelectedCityName] = useState<string>(initialCity??'İstanbul');
+  const [selectedCityName, setSelectedCityName] = useState<string>(()=>initialCity??publicCities.find(c=>c.slug===new URLSearchParams(window.location.search).get('city'))?.name??'İstanbul');
   useEffect(() => {
     updateSectionSeo(activeTab, selectedCityName);
     // State-only sections must not retain a detail/city schema or language
     // alternates left by the server document they were opened from.
     if(activeTab!=='city')document.getElementById('public-page-schema')?.remove();
     document.querySelectorAll('link[rel="alternate"][hreflang]').forEach(link=>link.remove());
-    const path=activeTab==='city'?cityPath(selectedCityName):'/';
+    const path=activeTab==='city'?cityPath(selectedCityName):sectionPath(activeTab);
     if(activeTab==='city'){
       let schema=document.getElementById('public-page-schema');
       if(!schema){schema=document.createElement('script');schema.id='public-page-schema';schema.setAttribute('type','application/ld+json');document.head.appendChild(schema);}
       schema.textContent=JSON.stringify({'@context':'https://schema.org','@type':'TouristDestination',name:selectedCityName,url:`https://www.safeinturkiye.com${path}`});
     }
-    if(initialCity)window.history.replaceState({},'',path);
+    if(activeTab==='city')window.history.replaceState({},'',path);
     document.querySelector('link[rel="canonical"]')?.setAttribute('href',`https://www.safeinturkiye.com${path}`);
     document.querySelector('meta[property="og:url"]')?.setAttribute('content',`https://www.safeinturkiye.com${path}`);
   }, [activeTab, selectedCityName,initialCity]);
@@ -655,7 +669,8 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = lang;
     saveLanguagePreference(lang);
-  }, [lang]);
+    updateSectionSeo(activeTab,selectedCityName,lang);
+  }, [lang,activeTab,selectedCityName]);
 
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authEmail, setAuthEmail] = useState('');
@@ -756,7 +771,8 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
     setActivityCategory('All');
     const cityMatch = Object.keys(citiesDetailedData).find(city => city.toLocaleLowerCase('tr-TR') === low || city.toLowerCase().replace(/i̇/g, 'i') === query.toLowerCase());
     if (cityMatch) { setSelectedCityName(cityMatch); setActiveTab('city'); return; }
-    if (/taksi|taxi|fare|ücret|такси|تاكسي|出租车/.test(low)) setActiveTab('taxi');
+    if (transferIntent(query)) setActiveTab('tours');
+    else if (/taksi|taxi|fare|ücret|такси|تاكسي|出租车/.test(low)) setActiveTab('taxi');
     else if (/metro|métro|otobüs|bus|tren|train|vapur|ferry|marmaray|ulaşım|transit|route|rota|bahn|transport|транспорт|метро|автобус|مواصلات|مترو|حافل|地铁|公交|交通|火车/.test(low)) setActiveTab('transit');
     else if (/döviz|kur|exchange|currency|euro|usd|wechsel|change|валют|обмен|صرف|صراف|汇率|换汇/.test(low)) setActiveTab('currency');
     else if (/yakın|near|eczane|pharmacy|hastane|hospital|atm|polis|police|nähe|apotheke|proximité|pharmacie|рядом|аптек|قريب|صيدلي|附近|药房/.test(low)) setActiveTab('nearme');
@@ -804,7 +820,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
     void getCurrentTaxiTariffs(referenceTaxiCity).then((tariffs) => {
       if (cancelled) return;
       const next: Record<string, TaxiTariff> = {};
-      for (const tariff of tariffs) next[tariff.vehicleClass] = { city: tariff.city, openingFare: tariff.openingFare, pricePerKm: tariff.perKm, minimumFare: tariff.minimumFare, waitingFarePerHour: tariff.waitingFare, source: tariff.sourceName + ' · ' + tariff.effectiveFrom, lastUpdated: tariff.lastVerified };
+      for (const tariff of tariffs) next[tariff.vehicleClass] = { city: tariff.city, openingFare: tariff.openingFare, pricePerKm: tariff.perKm, minimumFare: tariff.minimumFare, waitingFarePerHour: tariff.waitingFare, source: tariff.sourceName + ' · ' + tariff.effectiveFrom, lastUpdated: tariff.lastVerified, sourceUrl:tariff.sourceUrl };
       setTaxiTariffs(next);
     }).catch(() => { if (!cancelled) setTaxiTariffs({}); });
     return () => { cancelled = true; };
@@ -817,7 +833,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
     source: string;
   } | null>(null);
 
-  const [fareCalculation, setFareCalculation] = useState<{ amount: number; upper:number; hasRange:boolean; source: string; sourceUrls?:string[] } | null>(null);
+  const [fareCalculation, setFareCalculation] = useState<{ amount: number; upper:number; hasRange:boolean; source: string; sourceUrls?:string[]; verified?:boolean } | null>(null);
   const taxiRequest = useRef(0);
   useEffect(() => {
     taxiRequest.current++;
@@ -829,6 +845,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
   const taxiOriginLookupId = useRef(0);
 
   useEffect(() => {
+    setTaxiOriginSuggs([]);
     if (!taxiOriginText || taxiOriginCoords) {
       setTaxiOriginSuggs([]);
       return;
@@ -853,6 +870,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
   }, [taxiOriginText, taxiOriginCoords]);
 
   useEffect(() => {
+    setTaxiDestSuggs([]);
     if (!taxiDestText || taxiDestCoords) {
       setTaxiDestSuggs([]);
       return;
@@ -971,7 +989,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
       const selectedTariff = taxiTariffs[taxiClass.toUpperCase()];
       const tariff = selectedTariff?.city === referenceTaxiCity ? selectedTariff : undefined;
       if (!tariff) {
-        const budget=taxiBudgetRange(referenceTaxiCity,data.routes.filter((route:{distance:number})=>Number.isFinite(route.distance)&&route.distance>0).map((route:{distance:number})=>route.distance/1000),taxiClass.toUpperCase());
+        const budget=taxiBudgetRange(referenceTaxiCity,[distanceKm],taxiClass.toUpperCase());
         if(budget){setFareCalculation(budget);setTaxiRouteError(null);setIsTaxiRouting(false);return;}
         setFareCalculation(null);
         setTaxiRouteError('unavailable');
@@ -979,8 +997,9 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
         return;
       }
       setFareCalculation({
-        ...routeFareRange(data.routes.filter((route:{distance:number})=>Number.isFinite(route.distance)&&route.distance>0).map((route:{distance:number})=>route.distance/1000), tariff.openingFare, tariff.pricePerKm, tariff.minimumFare),
-        source: tariff.city+' · '+taxiClass+' · '+tariff.source,
+        ...routeFareRange([distanceKm], tariff.openingFare, tariff.pricePerKm, tariff.minimumFare),
+        source: tariff.city+' · '+taxiClass+' · '+tariff.source+' · '+tariff.lastUpdated,
+        sourceUrls:tariff.sourceUrl?[tariff.sourceUrl]:undefined, verified:true,
       });
     } catch {
       if (request !== taxiRequest.current) return;
@@ -1107,7 +1126,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
     localTip:regionalDescription(regionalCity, lang),
     highlights:(localizedGaziantep?.places??regionalCity.places).map(name=>({name,detail:''})),
   } : citiesDetailedData[selectedCityName] || citiesDetailedData['İstanbul'];
-  const currentCityInfo=lang==='tr'?{...baseCityInfo,...citiesTr[selectedCityName as keyof typeof citiesTr]}:lang==='zh'?{...baseCityInfo,...citiesZh[selectedCityName as keyof typeof citiesZh]}:lang==='es'?{...baseCityInfo,...citiesEs[selectedCityName as keyof typeof citiesEs]}:baseCityInfo;
+  const currentCityInfo=lang==='tr'?{...baseCityInfo,...citiesTr[selectedCityName as keyof typeof citiesTr]}:lang==='zh'?{...baseCityInfo,...citiesZh[selectedCityName as keyof typeof citiesZh]}:lang==='es'?{...baseCityInfo,...citiesEs[selectedCityName as keyof typeof citiesEs]}:{...baseCityInfo,...cityLocale(selectedCityName,lang)};
 
   if (!supabaseConfigured && !mockDataEnabled) {
     return (
@@ -1272,7 +1291,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
             {isStaff && <button type="button" onClick={() => { setActiveTab('admin'); setMobileMenuOpen(false); }} className="rounded-xl px-3 py-2 text-left bg-slate-900 text-white">CMS Studio</button>}
           </nav>}
         </header>
-        {activeTab!=='home' && activeTab!=='taxi' && <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-3"><HomeButton lang={lang} currentPage={({assistant:tr('assistant'),transit:tr('transit'),currency:tr('currency'),city:selectedCityName,nearme:tr('nearMe'),stay:page('hotelsTitle'),food:page('diningTitle'),experiences:page('activitiesTitle'),tours:toursLabel(lang),safety:page('safety'),admin:'CMS Studio'} as Record<string,string>)[activeTab]} onClick={()=>{window.history.replaceState({},'','/');setActiveTab('home');setMobileMenuOpen(false);window.scrollTo(0,0);}}/></div>}
+        {activeTab!=='home' && activeTab!=='taxi' && <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-3"><HomeButton lang={lang} currentPage={({assistant:tr('assistant'),transit:tr('transit'),currency:tr('currency'),city:selectedCityName,nearme:tr('nearMe'),stay:page('hotelsTitle'),food:page('diningTitle'),experiences:page('activitiesTitle'),tours:toursLabel(lang),safety:page('safety'),admin:'CMS Studio'} as Record<string,string>)[activeTab]} onClick={()=>{setActiveTab('home');setMobileMenuOpen(false);window.scrollTo(0,0);}}/></div>}
 
         {/* ====================================================================
             PAGE 1: EXPLORE
@@ -1290,14 +1309,14 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
         {/* ====================================================================
             PAGE 2: AI TRAVEL ASSISTANT
         ==================================================================== */}
-        {activeTab === 'assistant' && <Suspense fallback={<main aria-busy="true" className="p-8">SafeInTürkiye…</main>}><TravelFaq lang={lang} initialQuery={searchQuery} /></Suspense>}
+        {activeTab === 'assistant' && <Suspense fallback={<PageLoading lang={lang}/>}><TravelFaq lang={lang} initialQuery={searchQuery} /></Suspense>}
 
         {/* ====================================================================
             PAGE 3: TAKİ HESAPLAYICI
         ==================================================================== */}
         {activeTab === 'taxi' && (
           <main className="reference-page reference-taxi max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
-            <HomeButton lang={lang} currentPage={page('taxiTitle')} onClick={()=>{window.history.replaceState({},'','/');setActiveTab('home');setMobileMenuOpen(false);window.scrollTo(0,0);}}/>
+            <HomeButton lang={lang} currentPage={page('taxiTitle')} onClick={()=>{setActiveTab('home');setMobileMenuOpen(false);window.scrollTo(0,0);}}/>
 
             <div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">{page('taxiTitle')}</h1>
@@ -1331,7 +1350,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
                       setTaxiOriginCoords(null);
                       setDetectedTaxiCity('');
                     }}
-                    placeholder="Search departure place (e.g. Taksim, IST Airport)..."
+                    placeholder={page('origin')}
                     className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] font-medium focus:outline-none focus:border-[#087FFF]"
                   />
                   {taxiOriginSuggs.length > 0 && (
@@ -1367,7 +1386,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
                       setTaxiDestText(e.target.value);
                       setTaxiDestCoords(null);
                     }}
-                    placeholder="Search destination (e.g. Kadıköy, Sultanahmet)..."
+                    placeholder={page('destination')}
                     className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] font-medium focus:outline-none focus:border-[#087FFF]"
                   />
                   {taxiDestSuggs.length > 0 && (
@@ -1401,6 +1420,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
 
                 {taxiRouteError && <p role={taxiRouteError === 'unavailable' ? 'status' : 'alert'} className="text-sm text-slate-700 bg-sky-50 rounded-xl p-3">{taxiRouteError === 'unavailable' ? taxiUnavailableText(lang) : taxiErrorText(lang, taxiRouteError)}</p>}
                 {taxiRouteResult && !fareCalculation && <div className="grid grid-cols-2 gap-2 rounded-xl bg-sky-50 p-3 text-sm" aria-live="polite"><p>{page('distance')}<br /><strong>{taxiRouteResult.distanceKm.toLocaleString(lang,{maximumFractionDigits:1})} km</strong></p><p>{page('duration')}<br /><strong>~{taxiRouteResult.durationMinutes} min</strong></p></div>}
+                {taxiRouteResult && <p className="text-sm leading-relaxed text-slate-600">{taxiRouteNotice[lang]}</p>}
                 {taxiRouteResult && fareCalculation && (
                   <div className="pt-3 border-t border-slate-100 space-y-3">
                     <div className="p-4 bg-sky-50 rounded-2xl border border-sky-100 space-y-2">
@@ -1409,7 +1429,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
                         {taxiDetailsCopy[lang][1]} ₺{(fareCalculation.hasRange?Math.floor(fareCalculation.amount):Math.round(fareCalculation.amount)).toLocaleString(lang)}{fareCalculation.hasRange?` – ₺${Math.ceil(fareCalculation.upper).toLocaleString(lang)}`:''}
                       </span>
                       <span className="text-[11px] text-slate-500 block">{taxiEstimateCopy[lang][1]}</span>
-                      <details className="text-xs text-slate-500"><summary className="cursor-pointer min-h-8">{taxiDetailsCopy[lang][0]}</summary><p>{fareCalculation.source}</p>{fareCalculation.sourceUrls?.map((url)=><a key={url} className="block underline py-1" href={url} target="_blank" rel="noopener noreferrer">{new URL(url).hostname} ↗</a>)}<p>{fareCalculation.sourceUrls?taxiBudgetCopy[lang]:taxiDetailsCopy[lang][2]}</p></details>
+                      <details className="text-xs text-slate-500"><summary className="cursor-pointer min-h-8">{taxiDetailsCopy[lang][0]}</summary><p>{fareCalculation.source}</p>{fareCalculation.sourceUrls?.map((url)=><a key={url} className="block underline py-1" href={url} target="_blank" rel="noopener noreferrer">{new URL(url).hostname} ↗</a>)}<p>{fareCalculation.verified?taxiDetailsCopy[lang][2]:taxiBudgetCopy[lang]}</p></details>
                       <div className="grid grid-cols-2 gap-2 pt-2 border-t border-sky-200/60 text-[12px]">
                         <div>
                           <span className="text-slate-400 block text-[10px]">{page('distance')}</span>
@@ -1442,7 +1462,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
         {/* ====================================================================
             PAGE 4: TOPLU TAŞIMA (TRANSIT - DÜZELTİLDİ VE AKTİF)
         ==================================================================== */}
-        {activeTab === 'transit' && <Suspense fallback={<main aria-busy="true" className="p-8">SafeInTürkiye…</main>}><TransitPlanner lang={lang} initialCity={selectedCityName} /></Suspense>}
+        {activeTab === 'transit' && <Suspense fallback={<PageLoading lang={lang}/>}><TransitPlanner lang={lang} initialCity={selectedCityName} /></Suspense>}
 
         {/* ====================================================================
             PAGE 5: EXCHANGE (CANLI KURLAR + YAKINLARDAKİ DÖVİZCİLER - DÜZELTİLDİ)
@@ -1469,7 +1489,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
                     selectedCityName === cname ? 'bg-[#087FFF] text-white shadow-sm' : 'bg-white border border-sky-100 text-slate-600 hover:bg-sky-50'
                   }`}
                 >
-                  {cname}
+                  {cityDisplayName(cname,lang)}
                 </button>
               ))}
             </div>
@@ -1478,7 +1498,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
               <CityArtwork city={selectedCityName} lang={lang} hero className="absolute inset-0 w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-transparent" />
               <div className="relative z-10">
-                <h1 className="text-3xl font-black">{currentCityInfo.name}</h1>
+                <h1 className="text-3xl font-black">{cityDisplayName(currentCityInfo.name,lang)}</h1>
                 <p className="text-[13px] text-slate-200">{currentCityInfo.tagline}</p>
               </div>
             </div>
@@ -1518,7 +1538,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
               </div>
             </section>
 
-            <Suspense fallback={<div aria-busy="true">SafeInTürkiye…</div>}><TransportCardGuide city={selectedCityName} lang={lang} /></Suspense>
+            <Suspense fallback={<PageLoading lang={lang}/>}><TransportCardGuide city={selectedCityName} lang={lang} /></Suspense>
 
           </main>
         )}
@@ -1556,7 +1576,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
           </main>
         )}
 
-        {activeTab === 'tours' && <main className="travel-catalog"><Suspense fallback={<div aria-busy="true" className="p-8">SafeInTürkiye…</div>}><ViatorTours lang={lang} initialCity={publicCities.find(c=>c.name===selectedCityName)?.slug}/></Suspense></main>}
+        {activeTab === 'tours' && <main className="travel-catalog"><Suspense fallback={<PageLoading lang={lang}/>}><ViatorTours lang={lang} initialCity={publicCities.find(c=>c.name===selectedCityName)?.slug}/></Suspense></main>}
 
         {/* ====================================================================
             PAGE 10: NEAR ME
@@ -1606,7 +1626,7 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
         {/* ====================================================================
             PAGE 11: ROLE-PROTECTED ADMIN CMS
         ==================================================================== */}
-        {activeTab === 'admin' && isStaff && <Suspense fallback={<main aria-busy="true" className="p-8">SafeInTürkiye…</main>}><ContentAdmin role={role} /></Suspense>}
+        {activeTab === 'admin' && isStaff && <Suspense fallback={<PageLoading lang={lang}/>}><ContentAdmin role={role} /></Suspense>}
         {activeTab === 'admin' && !isStaff && <main className="max-w-xl mx-auto p-6 my-8 rounded-2xl bg-white border border-sky-100 space-y-4"><h1 className="text-xl font-bold">Yönetici girişi</h1><p>{session ? 'Hesabınızın içerik yönetimi yetkisi kontrol ediliyor. Yetki verilmemişse bu bölüm açılamaz.' : 'Yönetim panelini açmak için yetkili hesabınızla giriş yapın.'}</p>{!session && <button onClick={() => setAuthModalOpen(true)} className="bg-sky-600 text-white rounded-xl px-5 py-3">Giriş yap</button>}</main>}
 
       </div>
@@ -1671,10 +1691,12 @@ export default function App({initialCity,initialLanguage}:{initialCity?:string;i
             <img src={siteLogo} alt="SafeInTürkiye" className="w-48 h-auto object-contain mx-auto sm:mx-0 my-3" />
             <p>{footerCopy[lang].source}</p><PhotoCredits lang={lang} />
           </div>
-          <div className="flex items-center gap-4 text-[11px] font-bold text-[#087FFF]">
-            <span aria-disabled="true">{footerCopy[lang].privacy}</span>
+          <div className="flex flex-wrap items-center gap-4 text-sm font-bold text-[#087FFF]">
+            <a href="/privacy" className="underline">{footerCopy[lang].privacy}</a>
             <span>•</span>
-            <span aria-disabled="true">{footerCopy[lang].terms}</span>
+            <a href="/terms" className="underline">{footerCopy[lang].terms}</a>
+            <a href="/about" className="underline">{siteInformation[lang].labels[2]}</a>
+            <a href="/contact" className="underline">{siteInformation[lang].labels[3]}</a>
             <span>•</span>
             <span>{footerCopy[lang].rights}</span>
           </div>

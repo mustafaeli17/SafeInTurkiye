@@ -65,6 +65,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
   const controller = useRef<AbortController | null>(null)
   const generation = useRef(0)
   const locationTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lastSearch=useRef<{point:NearbyCenter;source:'location'|'city'}|null>(null)
 
   useEffect(() => {
     generation.current += 1
@@ -74,6 +75,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
     setState('idle')
     setError(null)
     setLimit(6)
+    lastSearch.current=null
     return () => { generation.current += 1; controller.current?.abort(); if (locationTimer.current) clearTimeout(locationTimer.current) }
   }, [kind, center.lat, center.lng, cityName, fixedCategory, locale])
 
@@ -84,6 +86,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
   }
 
   const search = async (point: NearbyCenter, source: 'location' | 'city', requestId: number) => {
+    lastSearch.current={point,source}
     controller.current?.abort()
     const request = new AbortController()
     controller.current = request
@@ -108,9 +111,10 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
   // Directory pages load on entry and when their visible city/category changes.
   // Near Me and exchange retain explicit consent-driven location searches.
   useEffect(() => {
-    if (!fixedCategory && !addressPlace) return
+    if (!fixedCategory && !addressPlace && !lastSearch.current) return
     if (address.trim() && address !== addressPlace?.label) return
-    const timer = setTimeout(searchCity, 350)
+    const previous=lastSearch.current
+    const timer = setTimeout(()=>previous?void search(previous.point,previous.source,++generation.current):searchCity(), 350)
     return () => clearTimeout(timer)
     // searchCity is deliberately captured only for the inputs that change a request.
   }, [fixedCategory, center.lat, center.lng, cityName, filter, locale, addressPlace, address])

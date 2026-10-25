@@ -1,4 +1,7 @@
-import { useState } from 'react'
+import { useState,useRef } from 'react'
+import {siteInformation} from '../lib/siteInformation'
+import {validBookingTime} from '../lib/bookingTime'
+import {restaurantRequestsEnabled,reservationUnavailable} from '../lib/reservationAvailability'
 import { createBooking } from '../repositories/bookingRepository'
 import { requireSupabase } from '../lib/supabase'
 import { restaurantRequestCopy } from '../lib/restaurantRequestCopy'
@@ -12,13 +15,13 @@ export default function RestaurantRequest({name,source,lang,businessKey}:{name:s
   const [message,setMessage]=useState<number|null>(null)
   const [reference,setReference]=useState('')
   const [started,setStarted]=useState(false)
+  const submitting=useRef(false)
   async function submit(event:React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if(busy||reference)return
+    if(!restaurantRequestsEnabled||submitting.current||busy||reference)return
     const data=new FormData(event.currentTarget)
-    const today=new Date();today.setHours(0,0,0,0)
-    if(new Date(`${data.get('date')}T00:00:00`)<today){setMessage(10);return}
-    setBusy(true);setMessage(null)
+    if(!validBookingTime(String(data.get('date')),String(data.get('time')))){setMessage(10);return}
+    submitting.current=true;setBusy(true);setMessage(null)
     try {
       const {data:auth,error}=await requireSupabase().auth.getUser()
       if(error||!auth.user){setMessage(11);return}
@@ -26,13 +29,15 @@ export default function RestaurantRequest({name,source,lang,businessKey}:{name:s
       setReference(result.reference_code)
       if(businessKey)trackBusinessEvent(businessKey,'reservation_submitted')
     } catch {setMessage(12)}
-    finally{setBusy(false)}
+    finally{submitting.current=false;setBusy(false)}
   }
+  if(!restaurantRequestsEnabled)return <p dir={lang==='ar'?'rtl':'ltr'} className="mt-4 text-sm text-slate-600">{reservationUnavailable[lang]??reservationUnavailable.en}</p>
   if(reference)return <><p dir={lang==='ar'?'rtl':'ltr'} role="status" className="mt-4 rounded-xl bg-sky-50 p-4">{t[13]}<bdi>{reference}</bdi></p><MyReservationRequests lang={lang}/></>
   const fields=[['name',t[2],'text'],['email',t[3],'email'],['phone',t[4],'tel'],['date',t[5],'date'],['time',t[6],'time'],['guests',t[7],'number']]
   return <><form onFocus={()=>{if(!started&&businessKey){setStarted(true);trackBusinessEvent(businessKey,'reservation_started')}}} lang={lang} dir={lang==='ar'?'rtl':'ltr'} onSubmit={submit} className="mt-5 rounded-xl border border-sky-100 p-4 space-y-3">
     <h4 className="font-bold">{t[0]}</h4>
     <p className="text-sm">{t[1]}</p>
+    <a href="/privacy" target="_blank" rel="noopener noreferrer" className="inline-block underline text-blue-700 text-sm">{(siteInformation[lang]??siteInformation.en).labels[0]}</a>
     <div className="grid sm:grid-cols-2 gap-3">{fields.map(([key,label,type])=><label key={key} className="text-sm">{label}<input className="block w-full border rounded-lg p-2" name={key} type={type} required maxLength={key==='name'?100:254} min={key==='guests'?1:undefined} max={key==='guests'?20:undefined} defaultValue={key==='guests'?2:undefined}/></label>)}</div>
     <label className="block text-sm">{t[8]}<textarea name="notes" maxLength={1000} className="block w-full border rounded-lg p-2"/></label>
     <button disabled={busy} className="min-h-11 rounded-xl bg-blue-600 px-4 py-2 text-white disabled:opacity-50">{busy?'…':t[9]}</button>

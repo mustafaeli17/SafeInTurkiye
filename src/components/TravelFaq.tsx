@@ -1,3 +1,4 @@
+import SearchAlternatives from './SearchAlternatives';
 import { useState } from 'react';
 import { practicalFaq, practicalSources } from '../data/practicalFaq';
 
@@ -113,6 +114,6 @@ export default function TravelFaq({ lang, initialQuery = '' }: { lang: string; i
     <input value={query} onChange={e => setQuery(e.target.value)} placeholder={labels[1]} aria-label={title} className="w-full p-3 bg-white border border-sky-100 rounded-xl" />
     <div className="reference-guide-topics">{topicLabels.map((label,index) => <button key={label} aria-pressed={topic === index} onClick={() => setTopic(topic === index ? -1 : index)}><span aria-hidden="true">{['🚇','💵','📍','🛏️','🎟️'][index]}</span>{label}</button>)}</div>
     {items.map(row => <details key={row[0]} className="rounded-2xl bg-white border border-sky-100 p-4"><summary className="font-bold cursor-pointer">{row[tr ? 0 : 1]}</summary><p className="text-sm text-slate-600 mt-3 leading-relaxed">{row[tr ? 2 : 3]}</p>{row[4] && <a href={row[4]} target="_blank" rel="noreferrer" className="inline-block mt-3 text-sky-700 underline text-sm">{labels[2]}</a>}</details>)}
-    {!items.length && <p>{labels[3]}</p>}
+    {!items.length && <><p>{labels[3]}</p><SearchAlternatives lang={lang}/></>}
   </main>;
 }

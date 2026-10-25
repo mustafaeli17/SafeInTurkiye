@@ -24,6 +24,18 @@ const base=await readFile('dist/index.html','utf8');
 const escape=value=>value.replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;').replaceAll('>','&gt;');
 const origin='https://www.safeinturkiye.com';
 const locations=[origin+'/'];
+const sectionRoutes={...JSON.parse(await readFile('src/data/sectionRoutes.json','utf8')),...Object.fromEntries(['privacy','terms','about','contact'].map(key=>[key,{path:'/'+key,title:({privacy:'Privacy information',terms:'Terms of use',about:'About SafeInTürkiye',contact:'Contact and support'})[key],description:'Information about SafeInTürkiye and using this website.'}]))};
+for(const route of Object.values(sectionRoutes)){
+ const url=origin+route.path,title=escape(route.title+' | SafeInTürkiye'),description=escape(route.description);
+ const html=base.replace(/<title>.*?<\/title>/,`<title>${title}</title>`)
+ .replace(/(<meta (?:name="description"|property="og:description"|name="twitter:description") content=")[^"]*/g,`$1${description}`)
+ .replace(/(<meta (?:property="og:title"|name="twitter:title") content=")[^"]*/g,`$1${title}`)
+ .replace(/(<link rel="canonical" href=")[^"]*/,`$1${url}`)
+ .replace(/(<meta property="og:url" content=")[^"]*/,`$1${url}`)
+ .replace(/<script type="application\/ld\+json">.*?<\/script>/s,`<script type="application/ld+json">${JSON.stringify({'@context':'https://schema.org','@type':'WebPage',name:route.title,url,description:route.description})}</script>`)
+ .replace('<div id="root"></div>',`<div id="root"><main class="max-w-5xl mx-auto p-6"><a href="/">SafeInTürkiye</a><h1>${title}</h1><p>${description}</p></main></div>`);
+ await mkdir(`dist${route.path}`,{recursive:true});await writeFile(`dist${route.path}/index.html`,html);locations.push(url);
+}
 const routeFor=entry=>`/${entry.kind}/${entry.slug}`;
 const linkFor=entry=>`<a href="${routeFor(entry)}">${escape(entry.name)}</a>`;
 const safeExternal=value=>{try{const url=new URL(value);return url.protocol==='https:'&&!url.username&&!url.password?escape(url.href):null;}catch{return null;}};

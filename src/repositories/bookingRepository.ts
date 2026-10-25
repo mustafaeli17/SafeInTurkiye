@@ -1,5 +1,6 @@
 import { requireSupabase } from '../lib/supabase'
 import { foundationEnabled } from '../lib/foundationConfig'
+import {validBookingTime} from '../lib/bookingTime'
 
 export interface BookingRequest {
   listingType: 'hotel' | 'restaurant' | 'activity'
@@ -29,6 +30,7 @@ export async function getOwnBookingRequests() {
 }
 
 export async function createBooking(request: BookingRequest) {
+  if(!validBookingTime(request.visitDate,request.visitTime))throw new Error('Invalid visit date or time.')
   const date = new Date(`${request.visitDate}T00:00:00Z`)
   if (!Number.isFinite(date.getTime()) || date.toISOString().slice(0, 10) !== request.visitDate) throw new Error('Invalid booking request.')
   if (request.visitTime && !/^([01]\d|2[0-3]):[0-5]\d$/.test(request.visitTime)) throw new Error('Invalid time.')
