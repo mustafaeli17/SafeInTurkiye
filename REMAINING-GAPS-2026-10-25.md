@@ -29,3 +29,10 @@
 - [Google Maps CSP guide](https://developers.google.com/maps/documentation/javascript/content-security-policy): nonce-based strict CSP requirements and provider compatibility. No untested broad script policy enforced.
 
 Production/main unchanged; no remote migration. Preview deployment verification is recorded below after deploy.
+
+## Deployment verification
+
+- `fcb7664` pushed only to Preview branch; Vercel reports **Ready** (10s build). Production/main remains `924674c`.
+- Authenticated Preview browser loads the packaged taxi map with decoded OSM tiles and no rejected Google iframe. Production Google key restrictions remain intact.
+- Preview end-to-end: Taksim Meydanı -> Sultanahmet Meydanı, 5.6km / about TRY340; decoded map tiles, route and endpoints visible; 485px client/scroll widths match. Proof: `audit-evidence/remaining-map-preview.jpg`.
+- Operator/contact remains awaiting an approved public person/company name and an actually active support mailbox. The owner has only proposed a future mailbox so far; no invented working contact was published.
