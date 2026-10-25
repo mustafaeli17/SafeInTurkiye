@@ -25,6 +25,7 @@ import type {ComponentProps} from 'react';
 const NearbyPlacesComponent=lazy(()=>import('./components/NearbyPlaces'));
 function NearbyPlaces(props:ComponentProps<typeof NearbyPlacesComponent>){return <Suspense fallback={<PageLoading lang={props.lang}/>}><NearbyPlacesComponent {...props}/></Suspense>;}
 import PageLoading from './components/PageLoading';
+const SafeRouteMap=lazy(()=>import('./components/TaxiRouteMap'));
 import PhotoCredits from './components/PhotoCredits';
 import SponsoredBusinesses from './components/SponsoredBusinesses';
 import TravelHome from './components/TravelHome';
@@ -53,7 +54,8 @@ import { routeFareRange } from './lib/taxiCalculation';
 import { taxiCityFromAddress,taxiReferenceCity,taxiUnavailableText } from './lib/taxiCity';
 import { taxiBudgetCopy,taxiDetailsCopy,taxiEstimateCopy,taxiIntroCopy } from './lib/taxiCopy';
 import { taxiErrorText,type TaxiErrorKey } from './lib/taxiErrors';
-import { taxiRouteNotice } from './lib/taxiRouteNotice';
+import { taxiRouteNotice,taxiCalculationMapNotice } from './lib/taxiRouteNotice';
+import {taxiMapKey} from './lib/mapEnvironment';
 import { taxiSearchUrl } from './lib/taxiSearch';
 import { toursLabel } from './lib/viatorCopy';
 import { directoryText } from './lib/visitorDirectory';
@@ -361,148 +363,6 @@ const citiesDetailedData: Record<string, CityInfo> = {
 // ============================================================================
 // 3. ASLA ÇÖKMEYEN İNTERAKTİF HARİTA (Leaflet CDN)
 // ============================================================================
-function SafeRouteMap({
-  originCoords,
-  destCoords,
-  geometry,
-  color = '#087FFF'
-}: {
-  originCoords: Coordinates | null;
-  destCoords: Coordinates | null;
-  geometry: RouteGeometryPoint[] | null;
-  color?: string;
-}) {
-  const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<any>(null);
-  const [leafletReady, setLeafletReady] = useState(false);
-  const googleBrowserKey = import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY?.trim();
-
-  useEffect(() => {
-    if (googleBrowserKey) return;
-    if ((window as any).L) {
-      setLeafletReady(true);
-      return;
-    }
-    if (!document.getElementById('leaflet-css')) {
-      const link = document.createElement('link');
-      link.id = 'leaflet-css';
-      link.rel = 'stylesheet';
-      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-      document.head.appendChild(link);
-    }
-    if (!document.getElementById('leaflet-js')) {
-      const script = document.createElement('script');
-      script.id = 'leaflet-js';
-      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-      script.async = true;
-      script.onload = () => setLeafletReady(true);
-      document.body.appendChild(script);
-    }
-  }, [googleBrowserKey]);
-
-  useEffect(() => {
-    if (googleBrowserKey) return;
-    const L = (window as any).L;
-    if (!leafletReady || !L || !mapContainerRef.current) return;
-
-    if (mapInstanceRef.current) {
-      mapInstanceRef.current.remove();
-      mapInstanceRef.current = null;
-    }
-
-    const container = mapContainerRef.current;
-    if ((container as any)._leaflet_id) {
-      delete (container as any)._leaflet_id;
-    }
-
-    const map = L.map(container).setView([41.0082, 28.9784], 12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-
-    mapInstanceRef.current = map;
-    const bounds: any[] = [];
-
-    if (originCoords) {
-      const icon = L.divIcon({
-        className: 'custom-map-marker',
-        html: `<div style="background-color:#087FFF; width:16px; height:16px; border-radius:50%; border:3px solid #ffffff; box-shadow:0 0 6px rgba(0,0,0,0.4);"></div>`,
-        iconSize: [16, 16],
-        iconAnchor: [8, 8]
-      });
-      L.marker([originCoords.lat, originCoords.lng], { icon }).addTo(map);
-      bounds.push([originCoords.lat, originCoords.lng]);
-    }
-
-    if (destCoords) {
-      const icon = L.divIcon({
-        className: 'custom-map-marker',
-        html: `<div style="background-color:#EF4444; width:16px; height:16px; border-radius:50%; border:3px solid #ffffff; box-shadow:0 0 6px rgba(0,0,0,0.4);"></div>`,
-        iconSize: [16, 16],
-        iconAnchor: [8, 8]
-      });
-      L.marker([destCoords.lat, destCoords.lng], { icon }).addTo(map);
-      bounds.push([destCoords.lat, destCoords.lng]);
-    }
-
-    if (geometry && geometry.length > 0) {
-      const latlngs = geometry.map(p => [p.lat, p.lng]);
-      L.polyline(latlngs, {
-        color: color,
-        weight: 5,
-        opacity: 0.85,
-        lineCap: 'round'
-      }).addTo(map);
-    }
-
-    if (bounds.length > 0) {
-      map.fitBounds(L.latLngBounds(bounds), { padding: [40, 40], maxZoom: 15 });
-    }
-
-    return () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
-    };
-  }, [leafletReady, originCoords, destCoords, geometry, color, googleBrowserKey]);
-
-  if (googleBrowserKey) {
-    const mapParams = new URLSearchParams({
-      key: googleBrowserKey,
-      language: document.documentElement.lang || 'en',
-      region: 'TR'
-    });
-    const mapMode = originCoords && destCoords ? 'directions' : originCoords || destCoords ? 'place' : 'view';
-    if (originCoords && destCoords) {
-      mapParams.set('origin', `${originCoords.lat},${originCoords.lng}`);
-      mapParams.set('destination', `${destCoords.lat},${destCoords.lng}`);
-      mapParams.set('mode', 'driving');
-    } else if (originCoords || destCoords) {
-      const point = (originCoords || destCoords)!;
-      mapParams.set('q', `${point.lat},${point.lng}`);
-    } else {
-      mapParams.set('center', '39,35');
-      mapParams.set('zoom', '5');
-    }
-    return (
-      <div className="w-full h-full min-h-[360px] rounded-2xl overflow-hidden border border-sky-100 shadow-sm bg-slate-100">
-        <iframe title="Google Maps taxi route" src={`https://www.google.com/maps/embed/v1/${mapMode}?${mapParams.toString()}`} className="w-full h-full min-h-[360px] sm:min-h-[480px]" loading="lazy" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen />
-      </div>
-    );
-  }
-
-  return (
-    <div className="w-full h-full min-h-[360px] rounded-2xl overflow-hidden border border-sky-100 shadow-sm relative z-0 bg-slate-100 flex items-center justify-center">
-      {!leafletReady && (
-        <div className="text-[12px] text-slate-500 flex items-center gap-2">
-          <Loader2 className="w-4 h-4 animate-spin text-[#087FFF]" /> Harita modülü yükleniyor...
-        </div>
-      )}
-      <div ref={mapContainerRef} className="w-full h-full min-h-[360px]" />
-    </div>
-  );
-}
 
 // ============================================================================
 // 4. ANA BİLEŞEN
@@ -1114,7 +974,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
 
                 {taxiRouteError && <p role={taxiRouteError === 'unavailable' ? 'status' : 'alert'} className="text-sm text-slate-700 bg-sky-50 rounded-xl p-3">{taxiRouteError === 'unavailable' ? taxiUnavailableText(lang) : taxiErrorText(lang, taxiRouteError)}</p>}
                 {taxiRouteResult && !fareCalculation && <div className="grid grid-cols-2 gap-2 rounded-xl bg-sky-50 p-3 text-sm" aria-live="polite"><p>{page('distance')}<br /><strong>{taxiRouteResult.distanceKm.toLocaleString(lang,{maximumFractionDigits:1})} km</strong></p><p>{page('duration')}<br /><strong>~{taxiRouteResult.durationMinutes} min</strong></p></div>}
-                {taxiRouteResult && <p className="text-sm leading-relaxed text-slate-600">{taxiRouteNotice[lang]}</p>}
+                {taxiRouteResult && <p className="text-sm leading-relaxed text-slate-600">{(taxiMapKey(window.location.hostname,import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY,import.meta.env.VITE_GOOGLE_MAPS_PREVIEW_BROWSER_KEY)?taxiRouteNotice:taxiCalculationMapNotice)[lang]}</p>}
                 {taxiRouteResult && fareCalculation && (
                   <div className="pt-3 border-t border-slate-100 space-y-3">
                     <div className="p-4 bg-sky-50 rounded-2xl border border-sky-100 space-y-2">
@@ -1140,12 +1000,15 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
               </div>
 
               <div className="lg:col-span-7 h-[360px] sm:h-[480px] lg:h-auto">
+                <Suspense fallback={<PageLoading lang={lang}/>}>
                 <SafeRouteMap
+                  title={dict[lang].taxi}
                   originCoords={taxiOriginCoords}
                   destCoords={taxiDestCoords}
                   geometry={taxiRouteResult ? taxiRouteResult.geometry : null}
                   color="#087FFF"
                 />
+                </Suspense>
               </div>
             </div>
             <aside className="catalog-editorial-note"><a className="inline-flex min-h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-[#087FFF] px-6 py-3 font-bold text-white shadow-sm hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-700" href="https://www.bitaksi.com/home" target="_blank" rel="noopener noreferrer">🚕 {directoryText(lang, 3)} ↗</a><p className="mt-2">{directoryText(lang, 4)}</p></aside>

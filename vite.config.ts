@@ -30,5 +30,18 @@ export default defineConfig({
   }],
   build: {
     sourcemap: false,
+    manifest: true,
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [
+            // Stable runtime dependencies can stay cached across site releases.
+            // Do not group all node_modules: that would pull lazy route code forward.
+            { name: 'react-runtime', test: /node_modules[\\/](react|react-dom|scheduler)[\\/]/, priority: 20 },
+            { name: 'supabase-client', test: /node_modules[\\/]@supabase[\\/]/, priority: 10 },
+          ],
+        },
+      },
+    },
   },
 });
