@@ -8,3 +8,9 @@
 - Browser local production build: desktop Turkish Contact; mobile 390px Turkish Privacy/Contact, French Terms at 320px, Arabic About at 320px, Chinese Contact at 320px. Client/scroll widths matched (375/375 and 305/305); active navigation, refresh route persistence and exact email href verified. No physical-device certification.
 - Evidence: `audit-evidence/information-desktop.jpg`, `audit-evidence/information-mobile-ar.jpg`.
 - Production has not been updated for this UI change; only Preview branch is to be deployed.
+
+## Preview verification
+
+- `fd765ba` Preview deployment Ready (10s); Production remains `0557f4e`.
+- Authenticated Preview Contact renders the new design, approved operator and exact Gmail `mailto:` link. Active navigation points to `/contact`, the language selector is 44px high and client/scroll widths both 485px.
+- Proof: `audit-evidence/information-preview.jpg`. No email was sent and no support response-time claim was added.
