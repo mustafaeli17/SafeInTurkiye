@@ -33,3 +33,15 @@ Baseline `924674c`; production is unchanged. No remote database migration, secre
 - F01: Real operator name, support email/operation and retention policy. No invented identity/contact. Reservations stay closed.
 - Real physical iOS/Android/GPS, authenticated CMS lifecycle, account WAF/provider quota verification are not claimed completed.
 - Full enforced CSP and remaining chunk optimization are follow-up items, not silently marked fixed.
+
+## Final Preview verification — 2026-10-25
+
+- Implementation checkpoint: `a37c138`, pushed only to `codex/phase3-places-preview`; Vercel deployment Ready. Production/main remains `924674c`.
+- Authenticated Preview: real Google discovery results loaded; selected Beşiktaş area survived reload; Chinese category/search/disclosure/status copy rendered correctly. See `audit-evidence/fix-preview-restored-area.jpg`.
+- Chinese staff dialog: labelled inputs/autofocus and Escape closure verified. See `audit-evidence/fix-preview-dialog.jpg`.
+- Root horizontal overflow checks passed at 320, 390 and 1440px viewports. This is browser viewport testing, not physical-device certification.
+- Taxi regression: Taksim Meydanı to Sultanahmet Meydanı returned 5.6km / about TRY340; existing calculation unchanged.
+- **Preview Maps limitation:** existing browser key only authorizes production domains, so Google Maps Embed rejects the Preview host. No key/restriction changed. A separate Preview-restricted map key/config is needed for Preview map acceptance; production maps were not changed by this work.
+- Unauthenticated Preview HTTP checks returned SSO redirects for homepage/logo/sitemap. Protection was not weakened. Final deployed response headers could not be independently verified through unauthenticated HTTP.
+- Final code validation: 392 tests passed, typecheck/lint/build passed; photo/favicon/SEO validators passed; npm audit reports zero vulnerabilities. The taxi-budget test clock was subsequently stabilized and its 17 targeted tests passed.
+- No production deploy, remote database migration, new paid service or credential change performed.
