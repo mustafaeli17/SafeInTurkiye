@@ -1,7 +1,6 @@
 import records from '../data/directory.json';
 import { readLanguagePreference } from './languagePreference';
 import regionalHotels from '../data/regionalHotels.json';
-import regionalRestaurants from '../data/regionalRestaurants.json';
 import regionalActivities from '../data/regionalActivities.json';
 import cityGuides from '../data/cityGuides.json';
 import photoAlternatives from '../data/photoAlternatives.json';
@@ -9,6 +8,7 @@ import publication from '../data/photoPublication.json';
 import cinemas from '../data/cinemas.json';
 import { safeWebsite } from '../services/nearbyPlaces';
 import { foundationEnabled } from './foundationConfig';
+import {navigateTo} from './browserNavigation';
 export interface DirectoryEntry {
   id:string; kind:string; slug:string; name:string; city:string;
   description:Record<string,string>; website:string; sourceUrl:string;
@@ -17,7 +17,6 @@ export interface DirectoryEntry {
 const editorialArchive:DirectoryEntry[]=[...records,...regionalHotels.map(hotel=>({...hotel,id:hotel.slug,kind:'hotels',sourceUrl:hotel.sourceUrl??hotel.website,lastVerified:'2026-09-28',gallery:[]})),...regionalActivities.map(activity=>{const source=cityGuides.find(city=>city.name===activity.city)!.source;return {...activity,id:activity.slug,kind:'activities',website:source,sourceUrl:source,lastVerified:'2026-09-28'};}),...photoAlternatives];
 editorialArchive.push(...cinemas.map(cinema=>({...cinema,id:cinema.slug,kind:'activities',category:'Cinema',gallery:['cinema-wide'],sourceUrl:cinema.website,lastVerified:'2026-09-29',description:{tr:'Güncel filmleri, seansları ve gösterim dilini sinemanın resmî sayfasından kontrol edin. Bilet işlemleri işletmenin sitesinde yapılır.',en:'Check current films, screening times and languages on the cinema’s official page. Ticket purchases take place on the operator’s website.'}})));
 for(const entry of editorialArchive)if(entry.id.startsWith('cinema'))entry.category='Cinema';
-editorialArchive.push(...regionalRestaurants.map(restaurant=>({...restaurant,id:restaurant.slug,kind:'restaurants',sourceUrl:restaurant.website,lastVerified:'2026-09-28',gallery:[]})));
 const galleries:Record<string,string[]>=publication.galleries;
 export const photoCuratedCatalog = !foundationEnabled && publication.source === 'photo-curated';
 // Recoverable editorial archive remains on disk. One explicit publication list
@@ -46,7 +45,6 @@ export function openDirectoryEntry(id: string) {
   const entry = directory.find(item => item.id === id);
   if (!entry) return false;
   const prefix=readLanguagePreference()==='tr'&&entry.description.tr?'/tr':'';
-  window.history.pushState({}, '', prefix+entryPath(entry));
-  window.dispatchEvent(new PopStateEvent('popstate'));
+  navigateTo(prefix+entryPath(entry));
   return true;
 }

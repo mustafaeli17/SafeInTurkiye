@@ -2,6 +2,7 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {publishedEditorialSnapshot} from './published-editorial-snapshot.mjs';
 const entries=JSON.parse(await readFile('src/data/directory.json','utf8'));
 const publication=JSON.parse(await readFile('src/data/photoPublication.json','utf8'));
+const retiredRestaurants=new Set(JSON.parse(await readFile('src/data/retiredRestaurantSlugs.json','utf8')));
 const alternatives=JSON.parse(await readFile('src/data/photoAlternatives.json','utf8'));
 const regionalHotels=JSON.parse(await readFile('src/data/regionalHotels.json','utf8'));
 entries.push(...regionalHotels.map(hotel=>({...hotel,kind:'hotels'})));
@@ -19,6 +20,7 @@ if(process.env.VITE_PLATFORM_FOUNDATION==='true'){
  const cms=await publishedEditorialSnapshot(process.env.VITE_SUPABASE_URL,process.env.VITE_SUPABASE_ANON_KEY);
  entries.splice(0,entries.length,...cms);
 }
+for(let i=entries.length-1;i>=0;i--)if(entries[i].kind==='restaurants'&&retiredRestaurants.has(entries[i].slug))entries.splice(i,1);
 entries.push(...[...originalCities,...cities].map(city=>({kind:'cities',slug:city.slug,name:city.name,description:city.description,website:city.source})));
 const base=await readFile('dist/index.html','utf8');
 const escape=value=>value.replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;').replaceAll('>','&gt;');

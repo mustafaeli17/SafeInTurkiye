@@ -1,4 +1,5 @@
 import { requireSupabase } from '../lib/supabase'
+import {isRetiredRestaurantSlug} from '../lib/retiredRestaurants'
 
 export type ContentTable = 'hotels' | 'restaurants' | 'activities'
 
@@ -19,7 +20,7 @@ export async function getPublishedContent(table: ContentTable, cityId?: string) 
   if (cityId) query = query.eq('city_id', cityId)
   const { data, error } = await query.order('name').abortSignal(AbortSignal.timeout(12000))
   if (error) throw error
-  return data ?? []
+  return (data ?? []).filter(row=>table!=='restaurants'||!isRetiredRestaurantSlug(row.public_slug??row.editorial_metadata?.slug))
 }
 
 export async function getManageableContent(table: ContentTable) {

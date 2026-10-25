@@ -26,11 +26,6 @@
     "paribu-bursa-marka": ["cinema-wide"],
     "paribu-denizli-sm": ["cinema-wide"],
     "paribu-bodrum-midtown": ["cinema-wide"],
-    "kanaat-uskudar": ["kanaat-interior"],
-    "sultanahmet-kofte-1920": ["sultanahmet-kofte"],
-    "cukur-meyhane-beyoglu": ["cukur-meyhane"],
-    "iskender-tarihi-mavi-dukkan": ["iskender-bursa"],
-    "hasanaga-antalya": ["hasanaga-antalya"],
     "h2": ["swissotel-facade"],
     "izmir-marriott": ["izmir-marriott"],
     "grand-hyatt-izmir": ["izmir-hyatt"],
@@ -57,8 +52,6 @@
     "uludag": ["bursa"],
     "koza-han": ["koza-han"],
     "pera-palace": ["pera-exterior", "pera-domes"],
-    "beyti-florya": ["beyti-interior"],
-    "kale-rumelihisari": ["kale-exterior"],
     "anitkabir": ["ankara"],
     "izmir-clock-tower": ["izmir"]
   }

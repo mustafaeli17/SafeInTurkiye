@@ -13,8 +13,8 @@ describe('Shared home breadcrumb',()=>{
  });
  it('supports in-app navigation and RTL without a duplicate link',()=>{
   const html=renderToStaticMarkup(<HomeButton lang="ar" currentPage="مدينة" onClick={()=>{}}/>);
-  expect(html.match(/<button /g)).toHaveLength(1);
-  expect(html).not.toContain('href=');
+  expect(html.match(/href="\/"/g)).toHaveLength(1);
+  expect(html).not.toContain('<button');
   expect(html).toContain('dir="rtl"');
   expect(html).toContain('flex-wrap');
  });

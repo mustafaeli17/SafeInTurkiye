@@ -11,6 +11,8 @@ import TransitAddressInput, { type TransitPlace } from './TransitAddressInput'
 import {trackBusinessEvent} from '../lib/businessEvents'
 import {foundationEnabled} from '../lib/foundationConfig'
 import { searchDestinations, directionsText } from '../lib/searchDestinations'
+import {useBrowserLocation,updateLocationQuery} from '../lib/browserNavigation'
+import {destinationSlug,discoveryCity} from '../lib/discoveryNavigation'
 import type { NearbyCategory, NearbyCenter, NearbyKind, NearbyResult } from '../services/nearbyPlaces'
 
 interface NearbyPlacesProps {
@@ -37,7 +39,10 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
   const eventContext=kind==='exchange'?'exchange':fixedCategory==='restaurant'?'restaurants':fixedCategory==='hotel'?'hotels':fixedCategory==='activity'?'activities':'nearby'
   const businessKey=(id:string)=>id.startsWith('google:')?`google/${id.slice(7)}`:undefined
   const cities: Record<string, NearbyCenter> = searchDestinations;
-  const [selectedCity, setSelectedCity] = useState(initialCityName.startsWith('Cappadocia') ? 'Cappadocia' : initialCityName);
+  const browserLocation=useBrowserLocation()
+  const query=browserLocation.split('?')[1]??''
+  const selectedCity=discoveryCity(query,initialCityName)
+  const setSelectedCity=(city:string)=>updateLocationQuery({city:destinationSlug(city),place:null})
   const [address, setAddress] = useState('')
   const [addressPlace, setAddressPlace] = useState<TransitPlace | null>(null)
   const cityName = addressPlace?.label ?? selectedCity;
@@ -59,9 +64,16 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
   const [state, setState] = useState<'idle' | 'locating' | 'loading' | 'ready' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
   const [origin, setOrigin] = useState<'location' | 'city'>('city')
-  const [filter, setFilter] = useState<'all' | NearbyCategory>(initialCategory ?? fixedCategory ?? 'all')
+  const requestedCategory=new URLSearchParams(query).get('category')
+  const filter:'all'|NearbyCategory=requestedCategory&&(requestedCategory==='all'||requestedCategory in categoryLabels)&&(!fixedCategory||fixedCategory==='activity'||requestedCategory===fixedCategory)?requestedCategory as 'all'|NearbyCategory:initialCategory??fixedCategory??'all'
+  const setFilter=(category:'all'|NearbyCategory)=>updateLocationQuery({category,place:null})
   const [limit, setLimit] = useState(6)
-  const [detailId, setDetailId] = useState<string | null>(null)
+  const requestedPlace=new URLSearchParams(query).get('place')
+  const detailId=requestedPlace&&/^google:[A-Za-z0-9_-]{1,250}$/.test(requestedPlace)?requestedPlace:null
+  const setDetailId=(id:string|null)=>{
+    if(id){const url=new URL(window.location.href);url.searchParams.delete('place');updateLocationQuery({place:id},{state:{placeList:url.pathname+url.search}})}
+    else if(detailId){const url=new URL(window.location.href);url.searchParams.delete('place');const list=url.pathname+url.search;if(window.history.state?.placeList===list)window.history.back();else updateLocationQuery({place:null},{replace:true})}
+  }
   const controller = useRef<AbortController | null>(null)
   const generation = useRef(0)
   const locationTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -70,7 +82,6 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
   useEffect(() => {
     generation.current += 1
     controller.current?.abort()
-    setDetailId(null)
     setResult(null)
     setState('idle')
     setError(null)
@@ -198,8 +209,8 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
 
       {state === 'ready' && places.length === 0 && <div className="rounded-2xl border border-sky-100 bg-white p-5 text-sm text-slate-600">{text('Bu alanda ve kategoride kayıt bulunamadı. Bu, yakınlarda işletme olmadığı anlamına gelmez; harita kayıtları eksik olabilir.', 'No records were found in this area and category. This does not mean there are no places nearby; map coverage may be incomplete.')}</div>}
       {detailId && <button type="button" className="min-h-11 text-blue-700 font-semibold" onClick={() => setDetailId(null)}>{text('← Listeye dön', '← Back to results')}</button>}
-      <div className={detailId ? 'space-y-4' : 'grid grid-cols-1 gap-3 sm:grid-cols-2'}>
-        {places.slice(0, limit).map(place => <article data-business-key={businessKey(place.id)} key={place.id} hidden={!!detailId && detailId !== place.id} className="min-w-0 rounded-2xl border border-sky-100 bg-white p-4 shadow-sm">
+      <div className={detailId && places.some(place=>place.id===detailId) ? 'space-y-4' : 'grid grid-cols-1 gap-3 sm:grid-cols-2'}>
+        {(detailId && places.some(place=>place.id===detailId)?places.filter(place=>place.id===detailId):places.slice(0, limit)).map(place => <article data-business-key={businessKey(place.id)} key={place.id} className="min-w-0 rounded-2xl border border-sky-100 bg-white p-4 shadow-sm">
           <GooglePlacePhoto key={place.photo?.url ?? place.id} place={place} onOpen={() => openPlace(place.id)} />
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0"><span className="text-[10px] font-bold uppercase tracking-wide text-[#007EAD]">{place.typeLabel ?? categoryLabel(place.category)}</span><h3 className="mt-1 break-words font-bold text-slate-900"><button className="text-left min-h-11 hover:text-blue-700" onClick={() => openPlace(place.id)}>{place.name || categoryLabel(place.category)}</button></h3></div>

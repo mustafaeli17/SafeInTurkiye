@@ -52,7 +52,8 @@ it('foundation migration enforces publication, ownership and sponsorship visibil
   await db.exec('reset role')
   await expect(db.exec(`update restaurants set public_slug='new-route' where id='${business}'`)).rejects.toThrow()
   const catalog=await foundationCatalog()
-  expect(catalog).toHaveLength(59)
+  expect(catalog).toHaveLength(52)
+  expect(catalog.filter((entry:{kind:string})=>entry.kind==='restaurants')).toHaveLength(0)
   const seed=catalogSeed(catalog)
   await db.exec(seed)
   await db.exec(seed)
@@ -64,6 +65,6 @@ it('foundation migration enforces publication, ownership and sponsorship visibil
   expect((await db.query(`select distinct description from hotels where editorial_key is not null`)).rows).toEqual([{description:'CMS edit'}])
   expect((await db.query('select * from published_editorial_businesses')).rows).toHaveLength(1)
   await db.exec(`update hotels set status='PUBLISHED' where editorial_key is not null;update restaurants set status='PUBLISHED' where editorial_key is not null;update activities set status='PUBLISHED' where editorial_key is not null;set role anon`)
-  expect((await db.query('select * from published_editorial_businesses')).rows).toHaveLength(60)
+  expect((await db.query('select * from published_editorial_businesses')).rows).toHaveLength(catalog.length+1)
  }finally{await db.close()}
 },60000)

@@ -4,7 +4,7 @@ export default function HomeButton({lang='en',onClick,currentPage}:{lang?:string
  const label=labels[lang]??labels.en;
  const style='inline-flex min-h-11 items-center gap-1 font-bold text-[#087FFF] hover:underline cursor-pointer focus-visible:outline-2 focus-visible:outline-blue-700';
  return <nav aria-label={label} dir={lang==='ar'?'rtl':'ltr'} className="flex flex-wrap items-center gap-x-2 text-[12px] text-slate-500">
- {onClick?<button type="button" onClick={onClick} className={style}><ArrowLeft aria-hidden="true" className="w-3.5 h-3.5 shrink-0"/>{label}</button>:<a href="/" className={style}><ArrowLeft aria-hidden="true" className="w-3.5 h-3.5 shrink-0"/>{label}</a>}
+ <a href="/" onClick={onClick?event=>{if(event.button===0&&!event.metaKey&&!event.ctrlKey&&!event.shiftKey&&!event.altKey){event.preventDefault();onClick();}}:undefined} className={style}><ArrowLeft aria-hidden="true" className={`w-3.5 h-3.5 shrink-0 ${lang==='ar'?'rotate-180':''}`}/>{label}</a>
  {currentPage&&<><span aria-hidden="true">/</span><span aria-current="page" className="font-bold text-slate-800 break-words min-w-0">{currentPage}</span></>}
  </nav>;
 }

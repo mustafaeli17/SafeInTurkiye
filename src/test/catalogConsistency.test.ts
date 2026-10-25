@@ -3,6 +3,7 @@ import {readFileSync,existsSync} from 'node:fs';
 import {curatedDirectory,directoryEntry,entryPath} from '../lib/directory';
 import {publicCities as cities} from '../lib/publicRoutes';
 import sections from '../data/sectionRoutes.json';
+import retiredRestaurants from '../data/retiredRestaurantSlugs.json';
 describe('built editorial catalog consistency (requires a production build)',()=>{
  it('has exactly the published entity set in sitemap, with no archive orphans',()=>{
   const xml=readFileSync('dist/sitemap.xml','utf8');
@@ -20,5 +21,12 @@ describe('built editorial catalog consistency (requires a production build)',()=
  it('does not resolve missing or retired editorial detail routes',()=>{
   expect(directoryEntry('/hotels/does-not-exist')).toBeUndefined();
   expect(directoryEntry('/hotels/colossae-pamukkale')).toBeUndefined();
+  const sitemap=readFileSync('dist/sitemap.xml','utf8');
+  expect(curatedDirectory.filter(entry=>entry.kind==='restaurants')).toEqual([]);
+  for(const slug of retiredRestaurants){
+   expect(directoryEntry(`/restaurants/${slug}`)).toBeUndefined();
+   expect(sitemap).not.toContain(`/restaurants/${slug}<`);
+   expect(existsSync(`dist/restaurants/${slug}/index.html`)).toBe(false);
+  }
  });
 });

@@ -1,6 +1,8 @@
 import PageLoading from './components/PageLoading';
 import CityArtwork from './components/CityArtwork';
 import {sectionFromPath,sectionPath,transferIntent,type Section} from './lib/sectionNavigation';
+import {navigateTo,useBrowserLocation} from './lib/browserNavigation';
+import {destinationSlug,discoveryCity} from './lib/discoveryNavigation';
 import {taxiRouteNotice} from './lib/taxiRouteNotice';
 import {siteInformation} from './lib/siteInformation';
 import {cityLocale,cityDisplayName} from './lib/cityLocale';
@@ -626,17 +628,20 @@ function SafeRouteMap({
 export default function App({initialCity,initialLanguage,initialSection}:{initialCity?:string;initialLanguage?:string;initialSection?:Section} = {}) {
   const { session, isStaff, role, signIn, signOut } = useSupabaseAuth();
   const mockDataEnabled = import.meta.env.VITE_ENABLE_MOCK_DATA === 'true';
-  const [activeTab, setTab] = useState<'home' | 'city' | Section | 'admin'>(initialCity?'city':initialSection??'home');
+  const browserLocation=useBrowserLocation();
+  const [browserPath,browserQuery='']=browserLocation.split('?');
+  const [adminOpen,setAdminOpen]=useState(false);
+  const activeTab:'home'|'city'|Section|'admin'=adminOpen?'admin':browserPath.startsWith('/cities/')?'city':sectionFromPath(browserPath)??'home';
+  const selectedCityName=publicCities.find(c=>cityPath(c.name)===browserPath)?.name??publicCities.find(c=>c.slug===new URLSearchParams(browserQuery).get('city'))?.name??'İstanbul';
   const setActiveTab = (tab:typeof activeTab) => {
+    setAdminOpen(tab==='admin');
+    if(tab==='admin')return;
     const path=tab==='city'?cityPath(selectedCityName):sectionPath(tab);
-    const city=publicCities.find(c=>c.name===selectedCityName)?.slug;
+    const city=destinationSlug(discoveryCity(browserQuery,selectedCityName));
     const target=tab!=='home'&&tab!=='city'&&city?path+'?city='+city:path;
-    if(window.location.pathname+window.location.search!==target)window.history.pushState({},'',target);
-    setTab(tab);
+    navigateTo(target);
   };
-  useEffect(()=>{const restore=()=>setTab(window.location.pathname.startsWith('/cities/')?'city':sectionFromPath(window.location.pathname)??'home');window.addEventListener('popstate',restore);return()=>window.removeEventListener('popstate',restore);},[]);
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }); }, [activeTab]);
-  const [selectedCityName, setSelectedCityName] = useState<string>(()=>initialCity??publicCities.find(c=>c.slug===new URLSearchParams(window.location.search).get('city'))?.name??'İstanbul');
   useEffect(() => {
     updateSectionSeo(activeTab, selectedCityName);
     // State-only sections must not retain a detail/city schema or language
@@ -649,7 +654,6 @@ export default function App({initialCity,initialLanguage,initialSection}:{initia
       if(!schema){schema=document.createElement('script');schema.id='public-page-schema';schema.setAttribute('type','application/ld+json');document.head.appendChild(schema);}
       schema.textContent=JSON.stringify({'@context':'https://schema.org','@type':'TouristDestination',name:selectedCityName,url:`https://www.safeinturkiye.com${path}`});
     }
-    if(activeTab==='city')window.history.replaceState({},'',path);
     document.querySelector('link[rel="canonical"]')?.setAttribute('href',`https://www.safeinturkiye.com${path}`);
     document.querySelector('meta[property="og:url"]')?.setAttribute('content',`https://www.safeinturkiye.com${path}`);
   }, [activeTab, selectedCityName,initialCity]);
@@ -770,7 +774,7 @@ export default function App({initialCity,initialLanguage,initialSection}:{initia
     setCatalogQuery('');
     setActivityCategory('All');
     const cityMatch = Object.keys(citiesDetailedData).find(city => city.toLocaleLowerCase('tr-TR') === low || city.toLowerCase().replace(/i̇/g, 'i') === query.toLowerCase());
-    if (cityMatch) { setSelectedCityName(cityMatch); setActiveTab('city'); return; }
+    if (cityMatch) { navigateTo(cityPath(cityMatch)); return; }
     if (transferIntent(query)) setActiveTab('tours');
     else if (/taksi|taxi|fare|ücret|такси|تاكسي|出租车/.test(low)) setActiveTab('taxi');
     else if (/metro|métro|otobüs|bus|tren|train|vapur|ferry|marmaray|ulaşım|transit|route|rota|bahn|transport|транспорт|метро|автобус|مواصلات|مترو|حافل|地铁|公交|交通|火车/.test(low)) setActiveTab('transit');
@@ -1151,9 +1155,9 @@ export default function App({initialCity,initialLanguage,initialSection}:{initia
           <div className="max-w-7xl mx-auto px-3 sm:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4">
 
             {/* Logo */}
-            <div onClick={() => setActiveTab('home')} className="flex items-center cursor-pointer shrink-0" aria-label="SafeInTürkiye home">
+            <a href="/" onClick={event=>{if(event.button===0&&!event.ctrlKey&&!event.metaKey&&!event.shiftKey&&!event.altKey){event.preventDefault();setActiveTab('home');}}} className="flex items-center cursor-pointer shrink-0" aria-label="SafeInTürkiye home">
               <img src={siteLogo} alt="SafeInTürkiye" className="h-7 w-auto max-w-[100px] object-contain sm:h-10 sm:max-w-[185px]" />
-            </div>
+            </a>
 
             {/* Menü Butonları */}
             <nav className="hidden lg:flex items-center gap-1.5 text-[13px] font-bold text-slate-600">
@@ -1203,7 +1207,7 @@ export default function App({initialCity,initialLanguage,initialSection}:{initia
               </button>
 
               <button
-                onClick={() => { setSelectedCityName('İstanbul'); setActiveTab('city'); }}
+                onClick={() => navigateTo(cityPath('İstanbul'))}
                 className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
                   activeTab === 'city' ? 'text-[#087FFF] bg-sky-50 font-extrabold' : 'hover:text-[#087FFF] hover:bg-slate-50'
                 }`}
@@ -1301,7 +1305,7 @@ export default function App({initialCity,initialLanguage,initialSection}:{initia
           lang={lang}
           cities={[...['İstanbul', 'Antalya', 'Cappadocia', 'Ankara', 'İzmir'].map(key => ({ key, name: citiesDetailedData[key].name, coverImage: key==='Antalya'?cityImages.antalya.thumbnail:citiesDetailedData[key].coverImage })),...cityGuides.map(city=>{const photo=cityImages[city.slug as keyof typeof cityImages];return {key:city.name,name:city.name,coverImage:'thumbnail' in photo?photo.thumbnail:photo.src};})]}
           onNavigate={setActiveTab}
-          onCity={city => { window.history.pushState({},'',cityPath(city));window.dispatchEvent(new PopStateEvent('popstate')); }}
+          onCity={city => navigateTo(cityPath(city))}
           onSearch={query => { setSearchQuery(query); handleGlobalSearch(query); }}
           onCategory={category => { setActivityCategory(category); setActiveTab('experiences'); }}
         />}
@@ -1484,7 +1488,7 @@ export default function App({initialCity,initialLanguage,initialSection}:{initia
               {[...['İstanbul', 'Ankara', 'Cappadocia', 'Antalya', 'İzmir'],...cityGuides.map(city=>city.name)].map((cname) => (
                 <button
                   key={cname}
-                  onClick={() => {const guide=findCityGuide(cname);if(guide)openCityGuide(guide.slug,lang);else setSelectedCityName(cname);}}
+                  onClick={() => navigateTo(cityPath(cname))}
                   className={`px-4 py-1.5 rounded-xl text-[12px] font-bold cursor-pointer transition-all ${
                     selectedCityName === cname ? 'bg-[#087FFF] text-white shadow-sm' : 'bg-white border border-sky-100 text-slate-600 hover:bg-sky-50'
                   }`}
@@ -1560,7 +1564,6 @@ export default function App({initialCity,initialLanguage,initialSection}:{initia
         {activeTab === 'food' && (
           <main className="travel-catalog">
             <h1 className="text-3xl font-extrabold text-slate-900">{page('diningTitle')}</h1>
-            <EditorialBusinesses entries={directoryRecords.filter(entry=>entry.kind==='restaurants')} lang={lang}/>
             <NearbyPlaces key="restaurants-discovery" kind="essential" fixedCategory="restaurant" lang={lang} center={{lat:currentCityInfo.lat,lng:currentCityInfo.lng}} cityName={currentCityInfo.name} />
           </main>
         )}
@@ -1572,7 +1575,7 @@ export default function App({initialCity,initialLanguage,initialSection}:{initia
           <main className="travel-catalog">
             <div><h1 className="text-3xl font-extrabold text-slate-900">{page('activitiesTitle')}</h1><p className="mt-1 text-sm text-slate-600">{page('activitiesSub')}</p></div>
             <EditorialBusinesses entries={directoryRecords.filter(entry=>entry.kind==='activities')} lang={lang}/>
-            <NearbyPlaces key={`activities-discovery-${activityCategory}`} kind="essential" fixedCategory="activity" initialCategory={activityCategory === 'Cinema' ? 'cinema' : activityCategory === 'Museum & Culture' ? 'museum' : activityCategory === 'Entertainment' ? 'entertainment' : 'activity'} lang={lang} center={{lat:currentCityInfo.lat,lng:currentCityInfo.lng}} cityName={currentCityInfo.name} />
+            <NearbyPlaces key="activities-discovery" kind="essential" fixedCategory="activity" initialCategory={activityCategory === 'Cinema' ? 'cinema' : activityCategory === 'Museum & Culture' ? 'museum' : activityCategory === 'Entertainment' ? 'entertainment' : 'activity'} lang={lang} center={{lat:currentCityInfo.lat,lng:currentCityInfo.lng}} cityName={currentCityInfo.name} />
           </main>
         )}
 

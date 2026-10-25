@@ -8,6 +8,10 @@ beforeEach(()=>{
  mocks.query.abortSignal=vi.fn(async()=>mocks.result);
 });
 describe('published CMS content',()=>{
+ it('does not republish removed hand-entered restaurants while retaining new CMS businesses',async()=>{
+  mocks.result={data:[{id:'old',public_slug:'sultanahmet-kofte-1920'},{id:'new',public_slug:'new-business'}],error:null};
+  expect(await getPublishedContent('restaurants')).toEqual([{id:'new',public_slug:'new-business'}]);
+ });
  it('keeps an empty published catalog empty',async()=>{
   expect(await getPublishedContent('hotels')).toEqual([]);
   expect(mocks.query.eq).toHaveBeenCalledWith('active',true);

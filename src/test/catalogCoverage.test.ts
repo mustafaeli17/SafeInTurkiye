@@ -17,10 +17,8 @@ describe('catalog expansion safeguards',()=>{
    for(const entry of entries)expect(entryPhotos(entry)[0].illustrative).not.toBe(true);
   }
  });
- it('has five Istanbul restaurants with actual business photos',()=>{
-  const entries=curatedDirectory.filter(e=>e.city==='İstanbul'&&e.kind==='restaurants');
-  expect(entries.length).toBeGreaterThanOrEqual(5);
-  for(const entry of entries)expect(entryPhotos(entry)[0].illustrative).not.toBe(true);
+ it('does not restore the retired manual restaurant list beside Google discovery',()=>{
+  expect(curatedDirectory.filter(e=>e.kind==='restaurants')).toEqual([]);
  });
  it('allows illustrative cinema photos but rejects them for a hotel or museum',()=>{
   const cinema=curatedDirectory.find(e=>e.category==='Cinema')!;
