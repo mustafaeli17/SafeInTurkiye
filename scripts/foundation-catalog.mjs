@@ -1,17 +1,6 @@
-import {readFile} from 'node:fs/promises'
 import {createHash} from 'node:crypto'
-const json=async name=>JSON.parse(await readFile(`src/data/${name}.json`,'utf8'))
-export async function foundationCatalog(){
- const [directory,hotels,restaurants,activities,alternatives,cinemas,guides,publication]=await Promise.all(['directory','regionalHotels','regionalRestaurants','regionalActivities','photoAlternatives','cinemas','cityGuides','photoPublication'].map(json))
- const rows=[...directory,...hotels.map(e=>({...e,kind:'hotels'})),...restaurants.map(e=>({...e,kind:'restaurants'})),...activities.map(e=>({...e,kind:'activities',website:guides.find(c=>c.name===e.city)?.source})),...alternatives,...cinemas.map(e=>({...e,kind:'activities',category:'Cinema',description:{en:'Check current films, screening times and languages on the cinema’s official page. Ticket purchases take place on the operator’s website.',tr:'Güncel filmleri, seansları ve gösterim dilini sinemanın resmî sayfasından kontrol edin. Bilet işlemleri işletmenin sitesinde yapılır.'}}))]
- const keys=new Set()
- return rows.filter(e=>publication.galleries[e.id||e.slug]?.length).map(e=>{
-  const key=`${e.kind}/${e.slug}`
-  if(keys.has(key)||!['hotels','restaurants','activities'].includes(e.kind)||!/^[a-z0-9-]+$/.test(e.slug)||!e.city||!e.name)throw Error('Catalog conflict: '+key)
-  keys.add(key)
-  return {...e,gallery:publication.galleries[e.id||e.slug],sourceUrl:e.sourceUrl??e.website}
- })
-}
+// The pre-API catalog was retired. Its import must remain empty.
+export async function foundationCatalog(){return []}
 const quote=value=>value==null?'null':`'${String(value).replaceAll("'","''")}'`
 const id=key=>{const h=createHash('sha256').update('safeinturkiye:editorial:v1:'+key).digest('hex').slice(0,32);return `${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20)}`}
 export function catalogSeed(rows){

@@ -1,43 +1,11 @@
 import {describe,it,expect} from 'vitest';
-import {curatedDirectory} from '../lib/directory';
-import {entryPhotos,illustrativeLabel} from '../lib/directoryPhotos';
-import targets from '../data/catalogTargets.json';
-describe('catalog expansion safeguards',()=>{
- it('keeps the requested minimums explicit, including every existing activity category',()=>{
-  expect(targets.hotelsPerCity).toBe(5);
-  expect(targets.restaurantsPerCity).toBe(5);
-  expect(targets.activitiesPerCategory).toBe(3);
-  expect(targets.activityCategories).toEqual(['Museum & Culture','Cinema','Entertainment','Summer','Winter']);
+import {curatedDirectory,directoryEntry} from '../lib/directory';
+import retired from '../data/retiredDirectory.json';
+import {isRetiredDirectoryEntry,retiredDirectoryDestination} from '../lib/retiredDirectory';
+describe('pre-API catalog retirement',()=>{
+ it('keeps all three old manual lists empty',()=>{expect(curatedDirectory).toEqual([]);for(const kind of ['hotels','restaurants','activities'])expect(retired.some(entry=>entry.kind===kind)).toBe(true);});
+ it('routes old bookmarks to the matching discovery section without exposing the old detail',()=>{
+  for(const entry of retired){const path=`/${entry.kind}/${entry.slug}`;expect(directoryEntry(path)).toBeUndefined();expect(isRetiredDirectoryEntry(entry.kind,entry.slug)).toBe(true);expect(retiredDirectoryDestination(path)).toMatch(new RegExp('^/'+entry.kind+'(?:\\\\?|$)'));expect(retiredDirectoryDestination('/tr'+path)).toBe(retiredDirectoryDestination(path));}
  });
- it('has five genuine-photo hotels in Antalya and İzmir',()=>{
-  for(const city of ['Antalya','İzmir']){
-   const entries=curatedDirectory.filter(e=>e.city===city&&e.kind==='hotels');
-   expect(entries.length).toBeGreaterThanOrEqual(5);
-   expect(new Set(entries.map(e=>e.website)).size).toBe(entries.length);
-   for(const entry of entries)expect(entryPhotos(entry)[0].illustrative).not.toBe(true);
-  }
- });
- it('does not restore the retired manual restaurant list beside Google discovery',()=>{
-  expect(curatedDirectory.filter(e=>e.kind==='restaurants')).toEqual([]);
- });
- it('allows illustrative cinema photos but rejects them for a hotel or museum',()=>{
-  const cinema=curatedDirectory.find(e=>e.category==='Cinema')!;
-  expect(entryPhotos(cinema)[0].illustrative).toBe(true);
-  expect(entryPhotos({...cinema,kind:'hotels'})).toEqual([]);
-  expect(entryPhotos({...cinema,category:'Museum & Culture'})).toEqual([]);
-  for(const lang of ['tr','en','ar','zh'])expect(illustrativeLabel(lang)).toBeTruthy();
- });
- it('has three distinct cinema venues in İstanbul, Ankara and İzmir',()=>{
-  for(const city of ['İstanbul','Ankara','İzmir']){
-   const entries=curatedDirectory.filter(e=>e.city===city&&e.category==='Cinema');
-   expect(entries.length).toBeGreaterThanOrEqual(3);
-   expect(new Set(entries.map(e=>e.website)).size).toBe(entries.length);
-  }
- });
- it('does not publish duplicate business websites within the same city and kind',()=>{
-  const identities=curatedDirectory.map(e=>`${e.kind}/${e.city}/${e.website.replace(/\/$/,'')}`);
-  // Landmarks may share a tourism authority; business venues must be distinct.
-  const businesses=identities.filter(id=>id.startsWith('hotels/')||id.startsWith('restaurants/'));
-  expect(new Set(businesses).size).toBe(businesses.length);
- });
+ it('does not retire newly published businesses or unrelated paths',()=>{expect(isRetiredDirectoryEntry('hotels','new-business')).toBe(false);expect(retiredDirectoryDestination('/taxi')).toBeUndefined();});
 });

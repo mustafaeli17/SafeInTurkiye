@@ -1,27 +1,8 @@
 import {describe,it,expect} from 'vitest';
 import {readFileSync,existsSync} from 'node:fs';
-import photos from '../lib/placePhotos.json';
-import officialPhotos from '../lib/officialPhotos.json';
-describe('verified place photographs',()=>{
- it('ships official venue images without mislabelling them as Creative Commons',()=>{
-  for(const p of Object.values(officialPhotos)){
-   expect(existsSync('public'+p.src)).toBe(true);
-   expect(readFileSync('public'+p.src).length).toBeGreaterThan(1000);
-   expect(p.source).toMatch(/^https:\/\//);
-   expect(p.license).toContain('rights reserved');
-  }
- });
- it('ships all attributed images with real local files',()=>{
-  for(const p of Object.values(photos)){
-   expect(existsSync('public'+p.src)).toBe(true);
-   expect(readFileSync('public'+p.src).length).toBeGreaterThan(10000);
-   expect(p.source).toMatch(/^https:\/\/commons.wikimedia.org\/wiki\/File:/);
-   expect(p.license).toMatch(/CC BY|CC0/);
-  }
- });
- it('does not substitute unrelated stock images for unverified venues',()=>{
-  const component=readFileSync('src/components/PlacePhoto.tsx','utf8');
-  expect(component).not.toContain('unsplash');
-  expect(component).toContain('!photo || failed');
- });
+import artwork from '../data/cityArtwork.json';
+import hero from '../data/heroPhoto.json';
+describe('active destination artwork',()=>{
+ it('ships only real local paths for each active city cover and thumbnail',()=>{for(const photo of artwork)for(const src of [photo.src,photo.thumbnail]){expect(src).toMatch(/^\/photos\/cities-2026\//);expect(existsSync('public'+src)).toBe(true);const bytes=readFileSync('public'+src);expect(bytes.length).toBeGreaterThan(1000);expect(bytes.toString('ascii',8,12)).toBe('WEBP');}});
+ it('retains the homepage panorama and explicitly labels generated artwork',()=>{expect(existsSync('public'+hero.src)).toBe(true);expect(hero.origin).toContain('AI-generated');for(const photo of artwork)expect(photo.kind).toContain('AI-generated');});
 });

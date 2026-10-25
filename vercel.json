@@ -5,13 +5,936 @@
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=()" }
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=()"
+        }
       ]
     }
   ],
   "redirects": [
-    { "source": "/favicon.svg", "destination": "/favicon-96x96.png", "permanent": true }
+    {
+      "source": "/favicon.svg",
+      "destination": "/favicon-96x96.png",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/akra-antalya",
+      "destination": "/hotels?city=antalya",
+      "permanent": true
+    },
+    {
+      "source": "/tr/hotels/akra-antalya",
+      "destination": "/hotels?city=antalya",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/swissotel-buyuk-efes-izmir",
+      "destination": "/hotels?city=izmir",
+      "permanent": true
+    },
+    {
+      "source": "/tr/hotels/swissotel-buyuk-efes-izmir",
+      "destination": "/hotels?city=izmir",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/ciragan-palace-kempinski",
+      "destination": "/hotels?city=istanbul",
+      "permanent": true
+    },
+    {
+      "source": "/tr/hotels/ciragan-palace-kempinski",
+      "destination": "/hotels?city=istanbul",
+      "permanent": true
+    },
+    {
+      "source": "/activities/goreme-open-air-museum",
+      "destination": "/activities?city=cappadocia",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/goreme-open-air-museum",
+      "destination": "/activities?city=cappadocia",
+      "permanent": true
+    },
+    {
+      "source": "/activities/museum-of-anatolian-civilizations",
+      "destination": "/activities?city=ankara",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/museum-of-anatolian-civilizations",
+      "destination": "/activities?city=ankara",
+      "permanent": true
+    },
+    {
+      "source": "/activities/topkapi-palace",
+      "destination": "/activities?city=istanbul",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/topkapi-palace",
+      "destination": "/activities?city=istanbul",
+      "permanent": true
+    },
+    {
+      "source": "/activities/paribu-cineverse-cevahir",
+      "destination": "/activities?city=istanbul",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/paribu-cineverse-cevahir",
+      "destination": "/activities?city=istanbul",
+      "permanent": true
+    },
+    {
+      "source": "/activities/paribu-cineverse-ankamall",
+      "destination": "/activities?city=ankara",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/paribu-cineverse-ankamall",
+      "destination": "/activities?city=ankara",
+      "permanent": true
+    },
+    {
+      "source": "/activities/paribu-cineverse-forum-bornova",
+      "destination": "/activities?city=izmir",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/paribu-cineverse-forum-bornova",
+      "destination": "/activities?city=izmir",
+      "permanent": true
+    },
+    {
+      "source": "/activities/paribu-cineverse-antalya-migros",
+      "destination": "/activities?city=antalya",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/paribu-cineverse-antalya-migros",
+      "destination": "/activities?city=antalya",
+      "permanent": true
+    },
+    {
+      "source": "/activities/iksv-events",
+      "destination": "/activities?city=istanbul",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/iksv-events",
+      "destination": "/activities?city=istanbul",
+      "permanent": true
+    },
+    {
+      "source": "/activities/istanbul-modern",
+      "destination": "/activities?city=istanbul",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/istanbul-modern",
+      "destination": "/activities?city=istanbul",
+      "permanent": true
+    },
+    {
+      "source": "/activities/erciyes-ski-centre",
+      "destination": "/activities",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/erciyes-ski-centre",
+      "destination": "/activities",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/azka-bodrum",
+      "destination": "/hotels?city=mugla",
+      "permanent": true
+    },
+    {
+      "source": "/tr/hotels/azka-bodrum",
+      "destination": "/hotels?city=mugla",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/marmara-bodrum",
+      "destination": "/hotels?city=mugla",
+      "permanent": true
+    },
+    {
+      "source": "/tr/hotels/marmara-bodrum",
+      "destination": "/hotels?city=mugla",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/mandarin-oriental-bodrum",
+      "destination": "/hotels?city=mugla",
+      "permanent": true
+    },
+    {
+      "source": "/tr/hotels/mandarin-oriental-bodrum",
+      "destination": "/hotels?city=mugla",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/charisma-kusadasi",
+      "destination": "/hotels?city=aydin",
+      "permanent": true
+    },
+    {
+      "source": "/tr/hotels/charisma-kusadasi",
+      "destination": "/hotels?city=aydin",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/yacht-club-didim",
+      "destination": "/hotels?city=aydin",
+      "permanent": true
+    },
+    {
+      "source": "/tr/hotels/yacht-club-didim",
+      "destination": "/hotels?city=aydin",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/ilayda-avantgarde-kusadasi",
+      "destination": "/hotels?city=aydin",
+      "permanent": true
+    },
+    {
+      "source": "/tr/hotels/ilayda-avantgarde-kusadasi",
+      "destination": "/hotels?city=aydin",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/richmond-pamukkale",
+      "destination": "/hotels?city=denizli",
+      "permanent": true
+    },
+    {
+      "source": "/tr/hotels/richmond-pamukkale",
+      "destination": "/hotels?city=denizli",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/doga-thermal-pamukkale",
+      "destination": "/hotels?city=denizli",
+      "permanent": true
+    },
+    {
+      "source": "/tr/hotels/doga-thermal-pamukkale",
+      "destination": "/hotels?city=denizli",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/colossae-pamukkale",
+      "destination": "/hotels?city=denizli",
+      "permanent": true
+    },
+    {
+      "source": "/tr/hotels/colossae-pamukkale",
+      "destination": "/hotels?city=denizli",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/zorlu-grand-trabzon",
+      "destination": "/hotels?city=trabzon",
+      "permanent": true
+    },
+    {
+      "source": "/tr/hotels/zorlu-grand-trabzon",
+      "destination": "/hotels?city=trabzon",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/radisson-blu-trabzon",
+      "destination": "/hotels?city=trabzon",
+      "permanent": true
+    },
+    {
+      "source": "/tr/hotels/radisson-blu-trabzon",
+      "destination": "/hotels?city=trabzon",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/novotel-trabzon",
+      "destination": "/hotels?city=trabzon",
+      "permanent": true
+    },
+    {
+      "source": "/tr/hotels/novotel-trabzon",
+      "destination": "/hotels?city=trabzon",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/dedeman-konya",
+      "destination": "/hotels?city=konya",
+      "permanent": true
+    },
+    {
+      "source": "/tr/hotels/dedeman-konya",
+      "destination": "/hotels?city=konya",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/hich-konya",
+      "destination": "/hotels?city=konya",
+      "permanent": true
+    },
+    {
+      "source": "/tr/hotels/hich-konya",
+      "destination": "/hotels?city=konya",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/selcuk-konya",
+      "destination": "/hotels?city=konya",
+      "permanent": true
+    },
+    {
+      "source": "/tr/hotels/selcuk-konya",
+      "destination": "/hotels?city=konya",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/almira-bursa",
+      "destination": "/hotels?city=bursa",
+      "permanent": true
+    },
+    {
+      "source": "/tr/hotels/almira-bursa",
+      "destination": "/hotels?city=bursa",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/hampton-bursa",
+      "destination": "/hotels?city=bursa",
+      "permanent": true
+    },
+    {
+      "source": "/tr/hotels/hampton-bursa",
+      "destination": "/hotels?city=bursa",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/hilton-bursa",
+      "destination": "/hotels?city=bursa",
+      "permanent": true
+    },
+    {
+      "source": "/tr/hotels/hilton-bursa",
+      "destination": "/hotels?city=bursa",
+      "permanent": true
+    },
+    {
+      "source": "/activities/bodrum-castle",
+      "destination": "/activities?city=mugla",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/bodrum-castle",
+      "destination": "/activities?city=mugla",
+      "permanent": true
+    },
+    {
+      "source": "/activities/bodrum-marina",
+      "destination": "/activities?city=mugla",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/bodrum-marina",
+      "destination": "/activities?city=mugla",
+      "permanent": true
+    },
+    {
+      "source": "/activities/bodrum-underwater-museum",
+      "destination": "/activities?city=mugla",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/bodrum-underwater-museum",
+      "destination": "/activities?city=mugla",
+      "permanent": true
+    },
+    {
+      "source": "/activities/guvercinada-kusadasi",
+      "destination": "/activities?city=aydin",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/guvercinada-kusadasi",
+      "destination": "/activities?city=aydin",
+      "permanent": true
+    },
+    {
+      "source": "/activities/didyma-apollo-temple",
+      "destination": "/activities?city=aydin",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/didyma-apollo-temple",
+      "destination": "/activities?city=aydin",
+      "permanent": true
+    },
+    {
+      "source": "/activities/dilek-peninsula",
+      "destination": "/activities?city=aydin",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/dilek-peninsula",
+      "destination": "/activities?city=aydin",
+      "permanent": true
+    },
+    {
+      "source": "/activities/pamukkale-travertines",
+      "destination": "/activities?city=denizli",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/pamukkale-travertines",
+      "destination": "/activities?city=denizli",
+      "permanent": true
+    },
+    {
+      "source": "/activities/hierapolis",
+      "destination": "/activities?city=denizli",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/hierapolis",
+      "destination": "/activities?city=denizli",
+      "permanent": true
+    },
+    {
+      "source": "/activities/laodikeia",
+      "destination": "/activities?city=denizli",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/laodikeia",
+      "destination": "/activities?city=denizli",
+      "permanent": true
+    },
+    {
+      "source": "/activities/sumela-monastery",
+      "destination": "/activities?city=trabzon",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/sumela-monastery",
+      "destination": "/activities?city=trabzon",
+      "permanent": true
+    },
+    {
+      "source": "/activities/uzungol",
+      "destination": "/activities?city=trabzon",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/uzungol",
+      "destination": "/activities?city=trabzon",
+      "permanent": true
+    },
+    {
+      "source": "/activities/trabzon-ataturk-mansion",
+      "destination": "/activities?city=trabzon",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/trabzon-ataturk-mansion",
+      "destination": "/activities?city=trabzon",
+      "permanent": true
+    },
+    {
+      "source": "/activities/mevlana-museum",
+      "destination": "/activities?city=konya",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/mevlana-museum",
+      "destination": "/activities?city=konya",
+      "permanent": true
+    },
+    {
+      "source": "/activities/karatay-tile-museum",
+      "destination": "/activities?city=konya",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/karatay-tile-museum",
+      "destination": "/activities?city=konya",
+      "permanent": true
+    },
+    {
+      "source": "/activities/konya-archaeology-museum",
+      "destination": "/activities?city=konya",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/konya-archaeology-museum",
+      "destination": "/activities?city=konya",
+      "permanent": true
+    },
+    {
+      "source": "/activities/uludag",
+      "destination": "/activities?city=bursa",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/uludag",
+      "destination": "/activities?city=bursa",
+      "permanent": true
+    },
+    {
+      "source": "/activities/koza-han",
+      "destination": "/activities?city=bursa",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/koza-han",
+      "destination": "/activities?city=bursa",
+      "permanent": true
+    },
+    {
+      "source": "/activities/bursa-ulu-cami",
+      "destination": "/activities?city=bursa",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/bursa-ulu-cami",
+      "destination": "/activities?city=bursa",
+      "permanent": true
+    },
+    {
+      "source": "/activities/paribu-akasya",
+      "destination": "/activities?city=istanbul",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/paribu-akasya",
+      "destination": "/activities?city=istanbul",
+      "permanent": true
+    },
+    {
+      "source": "/activities/paribu-aqua-florya",
+      "destination": "/activities?city=istanbul",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/paribu-aqua-florya",
+      "destination": "/activities?city=istanbul",
+      "permanent": true
+    },
+    {
+      "source": "/activities/paribu-antares",
+      "destination": "/activities?city=ankara",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/paribu-antares",
+      "destination": "/activities?city=ankara",
+      "permanent": true
+    },
+    {
+      "source": "/activities/paribu-armada",
+      "destination": "/activities?city=ankara",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/paribu-armada",
+      "destination": "/activities?city=ankara",
+      "permanent": true
+    },
+    {
+      "source": "/activities/paribu-forum-kayseri",
+      "destination": "/activities",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/paribu-forum-kayseri",
+      "destination": "/activities",
+      "permanent": true
+    },
+    {
+      "source": "/activities/paribu-izmir-park",
+      "destination": "/activities?city=izmir",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/paribu-izmir-park",
+      "destination": "/activities?city=izmir",
+      "permanent": true
+    },
+    {
+      "source": "/activities/paribu-optimum-izmir",
+      "destination": "/activities?city=izmir",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/paribu-optimum-izmir",
+      "destination": "/activities?city=izmir",
+      "permanent": true
+    },
+    {
+      "source": "/activities/paribu-kent-plaza",
+      "destination": "/activities?city=konya",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/paribu-kent-plaza",
+      "destination": "/activities?city=konya",
+      "permanent": true
+    },
+    {
+      "source": "/activities/paribu-bursa-podyum",
+      "destination": "/activities?city=bursa",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/paribu-bursa-podyum",
+      "destination": "/activities?city=bursa",
+      "permanent": true
+    },
+    {
+      "source": "/activities/paribu-bursa-marka",
+      "destination": "/activities?city=bursa",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/paribu-bursa-marka",
+      "destination": "/activities?city=bursa",
+      "permanent": true
+    },
+    {
+      "source": "/activities/paribu-denizli-sm",
+      "destination": "/activities?city=denizli",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/paribu-denizli-sm",
+      "destination": "/activities?city=denizli",
+      "permanent": true
+    },
+    {
+      "source": "/activities/paribu-bodrum-midtown",
+      "destination": "/activities?city=mugla",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/paribu-bodrum-midtown",
+      "destination": "/activities?city=mugla",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/anatolia-bursa",
+      "destination": "/hotels?city=bursa",
+      "permanent": true
+    },
+    {
+      "source": "/tr/hotels/anatolia-bursa",
+      "destination": "/hotels?city=bursa",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/efe-kusadasi",
+      "destination": "/hotels?city=aydin",
+      "permanent": true
+    },
+    {
+      "source": "/tr/hotels/efe-kusadasi",
+      "destination": "/hotels?city=aydin",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/doubletree-kusadasi",
+      "destination": "/hotels?city=aydin",
+      "permanent": true
+    },
+    {
+      "source": "/tr/hotels/doubletree-kusadasi",
+      "destination": "/hotels?city=aydin",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/izmir-marriott",
+      "destination": "/hotels?city=izmir",
+      "permanent": true
+    },
+    {
+      "source": "/tr/hotels/izmir-marriott",
+      "destination": "/hotels?city=izmir",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/grand-hyatt-izmir",
+      "destination": "/hotels?city=izmir",
+      "permanent": true
+    },
+    {
+      "source": "/tr/hotels/grand-hyatt-izmir",
+      "destination": "/hotels?city=izmir",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/ege-palas",
+      "destination": "/hotels?city=izmir",
+      "permanent": true
+    },
+    {
+      "source": "/tr/hotels/ege-palas",
+      "destination": "/hotels?city=izmir",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/wyndham-grand-izmir",
+      "destination": "/hotels?city=izmir",
+      "permanent": true
+    },
+    {
+      "source": "/tr/hotels/wyndham-grand-izmir",
+      "destination": "/hotels?city=izmir",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/ramada-plaza-antalya",
+      "destination": "/hotels?city=antalya",
+      "permanent": true
+    },
+    {
+      "source": "/tr/hotels/ramada-plaza-antalya",
+      "destination": "/hotels?city=antalya",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/sealife-family-antalya",
+      "destination": "/hotels?city=antalya",
+      "permanent": true
+    },
+    {
+      "source": "/tr/hotels/sealife-family-antalya",
+      "destination": "/hotels?city=antalya",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/rixos-downtown-antalya",
+      "destination": "/hotels?city=antalya",
+      "permanent": true
+    },
+    {
+      "source": "/tr/hotels/rixos-downtown-antalya",
+      "destination": "/hotels?city=antalya",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/alp-pasa-antalya",
+      "destination": "/hotels?city=antalya",
+      "permanent": true
+    },
+    {
+      "source": "/tr/hotels/alp-pasa-antalya",
+      "destination": "/hotels?city=antalya",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/lara-barut-collection",
+      "destination": "/hotels?city=antalya",
+      "permanent": true
+    },
+    {
+      "source": "/tr/hotels/lara-barut-collection",
+      "destination": "/hotels?city=antalya",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/grand-hotel-konya",
+      "destination": "/hotels?city=konya",
+      "permanent": true
+    },
+    {
+      "source": "/tr/hotels/grand-hotel-konya",
+      "destination": "/hotels?city=konya",
+      "permanent": true
+    },
+    {
+      "source": "/activities/anitkabir",
+      "destination": "/activities?city=ankara",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/anitkabir",
+      "destination": "/activities?city=ankara",
+      "permanent": true
+    },
+    {
+      "source": "/activities/izmir-clock-tower",
+      "destination": "/activities?city=izmir",
+      "permanent": true
+    },
+    {
+      "source": "/tr/activities/izmir-clock-tower",
+      "destination": "/activities?city=izmir",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/pera-palace",
+      "destination": "/hotels?city=istanbul",
+      "permanent": true
+    },
+    {
+      "source": "/tr/hotels/pera-palace",
+      "destination": "/hotels?city=istanbul",
+      "permanent": true
+    },
+    {
+      "source": "/restaurants/7-mehmet-antalya",
+      "destination": "/restaurants",
+      "permanent": true
+    },
+    {
+      "source": "/tr/restaurants/7-mehmet-antalya",
+      "destination": "/restaurants",
+      "permanent": true
+    },
+    {
+      "source": "/restaurants/ali-baba-firin-kebap-konya",
+      "destination": "/restaurants",
+      "permanent": true
+    },
+    {
+      "source": "/tr/restaurants/ali-baba-firin-kebap-konya",
+      "destination": "/restaurants",
+      "permanent": true
+    },
+    {
+      "source": "/restaurants/beyti-florya",
+      "destination": "/restaurants",
+      "permanent": true
+    },
+    {
+      "source": "/tr/restaurants/beyti-florya",
+      "destination": "/restaurants",
+      "permanent": true
+    },
+    {
+      "source": "/restaurants/cemo-konya",
+      "destination": "/restaurants",
+      "permanent": true
+    },
+    {
+      "source": "/tr/restaurants/cemo-konya",
+      "destination": "/restaurants",
+      "permanent": true
+    },
+    {
+      "source": "/restaurants/ciya-sofrasi",
+      "destination": "/restaurants",
+      "permanent": true
+    },
+    {
+      "source": "/tr/restaurants/ciya-sofrasi",
+      "destination": "/restaurants",
+      "permanent": true
+    },
+    {
+      "source": "/restaurants/cukur-meyhane-beyoglu",
+      "destination": "/restaurants",
+      "permanent": true
+    },
+    {
+      "source": "/tr/restaurants/cukur-meyhane-beyoglu",
+      "destination": "/restaurants",
+      "permanent": true
+    },
+    {
+      "source": "/restaurants/hasanaga-antalya",
+      "destination": "/restaurants",
+      "permanent": true
+    },
+    {
+      "source": "/tr/restaurants/hasanaga-antalya",
+      "destination": "/restaurants",
+      "permanent": true
+    },
+    {
+      "source": "/restaurants/iskender-tarihi-mavi-dukkan",
+      "destination": "/restaurants",
+      "permanent": true
+    },
+    {
+      "source": "/tr/restaurants/iskender-tarihi-mavi-dukkan",
+      "destination": "/restaurants",
+      "permanent": true
+    },
+    {
+      "source": "/restaurants/kale-rumelihisari",
+      "destination": "/restaurants",
+      "permanent": true
+    },
+    {
+      "source": "/tr/restaurants/kale-rumelihisari",
+      "destination": "/restaurants",
+      "permanent": true
+    },
+    {
+      "source": "/restaurants/kanaat-uskudar",
+      "destination": "/restaurants",
+      "permanent": true
+    },
+    {
+      "source": "/tr/restaurants/kanaat-uskudar",
+      "destination": "/restaurants",
+      "permanent": true
+    },
+    {
+      "source": "/restaurants/memedof-bodrum",
+      "destination": "/restaurants",
+      "permanent": true
+    },
+    {
+      "source": "/tr/restaurants/memedof-bodrum",
+      "destination": "/restaurants",
+      "permanent": true
+    },
+    {
+      "source": "/restaurants/musto-bodrum",
+      "destination": "/restaurants",
+      "permanent": true
+    },
+    {
+      "source": "/tr/restaurants/musto-bodrum",
+      "destination": "/restaurants",
+      "permanent": true
+    },
+    {
+      "source": "/restaurants/sait-yalikavak",
+      "destination": "/restaurants",
+      "permanent": true
+    },
+    {
+      "source": "/tr/restaurants/sait-yalikavak",
+      "destination": "/restaurants",
+      "permanent": true
+    },
+    {
+      "source": "/restaurants/sultanahmet-kofte-1920",
+      "destination": "/restaurants",
+      "permanent": true
+    },
+    {
+      "source": "/tr/restaurants/sultanahmet-kofte-1920",
+      "destination": "/restaurants",
+      "permanent": true
+    }
   ]
 }

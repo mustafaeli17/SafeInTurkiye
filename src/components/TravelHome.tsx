@@ -21,7 +21,7 @@ const translations = {
 }
 export default function TravelHome({ lang, cities, onNavigate, onCity, onSearch, onCategory }: {
   lang: string
-  cities: Array<{ key: string; name: string; coverImage: string }>
+  cities: Array<{ key: string; name: string }>
   onNavigate: (destination: Destination) => void
   onCity: (city: string) => void
   onSearch: (query: string) => void

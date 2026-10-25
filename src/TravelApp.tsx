@@ -3,10 +3,10 @@ import { useEffect, useState, lazy, Suspense } from 'react';
 import App from './App';
 import {sectionFromPath} from './lib/sectionNavigation';
 import {navigateTo,useBrowserLocation} from './lib/browserNavigation';
-import {isRetiredRestaurantPath} from './lib/retiredRestaurants';
+import {retiredDirectoryDestination} from './lib/retiredDirectory';
 import SiteInformation from './components/SiteInformation';
 import { readLanguagePreference } from './lib/languagePreference';
-import { directoryEntry, registerPublishedEntry, photoCuratedCatalog } from './lib/directory';
+import { directoryEntry, registerPublishedEntry } from './lib/directory';
 import type { DirectoryEntry } from './lib/directory';
 import { requireSupabase } from './lib/supabase';
 import {publicCities} from './lib/publicRoutes';
@@ -21,7 +21,9 @@ export default function TravelApp() {
   const match=path.match(foundationEnabled?cmsPattern:legacyPattern);
   useEffect(()=>{
     const route=path.match(foundationEnabled?/^(?:\/tr)?\/(hotels|restaurants|activities)\/([a-z0-9-]+)\/?$/:/^\/(hotels|restaurants|activities)\/[a-z0-9-]+--([a-f0-9-]{36})\/?$/);
-    if(!route||photoCuratedCatalog||isRetiredRestaurantPath(path)){if(route)setRemote({path});return;}
+    const retiredDestination=retiredDirectoryDestination(path);
+    if(retiredDestination){navigateTo(retiredDestination,{replace:true});return;}
+    if(!route){return;}
     let cancelled=false;
     void (async()=>{
       try {
@@ -44,7 +46,7 @@ export default function TravelApp() {
   const city=publicCities.find(item=>path.replace(/\/$/,'')===`/cities/${item.slug}`);
   const section=sectionFromPath(path);
   if(['/privacy','/terms','/about','/contact'].includes(path))return <SiteInformation page={path.slice(1) as 'privacy'|'terms'|'about'|'contact'}/>;
-  if(section||city||path==='/')return <App initialSection={section} initialCity={city?.name} initialLanguage={preference}/>;
+  if(section||city||path==='/')return <App initialLanguage={preference}/>;
   if(match && remote?.path!==path)return <PageLoading lang={language}/>;
   if(path!=='/'&&!entry)return <main className="max-w-xl mx-auto p-8 space-y-4"><h1 className="text-xl font-bold">{language==='tr'?'İçerik şu anda görüntülenemiyor':'This page is currently unavailable'}</h1><p>{language==='tr'?'Kayıt yayından kaldırılmış veya bağlantı geçici olarak kesilmiş olabilir.':'The entry may no longer be published, or the connection may be temporarily unavailable.'}</p><button className="text-blue-700 underline" onClick={back}>{language==='tr'?'Ana sayfaya dön':'Back to home'}</button></main>;
   return entry ? <Suspense fallback={<PageLoading lang={language}/>}><DirectoryDetail key={entry.id} entry={entry} lang={language} onBack={back}/></Suspense> : <App/>;

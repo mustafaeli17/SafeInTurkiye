@@ -1,6 +1,7 @@
 import {useEffect,useState} from 'react'
 import {requireSupabase} from '../lib/supabase'
 import {foundationEnabled} from '../lib/foundationConfig'
+import {isRetiredDirectoryEntry} from '../lib/retiredDirectory'
 type Item={id:string;name:string;kind:string;slug:string;city_id:string}
 const label:Record<string,string>={es:'Patrocinado',en:'Sponsored',tr:'Sponsorlu',de:'Gesponsert',fr:'Sponsorisé',ar:'إعلان ممول',ru:'Реклама',zh:'赞助推广'}
 export default function SponsoredBusinesses({context,lang,city}:{context:string;lang:string;city?:string}){
@@ -17,7 +18,7 @@ export default function SponsoredBusinesses({context,lang,city}:{context:string;
     let query=client.from('published_editorial_businesses').select('id,name,kind,slug,city_id').in('id',placements.map(row=>row.business_id))
     if(city){const result=await client.from('cities').select('id').eq('name',city).maybeSingle();if(result.error||!result.data){if(!cancelled)setRows([]);return}query=query.eq('city_id',result.data.id)}
     const result=await query.abortSignal(AbortSignal.timeout(8000));if(result.error)throw result.error
-    const ordered=placements.flatMap(p=>result.data?.filter(b=>b.id===p.business_id&&b.kind===p.business_kind)??[])
+    const ordered=placements.flatMap(p=>result.data?.filter(b=>b.id===p.business_id&&b.kind===p.business_kind&&!isRetiredDirectoryEntry(b.kind,b.slug))??[])
     if(!cancelled)setRows([...new Map(ordered.map(row=>[`${row.kind}/${row.id}`,row])).values()])
    }catch{if(!cancelled)setRows([])}
   })()

@@ -1,20 +1,3 @@
-// Official destinations checked on 2026-09-20. No availability or live prices implied.
-export const officialLinks: Record<string, string> = {
- h1: 'https://www.akrahotels.com/en/hotels/akra-antalya/',
- h2: 'https://www.swissotel.com/hotels/izmir/',
- h3: 'https://www.kempinski.com/en/ciragan-palace',
- r2: 'https://www.ciya.com.tr/', r3: 'https://7mehmet.com/en/contact',
- a1: 'https://muze.gov.tr/muze-detay?DistId=grm&SectionId=grm01',
- a2: 'https://www.muze.gov.tr/muze-detay?DistId=AMM&SectionId=AMM01',
- a3: 'https://millisaraylar.gov.tr/',
- cinemaIstanbul: 'https://www.paribucineverse.com/sinemalar/cevahir',
- cinemaAnkara: 'https://www.paribucineverse.com/sinemalar/ankamall',
- cinemaIzmir: 'https://www.paribucineverse.com/sinemalar/forum-bornova',
- cinemaAntalya: 'https://www.paribucineverse.com/sinemalar/antalya-migros',
- iksv: 'https://www.iksv.org/',
- modern: 'https://www.istanbulmodern.org/en/visit/museum',
- erciyes: 'https://erciyeskayak.com/tr',
-};
 const copy: Record<string, string[]> = {
  es:['Sitio oficial / contacto','Consulta el programa, las entradas, el idioma y las condiciones de visita en el sitio oficial.','Aquí no se realizan reservas ni pagos. Contacta directamente con el establecimiento en su sitio web. Las fotos pueden ser ilustrativas.','Pedir taxi con BiTaksi','Servicio externo; la disponibilidad y la tarifa final dependen del proveedor.','Fuentes consultadas: 20 sep. 2026'],
  tr: ['Resmî site / iletişim', 'Güncel program, bilet, dil ve ziyaret koşullarını doğrudan resmî siteden kontrol edin.', 'Rezervasyon ve ödeme bu sitede alınmaz. İşlemler doğrudan işletmenin sitesinde yapılır. Fotoğraflar temsilî olabilir.', 'BiTaksi üzerinden çağır', 'Harici hizmet; taksi bulunabilirliği ve nihai ücret sağlayıcıya bağlıdır.', 'Kaynak kontrolü: 20.09.2026'],
@@ -36,16 +19,3 @@ const bookingDisclaimer:Record<string,string>={
  zh:'本站不接受预订或付款。请直接在商家网站办理。',
 };
 export const directoryText = (lang: string, index: number) => index===2 ? bookingDisclaimer[lang]??bookingDisclaimer.en : (copy[lang] ?? copy.en)[index];
-export const cityPhotos = {
- izmir: '/photos/izmir.jpg',
- antalya: '/photos/antalya-city.webp',
-};
-export const sourcedActivities = [
- ['cinemaIstanbul','Paribu Cineverse Cevahir','İstanbul','Cinema'],
- ['cinemaAnkara','Paribu Cineverse ANKAmall','Ankara','Cinema'],
- ['cinemaIzmir','Paribu Cineverse Forum Bornova','İzmir','Cinema'],
- ['cinemaAntalya','Paribu Cineverse Antalya Migros','Antalya','Cinema'],
- ['iksv','İKSV','İstanbul','Entertainment'],
- ['modern','İstanbul Modern','İstanbul','Museum & Culture'],
- ['erciyes','Erciyes Kayak Merkezi','Kayseri','Winter'],
-].map(([id,title,city,category]) => ({id,title,city,category,duration:'',price:'Check programme',guideLang:'',rating:'—',description:'',img: category==='Cinema' ? 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=900&q=80' : category==='Winter' ? 'https://images.unsplash.com/photo-1486911278844-a81c5267e227?auto=format&fit=crop&w=900&q=80' : 'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?auto=format&fit=crop&w=900&q=80'}));

@@ -1,114 +1,66 @@
-import PageLoading from './components/PageLoading';
+import {
+Bot,
+Building2,
+ChevronDown,
+Hotel,
+Loader2,
+Lock,
+MapPin,
+Menu,
+Navigation2,
+PhoneCall,
+Shield,
+ShieldCheck,
+Ticket,
+Utensils,
+X
+} from 'lucide-react';
+import { lazy,Suspense,useCallback,useEffect,useRef,useState } from 'react';
+import siteLogo from './assets/safeinturkiye-logo.png';
 import CityArtwork from './components/CityArtwork';
-import {sectionFromPath,sectionPath,transferIntent,type Section} from './lib/sectionNavigation';
-import {navigateTo,useBrowserLocation} from './lib/browserNavigation';
-import {destinationSlug,discoveryCity} from './lib/discoveryNavigation';
-import {taxiRouteNotice} from './lib/taxiRouteNotice';
-import {siteInformation} from './lib/siteInformation';
-import {cityLocale,cityDisplayName} from './lib/cityLocale';
-import { officialLinks, directoryText, sourcedActivities, cityPhotos } from './lib/visitorDirectory';
-import { readLanguagePreference, saveLanguagePreference } from './lib/languagePreference';
-import { cityTransportText } from './lib/cityTransportCopy';
-import { openDirectoryEntry, registerPublishedEntry, photoCuratedCatalog } from './lib/directory';
-import { directory as directoryRecords } from './lib/directory';
+import HomeButton from './components/HomeButton';
+import NearbyPlaces from './components/NearbyPlaces';
+import PageLoading from './components/PageLoading';
+import PhotoCredits from './components/PhotoCredits';
 import SponsoredBusinesses from './components/SponsoredBusinesses';
-import EditorialBusinesses from './components/EditorialBusinesses';
-import { toursLabel } from './lib/viatorCopy';
-import cityGuides from './data/cityGuides.json';
-import {cityPath, publicCities} from './lib/publicRoutes';
-import citiesZh from './data/citiesZh.json';
+import TravelHome from './components/TravelHome';
+import { WeatherCard } from './components/WeatherCard';
 import citiesEs from './data/citiesEs.json';
 import citiesTr from './data/citiesTr.json';
-import cityImages from './lib/placePhotos.json';
-import { findCityGuide, openCityGuide } from './lib/cityNavigation';
-import HomeButton from './components/HomeButton';
-import { getPublishedContent } from './repositories/contentRepository';
-import { detailLabel, hotelSummary } from './lib/directoryLabels';
-import { taxiCityFromAddress, taxiReferenceCity, taxiUnavailableText } from './lib/taxiCity';
-import PlacePhoto, { PhotoCredits } from './components/PlacePhoto';
-import { updateSectionSeo } from './lib/seo';
-import CatalogFilters from './components/CatalogFilters';
-import { matchesCatalog, normalizeSearch, localDate } from './lib/catalog';
-import { bookingText } from './lib/bookingCopy';
-import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
-import {
-  Search,
-  MapPin,
-  Car,
-  Coins,
-  ShieldCheck,
-  Compass,
-  PhoneCall,
-  X,
-  Train,
-  Check,
-  Building2,
-  Utensils,
-  Navigation2,
-  Bot,
-  User,
-  Pill,
-  Shield,
-  BookmarkPlus,
-  Trash2,
-  AlertCircle,
-  Loader2,
-  Sun,
-  Sparkles,
-  Ticket,
-  Send,
-  Hotel,
-  Coffee,
-  CheckCircle2,
-  CreditCard,
-  ArrowRight,
-  TrendingUp,
-  TrendingDown,
-  LayoutDashboard,
-  Plus,
-  Edit3,
-  Wind,
-  Droplets,
-  AlertTriangle,
-  Clock,
-  Lock,
-  SlidersHorizontal,
-  DollarSign,
-  Image as ImageIcon,
-  Calendar,
-  Download,
-  Share2,
-  MessageSquare,
-  RefreshCw,
-  ChevronLeft,
-  ChevronRight,
-  ChevronDown,
-  Menu
-} from 'lucide-react';
-import { useSupabaseAuth } from './hooks/useSupabaseAuth';
-import { createBooking } from './repositories/bookingRepository';
-import { getCurrentTaxiTariffs } from './repositories/tariffRepository';
-import { routeFareRange } from './lib/taxiCalculation';
-import { taxiBudgetRange } from './lib/taxiBudget';
-import { taxiSearchUrl } from './lib/taxiSearch';
-import { taxiEstimateCopy, taxiDetailsCopy, taxiBudgetCopy, taxiIntroCopy } from './lib/taxiCopy';
-import { taxiErrorText, type TaxiErrorKey } from './lib/taxiErrors';
-import { regionalDescription } from './lib/regionalDescription';
+import citiesZh from './data/citiesZh.json';
+import cityGuides from './data/cityGuides.json';
 import gaziantepCopy from './data/gaziantepCopy.json';
-import { getAssistantReply } from './services/travelDataService';
+import { useSupabaseAuth } from './hooks/useSupabaseAuth';
+import { navigateTo,useBrowserLocation } from './lib/browserNavigation';
+import { normalizeSearch } from './lib/catalog';
+import { cityDisplayName,cityLocale } from './lib/cityLocale';
+import { findCityGuide,openCityGuide } from './lib/cityNavigation';
+import { cityTransportText } from './lib/cityTransportCopy';
+import { destinationSlug,discoveryCity } from './lib/discoveryNavigation';
+import { readLanguagePreference,saveLanguagePreference } from './lib/languagePreference';
+import { cityPath,publicCities } from './lib/publicRoutes';
+import { regionalDescription } from './lib/regionalDescription';
+import { sectionFromPath,sectionPath,transferIntent,type Section } from './lib/sectionNavigation';
+import { updateSectionSeo } from './lib/seo';
+import { siteInformation } from './lib/siteInformation';
 import { supabaseConfigured } from './lib/supabase';
-import { WeatherCard } from './components/WeatherCard';
+import { taxiBudgetRange } from './lib/taxiBudget';
+import { routeFareRange } from './lib/taxiCalculation';
+import { taxiCityFromAddress,taxiReferenceCity,taxiUnavailableText } from './lib/taxiCity';
+import { taxiBudgetCopy,taxiDetailsCopy,taxiEstimateCopy,taxiIntroCopy } from './lib/taxiCopy';
+import { taxiErrorText,type TaxiErrorKey } from './lib/taxiErrors';
+import { taxiRouteNotice } from './lib/taxiRouteNotice';
+import { taxiSearchUrl } from './lib/taxiSearch';
+import { toursLabel } from './lib/viatorCopy';
+import { directoryText } from './lib/visitorDirectory';
+import { getCurrentTaxiTariffs } from './repositories/tariffRepository';
 const CurrencyRates = lazy(()=>import('./components/CurrencyRates'));
 const SafetyTips = lazy(()=>import('./components/SafetyTips'));
-import NearbyPlaces from './components/NearbyPlaces';
 const TransitPlanner = lazy(()=>import('./components/TransitPlanner'));
 const ViatorTours = lazy(()=>import('./components/ViatorTours'));
 const TravelFaq = lazy(()=>import('./components/TravelFaq'));
 const TransportCardGuide = lazy(()=>import('./components/TravelFaq').then(module=>({default:module.TransportCardGuide})));
 const ContentAdmin = lazy(()=>import('./components/ContentAdmin'));
-import TravelHome from './components/TravelHome';
-import { activityLabel, activityText, activityContent } from './lib/activityLabels';
-import siteLogo from './assets/safeinturkiye-logo.png';
 
 // ============================================================================
 // 1. TİP TANIMLARI & 6 DİLLİ SÖZLÜK SİSTEMİ
@@ -132,31 +84,9 @@ interface GeocodedPlace {
   city?: string;
 }
 
-interface TransitStep {
-  type: 'walk' | 'metro' | 'marmaray' | 'tram' | 'bus' | 'ferry' | 'metrobus';
-  lineName: string;
-  instruction: string;
-  durationMins: number;
-  stopsCount?: number;
-  frequency?: string;
-  firstTrip?: string;
-  lastTrip?: string;
-}
-
-interface TransitRouteOption {
-  id: string;
-  title: string;
-  totalDurationMins: number;
-  fareTRY: number;
-  transfersCount: number;
-  steps: TransitStep[];
-  geometry: RouteGeometryPoint[];
-}
-
 interface CityInfo {
   name: string;
   tagline: string;
-  coverImage: string;
   lat: number;
   lng: number;
   temp: string;
@@ -165,22 +95,6 @@ interface CityInfo {
   wind: string;
   localTip: string;
   highlights: { name: string; detail: string }[];
-}
-
-
-interface ExchangeQuote {
-  pair: string;
-  rate: number;
-}
-
-interface NearbyPlace {
-  id: string;
-  name: string;
-  dist: string;
-  addr: string;
-  cat: string;
-  phone: string;
-  website?: string;
 }
 
 interface TaxiTariff {
@@ -363,45 +277,13 @@ const footerCopy: Record<SupportedLang, { signIn: string; source: string; privac
   zh: { signIn: '登录', source: '提供标注来源的出租车资费、交通指南、参考汇率和城市信息。', privacy: '隐私政策', terms: '服务条款', rights: '保留所有权利。' },
 };
 
-function offlineAssistantReply(prompt: string, language: SupportedLang): string {
-  const low = prompt.toLowerCase();
-  if (language === 'tr') {
-    if (low.includes('taksi') || low.includes('ücret')) return 'Taksi Ücreti sayfasında başlangıç ve varış noktalarını seçip yol mesafesine göre tahmini aralığı görebilirsin. Son tutar taksimetre ve trafiğe göre değişebilir.';
-    if (low.includes('metro') || low.includes('ulaşım') || low.includes('vapur')) return 'Toplu Taşıma sayfasında desteklenen istasyonlar için F1 ve T1 bağlantısını görebilirsin. Canlı sefer ve arıza bilgisi için henüz bir ulaşım veri kaynağı bağlı değil.';
-    if (low.includes('döviz') || low.includes('euro') || low.includes('kur')) return 'Exchange sayfasında tarihli referans kurları ve çevirici var. Döviz bürosu alış/satış kuru yalnızca kaynak sağlanırsa gösterilir.';
-    if (low.includes('yakın') || low.includes('eczane') || low.includes('restoran') || low.includes('otel')) return 'Yakınımda sayfasında şehir merkezini veya konumunu seçerek adres, telefon ve yayımlanmış çalışma saatlerini arayabilirsin.';
-    if (low.includes('hava') || low.includes('istanbul') || low.includes('antalya') || low.includes('kapadokya') || low.includes('izmir')) return 'Cities & Weather sayfasında seçtiğin şehir için güncel hava, şehir notları ve görülmesi gereken yerler bulunur.';
-    if (low.includes('güven') || low.includes('acil')) return 'Safety sayfasında 112 ve temel güvenlik önerileri var. Acil durumda doğrudan 112’yi ara.';
-    if (low.includes('aktiv') || low.includes('müze') || low.includes('gez')) return 'Activities ve şehir sayfalarında etkinlik ve müze önerilerini inceleyebilirsin; rezervasyon için işletmenin kendi onayı gerekir.';
-    return 'Bu konuda şehir, taksi, toplu taşıma, hava durumu veya döviz sayfalarındaki kaynaklı bilgileri kontrol edebilirim.';
-  }
-  const replies: Record<SupportedLang, string> = {
-    es:'Consulta las páginas de taxis, transporte, cambio de divisas y ciudades. Solo mostramos datos en tiempo real cuando los proporciona una fuente conectada.',
-    en: 'I can help with the Taxi Fare, Transit Navigator, Exchange and Cities & Weather pages. Live departures, traffic percentages and bureau quotes are shown only when a connected source provides them.',
-    tr: 'Taksi Ücreti, Toplu Taşıma, Döviz ve Şehirler & Hava sayfalarında yardımcı olabilirim. Canlı sefer, trafik ve büro kurları yalnızca bağlı bir kaynak varsa gösterilir.',
-    de: 'Ich helfe bei Taxi, öffentlichem Verkehr, Wechselkursen und Städten. Live-Daten werden nur angezeigt, wenn eine Quelle verbunden ist.',
-    fr: 'Je peux aider avec les pages taxi, transports, change et villes. Les données en direct ne sont affichées que lorsqu’une source est connectée.',
-    ar: 'يمكنني المساعدة في صفحات سيارات الأجرة والمواصلات والصرافة والمدن. لا تظهر البيانات المباشرة إلا عند توفر مصدر متصل.',
-    ru: 'Я помогу со страницами такси, транспорта, обмена валют и городов. Данные в реальном времени показываются только при подключённом источнике.',
-    zh: '我可以帮助你使用出租车、公共交通、汇率和城市页面。只有连接了数据源，才会显示实时信息。',
-  };
-  if (language === 'en') {
-    if (low.includes('taxi') || low.includes('fare') || low.includes('price')) return 'Open Taxi Fare, choose both places from the address suggestions, then calculate. The estimate uses the dated Istanbul reference tariff and road distance; the meter can differ.';
-    if (low.includes('metro') || low.includes('train') || low.includes('bus') || low.includes('transit') || low.includes('route')) return 'Open Transit Navigator and choose different stations. The guide changes its F1/T1 connection for the selected pair. Live departures, bus times and fares need a connected municipal feed and are not invented.';
-    if (low.includes('near') || low.includes('pharmacy') || low.includes('restaurant') || low.includes('hotel')) return 'Open Near Me, choose city centre or your location, then wait for the published place directory. Cards show only sourced address, phone and hours.';
-    if (low.includes('weather') || low.includes('istanbul') || low.includes('antalya') || low.includes('cappadocia') || low.includes('izmir')) return 'Open Cities & Weather and select a city for current weather, practical city notes and places worth seeing.';
-    if (low.includes('activity') || low.includes('museum') || low.includes('visit')) return 'Open Activities or a city page for suggestions. A booking is only confirmed after the business or booking provider accepts it.';
-  }
-  return replies[language];
-}
-
 // ============================================================================
 // 2. RESMİ TARİFELER & DÖVİZ
 // ============================================================================
 const citiesDetailedData: Record<string, CityInfo> = {
   'Ankara': {
     name: 'Ankara', tagline: 'Türkiye’s capital: museums, historic streets and parks',
-    coverImage: '/photos/ankara.jpg', lat: 39.9334, lng: 32.8597,
+    lat: 39.9334, lng: 32.8597,
     temp: '', weatherDesc: '', humidity: '', wind: '',
     localTip: 'Use Başkent Kart Ulaşım for urban transport. Check EGO for routes and departure times.',
     highlights: [
@@ -413,7 +295,6 @@ const citiesDetailedData: Record<string, CityInfo> = {
   'İstanbul': {
     name: 'İstanbul',
     tagline: 'Bridging continents with vibrant history, ferries and culture',
-    coverImage: 'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?auto=format&fit=crop&w=1200&q=80',
     lat: 41.0082, lng: 28.9784,
     temp: '25°C',
     weatherDesc: 'Sunny & Pleasant',
@@ -429,7 +310,6 @@ const citiesDetailedData: Record<string, CityInfo> = {
   'Cappadocia': {
     name: 'Cappadocia (Kapadokya)',
     tagline: 'Fairy chimneys, volcanic valleys and sunrise balloon corridors',
-    coverImage: 'https://images.unsplash.com/photo-1557972359-152b6ebd3eb3?auto=format&fit=crop&w=1200&q=80',
     lat: 38.6431, lng: 34.8289,
     temp: '22°C',
     weatherDesc: 'Clear Sky & Calm',
@@ -445,7 +325,6 @@ const citiesDetailedData: Record<string, CityInfo> = {
   'Antalya': {
     name: 'Antalya',
     tagline: 'Turquoise Mediterranean shores, waterfalls and Roman ruins',
-    coverImage: cityImages.antalya.src,
     lat: 36.8969, lng: 30.7133,
     temp: '30°C',
     weatherDesc: 'Warm & Sunny',
@@ -461,7 +340,6 @@ const citiesDetailedData: Record<string, CityInfo> = {
   'İzmir': {
     name: 'İzmir',
     tagline: 'Aegean breeze, Kordon promenade, and lively bazaar alleys',
-    coverImage: cityPhotos.izmir,
     lat: 38.4237, lng: 27.1428,
     temp: '28°C',
     weatherDesc: 'Breezy & Sunny',
@@ -625,8 +503,8 @@ function SafeRouteMap({
 // ============================================================================
 // 4. ANA BİLEŞEN
 // ============================================================================
-export default function App({initialCity,initialLanguage,initialSection}:{initialCity?:string;initialLanguage?:string;initialSection?:Section} = {}) {
-  const { session, isStaff, role, signIn, signOut } = useSupabaseAuth();
+export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
+  const { session, isStaff, role, signIn } = useSupabaseAuth();
   const mockDataEnabled = import.meta.env.VITE_ENABLE_MOCK_DATA === 'true';
   const browserLocation=useBrowserLocation();
   const [browserPath,browserQuery='']=browserLocation.split('?');
@@ -656,7 +534,7 @@ export default function App({initialCity,initialLanguage,initialSection}:{initia
     }
     document.querySelector('link[rel="canonical"]')?.setAttribute('href',`https://www.safeinturkiye.com${path}`);
     document.querySelector('meta[property="og:url"]')?.setAttribute('content',`https://www.safeinturkiye.com${path}`);
-  }, [activeTab, selectedCityName,initialCity]);
+  }, [activeTab, selectedCityName]);
   const [lang, setLang] = useState<SupportedLang>(() => {
     const candidate = initialLanguage || readLanguagePreference();
     return ['en','tr','de','fr','ar','ru','zh','es'].includes(candidate) ? candidate as SupportedLang : 'en';
@@ -692,76 +570,6 @@ export default function App({initialCity,initialLanguage,initialSection}:{initia
     window.addEventListener('hashchange', openAdmin);
     return () => window.removeEventListener('hashchange', openAdmin);
   }, [session]);
-  const [exchangeQuotes, setExchangeQuotes] = useState<ExchangeQuote[]>([]);
-  const [exchangeUpdatedAt, setExchangeUpdatedAt] = useState<string | null>(null);
-  const [exchangeError, setExchangeError] = useState<string | null>(null);
-  const [nearbyBureaus, setNearbyBureaus] = useState<NearbyPlace[]>([]);
-  const [nearbyExchangeStatus, setNearbyExchangeStatus] = useState<string | null>(null);
-  const [nearbyLivePlaces, setNearbyLivePlaces] = useState<NearbyPlace[]>([]);
-  const [nearbySearchStatus, setNearbySearchStatus] = useState<string | null>(null);
-
-  const distanceLabel = (from: Coordinates, lat: number, lng: number) => {
-    const radiusKm = 6371;
-    const dLat = ((lat - from.lat) * Math.PI) / 180;
-    const dLng = ((lng - from.lng) * Math.PI) / 180;
-    const a = Math.sin(dLat / 2) ** 2 + Math.cos((from.lat * Math.PI) / 180) * Math.cos((lat * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
-    const km = radiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return km < 1 ? `${Math.max(1, Math.round(km * 1000))} m` : `${km.toFixed(1)} km`;
-  };
-
-  const findNearby = (kind: 'exchange' | 'essential') => {
-    if (!navigator.geolocation) {
-      const message = 'This browser does not support location search.';
-      if (kind === 'exchange') setNearbyExchangeStatus(message); else setNearbySearchStatus(message);
-      return;
-    }
-
-    const setStatus = kind === 'exchange' ? setNearbyExchangeStatus : setNearbySearchStatus;
-    setStatus('Requesting your location…');
-    navigator.geolocation.getCurrentPosition(async (position) => {
-      const origin = { lat: position.coords.latitude, lng: position.coords.longitude };
-      const filters = kind === 'exchange'
-        ? '["amenity"="bureau_de_change"]'
-        : '["amenity"~"pharmacy|police|atm|taxi"]';
-      const query = `[out:json][timeout:20];(node(around:3500,${origin.lat},${origin.lng})${filters};way(around:3500,${origin.lat},${origin.lng})${filters};);out center tags;`;
-      try {
-        const response = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
-        if (!response.ok) throw new Error('Place service unavailable');
-        const data = await response.json();
-        const places: NearbyPlace[] = (data.elements || []).map((item: any) => {
-          const tags = item.tags || {};
-          const lat = item.lat ?? item.center?.lat;
-          const lng = item.lon ?? item.center?.lon;
-          const address = [tags['addr:street'], tags['addr:housenumber'], tags['addr:district'], tags['addr:city']].filter(Boolean).join(', ');
-          return {
-            id: `${item.type}-${item.id}`,
-            name: tags.name || (kind === 'exchange' ? 'Exchange bureau' : tags.amenity || 'Local service'),
-            dist: typeof lat === 'number' && typeof lng === 'number' ? distanceLabel(origin, lat, lng) : 'Distance unavailable',
-            addr: address || 'Address not published in OpenStreetMap',
-            cat: kind === 'exchange' ? 'Exchange bureau' : (tags.amenity || 'Service'),
-            phone: tags.phone || tags['contact:phone'] || 'Phone not published',
-            website: tags.website || tags['contact:website']
-          };
-        }).sort((a: NearbyPlace, b: NearbyPlace) => parseFloat(a.dist) - parseFloat(b.dist)).slice(0, 8);
-        if (kind === 'exchange') setNearbyBureaus(places); else setNearbyLivePlaces(places);
-        setStatus(places.length ? `Showing ${places.length} places from OpenStreetMap near your location.` : 'No matching places were published within 3.5 km of your location.');
-      } catch {
-        setStatus('Could not reach the place directory. Please try again in a moment.');
-      }
-    }, () => setStatus('Location permission was not granted. No location was stored.'), { enableHighAccuracy: false, timeout: 12000, maximumAge: 300000 });
-  };
-
-
-  // Soru Listesi Yatay Kaydırma
-  const questionsScrollRef = useRef<HTMLDivElement>(null);
-  const scrollQuestions = (direction: 'left' | 'right') => {
-    if (questionsScrollRef.current) {
-      const scrollAmount = direction === 'left' ? -280 : 280;
-      questionsScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-    }
-  };
-
-
   const handleGlobalSearch = (input = searchQuery) => {
     const query = input.trim();
     if (!query) return;
@@ -769,36 +577,21 @@ export default function App({initialCity,initialLanguage,initialSection}:{initia
     if(newCity){openCityGuide(newCity.slug,lang);return;}
     const low = query.toLocaleLowerCase('tr-TR');
     const normalized = normalizeSearch(query);
-    const mentionedCity = Object.keys(citiesDetailedData).find(city => normalized.includes(normalizeSearch(city)));
-    setCatalogCity(mentionedCity ?? '');
-    setCatalogQuery('');
+    const mentionedCity = publicCities.find(city => normalized.includes(normalizeSearch(city.name)));
+    const navigateSearch=(section:Section)=>mentionedCity?navigateTo(`${sectionPath(section)}?city=${mentionedCity.slug}`):setActiveTab(section);
     setActivityCategory('All');
     const cityMatch = Object.keys(citiesDetailedData).find(city => city.toLocaleLowerCase('tr-TR') === low || city.toLowerCase().replace(/i̇/g, 'i') === query.toLowerCase());
     if (cityMatch) { navigateTo(cityPath(cityMatch)); return; }
-    if (transferIntent(query)) setActiveTab('tours');
-    else if (/taksi|taxi|fare|ücret|такси|تاكسي|出租车/.test(low)) setActiveTab('taxi');
-    else if (/metro|métro|otobüs|bus|tren|train|vapur|ferry|marmaray|ulaşım|transit|route|rota|bahn|transport|транспорт|метро|автобус|مواصلات|مترو|حافل|地铁|公交|交通|火车/.test(low)) setActiveTab('transit');
-    else if (/döviz|kur|exchange|currency|euro|usd|wechsel|change|валют|обмен|صرف|صراف|汇率|换汇/.test(low)) setActiveTab('currency');
-    else if (/yakın|near|eczane|pharmacy|hastane|hospital|atm|polis|police|nähe|apotheke|proximité|pharmacie|рядом|аптек|قريب|صيدلي|附近|药房/.test(low)) setActiveTab('nearme');
-    else if (/otel|hotel|hôtel|konak|stay|отел|гостиниц|فندق|فنادق|酒店|住宿/.test(low)) setActiveTab('stay');
-    else if (/restoran|restaurant|yemek|food|cafe|kafe|ресторан|مطعم|مطاعم|餐厅|餐饮/.test(low)) setActiveTab('food');
-    else if (/aktiv|activit|etkinlik|museum|musée|müze|gez|cinema|cinéma|музе|кино|متحف|أنشط|سينما|活动|博物馆|影院/.test(low)) setActiveTab('experiences');
-    else if (/güven|safety|acil|emergency|sicher|sécurité|безопас|أمان|طوارئ|安全|紧急/.test(low)) setActiveTab('safety');
-    else {
-      const hotel = hotelsList.find(item => matchesCatalog(item, query, ''));
-      const restaurant = restaurantsList.find(item => matchesCatalog(item, query, ''));
-      const activity = activitiesList.find(item => matchesCatalog(activityContent(item, lang), query, ''));
-      if (hotel || restaurant || activity) {
-        setCatalogQuery(query);
-        setActiveTab(hotel ? 'stay' : restaurant ? 'food' : 'experiences');
-      } else setActiveTab('assistant');
-    }
-  };
-
-  // Referral-only: never submit booking requests from the public directory.
-  const handleOpenBooking = (item: {id: string}, _listingType: string) => {
-    saveLanguagePreference(lang);
-    openDirectoryEntry(item.id);
+    if (transferIntent(query)) navigateSearch('tours');
+    else if (/taksi|taxi|fare|ücret|такси|تاكسي|出租车/.test(low)) navigateSearch('taxi');
+    else if (/metro|métro|otobüs|bus|tren|train|vapur|ferry|marmaray|ulaşım|transit|route|rota|bahn|transport|транспорт|метро|автобус|مواصلات|مترو|حافل|地铁|公交|交通|火车/.test(low)) navigateSearch('transit');
+    else if (/döviz|kur|exchange|currency|euro|usd|wechsel|change|валют|обмен|صرف|صراف|汇率|换汇/.test(low)) navigateSearch('currency');
+    else if (/yakın|near|eczane|pharmacy|hastane|hospital|atm|polis|police|nähe|apotheke|proximité|pharmacie|рядом|аптек|قريب|صيدلي|附近|药房/.test(low)) navigateSearch('nearme');
+    else if (/otel|hotel|hôtel|konak|stay|отел|гостиниц|فندق|فنادق|酒店|住宿/.test(low)) navigateSearch('stay');
+    else if (/restoran|restaurant|yemek|food|cafe|kafe|ресторан|مطعم|مطاعم|餐厅|餐饮/.test(low)) navigateSearch('food');
+    else if (/aktiv|activit|etkinlik|museum|musée|müze|gez|cinema|cinéma|музе|кино|متحف|أنشط|سينما|活动|博物馆|影院/.test(low)) navigateSearch('experiences');
+    else if (/güven|safety|acil|emergency|sicher|sécurité|безопас|أمان|طوارئ|安全|紧急/.test(low)) navigateSearch('safety');
+    else navigateSearch('assistant');
   };
 
   // Taksi Durumları
@@ -809,7 +602,7 @@ export default function App({initialCity,initialLanguage,initialSection}:{initia
   const [taxiDestCoords, setTaxiDestCoords] = useState<Coordinates | null>(null);
   const [taxiOriginSuggs, setTaxiOriginSuggs] = useState<GeocodedPlace[]>([]);
   const [taxiDestSuggs, setTaxiDestSuggs] = useState<GeocodedPlace[]>([]);
-  const [taxiClass, setTaxiClass] = useState<'Yellow' | 'Turquoise' | 'Black'>('Yellow');
+  const taxiClass = 'Yellow';
 
   const [isTaxiLocating, setIsTaxiLocating] = useState(false);
   const [isTaxiRouting, setIsTaxiRouting] = useState(false);
@@ -1012,120 +805,13 @@ export default function App({initialCity,initialLanguage,initialSection}:{initia
     }
   };
 
-  // Toplu Taşıma Durumları ve Rota Hesaplama (Düzeltildi)
-  const [transitOriginText, setTransitOriginText] = useState('Taksim Square');
-  const [transitDestText, setTransitDestText] = useState('Sultanahmet (Old City)');
-  const [transitOriginCoords, setTransitOriginCoords] = useState<Coordinates | null>({ lat: 41.0369, lng: 28.9850 });
-  const [transitDestCoords, setTransitDestCoords] = useState<Coordinates | null>({ lat: 41.0054, lng: 28.9768 });
-  const [isTransitLocating, setIsTransitLocating] = useState(false);
-  const [isTransitRouting, setIsTransitRouting] = useState(false);
-  const [transitRouteResults, setTransitRouteResults] = useState<TransitRouteOption[] | null>(null);
-
-  const handleCalculateTransitRoute = async () => {
-    if (!transitOriginCoords || !transitDestCoords) return;
-    setIsTransitRouting(true);
-    try {
-      const url = `https://router.project-osrm.org/route/v1/driving/${transitOriginCoords.lng},${transitOriginCoords.lat};${transitDestCoords.lng},${transitDestCoords.lat}?overview=full&geometries=geojson`;
-      const res = await fetch(url);
-      let realGeo: RouteGeometryPoint[] = [];
-      if (res.ok) {
-        const d = await res.json();
-        if (d.routes && d.routes.length > 0) {
-          realGeo = d.routes[0].geometry.coordinates.map((coord: [number, number]) => ({ lat: coord[1], lng: coord[0] }));
-        }
-      }
-
-      setTransitRouteResults([
-        {
-          id: 'tr-opt-4',
-          title: 'F1 Funicular + T1 Historic Peninsula Tram',
-          totalDurationMins: 18,
-          fareTRY: 46.20 + 34.40,
-          transfersCount: 1,
-          geometry: realGeo,
-          steps: [
-            { type: 'walk', lineName: 'Walk', instruction: 'Enter Taksim underground station', durationMins: 2 },
-            { type: 'metro', lineName: 'F1 Funicular', instruction: 'F1 down to Kabataş waterfront', durationMins: 3, stopsCount: 1, frequency: 'Every 5 mins' },
-            { type: 'tram', lineName: 'T1 Tram', instruction: 'Board T1 towards Bağcılar. Get off at Sultanahmet (Hagia Sophia)', durationMins: 11, stopsCount: 5, frequency: 'Every 3 mins', firstTrip: '06:00', lastTrip: '00:00' },
-            { type: 'walk', lineName: 'Walk', instruction: 'Walk 2 mins to Sultanahmet square', durationMins: 2 }
-          ]
-        }
-      ]);
-    } catch {} finally {
-      setIsTransitRouting(false);
-    }
-  };
-
-  useEffect(() => {
-    handleCalculateTransitRoute();
-  }, []);
-
-  const handleTransitCurrentLocation = () => {
-    if (!('geolocation' in navigator)) return;
-    setIsTransitLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        setIsTransitLocating(false);
-        const c = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        setTransitOriginCoords(c);
-        setTransitOriginText('Fetching address...');
-        try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${c.lat}&lon=${c.lng}&zoom=16`);
-          if (res.ok) {
-            const data = await res.json();
-            setTransitOriginText(data.display_name || `${c.lat.toFixed(4)}, ${c.lng.toFixed(4)}`);
-          } else {
-            setTransitOriginText(`${c.lat.toFixed(4)}, ${c.lng.toFixed(4)}`);
-          }
-        } catch {
-          setTransitOriginText(`${c.lat.toFixed(4)}, ${c.lng.toFixed(4)}`);
-        }
-      },
-      () => setIsTransitLocating(false),
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
-  };
-
-  // CMS Listeleri
-  const [hotelsList, setHotelsList] = useState(()=>directoryRecords.filter(entry=>entry.kind==='hotels').map(entry=>({id:entry.id,name:entry.name,city:entry.city,area:'',roomType:'',price:'',rating:'',amenities:'',img:''})));
-
-  const [restaurantsList, setRestaurantsList] = useState(()=>directoryRecords.filter(entry=>entry.kind==='restaurants').map(entry=>({id:entry.id,name:entry.name,city:entry.city,cuisine:'',avgPrice:'',openHours:'openingHours' in entry ? entry.openingHours??'':'',rating:'',img:''})));
-
-  const [activitiesList, setActivitiesList] = useState(()=>directoryRecords.filter(entry=>entry.kind==='activities').map(entry=>({id:entry.id,title:entry.name,city:entry.city,category:entry.category??(entry.id==='erciyes'?'Winter':'Museum & Culture'),duration:'',price:'',guideLang:'',rating:'',description:entry.description[lang]??entry.description.en,img:''})));
   const [activityCategory, setActivityCategory] = useState('All');
-  const [catalogError, setCatalogError] = useState(false);
-  useEffect(() => {
-    if (photoCuratedCatalog || !supabaseConfigured || !['stay','food','experiences','city'].includes(activeTab)) return;
-    let cancelled=false;
-    setCatalogError(false);
-    directoryRecords.splice(0,directoryRecords.length);
-    setHotelsList([]); setRestaurantsList([]); setActivitiesList([]);
-    void Promise.all(['hotels','restaurants','activities'].map(async table => {
-      const rows=await getPublishedContent(table as 'hotels'|'restaurants'|'activities');
-      if(cancelled) return;
-      for(const row of rows)registerPublishedEntry(row,table);
-      if(table==='hotels')setHotelsList(rows.map(row=>({id:row.id,name:row.name,city:row.city?.name??'',area:'',roomType:'',price:'',rating:'',amenities:'',img:''})));
-      if(table==='restaurants')setRestaurantsList(rows.map(row=>({id:row.id,name:row.name,city:row.city?.name??'',cuisine:'',avgPrice:'',openHours:'',rating:'',img:''})));
-      if(table==='activities')setActivitiesList(rows.map(row=>({id:row.id,title:row.name,city:row.city?.name??'',category:'',duration:'',price:'',guideLang:'',rating:'',description:row.description??'',img:''})));
-    })).catch(()=>{ if(!cancelled)setCatalogError(true); });
-    return()=>{cancelled=true;};
-  },[activeTab]);
-  const [catalogQuery, setCatalogQuery] = useState('');
-  const [catalogCity, setCatalogCity] = useState('');
-  const filteredHotels = hotelsList.filter(item => matchesCatalog(item, catalogQuery, catalogCity));
-  const filteredRestaurants = restaurantsList.filter(item => matchesCatalog(item, catalogQuery, catalogCity));
-  const filteredActivities = activitiesList.filter(item=>directoryRecords.some(entry=>entry.id===item.id)).map(item => activityContent(item, lang)).filter(item => (activityCategory === 'All' || item.category === activityCategory) && matchesCatalog(item, catalogQuery, catalogCity));
-  const resetCatalog = () => { setCatalogQuery(''); setCatalogCity(''); setActivityCategory('All'); };
-  const catalogFilters = (items: {city: string}[], count: number) => <>{catalogError && <p role="alert">{lang==='tr'?'İçerik yüklenemedi. Lütfen sayfayı yenileyerek tekrar deneyin.':'Content could not be loaded. Please refresh to retry.'}</p>}<CatalogFilters lang={lang} query={catalogQuery} city={catalogCity} cities={[...new Set([...items.map(item => item.city), ...(catalogCity ? [catalogCity] : [])])]} count={count} onQuery={setCatalogQuery} onCity={setCatalogCity} onReset={resetCatalog} /></>;
-
-
-
 
   const regionalCity=cityGuides.find(city=>city.name===selectedCityName);
   const localizedGaziantep = regionalCity?.slug==='gaziantep' ? gaziantepCopy[lang as keyof typeof gaziantepCopy] : undefined;
   const baseCityInfo = regionalCity ? {
     name:regionalCity.name,tagline:localizedGaziantep?.tagline??regionalCity.focus,
-    coverImage:cityImages[regionalCity.slug as keyof typeof cityImages].src,
+    
     lat:regionalCity.lat,lng:regionalCity.lng,
     localTip:regionalDescription(regionalCity, lang),
     highlights:(localizedGaziantep?.places??regionalCity.places).map(name=>({name,detail:''})),
@@ -1303,7 +989,7 @@ export default function App({initialCity,initialLanguage,initialSection}:{initia
         {['city','stay','food','experiences'].includes(activeTab)&&<SponsoredBusinesses context={activeTab==='stay'?'hotels':activeTab==='food'?'restaurants':activeTab==='experiences'?'activities':'city'} city={activeTab==='city'?selectedCityName:undefined} lang={lang}/>}
         {activeTab === 'home' && <TravelHome
           lang={lang}
-          cities={[...['İstanbul', 'Antalya', 'Cappadocia', 'Ankara', 'İzmir'].map(key => ({ key, name: citiesDetailedData[key].name, coverImage: key==='Antalya'?cityImages.antalya.thumbnail:citiesDetailedData[key].coverImage })),...cityGuides.map(city=>{const photo=cityImages[city.slug as keyof typeof cityImages];return {key:city.name,name:city.name,coverImage:'thumbnail' in photo?photo.thumbnail:photo.src};})]}
+          cities={publicCities.map(city=>({key:city.name,name:city.name}))}
           onNavigate={setActiveTab}
           onCity={city => navigateTo(cityPath(city))}
           onSearch={query => { setSearchQuery(query); handleGlobalSearch(query); }}
@@ -1534,11 +1220,6 @@ export default function App({initialCity,initialLanguage,initialSection}:{initia
                     <p className="text-[11px] leading-relaxed text-slate-600 mt-1">{highlight.detail}</p>
                   </article>
                 ))}
-                {[
-                  ...restaurantsList.filter(item=>item.city===selectedCityName).map(item=>({id:item.id,name:item.name,type:'restaurant',label:tr('dining')})),
-                  ...activitiesList.filter(item=>item.city===selectedCityName).map(item=>({id:item.id,name:item.title,type:'activity',label:tr('activities')})),
-                  ...hotelsList.filter(item=>item.city===selectedCityName).map(item=>({id:item.id,name:item.name,type:'hotel',label:tr('hotels')})),
-                ].filter(item=>!currentCityInfo.highlights.some(highlight=>highlight.name===item.name)).slice(0,12).map(item=><button key={item.id} onClick={()=>handleOpenBooking(item,item.type)} className="text-left p-3.5 rounded-xl bg-sky-50/60 border border-sky-100 hover:border-blue-400"><h3 className="text-[13px] font-extrabold text-slate-900">{item.name}</h3><p className="text-[11px] leading-relaxed text-slate-600 mt-1">{item.label} · {directoryText(lang,0)} →</p></button>)}
               </div>
             </section>
 
@@ -1553,7 +1234,7 @@ export default function App({initialCity,initialLanguage,initialSection}:{initia
         {activeTab === 'stay' && (
           <main className="travel-catalog">
             <h1 className="text-3xl font-extrabold text-slate-900">{page('hotelsTitle')}</h1>
-            <EditorialBusinesses entries={directoryRecords.filter(entry=>entry.kind==='hotels')} lang={lang}/>
+
             <NearbyPlaces key="hotels-discovery" kind="essential" fixedCategory="hotel" lang={lang} center={{lat:currentCityInfo.lat,lng:currentCityInfo.lng}} cityName={currentCityInfo.name} />
           </main>
         )}
@@ -1574,7 +1255,7 @@ export default function App({initialCity,initialLanguage,initialSection}:{initia
         {activeTab === 'experiences' && (
           <main className="travel-catalog">
             <div><h1 className="text-3xl font-extrabold text-slate-900">{page('activitiesTitle')}</h1><p className="mt-1 text-sm text-slate-600">{page('activitiesSub')}</p></div>
-            <EditorialBusinesses entries={directoryRecords.filter(entry=>entry.kind==='activities')} lang={lang}/>
+
             <NearbyPlaces key="activities-discovery" kind="essential" fixedCategory="activity" initialCategory={activityCategory === 'Cinema' ? 'cinema' : activityCategory === 'Museum & Culture' ? 'museum' : activityCategory === 'Entertainment' ? 'entertainment' : 'activity'} lang={lang} center={{lat:currentCityInfo.lat,lng:currentCityInfo.lng}} cityName={currentCityInfo.name} />
           </main>
         )}
@@ -1617,13 +1298,9 @@ export default function App({initialCity,initialLanguage,initialSection}:{initia
             <SafetyTips lang={lang} />
             <section className="reference-safety-banner">
               <div><h2>{page('safety')}</h2><p><span aria-hidden="true">✅</span> {page('taxiSafety')}</p><p><span aria-hidden="true">✅</span> {page('usefulText')}</p><a href="tel:112"><span aria-hidden="true">🚨</span> {page('emergencyTitle')} · 112</a></div>
-              <img src={citiesDetailedData['Antalya'].coverImage} alt={citiesDetailedData['Antalya'].name} loading="lazy" />
+              <CityArtwork city="Antalya" lang={lang} />
             </section>
-            <p className="text-[10px] text-slate-400">
-              Photo credits: <a className="underline" href="https://commons.wikimedia.org/wiki/File:Anadolu_Medeniyetleri_M%C3%BCzesi.jpg" target="_blank" rel="noreferrer">José Luis Filpo Cabana / CC BY 3.0</a>{' · '}
-              <a className="underline" href="https://commons.wikimedia.org/wiki/File:Topkapi_Palace,_Istanbul.jpg" target="_blank" rel="noreferrer">Rraj89 / CC BY-SA 4.0</a>. Other editorial images are from Unsplash; CC0/public-domain images are identified at their source.
-            </p>
-          </main>
+         </main>
         )}
 
         {/* ====================================================================

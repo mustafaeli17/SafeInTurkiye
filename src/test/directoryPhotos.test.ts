@@ -3,16 +3,9 @@ import {directory,curatedDirectory,registerPublishedEntry} from '../lib/director
 import {entryPhotos,publishedPhoto} from '../lib/directoryPhotos';
 afterEach(()=>{const index=directory.findIndex(entry=>entry.id==='photo-test');if(index>=0)directory.splice(index,1);});
 describe('published content images',()=>{
- it('gives every published editorial entry a licensed entity image, never city context',()=>{
-  for(const entry of curatedDirectory){
-   const gallery=entryPhotos(entry);
-   expect(gallery.length,entry.name).toBeGreaterThan(0);
-   expect(entry.gallery.length).toBeGreaterThan(0);
-   expect(gallery[0].cityContext).toBeUndefined();
-   expect(gallery[0].license).toMatch(/^(CC|Public domain)/);
-   expect(publishedPhoto(entry.id)?.src).toBe(gallery[0].src);
-   expect(gallery[0].src).toMatch(/^\/photos\//);
-  }
+ it('does not resurrect the retired local gallery for a CMS entry',()=>{
+  const entry=registerPublishedEntry({id:'photo-test',name:'Test',editorial_metadata:{gallery:['h2','a3','cinema-wide']}},'hotels');
+  expect(curatedDirectory).toEqual([]);expect(entryPhotos(entry)).toEqual([]);expect(publishedPhoto(entry.id)).toBeUndefined();
  });
  it('does not treat an unreviewed CMS URL as a licensed entity photo',()=>{
   const entry=registerPublishedEntry({id:'photo-test',name:'Test',image_url:'https://example.com/photo.webp'},'hotels');

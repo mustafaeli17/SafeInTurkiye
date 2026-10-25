@@ -3,7 +3,7 @@ import {readFileSync,existsSync} from 'node:fs';
 import {curatedDirectory,directoryEntry,entryPath} from '../lib/directory';
 import {publicCities as cities} from '../lib/publicRoutes';
 import sections from '../data/sectionRoutes.json';
-import retiredRestaurants from '../data/retiredRestaurantSlugs.json';
+import retired from '../data/retiredDirectory.json';
 describe('built editorial catalog consistency (requires a production build)',()=>{
  it('has exactly the published entity set in sitemap, with no archive orphans',()=>{
   const xml=readFileSync('dist/sitemap.xml','utf8');
@@ -11,22 +11,21 @@ describe('built editorial catalog consistency (requires a production build)',()=
   const expected=['/',...Object.values(sections).map(s=>s.path),'/privacy','/terms','/about','/contact',...curatedDirectory.map(entryPath),...curatedDirectory.filter(entry=>entry.description.tr).map(entry=>'/tr'+entryPath(entry)),...cities.map(c=>`/cities/${c.slug}`)].sort();
   expect(actual).toEqual(expected);
  });
- it('resolves every published detail and produces its own HTML metadata',()=>{
-  for(const entry of curatedDirectory){
-   const path=entryPath(entry);expect(directoryEntry(path)?.id).toBe(entry.id);
-   const file=`dist${path}/index.html`;expect(existsSync(file)).toBe(true);
-   expect(readFileSync(file,'utf8')).toContain(`https://www.safeinturkiye.com${path}`);
-  }
+ it('keeps provider discovery pages while the pre-API catalog stays empty',()=>{
+  expect(curatedDirectory).toEqual([]);
+  for(const kind of ['hotels','restaurants','activities'])expect(readFileSync(`dist/${kind}/index.html`,'utf8')).toContain(`https://www.safeinturkiye.com/${kind}`);
  });
  it('does not resolve missing or retired editorial detail routes',()=>{
   expect(directoryEntry('/hotels/does-not-exist')).toBeUndefined();
   expect(directoryEntry('/hotels/colossae-pamukkale')).toBeUndefined();
   const sitemap=readFileSync('dist/sitemap.xml','utf8');
-  expect(curatedDirectory.filter(entry=>entry.kind==='restaurants')).toEqual([]);
-  for(const slug of retiredRestaurants){
-   expect(directoryEntry(`/restaurants/${slug}`)).toBeUndefined();
-   expect(sitemap).not.toContain(`/restaurants/${slug}<`);
-   expect(existsSync(`dist/restaurants/${slug}/index.html`)).toBe(false);
+  const config=JSON.parse(readFileSync('vercel.json','utf8'));
+  for(const {kind,slug} of retired){
+   const path=`/${kind}/${slug}`;
+   expect(directoryEntry(path)).toBeUndefined();
+   expect(sitemap).not.toContain(path+'<');
+   expect(existsSync(`dist${path}/index.html`)).toBe(false);
+   expect(config.redirects.some((r:{source:string;permanent:boolean})=>r.source===path&&r.permanent)).toBe(true);
   }
  });
 });

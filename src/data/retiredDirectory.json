@@ -1,0 +1,443 @@
+[
+  {
+    "kind": "hotels",
+    "slug": "akra-antalya",
+    "city": "Antalya"
+  },
+  {
+    "kind": "hotels",
+    "slug": "swissotel-buyuk-efes-izmir",
+    "city": "İzmir"
+  },
+  {
+    "kind": "hotels",
+    "slug": "ciragan-palace-kempinski",
+    "city": "İstanbul"
+  },
+  {
+    "kind": "activities",
+    "slug": "goreme-open-air-museum",
+    "city": "Cappadocia"
+  },
+  {
+    "kind": "activities",
+    "slug": "museum-of-anatolian-civilizations",
+    "city": "Ankara"
+  },
+  {
+    "kind": "activities",
+    "slug": "topkapi-palace",
+    "city": "İstanbul"
+  },
+  {
+    "kind": "activities",
+    "slug": "paribu-cineverse-cevahir",
+    "city": "İstanbul"
+  },
+  {
+    "kind": "activities",
+    "slug": "paribu-cineverse-ankamall",
+    "city": "Ankara"
+  },
+  {
+    "kind": "activities",
+    "slug": "paribu-cineverse-forum-bornova",
+    "city": "İzmir"
+  },
+  {
+    "kind": "activities",
+    "slug": "paribu-cineverse-antalya-migros",
+    "city": "Antalya"
+  },
+  {
+    "kind": "activities",
+    "slug": "iksv-events",
+    "city": "İstanbul"
+  },
+  {
+    "kind": "activities",
+    "slug": "istanbul-modern",
+    "city": "İstanbul"
+  },
+  {
+    "kind": "activities",
+    "slug": "erciyes-ski-centre",
+    "city": "Kayseri"
+  },
+  {
+    "kind": "hotels",
+    "slug": "azka-bodrum",
+    "city": "Muğla"
+  },
+  {
+    "kind": "hotels",
+    "slug": "marmara-bodrum",
+    "city": "Muğla"
+  },
+  {
+    "kind": "hotels",
+    "slug": "mandarin-oriental-bodrum",
+    "city": "Muğla"
+  },
+  {
+    "kind": "hotels",
+    "slug": "charisma-kusadasi",
+    "city": "Aydın"
+  },
+  {
+    "kind": "hotels",
+    "slug": "yacht-club-didim",
+    "city": "Aydın"
+  },
+  {
+    "kind": "hotels",
+    "slug": "ilayda-avantgarde-kusadasi",
+    "city": "Aydın"
+  },
+  {
+    "kind": "hotels",
+    "slug": "richmond-pamukkale",
+    "city": "Denizli"
+  },
+  {
+    "kind": "hotels",
+    "slug": "doga-thermal-pamukkale",
+    "city": "Denizli"
+  },
+  {
+    "kind": "hotels",
+    "slug": "colossae-pamukkale",
+    "city": "Denizli"
+  },
+  {
+    "kind": "hotels",
+    "slug": "zorlu-grand-trabzon",
+    "city": "Trabzon"
+  },
+  {
+    "kind": "hotels",
+    "slug": "radisson-blu-trabzon",
+    "city": "Trabzon"
+  },
+  {
+    "kind": "hotels",
+    "slug": "novotel-trabzon",
+    "city": "Trabzon"
+  },
+  {
+    "kind": "hotels",
+    "slug": "dedeman-konya",
+    "city": "Konya"
+  },
+  {
+    "kind": "hotels",
+    "slug": "hich-konya",
+    "city": "Konya"
+  },
+  {
+    "kind": "hotels",
+    "slug": "selcuk-konya",
+    "city": "Konya"
+  },
+  {
+    "kind": "hotels",
+    "slug": "almira-bursa",
+    "city": "Bursa"
+  },
+  {
+    "kind": "hotels",
+    "slug": "hampton-bursa",
+    "city": "Bursa"
+  },
+  {
+    "kind": "hotels",
+    "slug": "hilton-bursa",
+    "city": "Bursa"
+  },
+  {
+    "kind": "activities",
+    "slug": "bodrum-castle",
+    "city": "Muğla"
+  },
+  {
+    "kind": "activities",
+    "slug": "bodrum-marina",
+    "city": "Muğla"
+  },
+  {
+    "kind": "activities",
+    "slug": "bodrum-underwater-museum",
+    "city": "Muğla"
+  },
+  {
+    "kind": "activities",
+    "slug": "guvercinada-kusadasi",
+    "city": "Aydın"
+  },
+  {
+    "kind": "activities",
+    "slug": "didyma-apollo-temple",
+    "city": "Aydın"
+  },
+  {
+    "kind": "activities",
+    "slug": "dilek-peninsula",
+    "city": "Aydın"
+  },
+  {
+    "kind": "activities",
+    "slug": "pamukkale-travertines",
+    "city": "Denizli"
+  },
+  {
+    "kind": "activities",
+    "slug": "hierapolis",
+    "city": "Denizli"
+  },
+  {
+    "kind": "activities",
+    "slug": "laodikeia",
+    "city": "Denizli"
+  },
+  {
+    "kind": "activities",
+    "slug": "sumela-monastery",
+    "city": "Trabzon"
+  },
+  {
+    "kind": "activities",
+    "slug": "uzungol",
+    "city": "Trabzon"
+  },
+  {
+    "kind": "activities",
+    "slug": "trabzon-ataturk-mansion",
+    "city": "Trabzon"
+  },
+  {
+    "kind": "activities",
+    "slug": "mevlana-museum",
+    "city": "Konya"
+  },
+  {
+    "kind": "activities",
+    "slug": "karatay-tile-museum",
+    "city": "Konya"
+  },
+  {
+    "kind": "activities",
+    "slug": "konya-archaeology-museum",
+    "city": "Konya"
+  },
+  {
+    "kind": "activities",
+    "slug": "uludag",
+    "city": "Bursa"
+  },
+  {
+    "kind": "activities",
+    "slug": "koza-han",
+    "city": "Bursa"
+  },
+  {
+    "kind": "activities",
+    "slug": "bursa-ulu-cami",
+    "city": "Bursa"
+  },
+  {
+    "kind": "activities",
+    "slug": "paribu-akasya",
+    "city": "İstanbul"
+  },
+  {
+    "kind": "activities",
+    "slug": "paribu-aqua-florya",
+    "city": "İstanbul"
+  },
+  {
+    "kind": "activities",
+    "slug": "paribu-antares",
+    "city": "Ankara"
+  },
+  {
+    "kind": "activities",
+    "slug": "paribu-armada",
+    "city": "Ankara"
+  },
+  {
+    "kind": "activities",
+    "slug": "paribu-forum-kayseri",
+    "city": "Kayseri"
+  },
+  {
+    "kind": "activities",
+    "slug": "paribu-izmir-park",
+    "city": "İzmir"
+  },
+  {
+    "kind": "activities",
+    "slug": "paribu-optimum-izmir",
+    "city": "İzmir"
+  },
+  {
+    "kind": "activities",
+    "slug": "paribu-kent-plaza",
+    "city": "Konya"
+  },
+  {
+    "kind": "activities",
+    "slug": "paribu-bursa-podyum",
+    "city": "Bursa"
+  },
+  {
+    "kind": "activities",
+    "slug": "paribu-bursa-marka",
+    "city": "Bursa"
+  },
+  {
+    "kind": "activities",
+    "slug": "paribu-denizli-sm",
+    "city": "Denizli"
+  },
+  {
+    "kind": "activities",
+    "slug": "paribu-bodrum-midtown",
+    "city": "Muğla"
+  },
+  {
+    "kind": "hotels",
+    "slug": "anatolia-bursa",
+    "city": "Bursa"
+  },
+  {
+    "kind": "hotels",
+    "slug": "efe-kusadasi",
+    "city": "Aydın"
+  },
+  {
+    "kind": "hotels",
+    "slug": "doubletree-kusadasi",
+    "city": "Aydın"
+  },
+  {
+    "kind": "hotels",
+    "slug": "izmir-marriott",
+    "city": "İzmir"
+  },
+  {
+    "kind": "hotels",
+    "slug": "grand-hyatt-izmir",
+    "city": "İzmir"
+  },
+  {
+    "kind": "hotels",
+    "slug": "ege-palas",
+    "city": "İzmir"
+  },
+  {
+    "kind": "hotels",
+    "slug": "wyndham-grand-izmir",
+    "city": "İzmir"
+  },
+  {
+    "kind": "hotels",
+    "slug": "ramada-plaza-antalya",
+    "city": "Antalya"
+  },
+  {
+    "kind": "hotels",
+    "slug": "sealife-family-antalya",
+    "city": "Antalya"
+  },
+  {
+    "kind": "hotels",
+    "slug": "rixos-downtown-antalya",
+    "city": "Antalya"
+  },
+  {
+    "kind": "hotels",
+    "slug": "alp-pasa-antalya",
+    "city": "Antalya"
+  },
+  {
+    "kind": "hotels",
+    "slug": "lara-barut-collection",
+    "city": "Antalya"
+  },
+  {
+    "kind": "hotels",
+    "slug": "grand-hotel-konya",
+    "city": "Konya"
+  },
+  {
+    "kind": "activities",
+    "slug": "anitkabir",
+    "city": "Ankara"
+  },
+  {
+    "kind": "activities",
+    "slug": "izmir-clock-tower",
+    "city": "İzmir"
+  },
+  {
+    "kind": "hotels",
+    "slug": "pera-palace",
+    "city": "İstanbul"
+  },
+  {
+    "kind": "restaurants",
+    "slug": "7-mehmet-antalya"
+  },
+  {
+    "kind": "restaurants",
+    "slug": "ali-baba-firin-kebap-konya"
+  },
+  {
+    "kind": "restaurants",
+    "slug": "beyti-florya"
+  },
+  {
+    "kind": "restaurants",
+    "slug": "cemo-konya"
+  },
+  {
+    "kind": "restaurants",
+    "slug": "ciya-sofrasi"
+  },
+  {
+    "kind": "restaurants",
+    "slug": "cukur-meyhane-beyoglu"
+  },
+  {
+    "kind": "restaurants",
+    "slug": "hasanaga-antalya"
+  },
+  {
+    "kind": "restaurants",
+    "slug": "iskender-tarihi-mavi-dukkan"
+  },
+  {
+    "kind": "restaurants",
+    "slug": "kale-rumelihisari"
+  },
+  {
+    "kind": "restaurants",
+    "slug": "kanaat-uskudar"
+  },
+  {
+    "kind": "restaurants",
+    "slug": "memedof-bodrum"
+  },
+  {
+    "kind": "restaurants",
+    "slug": "musto-bodrum"
+  },
+  {
+    "kind": "restaurants",
+    "slug": "sait-yalikavak"
+  },
+  {
+    "kind": "restaurants",
+    "slug": "sultanahmet-kofte-1920"
+  }
+]

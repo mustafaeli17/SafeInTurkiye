@@ -1,26 +1,13 @@
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {publishedEditorialSnapshot} from './published-editorial-snapshot.mjs';
-const entries=JSON.parse(await readFile('src/data/directory.json','utf8'));
-const publication=JSON.parse(await readFile('src/data/photoPublication.json','utf8'));
-const retiredRestaurants=new Set(JSON.parse(await readFile('src/data/retiredRestaurantSlugs.json','utf8')));
-const alternatives=JSON.parse(await readFile('src/data/photoAlternatives.json','utf8'));
-const regionalHotels=JSON.parse(await readFile('src/data/regionalHotels.json','utf8'));
-entries.push(...regionalHotels.map(hotel=>({...hotel,kind:'hotels'})));
-const restaurants=JSON.parse(await readFile('src/data/regionalRestaurants.json','utf8'));
-entries.push(...restaurants.map(restaurant=>({...restaurant,kind:'restaurants'})));
+const retired=new Set(JSON.parse(await readFile('src/data/retiredDirectory.json','utf8')).map(entry=>`/${entry.kind}/${entry.slug}`));
+const entries=[];
 const cities=JSON.parse(await readFile('src/data/cityGuides.json','utf8'));
 const originalCities=JSON.parse(await readFile('src/data/originalCityRoutes.json','utf8'));
-const activities=JSON.parse(await readFile('src/data/regionalActivities.json','utf8'));
-entries.push(...activities.map(activity=>({...activity,kind:'activities',website:cities.find(city=>city.name===activity.city).source})));
-entries.push(...alternatives);
-const cinemas=JSON.parse(await readFile('src/data/cinemas.json','utf8'));
-entries.push(...cinemas.map(cinema=>({...cinema,kind:'activities',description:{en:'Check current films, screening times and languages on the cinema’s official page. Ticket purchases take place on the operator’s website.',tr:'Güncel filmleri, seansları ve gösterim dilini sinemanın resmî sayfasından kontrol edin. Bilet işlemleri işletmenin sitesinde yapılır.'}})));
-for(let i=entries.length-1;i>=0;i--)if(!publication.galleries[entries[i].id||entries[i].slug]?.length)entries.splice(i,1);
 if(process.env.VITE_PLATFORM_FOUNDATION==='true'){
  const cms=await publishedEditorialSnapshot(process.env.VITE_SUPABASE_URL,process.env.VITE_SUPABASE_ANON_KEY);
- entries.splice(0,entries.length,...cms);
+ entries.push(...cms.filter(entry=>!retired.has(`/${entry.kind}/${entry.slug}`)));
 }
-for(let i=entries.length-1;i>=0;i--)if(entries[i].kind==='restaurants'&&retiredRestaurants.has(entries[i].slug))entries.splice(i,1);
 entries.push(...[...originalCities,...cities].map(city=>({kind:'cities',slug:city.slug,name:city.name,description:city.description,website:city.source})));
 const base=await readFile('dist/index.html','utf8');
 const escape=value=>value.replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;').replaceAll('>','&gt;');

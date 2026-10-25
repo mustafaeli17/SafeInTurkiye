@@ -152,22 +152,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .travel-catalog-row + .travel-catalog-row { border-top: 1px solid #e6eef5; }
 .travel-catalog-photo { position: relative; height: 132px; border-radius: 11px; overflow: hidden; background: #eaf3fb; }
 .travel-catalog-photo img { width: 100%; height: 100%; object-fit: cover; }
-.place-photo-image { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; background: #edf5fa; }
-.place-photo-missing { min-height: 112px; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 12px; gap: 8px; text-align: center; color: #42617e; background: #edf5fa; }
-.place-photo-missing > span { font-size: 30px; }
-.place-photo-missing small { font-size: 11px; }
-.reference-photo-grid .place-photo-image { object-fit: cover; }
-.travel-cities img[src="/photos/izmir.jpg"] { object-fit: cover; object-position: center 38%; }
 .city-photo-banner { height: clamp(280px, 42vw, 480px); background: #164e63; }
 .city-photo-banner img { object-fit: cover; object-position: center; }
-.city-photo-banner img[src="/photos/izmir.jpg"] { object-position: center 28%; }
-.city-photo-banner img[src="/photos/ankara.jpg"] { object-position: center 62%; }
-.travel-cities img[src*="antalya-city"], .city-photo-banner img[src*="antalya-city"] { object-position: 35% 78%; }
-.travel-cities img[src="/photos/ankara.jpg"] { object-position: center 65%; }
-.travel-cities img[src*="trabzon-city"], .city-photo-banner img[src*="trabzon-city"] { object-position: 35% 70%; }
-.place-photo-image[data-photo-id="a2"] { object-position: 50% 60%; }
-.place-photo-image[data-photo-id="modern"] { object-position: 50% 60%; }
-.place-photo-image[data-photo-id="r2"] { object-position: 50% 65%; }
 .place-photo-image[data-photo-id="iksv"] { object-fit: contain; background: white; }
 .cinema-art { min-height: 125px; height: 100%; width: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px; padding: 12px; background: linear-gradient(135deg,#09273d,#176486); color: white; text-align: center; }
 .cinema-art svg { width: 38px; height: 38px; }

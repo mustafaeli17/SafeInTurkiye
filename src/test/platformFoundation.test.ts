@@ -51,9 +51,9 @@ it('foundation migration enforces publication, ownership and sponsorship visibil
   expect((await db.query('select event_type,total from business_metrics')).rows).toEqual([{event_type:'detail_open',total:1}])
   await db.exec('reset role')
   await expect(db.exec(`update restaurants set public_slug='new-route' where id='${business}'`)).rejects.toThrow()
-  const catalog=await foundationCatalog()
-  expect(catalog).toHaveLength(52)
-  expect(catalog.filter((entry:{kind:string})=>entry.kind==='restaurants')).toHaveLength(0)
+  expect(await foundationCatalog()).toEqual([])
+  // Exercise idempotent import safeguards using isolated fixtures, never the retired venues.
+  const catalog=[{kind:'hotels',slug:'fixture-hotel',name:'Fixture hotel',city:'Fixture city',description:{en:'Test only'},gallery:[]},{kind:'activities',slug:'fixture-activity',name:'Fixture activity',city:'Fixture city',description:{en:'Test only'},gallery:[]}]
   const seed=catalogSeed(catalog)
   await db.exec(seed)
   await db.exec(seed)
