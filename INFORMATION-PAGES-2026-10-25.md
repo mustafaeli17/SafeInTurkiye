@@ -7,10 +7,17 @@
 - Full tests **405 passed / 64 files**, typecheck/lint/build passed. After a CSS-only 44px control-target adjustment, rebuilt and all 15 targeted operator/audit regressions passed. Photo/favicon/SEO/bundle validators passed before that sizing-only change.
 - Browser local production build: desktop Turkish Contact; mobile 390px Turkish Privacy/Contact, French Terms at 320px, Arabic About at 320px, Chinese Contact at 320px. Client/scroll widths matched (375/375 and 305/305); active navigation, refresh route persistence and exact email href verified. No physical-device certification.
 - Evidence: `audit-evidence/information-desktop.jpg`, `audit-evidence/information-mobile-ar.jpg`.
-- Production has not been updated for this UI change; only Preview branch is to be deployed.
+- Initial review deployed only Preview; subsequent approved production release is recorded below.
 
 ## Preview verification
 
 - `fd765ba` Preview deployment Ready (10s); Production remains `0557f4e`.
 - Authenticated Preview Contact renders the new design, approved operator and exact Gmail `mailto:` link. Active navigation points to `/contact`, the language selector is 44px high and client/scroll widths both 485px.
 - Proof: `audit-evidence/information-preview.jpg`. No email was sent and no support response-time claim was added.
+
+## Approved production release
+
+- User approved publishing the reviewed version. Exact tested implementation `fd765ba` fast-forwarded to main; Vercel **Production Ready** (11s). Rollback baseline `0557f4e`.
+- `/privacy`, `/terms`, `/about`, `/contact`: public HTTP 200, HTML content types.
+- Live browser Contact: new card/navigation design, approved operator and `mailto:elimust503@gmail.com` confirmed. Screenshot: `audit-evidence/information-live.jpg`.
+- No further implementation, API, credential, paid-service or database changes during release. No email sent.
