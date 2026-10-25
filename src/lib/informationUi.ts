@@ -1,0 +1,11 @@
+export const informationUi:Record<string,string[]>={
+ tr:['Ana sayfaya dön','Bilgi ve destek','SafeInTürkiye hakkında bilmeniz gerekenler, tek bir yerde.','Bu bölümde','Dil','Bilmeniz gerekenler','Bize e-posta gönderin','Siteyle ilgili sorularınız ve geri bildirimleriniz için.','Acil durumda 112','Bu e-posta acil yardım kanalı değildir.'],
+ en:['Back to home','Information & support','What you need to know about SafeInTürkiye, in one place.','In this section','Language','What to know','Email us','For questions and feedback about the website.','Emergency: 112','This email is not an emergency support channel.'],
+ de:['Zur Startseite','Informationen & Hilfe','Wissenswertes über SafeInTürkiye an einem Ort.','In diesem Bereich','Sprache','Gut zu wissen','E-Mail senden','Für Fragen und Rückmeldungen zur Website.','Notruf: 112','Diese E-Mail-Adresse ist kein Notfallkanal.'],
+ fr:['Retour à l’accueil','Informations et assistance','Les informations essentielles sur SafeInTürkiye, au même endroit.','Dans cette rubrique','Langue','À savoir','Nous écrire','Pour vos questions et commentaires sur le site.','Urgence : 112','Cet e-mail n’est pas un service d’urgence.'],
+ es:['Volver al inicio','Información y ayuda','Todo lo que necesitas saber sobre SafeInTürkiye, en un solo lugar.','En esta sección','Idioma','Información importante','Escríbenos','Para preguntas y comentarios sobre el sitio.','Emergencias: 112','Este correo no es un canal de emergencias.'],
+ ar:['العودة إلى الرئيسية','المعلومات والدعم','ما تحتاج إلى معرفته عن SafeInTürkiye، في مكان واحد.','في هذا القسم','اللغة','معلومات مهمة','راسلنا بالبريد الإلكتروني','للأسئلة والملاحظات المتعلقة بالموقع.','الطوارئ: 112','هذا البريد ليس قناة للمساعدة في حالات الطوارئ.'],
+ ru:['На главную','Информация и помощь','Всё, что нужно знать о SafeInTürkiye, в одном месте.','В этом разделе','Язык','Важно знать','Написать нам','Для вопросов и отзывов о сайте.','Экстренная помощь: 112','Эта почта не предназначена для экстренной помощи.'],
+ zh:['返回首页','信息与支持','在这里了解 SafeInTürkiye 的重要信息。','本栏目','语言','须知','发送邮件','如对网站有疑问或建议，请通过邮件联系我们。','紧急情况：112','此邮箱不提供紧急救援服务。'],
+};
+export const informationLanguages={en:'English',tr:'Türkçe',de:'Deutsch',fr:'Français',es:'Español',ar:'العربية',ru:'Русский',zh:'中文'};
