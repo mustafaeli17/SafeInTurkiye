@@ -1,6 +1,6 @@
-// Owner confirmed on 2026-10-25 that no reservation handling operation exists.
-// Keep requests unavailable until ownership, privacy and response workflow are confirmed.
-export const restaurantRequestsEnabled=false;
+// Enable only after approved migration, mail configuration and delivery verification.
+// The server performs a separate readiness check; a UI flag alone cannot open intake.
+export const restaurantRequestsEnabled=import.meta.env.VITE_RESTAURANT_REQUESTS==='true';
 export const reservationUnavailable:Record<string,string>={
  tr:'Rezervasyon talebi hizmetimiz henüz açık değil. Rezervasyon için işletmenin telefonunu veya resmî web sitesini kullanın.',
  en:'Our reservation request service is not available yet. Please contact the business by phone or through its official website to book.',

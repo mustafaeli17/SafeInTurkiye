@@ -1,46 +1,53 @@
-import { useState,useRef } from 'react'
-import {siteInformation} from '../lib/siteInformation'
-import {validBookingTime} from '../lib/bookingTime'
-import {restaurantRequestsEnabled,reservationUnavailable} from '../lib/reservationAvailability'
-import { createBooking } from '../repositories/bookingRepository'
-import { requireSupabase } from '../lib/supabase'
-import { restaurantRequestCopy } from '../lib/restaurantRequestCopy'
-import MyReservationRequests from './MyReservationRequests'
-import {trackBusinessEvent} from '../lib/businessEvents'
+import {useEffect,useRef,useState} from 'react';
+import {siteInformation} from '../lib/siteInformation';
+import {validBookingTime} from '../lib/bookingTime';
+import {restaurantRequestsEnabled,reservationUnavailable} from '../lib/reservationAvailability';
+import {restaurantRequestCopy} from '../lib/restaurantRequestCopy';
+import {newReceipt,readReceipt,reservationCall,saveReceipt} from '../lib/reservationClient';
+import type {SavedReceipt} from '../lib/reservationClient';
+import {receiptCopy,reservationIntro,requestRetryCopy} from '../lib/reservationReceiptCopy';
+import ReservationReceipt from './ReservationReceipt';
+import {trackBusinessEvent} from '../lib/businessEvents';
 
-// Requests are pending until staff contact the restaurant. No payment or automatic confirmation.
-export default function RestaurantRequest({name,source,lang,businessKey}:{name:string;source:string;lang:string;businessKey?:string}) {
-  const t=restaurantRequestCopy[lang]??restaurantRequestCopy.en
-  const [busy,setBusy]=useState(false)
-  const [message,setMessage]=useState<number|null>(null)
-  const [reference,setReference]=useState('')
-  const [started,setStarted]=useState(false)
-  const submitting=useRef(false)
-  async function submit(event:React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if(!restaurantRequestsEnabled||submitting.current||busy||reference)return
-    const data=new FormData(event.currentTarget)
-    if(!validBookingTime(String(data.get('date')),String(data.get('time')))){setMessage(10);return}
-    submitting.current=true;setBusy(true);setMessage(null)
-    try {
-      const {data:auth,error}=await requireSupabase().auth.getUser()
-      if(error||!auth.user){setMessage(11);return}
-      const result=await createBooking({listingType:'restaurant',listingName:name,guestName:String(data.get('name')).trim(),guestEmail:String(data.get('email')).trim(),visitDate:String(data.get('date')),visitTime:String(data.get('time')),guestPhone:String(data.get('phone')).trim(),guestCount:Number(data.get('guests')),notes:JSON.stringify({time:data.get('time'),phone:data.get('phone'),source,notes:data.get('notes')})})
-      setReference(result.reference_code)
-      if(businessKey)trackBusinessEvent(businessKey,'reservation_submitted')
-    } catch {setMessage(12)}
-    finally{submitting.current=false;setBusy(false)}
-  }
-  if(!restaurantRequestsEnabled)return <p dir={lang==='ar'?'rtl':'ltr'} className="mt-4 text-sm text-slate-600">{reservationUnavailable[lang]??reservationUnavailable.en}</p>
-  if(reference)return <><p dir={lang==='ar'?'rtl':'ltr'} role="status" className="mt-4 rounded-xl bg-sky-50 p-4">{t[13]}<bdi>{reference}</bdi></p><MyReservationRequests lang={lang}/></>
-  const fields=[['name',t[2],'text'],['email',t[3],'email'],['phone',t[4],'tel'],['date',t[5],'date'],['time',t[6],'time'],['guests',t[7],'number']]
-  return <><form onFocus={()=>{if(!started&&businessKey){setStarted(true);trackBusinessEvent(businessKey,'reservation_started')}}} lang={lang} dir={lang==='ar'?'rtl':'ltr'} onSubmit={submit} className="mt-5 rounded-xl border border-sky-100 p-4 space-y-3">
-    <h4 className="font-bold">{t[0]}</h4>
-    <p className="text-sm">{t[1]}</p>
-    <a href="/privacy" target="_blank" rel="noopener noreferrer" className="inline-block underline text-blue-700 text-sm">{(siteInformation[lang]??siteInformation.en).labels[0]}</a>
-    <div className="grid sm:grid-cols-2 gap-3">{fields.map(([key,label,type])=><label key={key} className="text-sm">{label}<input className="block w-full border rounded-lg p-2" name={key} type={type} required maxLength={key==='name'?100:254} min={key==='guests'?1:undefined} max={key==='guests'?20:undefined} defaultValue={key==='guests'?2:undefined}/></label>)}</div>
-    <label className="block text-sm">{t[8]}<textarea name="notes" maxLength={1000} className="block w-full border rounded-lg p-2"/></label>
-    <button disabled={busy} className="min-h-11 rounded-xl bg-blue-600 px-4 py-2 text-white disabled:opacity-50">{busy?'…':t[9]}</button>
-    <p role="status">{message!==null?t[message]:''}</p>
-  </form><MyReservationRequests lang={lang}/></>
+type Props={name:string;source:string;lang:string;businessKey?:string};
+export default function RestaurantRequest(props:Props){return <RequestForm key={props.businessKey??props.source+props.name} {...props}/>;}
+function RequestForm({name,source,lang,businessKey}:Props){
+ const t=restaurantRequestCopy[lang]??restaurantRequestCopy.en;
+ const copy=receiptCopy[lang]??receiptCopy.en,key=businessKey??source+name;
+ const [receipt,setReceipt]=useState<SavedReceipt|null>(()=>readReceipt(key));
+ const [ready,setReady]=useState(false),[checking,setChecking]=useState(restaurantRequestsEnabled);
+ const [busy,setBusy]=useState(false),[message,setMessage]=useState<number|null>(null);
+ const submitting=useRef(false),credentials=useRef<ReturnType<typeof newReceipt>|null>(null),started=useRef(false);
+ useEffect(()=>{
+  if(!restaurantRequestsEnabled||receipt){setChecking(false);return;}
+  const controller=new AbortController();
+  void fetch('/api/reservations',{signal:AbortSignal.any([controller.signal,AbortSignal.timeout(10000)])}).then(r=>r.ok?r.json():null).then(data=>{if(!controller.signal.aborted)setReady(data?.enabled===true);}).catch(()=>{}).finally(()=>{if(!controller.signal.aborted)setChecking(false);});
+  return()=>controller.abort();
+ },[receipt]);
+ async function submit(event:React.FormEvent<HTMLFormElement>){
+  event.preventDefault();if(!ready||submitting.current||receipt)return;
+  const form=event.currentTarget,data=new FormData(form);
+  if(!validBookingTime(String(data.get('date')),String(data.get('time')))){setMessage(10);return;}
+  credentials.current??=newReceipt();submitting.current=true;setBusy(true);setMessage(null);
+  try{
+   const result=await reservationCall({action:'create',...credentials.current,listing:name,source,name:String(data.get('name')).trim(),email:String(data.get('email')).trim(),phone:String(data.get('phone')).trim(),date:String(data.get('date')),time:String(data.get('time')),guests:Number(data.get('guests')),notes:String(data.get('notes')??''),website:String(data.get('website')??'')});
+   if(typeof result.reference!=='string'||!/^SIT-[A-Z0-9-]{1,40}$/.test(result.reference))throw Error();
+   const saved={...credentials.current,reference:result.reference,expires:Date.now()+7*86400000};
+   saveReceipt(key,saved);setReceipt(saved);
+   if(businessKey)trackBusinessEvent(businessKey,'reservation_submitted');
+  }catch{setMessage(12);}finally{submitting.current=false;setBusy(false);}
+ }
+ if(receipt)return <ReservationReceipt {...receipt} lang={lang}/>;
+ if(checking)return <p role="status" className="mt-4 text-sm">…</p>;
+ if(!restaurantRequestsEnabled||!ready)return <p className="mt-4 text-sm text-slate-600">{reservationUnavailable[lang]??reservationUnavailable.en}</p>;
+ const fields=[['name',t[2],'text'],['email',t[3],'email'],['phone',t[4],'tel'],['date',t[5],'date'],['time',t[6],'time'],['guests',t[7],'number']];
+ return <form onFocus={()=>{if(!started.current&&businessKey){started.current=true;trackBusinessEvent(businessKey,'reservation_started');}}} lang={lang} dir={lang==='ar'?'rtl':'ltr'} onSubmit={submit} className="mt-5 rounded-2xl border border-sky-100 bg-white p-5 space-y-4">
+  <h4 className="font-bold text-lg">{t[0]}</h4><p className="text-sm text-slate-600">{reservationIntro[lang]??reservationIntro.en}</p>
+  <div className="grid sm:grid-cols-2 gap-3">{fields.map(([field,label,type])=><label key={field} className="text-sm font-semibold">{label}<input className="mt-1 block w-full min-h-11 rounded-xl border border-sky-100 p-3 font-normal" name={field} type={type} required maxLength={field==='name'?100:field==='phone'?40:254} min={field==='guests'?1:undefined} max={field==='guests'?20:undefined} defaultValue={field==='guests'?2:undefined} autoComplete={field==='name'?'name':field==='email'?'email':field==='phone'?'tel':undefined}/></label>)}</div>
+  <label className="hidden" aria-hidden="true">Website<input name="website" tabIndex={-1} autoComplete="off"/></label>
+  <label className="block text-sm font-semibold">{t[8]}<textarea name="notes" maxLength={1000} className="mt-1 block w-full rounded-xl border border-sky-100 p-3 font-normal"/></label>
+  <p className="text-xs text-slate-500">{copy[7]} <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline text-blue-700">{(siteInformation[lang]??siteInformation.en).labels[0]}</a></p>
+  <button disabled={busy} className="min-h-12 rounded-xl bg-blue-600 px-6 py-3 font-bold text-white disabled:opacity-50">{busy?'…':t[9]}</button>
+  {message!==null&&<p role="alert" className="text-sm text-red-700">{message===12?(requestRetryCopy[lang]??requestRetryCopy.en):t[message]}</p>}
+ </form>;
 }

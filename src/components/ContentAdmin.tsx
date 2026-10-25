@@ -1,89 +1,45 @@
-import { useEffect, useState } from 'react';
-import { requireSupabase } from '../lib/supabase';
-import BookingAdmin from './BookingAdmin';
-import SponsorshipAdmin from './SponsorshipAdmin';
-import BusinessMetricsAdmin from './BusinessMetricsAdmin';
+import {lazy,Suspense,useCallback,useEffect,useState} from 'react';
+import {BarChart3,Bell,BookOpen,CheckCircle2,ExternalLink,LayoutDashboard,LogOut,Settings,ShieldCheck,Ticket,TriangleAlert} from 'lucide-react';
+import {requireSupabase} from '../lib/supabase';
 import {foundationEnabled} from '../lib/foundationConfig';
-
-const sections = {
-  hotels: ['Oteller', 'Otel adı', 'Oda türleri, giriş/çıkış saatleri, tesis olanakları, erişilebilirlik ve iptal koşulları.'],
-  restaurants: ['Restoranlar', 'Restoran adı', 'Mutfak türü, menü, diyet seçenekleri, çalışma saatleri ve masa rezervasyonu koşulları.'],
-  activities: ['Aktiviteler', 'Aktivite adı', 'Buluşma yeri, süre, rehber dili, dahil olan hizmetler, yaş sınırı ve iptal koşulları.'],
-  exchange_offices: ['Döviz büroları', 'Büro adı', 'Çalışma saatleri, telefon, desteklenen para birimleri ve komisyon bilgisi. Tarihsiz fiyatı canlı kur diye yazmayın.'],
-  attractions: ['Gezilecek yerler', 'Yer adı', 'Adres, ziyaret saatleri, ulaşım, erişilebilirlik ve resmî bilet bilgisi.'],
-  museums: ['Müzeler', 'Müze adı', 'Ziyaret saatleri, kapalı günler, bilet kaynağı ve erişilebilirlik.'],
-} as const;
-type Table = keyof typeof sections;
-interface Entry { id?: string; name: string; description: string; address: string; website: string; city_id: string | null; active: boolean; status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED' }
-const empty = (): Entry => ({ name: '', description: '', address: '', website: '', city_id: null, active: true, status: 'DRAFT' });
-export default function ContentAdmin({ role }: { role: string }) {
-  const [table, setTable] = useState<Table>('hotels');
-  const [rows, setRows] = useState<Entry[]>([]);
-  const [cities, setCities] = useState<{id: string; name: string}[]>([]);
-  const [form, setForm] = useState<Entry>(empty);
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
-  const writable = role === 'admin' || role === 'editor';
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true); setRows([]); setForm(empty()); setMessage(''); setError('');
-    const client = requireSupabase();
-    void Promise.all([
-      client.from(table).select('id,name,description,address,website,city_id,active,status').order('name'),
-      client.from('cities').select('id,name').order('name'),
-    ]).then(([list, cityList]) => {
-      if (cancelled) return;
-      if (list.error || cityList.error) { setError('Kayıtlar alınamadı. Hesabınızın yetkisini ve veritabanı bağlantısını kontrol edin.'); return; }
-      setRows(list.data ?? []); setCities(cityList.data ?? []);
-    }).catch(() => { if (!cancelled) setError('Bağlantı kurulamadı. Yeniden deneyin.'); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, [table]);
-  const save = async (event: React.FormEvent) => {
-    event.preventDefault(); if (!writable || saving) return;
-    setMessage(''); setError('');
-    if (form.website && !/^https?:\/\//i.test(form.website)) { setError('Web adresi https:// veya http:// ile başlamalı.'); return; }
-    if (form.status === 'PUBLISHED' && (!form.description.trim() || !form.address.trim() || !form.city_id)) { setError('Yayımlamak için şehir, adres ve açıklamayı doldurun. Eksik kaydı taslak olarak saklayabilirsiniz.'); return; }
-    setSaving(true);
-    const payload = { name: form.name.trim(), description: form.description || null, address: form.address || null, website: form.website || null, city_id: form.city_id, active: form.active, status: form.status };
-    try {
-      const client = requireSupabase();
-      const query = form.id ? client.from(table).update(payload).eq('id', form.id) : client.from(table).insert(payload);
-      const result = await query.select('id,name,description,address,website,city_id,active,status').single();
-      if (result.error) throw result.error;
-      const saved = result.data as Entry;
-      setRows(old => [...old.filter(row => row.id !== saved.id), saved].sort((a,b) => a.name.localeCompare(b.name)));
-      setForm({ ...saved, description: saved.description ?? '', address: saved.address ?? '', website: saved.website ?? '' });
-      setMessage('Veritabanına kaydedildi. Bu kayıt sayfa yenilendiğinde korunur.');
-    } catch { setError('Kaydedilemedi. Yetki veya bağlantı sorunu olabilir; formunuz korunuyor. Kayıt başarılı sayılmadı.'); }
-    finally { setSaving(false); }
-  };
-  const field = 'w-full rounded-xl border border-sky-100 bg-white px-3 py-2 text-sm';
-  return <main className="max-w-6xl mx-auto p-4 sm:p-6 space-y-5 pb-24">
-    <header><h1 className="text-2xl font-bold">İçerik yönetimi</h1><p className="text-sm text-slate-600 mt-2">Gerçek veritabanı kayıtları · {role}. Yayımlanan kayıtları canlı site de okuyabilir; denemeleri taslak kaydedin.</p></header>
-    <section className="p-4 rounded-xl border border-sky-100 bg-white"><h2 className="font-bold">Ziyaretçi istatistikleri</h2><p className="text-sm text-slate-600 my-2">Ziyaretçi, görüntülenme, ülke, cihaz ve yönlendiren kaynak bilgilerini Vercel Analytics ekranında görebilirsiniz. Vercel proje erişimi gerekir. Ölçüm kurulmadan önceki ziyaretler geriye dönük hesaplanamaz. Ücretsiz planda bölüm tıklamaları ölçülmez.</p><a href="https://vercel.com/eli-1196/safe-in-turkiye/analytics" target="_blank" rel="noopener noreferrer" className="text-sky-700 underline font-semibold">İstatistikleri aç ↗</a></section>
-    <BookingAdmin />
-    {foundationEnabled&&<><SponsorshipAdmin/><BusinessMetricsAdmin/></>}
-    <p className="text-sm text-slate-600">Mevcut içerikleri aşağıdaki listeden seçerek düzenleyebilir, taslak veya arşiv durumuna alabilirsiniz. Google Maps kayıtları burada düzenlenmez. Tasarım ve çeviri yönetimi bu panelin dışındadır. Arama motorlarına sunulan sayfalar ve site haritası için içerik değişikliklerinden sonra onaylı yayın/build işlemi gerekir.</p>
-    {!writable && <p className="p-3 bg-amber-50 rounded-xl">Hesabınız görüntüleme yetkisine sahip. Düzenleme için editör veya yönetici rolü gerekir.</p>}
-    <nav className="flex gap-2 flex-wrap">{Object.entries(sections).map(([key, value]) => <button disabled={saving} type="button" aria-pressed={table === key} key={key} onClick={() => setTable(key as Table)} className={`px-4 py-2 rounded-xl ${table === key ? 'bg-sky-600 text-white' : 'bg-white border border-sky-100'}`}>{value[0]}</button>)}</nav>
-    {loading && <p role="status">Kayıtlar yükleniyor…</p>}
-    {error && <p role="alert" className="p-3 rounded-xl bg-red-50 text-red-800">{error}</p>}
-    {message && <p role="status" className="p-3 rounded-xl bg-green-50 text-green-800">{message}</p>}
-    <div className="grid md:grid-cols-[minmax(220px,1fr)_2fr] gap-5">
-      <aside className="space-y-2"><button disabled={saving || !writable} onClick={() => { setForm(empty()); setMessage(''); setError(''); }} className="w-full p-3 border border-sky-200 bg-white rounded-xl text-sky-800 font-bold">+ Yeni kayıt</button>{!loading && rows.length === 0 && <p className="text-sm p-3">Bu bölümde kayıt yok.</p>}{rows.map(row => <button disabled={saving} onClick={() => { setForm({ ...row, description: row.description ?? '', address: row.address ?? '', website: row.website ?? '' }); setMessage(''); }} key={row.id} className="w-full p-3 text-left bg-white border border-sky-100 rounded-xl"><strong className="block break-words">{row.name}</strong><span className="text-xs">{row.status === 'DRAFT' ? 'Taslak' : row.status === 'PUBLISHED' ? 'Yayında' : 'Arşiv'}{!row.active && ' · Pasif'}</span></button>)}</aside>
-      <form onSubmit={save} className="p-5 bg-white rounded-2xl border border-sky-100 space-y-4"><h2 className="font-bold text-lg">{form.id ? 'Kaydı düzenle' : sections[table][1] + ' ekle'}</h2><fieldset disabled={!writable || saving || loading} className="space-y-4 disabled:opacity-60">
-        <label className="block text-sm font-semibold">{sections[table][1]}<input required maxLength={200} className={field} value={form.name} onChange={e => setForm({...form, name:e.target.value})} /></label>
-        <label className="block text-sm font-semibold">Şehir<select className={field} value={form.city_id ?? ''} onChange={e => setForm({...form,city_id:e.target.value || null})}><option value="">Şehir seçin</option>{cities.map(city => <option value={city.id} key={city.id}>{city.name}</option>)}</select></label>
-        <label className="block text-sm font-semibold">Açık adres<input className={field} value={form.address} onChange={e => setForm({...form,address:e.target.value})} /></label>
-        <label className="block text-sm font-semibold">Resmî web sitesi<input type="url" placeholder="https://" className={field} value={form.website} onChange={e => setForm({...form,website:e.target.value})} /></label>
-        <label className="block text-sm font-semibold">{sections[table][0]} bilgileri<textarea rows={8} className={field} placeholder={sections[table][2]} value={form.description} onChange={e => setForm({...form,description:e.target.value})} /></label><p className="text-xs text-slate-500">{sections[table][2]}</p>
-        <label className="block text-sm font-semibold">Durum<select className={field} value={form.status} onChange={e => setForm({...form,status:e.target.value as Entry['status']})}><option value="DRAFT">Taslak — ziyaretçiler görmez</option><option value="PUBLISHED">Yayında — ziyaretçiler okuyabilir</option><option value="ARCHIVED">Arşiv — ziyaretçiler görmez</option></select></label>
-        <label className="flex gap-2 text-sm"><input type="checkbox" checked={form.active} onChange={e => setForm({...form,active:e.target.checked})} />Kayıt aktif</label>
-        <button className="bg-sky-600 text-white px-5 py-3 rounded-xl font-bold" type="submit">{saving ? 'Kaydediliyor…' : 'Veritabanına kaydet'}</button>
-      </fieldset></form>
-    </div>
-  </main>;
+import {restaurantRequestsEnabled} from '../lib/reservationAvailability';
+import {publicCities} from '../lib/publicRoutes';
+import {useDiscardChanges} from './useDiscardChanges';
+import './ContentAdmin.css';
+const EditorialAdmin=lazy(()=>import('./EditorialAdmin'));
+const BookingAdmin=lazy(()=>import('./BookingAdmin'));
+const SponsorshipAdmin=lazy(()=>import('./SponsorshipAdmin'));
+const BusinessMetricsAdmin=lazy(()=>import('./BusinessMetricsAdmin'));
+const tabs=[['overview','Genel bakış',LayoutDashboard],['reservations','Rezervasyonlar',Bell],['content','İçerik yönetimi',BookOpen],['sponsors','Sponsorlu yerleşimler',Ticket],['analytics','İstatistikler',BarChart3],['system','Sistem ve yayın',Settings]] as const;
+export default function ContentAdmin({role,onSignOut}:{role:string;onSignOut?:()=>unknown}){
+ const [tab,setTab]=useState('overview'),[dirty,setDirty]=useState(false),[count,setCount]=useState<number|null>(null),[cityCount,setCityCount]=useState<number|null>(null),[error,setError]=useState(''),[loading,setLoading]=useState(false);
+ const onDirty=useCallback((value:boolean)=>setDirty(value),[]);
+ const discard=useDiscardChanges(dirty);
+ const permitted=['admin','editor','moderator'].includes(role);
+ async function refresh(){
+  setLoading(true);setError('');
+  try{
+   const client=requireSupabase();
+   const [requests,cities]=await Promise.all([client.from('bookings').select('id',{count:'exact',head:true}).eq('listing_type','restaurant').eq('status','PENDING').abortSignal(AbortSignal.timeout(10000)),client.from('cities').select('id',{count:'exact',head:true}).abortSignal(AbortSignal.timeout(10000))]);
+   if(requests.error||cities.error)throw Error();setCount(requests.count??null);setCityCount(cities.count??null);
+  }catch{setError('Özet verileri alınamadı. Bilinmeyen değerler sıfır kabul edilmedi.');}
+  finally{setLoading(false);}
+ }
+ useEffect(()=>{if(permitted)void refresh();},[permitted]);
+ function navigate(next:string){discard.protect(()=>{setDirty(false);setTab(next);});}
+ if(!permitted)return <p role="alert">Bu panel için yetkiniz yok.</p>;
+ return <main className="admin-studio">
+  <header className="admin-studio-header"><div><p className="admin-eyebrow">SAFEINTÜRKİYE · YÖNETİM</p><h1>Kontrol merkezi</h1><p>Rezervasyonlar, içerikler ve işletme yönetimi.</p></div><div className="admin-header-actions"><span className="admin-role"><ShieldCheck size={15}/>{role}</span>{onSignOut&&<button className="admin-button" onClick={()=>discard.protect(()=>{void onSignOut();})}><LogOut size={15}/>Çıkış</button>}</div></header>
+  <div className="admin-studio-layout"><nav className="admin-side-nav" aria-label="Yönetim bölümleri">{tabs.map(([id,label,Icon])=><button key={id} aria-pressed={tab===id} onClick={()=>navigate(id)}><Icon size={18}/><span>{label}</span>{id==='reservations'&&count!==null&&count>0&&<b>{count}</b>}</button>)}</nav>
+  <div className="admin-workspace">
+   {tab==='overview'&&<><div className="admin-section-heading"><div><h2>Bugünün çalışma alanı</h2><p>Gerçek kayıtlar; bilinmeyen sayılar “—” ile gösterilir.</p></div><button disabled={loading} className="admin-button" onClick={()=>void refresh()}>{loading?'Yükleniyor…':'Özeti yenile'}</button></div>{error&&<p role="alert" className="admin-error">{error}</p>}<div className="admin-stat-grid"><button onClick={()=>navigate('reservations')} className="admin-stat"><Bell/><strong>{count??'—'}</strong><span>Bekleyen restoran talebi</span></button><div className="admin-stat"><BookOpen/><strong>{cityCount??'—'}</strong><span>Veritabanındaki şehir</span></div><div className="admin-stat"><LayoutDashboard/><strong>{publicCities.length}</strong><span>Sitedeki destinasyon</span></div></div><section className="admin-panel"><h2>Önce rezervasyonlar</h2><p>Talebi açın, restoranı arayın ve sonucu kaydedin. “Talep alındı” kesin rezervasyon anlamına gelmez.</p><button className="admin-button admin-primary" onClick={()=>navigate('reservations')}>Talepleri aç</button></section><div className="admin-health-grid"><section className="admin-panel"><CheckCircle2/><h3>Yetki koruması</h3><p>Oturum ve veritabanı RLS kuralları geçerlidir. Bu ekran yetki vermez.</p></section><section className="admin-panel"><TriangleAlert/><h3>Yayın durumu</h3><p>{restaurantRequestsEnabled?'Talep arayüzü etkin; sunucu ayrıca hazır olmalıdır.':'Rezervasyon hizmeti aktivasyon bekliyor.'} Google kayıtları bu panelde düzenlenmez.</p></section></div></>}
+   <Suspense fallback={<p role="status" className="admin-panel">Bölüm yükleniyor…</p>}>
+    {tab==='reservations'&&<BookingAdmin onChanged={()=>void refresh()}/>}
+    {tab==='content'&&<EditorialAdmin role={role} onDirtyChange={onDirty}/>}
+    {tab==='sponsors'&&(foundationEnabled?<SponsorshipAdmin/>:<section className="admin-panel"><h2>Sponsorlu yerleşimler</h2><p>Foundation şeması bu ortamda etkin değil. Yanlış tabloya veya Google kayıtlarına reklam yazılmayacak.</p></section>)}
+    {tab==='analytics'&&<><section className="admin-panel"><h2>Ziyaretçi istatistikleri</h2><p>Vercel’de ölçülen ziyaretçi, ülke, cihaz ve yönlendirme verileri. Fiziksel işletme ziyareti anlamına gelmez.</p><a className="admin-button" href="https://vercel.com/eli-1196/safe-in-turkiye/analytics" target="_blank" rel="noopener noreferrer">Vercel Analytics<ExternalLink size={15}/></a></section>{foundationEnabled&&<BusinessMetricsAdmin/>}</>}
+   </Suspense>
+   {tab==='system'&&<section className="admin-panel admin-system"><h2>Sistem ve yayın</h2><dl><div><dt>İçerik kaynağı</dt><dd>Google Places keşfi + ayrı editoryal CMS kayıtları</dd></div><div><dt>Foundation</dt><dd>{foundationEnabled?'Etkin':'Etkin değil'}</dd></div><div><dt>Rezervasyon arayüzü</dt><dd>{restaurantRequestsEnabled?'Etkin':'Aktivasyon bekliyor'}</dd></div><div><dt>İçerik güncellemeleri</dt><dd>CMS kayıtları kalıcıdır. SEO/site haritası için onaylı build/yayın gerekir.</dd></div></dl><p>Şehir tasarımları, çeviriler, API anahtarları ve güvenlik ayarları burada değiştirilmez. Gerçekte çalışmayan “tüm siteyi değiştir” düğmeleri gösterilmez.</p><a className="admin-button" href="https://vercel.com/eli-1196/safe-in-turkiye" target="_blank" rel="noopener noreferrer">Yayın ve API ortamı<ExternalLink size={15}/></a></section>}
+  </div></div>
+ {discard.dialog}</main>;
 }

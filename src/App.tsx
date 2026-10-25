@@ -368,7 +368,7 @@ const citiesDetailedData: Record<string, CityInfo> = {
 // 4. ANA BİLEŞEN
 // ============================================================================
 export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
-  const { session, isStaff, role, signIn } = useSupabaseAuth();
+  const { session, isStaff, role, signIn,signOut,loading:authLoading } = useSupabaseAuth();
   const mockDataEnabled = import.meta.env.VITE_ENABLE_MOCK_DATA === 'true';
   const browserLocation=useBrowserLocation();
   const [browserPath,browserQuery='']=browserLocation.split('?');
@@ -377,7 +377,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
   const selectedCityName=publicCities.find(c=>cityPath(c.name)===browserPath)?.name??publicCities.find(c=>c.slug===new URLSearchParams(browserQuery).get('city'))?.name??'İstanbul';
   const setActiveTab = (tab:typeof activeTab) => {
     setAdminOpen(tab==='admin');
-    if(tab==='admin')return;
+    if(tab==='admin'){if(window.location.hash!=='#admin')window.location.hash='admin';return;}
     const path=tab==='city'?cityPath(selectedCityName):sectionPath(tab);
     const city=destinationSlug(discoveryCity(browserQuery,selectedCityName));
     const target=tab!=='home'&&tab!=='city'&&city?path+'?city='+city:path;
@@ -425,15 +425,13 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
   const [authBusy, setAuthBusy] = useState(false);
   useEffect(() => {
     const openAdmin = () => {
-      if (window.location.hash === '#admin') {
-        setActiveTab('admin');
-        if (!session) setAuthModalOpen(true);
-      }
+      const open=window.location.hash==='#admin';setAdminOpen(open);
+      if(open&&!session&&!authLoading)setAuthModalOpen(true);
     };
     openAdmin();
     window.addEventListener('hashchange', openAdmin);
     return () => window.removeEventListener('hashchange', openAdmin);
-  }, [session]);
+  }, [session,authLoading]);
   const handleGlobalSearch = (input = searchQuery) => {
     const query = input.trim();
     if (!query) return;
@@ -1169,8 +1167,9 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
         {/* ====================================================================
             PAGE 11: ROLE-PROTECTED ADMIN CMS
         ==================================================================== */}
-        {activeTab === 'admin' && isStaff && <Suspense fallback={<PageLoading lang={lang}/>}><ContentAdmin role={role} /></Suspense>}
-        {activeTab === 'admin' && !isStaff && <main className="max-w-xl mx-auto p-6 my-8 rounded-2xl bg-white border border-sky-100 space-y-4"><h1 className="text-xl font-bold">{authCopy[lang][0]}</h1><p>{authCopy[lang][session?8:1]}</p>{!session && <button onClick={() => setAuthModalOpen(true)} className="bg-sky-600 text-white rounded-xl px-5 py-3">{footerCopy[lang].signIn}</button>}</main>}
+        {activeTab === 'admin' && authLoading && <PageLoading lang={lang}/>}
+        {activeTab === 'admin' && isStaff && <Suspense fallback={<PageLoading lang={lang}/>}><ContentAdmin role={role} onSignOut={signOut}/></Suspense>}
+        {activeTab === 'admin' && !authLoading && !isStaff && <main className="max-w-xl mx-auto p-6 my-8 rounded-2xl bg-white border border-sky-100 space-y-4"><h1 className="text-xl font-bold">{authCopy[lang][0]}</h1><p>{authCopy[lang][session?8:1]}</p>{!session && <button onClick={() => setAuthModalOpen(true)} className="bg-sky-600 text-white rounded-xl px-5 py-3">{footerCopy[lang].signIn}</button>}</main>}
 
       </div>
 
@@ -1224,7 +1223,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
           <div className="space-y-0.5 text-center sm:text-left">
             <div className="font-bold text-[#0A2540] flex items-center gap-1.5 justify-center sm:justify-start">
               SafeInTürkiye 2026
-              <button onClick={() => setAuthModalOpen(true)} title={footerCopy[lang].signIn} className="text-slate-300 hover:text-[#087FFF] cursor-pointer">
+              <button onClick={() => isStaff?setActiveTab('admin'):setAuthModalOpen(true)} title={isStaff?'CMS Studio':footerCopy[lang].signIn} className="text-slate-300 hover:text-[#087FFF] cursor-pointer">
                 <Lock className="w-3 h-3" />
               </button>
             </div>

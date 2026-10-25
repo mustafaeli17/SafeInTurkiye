@@ -24,7 +24,7 @@ it('propagates history failure instead of presenting an empty successful result'
 })
 it('translates all request status states and gives final status precedence over contacted',()=>{
  for(const lang of ['en','tr','de','fr','ar','ru','zh'])expect(reservationStatusCopy[lang]).toHaveLength(10)
- expect(reservationStatusIndex('PENDING','CONTACTED')).toBe(6)
+ expect(reservationStatusIndex('PENDING','CONTACTED')).toBe(5)
  expect(reservationStatusIndex('CONFIRMED','CONTACTED')).toBe(7)
  expect(reservationStatusIndex('REJECTED')).toBe(8)
  expect(reservationStatusIndex('CANCELLED')).toBe(9)

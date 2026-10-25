@@ -1,0 +1,15 @@
+// Short customer-facing states. Never expose the internal restaurant-contact stage.
+// A timeout can occur after the database commits. Never claim that no request exists.
+export const requestRetryCopy:Record<string,string>={tr:'Sonuç doğrulanamadı. Bu sekmeyi kapatmadan tekrar deneyin.',en:'The result could not be confirmed. Please retry without closing this tab.',de:'Das Ergebnis konnte nicht bestätigt werden. Bitte versuchen Sie es erneut, ohne diesen Tab zu schließen.',fr:'Le résultat n’a pas pu être confirmé. Réessayez sans fermer cet onglet.',es:'No se pudo confirmar el resultado. Vuelve a intentarlo sin cerrar esta pestaña.',ar:'تعذر تأكيد النتيجة. أعد المحاولة دون إغلاق علامة التبويب هذه.',ru:'Не удалось подтвердить результат. Повторите попытку, не закрывая эту вкладку.',zh:'无法确认结果。请勿关闭此标签页，然后重试。'};
+export const receiptCopy:Record<string,string[]>={
+ tr:['Talep alındı','Onaylandı','Reddedildi','İptal edildi','Durumu yenile','Son onay bekleniyor.','Durum şu anda alınamıyor.','Ad, iletişim ve ziyaret bilgileriniz bu talebi yönetmek için kullanılır.'],
+ en:['Request received','Confirmed','Declined','Cancelled','Refresh status','Awaiting final confirmation.','Status is unavailable right now.','Your name, contact and visit details are used to manage this request.'],
+ de:['Anfrage eingegangen','Bestätigt','Abgelehnt','Storniert','Status aktualisieren','Endgültige Bestätigung steht aus.','Status derzeit nicht verfügbar.','Name, Kontakt- und Besuchsdaten werden zur Bearbeitung dieser Anfrage verwendet.'],
+ fr:['Demande reçue','Confirmée','Refusée','Annulée','Actualiser le statut','Confirmation finale en attente.','Le statut est indisponible pour le moment.','Vos coordonnées et les détails de la visite servent à traiter cette demande.'],
+ es:['Solicitud recibida','Confirmada','Rechazada','Cancelada','Actualizar estado','Pendiente de confirmación final.','El estado no está disponible ahora.','Tu nombre, contacto y datos de visita se usan para gestionar esta solicitud.'],
+ ar:['تم استلام الطلب','تم التأكيد','تم الرفض','تم الإلغاء','تحديث الحالة','بانتظار التأكيد النهائي.','الحالة غير متاحة الآن.','يُستخدم اسمك وبيانات التواصل والزيارة لمعالجة هذا الطلب.'],
+ ru:['Заявка получена','Подтверждено','Отклонено','Отменено','Обновить статус','Ожидается окончательное подтверждение.','Статус сейчас недоступен.','Имя, контакты и данные посещения используются для обработки заявки.'],
+ zh:['申请已收到','已确认','已拒绝','已取消','刷新状态','等待最终确认。','暂时无法获取状态。','您的姓名、联系方式和到访信息将用于处理此申请。'],
+};
+export const customerStatusIndex=(status:string)=>status==='CONFIRMED'?1:status==='REJECTED'?2:status==='CANCELLED'?3:0;
+export const reservationIntro:Record<string,string>={tr:'Rezervasyonunuz restoran onayından sonra kesinleşir.',en:'Your reservation is final only after restaurant confirmation.',de:'Ihre Reservierung ist erst nach Bestätigung durch das Restaurant verbindlich.',fr:'La réservation devient définitive après confirmation du restaurant.',es:'La reserva solo es definitiva tras la confirmación del restaurante.',ar:'يصبح الحجز نهائيًا بعد تأكيد المطعم.',ru:'Бронирование действительно только после подтверждения рестораном.',zh:'预订须经餐厅确认后才正式生效。'};

@@ -9,9 +9,9 @@ export const reservationStatusCopy: Record<string, readonly string[]> = {
   ru: ['Мои заявки на бронирование', 'Обновить', 'Заявок пока нет.', 'Войдите, чтобы увидеть свои заявки.', 'Не удалось загрузить заявки. Попробуйте ещё раз.', 'Ожидает обработки', 'Ресторану позвонили', 'Подтверждено', 'Отклонено', 'Отменено'],
   zh: ['我的预订申请', '刷新', '暂无申请。', '请登录以查看您的申请。', '无法加载申请，请重试。', '待处理', '已联系餐厅', '已确认', '已拒绝', '已取消'],
 }
-export function reservationStatusIndex(status: string, contactStage?: string) {
+export function reservationStatusIndex(status: string, _contactStage?: string) {
   if (status === 'CONFIRMED') return 7
   if (status === 'REJECTED') return 8
   if (status === 'CANCELLED') return 9
-  return contactStage === 'CONTACTED' ? 6 : 5
+  return 5
 }
