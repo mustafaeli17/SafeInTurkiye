@@ -9,9 +9,9 @@ export async function POST(request:Request){
  try{const reader=request.body?.getReader();if(!reader)return reply(400);const chunks:Uint8Array[]=[];let size=0;
   while(true){const {done,value}=await reader.read();if(done)break;size+=value.length;if(size>65536){await reader.cancel();return reply(413);}chunks.push(value);}
   payload=Buffer.concat(chunks).toString('utf8');
- }catch{return reply(400);}
+ }catch{console.warn('reservation_delivery_rejected',{stage:'body'});return reply(400);}
  let event:any;
- try{new Webhook(secret).verify(payload,{'svix-id':request.headers.get('svix-id')??'','svix-timestamp':request.headers.get('svix-timestamp')??'','svix-signature':request.headers.get('svix-signature')??''});event=JSON.parse(payload);}catch{return reply(400);}
+ try{new Webhook(secret).verify(payload,{'svix-id':request.headers.get('svix-id')??'','svix-timestamp':request.headers.get('svix-timestamp')??'','svix-signature':request.headers.get('svix-signature')??''});event=JSON.parse(payload);}catch{console.warn('reservation_delivery_rejected',{stage:'signature',secretFormatValid:secret.startsWith('whsec_'),headersPresent:['svix-id','svix-timestamp','svix-signature'].every(name=>Boolean(request.headers.get(name)))});return reply(400);}
  const state=states[event?.type];if(!state)return reply(200,true);
  const backend=reservationBackend();if(!backend)return reply(503);
  // A shared Resend account can send production and test mail. Never mix them.
