@@ -6,6 +6,8 @@ import { useState } from 'react'
 import hero from '../data/heroPhoto.json'
 import {cityPath} from '../lib/publicRoutes'
 import {toursLabel} from '../lib/viatorCopy'
+import SearchAlternatives from './SearchAlternatives'
+import {searchHelp} from '../services/homeSearch'
 
 
 type Destination = 'city' | 'taxi' | 'transit' | 'currency' | 'nearme' | 'safety' | 'stay' | 'food' | 'experiences' | 'assistant' | 'tours'
@@ -19,9 +21,10 @@ const translations = {
   ru: ['Турция,', 'путешествовать проще.', 'Практические местные сведения для безопасного и приятного путешествия.', 'Куда вы едете или что ищете?', 'Поиск', 'Нужно сейчас?', 'Откройте Турцию', 'Планируйте поездку', 'Перед поездкой', 'Смотреть всё', 'Стоимость такси', 'Курсы валют', 'Транспорт', 'Рядом со мной', 'Безопасность', 'Экстренная помощь', 'Отели', 'Рестораны', 'Развлечения', 'Путеводитель', 'Города, побережья и незабываемые впечатления.', 'Всё для поездки в одном месте.', 'Транспортные карты, деньги и полезные ответы.', 'Музеи и культура', 'Кино', 'Развлечения', 'Лето', 'Зима'],
   zh: ['土耳其，', '旅行更轻松。', '实用的当地信息，让旅程更安全、更从容、更愉快。', '想去哪里，或需要什么帮助？', '搜索', '现在需要？', '探索土耳其', '规划旅程', '出发前须知', '查看全部', '出租车费用', '汇率', '公共交通', '附近地点', '安全', '紧急帮助', '酒店', '餐厅', '活动', '旅行指南', '城市、海岸与难忘的体验。', '旅行所需，尽在一处。', '交通卡、换汇和实用旅行问答。', '博物馆与文化', '影院', '娱乐', '夏季', '冬季'],
 }
-export default function TravelHome({ lang, cities, onNavigate, onCity, onSearch, onCategory,initialQuery='' }: {
+export default function TravelHome({ lang, cities, onNavigate, onCity, onSearch, onCategory,initialQuery='',chooseSearch=false }: {
   lang: string
   initialQuery?:string
+  chooseSearch?:boolean
   cities: Array<{ key: string; name: string }>
   onNavigate: (destination: Destination) => void
   onCity: (city: string) => void
@@ -43,6 +46,7 @@ export default function TravelHome({ lang, cities, onNavigate, onCity, onSearch,
         <div className="travel-city-chips">{cities.map(city => <a key={city.key} href={cityPath(city.key)} onClick={event=>{if(!event.ctrlKey&&!event.metaKey&&!event.shiftKey){event.preventDefault();onCity(city.key);}}}>{cityDisplayName(city.name,lang)}</a>)}</div>
       </div>
     </section>
+    {chooseSearch&&<section className="travel-section" role="status"><p className="mb-3">{searchHelp[lang]??searchHelp.en}</p><SearchAlternatives lang={lang} query={initialQuery}/></section>}
     <section className="travel-section"><h2>{t[5]}</h2><div className="travel-quick-grid">{quick.map(({ label, emoji, page }) => <a key={page} href={sectionPath(page)} onClick={event=>{if(!event.ctrlKey&&!event.metaKey&&!event.shiftKey){event.preventDefault();onNavigate(page);}}} className="travel-tool"><span className="travel-tool-emoji" aria-hidden="true">{emoji}</span><span>{label}</span><ArrowRight size={14} aria-hidden="true" /></a>)}<a href="tel:112" className="travel-tool travel-emergency"><span className="travel-tool-emoji" aria-hidden="true">🚨</span><span>{t[15]}</span><strong>112</strong></a></div></section>
     <section className="travel-section"><div className="travel-section-heading"><div><h2>{t[6]}</h2><p>{t[20]}</p></div><button onClick={() => onNavigate('city')}>{t[9]} <ArrowRight size={14} /></button></div><div className="travel-cities">{cities.map(city => <a key={city.key} href={cityPath(city.key)} onClick={event=>{if(!event.ctrlKey&&!event.metaKey&&!event.shiftKey){event.preventDefault();onCity(city.key);}}}><CityArtwork city={city.key} lang={lang} /><span>{cityDisplayName(city.name,lang)}<ArrowRight size={16} /></span></a>)}</div></section>
     <section className="travel-section"><div className="travel-section-heading"><div><h2>{t[7]}</h2><p>{t[21]}</p></div></div><div className="travel-plan-grid">{plan.map(({ label, icon: Icon, page }) => <a key={page} href={sectionPath(page)} onClick={event=>{if(!event.ctrlKey&&!event.metaKey&&!event.shiftKey){event.preventDefault();onNavigate(page);}}} className="travel-tool"><Icon aria-hidden="true" /><span>{label}</span><ArrowRight size={14} aria-hidden="true" /></a>)}</div></section>

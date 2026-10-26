@@ -48,6 +48,7 @@ import { regionalDescription } from './lib/regionalDescription';
 import { sectionFromPath,sectionPath,transferIntent,type Section } from './lib/sectionNavigation';
 import {tourIntent} from './services/tourSearch';
 import {mentionedSearchCity} from './services/searchCities';
+import {discoverySearch,guideSearch,wantsNearby} from './services/homeSearch';
 import { updateSectionSeo } from './lib/seo';
 import { siteInformation } from './lib/siteInformation';
 import { supabaseConfigured } from './lib/supabase';
@@ -435,18 +436,21 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
     return () => window.removeEventListener('hashchange', openAdmin);
   }, [session,authLoading]);
   const handleGlobalSearch = (input = searchQuery) => {
-    const query = input.trim();
+    const query = input.trim().slice(0,200);
     if (!query) return;
     if(activeTab==='home')navigateTo('/?'+new URLSearchParams({q:query}),{replace:true,scroll:false});
     const newCity=findCityGuide(query);
     if(newCity){openCityGuide(newCity.slug,lang);return;}
     const low = query.toLocaleLowerCase('tr-TR');
     const mentionedCity = publicCities.find(city => city.slug===mentionedSearchCity(query));
-    const navigateSearch=(section:Section)=>{const params=new URLSearchParams({q:query});if(mentionedCity)params.set('city',mentionedCity.slug);if(transferIntent(query))params.set('intent','transfer');navigateTo(`${sectionPath(section)}?${params}`);};
+    const navigateSearch=(section:Section,category?:string)=>{const params=new URLSearchParams({q:query});if(mentionedCity)params.set('city',mentionedCity.slug);if(category){params.set('category',category);params.set('lookup','1');if(wantsNearby(query))params.set('near','1');}if(transferIntent(query))params.set('intent','transfer');navigateTo(`${sectionPath(section)}?${params}`);};
     setActivityCategory('All');
     const cityMatch = Object.keys(citiesDetailedData).find(city => city.toLocaleLowerCase('tr-TR') === low || city.toLowerCase().replace(/i̇/g, 'i') === query.toLowerCase());
     if (cityMatch) { navigateTo(cityPath(cityMatch)); return; }
-    if (tourIntent(query)) navigateSearch('tours');
+    const discovery=discoverySearch(query);
+    if(guideSearch(query))navigateSearch('assistant');
+    else if (tourIntent(query)) navigateSearch('tours');
+    else if(discovery)navigateSearch(discovery.section,discovery.category);
     else if (/taksi|taxi|fare|ücret|такси|تاكسي|出租车/.test(low)) navigateSearch('taxi');
     else if (/metro|métro|otobüs|bus|tren|train|vapur|ferry|marmaray|ulaşım|transit|route|rota|bahn|transport|транспорт|метро|автобус|مواصلات|مترو|حافل|地铁|公交|交通|火车/.test(low)) navigateSearch('transit');
     else if (/döviz|kur|exchange|currency|euro|usd|wechsel|change|валют|обмен|صرف|صراف|汇率|换汇/.test(low)) navigateSearch('currency');
@@ -455,7 +459,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
     else if (/restoran|restaurant|yemek|food|cafe|kafe|ресторан|مطعم|مطاعم|餐厅|餐饮/.test(low)) navigateSearch('food');
     else if (/aktiv|activit|etkinlik|museum|musée|müze|gez|cinema|cinéma|музе|кино|متحف|أنشط|سينما|活动|博物馆|影院/.test(low)) navigateSearch('experiences');
     else if (/güven|safety|acil|emergency|sicher|sécurité|безопас|أمان|طوارئ|安全|紧急/.test(low)) navigateSearch('safety');
-    else navigateSearch('assistant');
+    else navigateTo('/?'+new URLSearchParams({q:query,choose:'1'}),{replace:true,scroll:false});
   };
 
   // Taksi Durumları
@@ -847,7 +851,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
           </nav>}
         </header>
         {activeTab!=='home' && activeTab!=='taxi' && <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-3"><HomeButton lang={lang} currentPage={({assistant:tr('assistant'),transit:tr('transit'),currency:tr('currency'),city:selectedCityName,nearme:tr('nearMe'),stay:page('hotelsTitle'),food:page('diningTitle'),experiences:page('activitiesTitle'),tours:toursLabel(lang),safety:page('safety'),admin:'CMS Studio'} as Record<string,string>)[activeTab]} onClick={()=>{setActiveTab('home');setMobileMenuOpen(false);window.scrollTo(0,0);}}/></div>}
-        {activeTab!=='home'&&activeTab!=='tours'&&searchQuery&&<SearchContext query={searchQuery} city={new URLSearchParams(browserQuery).get('city')??undefined} transfer={new URLSearchParams(browserQuery).get('intent')==='transfer'} lang={lang}/>}
+        {activeTab!=='home'&&activeTab!=='tours'&&searchQuery&&<SearchContext query={searchQuery} city={new URLSearchParams(browserQuery).get('city')??undefined} transfer={new URLSearchParams(browserQuery).get('intent')==='transfer'} resultsSearch={new URLSearchParams(browserQuery).get('lookup')==='1'} lang={lang}/>}
 
         {/* ====================================================================
             PAGE 1: EXPLORE
@@ -856,6 +860,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
         {activeTab === 'home' && <TravelHome
           lang={lang}
           initialQuery={searchQuery}
+          chooseSearch={new URLSearchParams(browserQuery).get('choose')==='1'}
           cities={publicCities.map(city=>({key:city.name,name:city.name}))}
           onNavigate={setActiveTab}
           onCity={city => navigateTo(cityPath(city))}
@@ -1031,7 +1036,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
           <main className="reference-page max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
             <h1 className="text-3xl font-extrabold text-slate-900">{({ es:'Divisas y casas de cambio', en: 'Currency and exchange bureaux', tr: 'Döviz ve döviz büroları', de: 'Wechselkurse und Wechselstuben', fr: 'Change et bureaux de change', ar: 'العملات ومكاتب الصرافة', ru: 'Валюта и обменные пункты', zh: '汇率与附近兑换点' } as Record<SupportedLang, string>)[lang]}</h1>
             <CurrencyRates lang={lang} />
-            <NearbyPlaces kind="exchange" lang={lang} center={{ lat: currentCityInfo.lat, lng: currentCityInfo.lng }} cityName={currentCityInfo.name} />
+            <NearbyPlaces key={`exchange:${searchQuery}`} kind="exchange" lang={lang} center={{ lat: currentCityInfo.lat, lng: currentCityInfo.lng }} cityName={currentCityInfo.name} />
           </main>
         )}
 
@@ -1105,7 +1110,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
           <main className="travel-catalog">
             <h1 className="text-3xl font-extrabold text-slate-900">{page('hotelsTitle')}</h1>
 
-            <NearbyPlaces key="hotels-discovery" kind="essential" fixedCategory="hotel" lang={lang} center={{lat:currentCityInfo.lat,lng:currentCityInfo.lng}} cityName={currentCityInfo.name} />
+            <NearbyPlaces key={`hotels-discovery:${searchQuery}`} kind="essential" fixedCategory="hotel" lang={lang} center={{lat:currentCityInfo.lat,lng:currentCityInfo.lng}} cityName={currentCityInfo.name} />
           </main>
         )}
 
@@ -1115,7 +1120,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
         {activeTab === 'food' && (
           <main className="travel-catalog">
             <h1 className="text-3xl font-extrabold text-slate-900">{page('diningTitle')}</h1>
-            <NearbyPlaces key="restaurants-discovery" kind="essential" fixedCategory="restaurant" lang={lang} center={{lat:currentCityInfo.lat,lng:currentCityInfo.lng}} cityName={currentCityInfo.name} />
+            <NearbyPlaces key={`restaurants-discovery:${searchQuery}`} kind="essential" fixedCategory="restaurant" lang={lang} center={{lat:currentCityInfo.lat,lng:currentCityInfo.lng}} cityName={currentCityInfo.name} />
           </main>
         )}
 
@@ -1126,7 +1131,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
           <main className="travel-catalog">
             <div><h1 className="text-3xl font-extrabold text-slate-900">{page('activitiesTitle')}</h1><p className="mt-1 text-sm text-slate-600">{page('activitiesSub')}</p></div>
 
-            <NearbyPlaces key="activities-discovery" kind="essential" fixedCategory="activity" initialCategory={activityCategory === 'Cinema' ? 'cinema' : activityCategory === 'Museum & Culture' ? 'museum' : activityCategory === 'Entertainment' ? 'entertainment' : 'activity'} lang={lang} center={{lat:currentCityInfo.lat,lng:currentCityInfo.lng}} cityName={currentCityInfo.name} />
+            <NearbyPlaces key={`activities-discovery:${searchQuery}`} kind="essential" fixedCategory="activity" initialCategory={activityCategory === 'Cinema' ? 'cinema' : activityCategory === 'Museum & Culture' ? 'museum' : activityCategory === 'Entertainment' ? 'entertainment' : 'activity'} lang={lang} center={{lat:currentCityInfo.lat,lng:currentCityInfo.lng}} cityName={currentCityInfo.name} />
           </main>
         )}
 
@@ -1138,7 +1143,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
         {activeTab === 'nearme' && (
           <main className="reference-page max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
             <h1 className="text-3xl font-extrabold text-slate-900">{tr('nearMe')}</h1>
-            <NearbyPlaces kind="essential" lang={lang} center={{ lat: currentCityInfo.lat, lng: currentCityInfo.lng }} cityName={currentCityInfo.name} />
+            <NearbyPlaces key={`nearby:${searchQuery}`} kind="essential" lang={lang} center={{ lat: currentCityInfo.lat, lng: currentCityInfo.lng }} cityName={currentCityInfo.name} />
           </main>
         )}
 

@@ -1,4 +1,5 @@
 import SearchAlternatives from './SearchAlternatives';
+import {matchesGuide} from '../services/homeSearch';
 import { useEffect,useState } from 'react';
 import {restaurantRequestsEnabled,reservationUnavailable} from '../lib/reservationAvailability';
 import { practicalFaq, practicalSources } from '../data/practicalFaq';
@@ -113,7 +114,7 @@ export default function TravelFaq({ lang, initialQuery = '' }: { lang: string; i
     return translated;
   });
   const extra = (practicalFaq[lang] ?? practicalFaq.en).map(([question, answer], index) => [question, question, answer, answer, practicalSources[index] ?? '']);
-  const items = [...rows, ...extra].filter((row, index) => index !== 9 && (topic === -1 || topicRows[topic].includes(index)) && row.slice(0,4).join(' ').toLocaleLowerCase().includes(query.toLocaleLowerCase()));
+  const items = [...rows, ...extra].filter((row, index) => index !== 9 && (topic === -1 || topicRows[topic].includes(index)) && matchesGuide(row.slice(0,4).join(' '),query));
   return <main dir={lang === 'ar' ? 'rtl' : 'ltr'} className="reference-page reference-guides max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-4 pb-24">
     <h1 className="text-3xl font-extrabold">{title}</h1>
     <p className="text-sm text-slate-600">{labels[0]}</p>

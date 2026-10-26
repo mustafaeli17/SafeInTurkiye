@@ -51,15 +51,16 @@ export function parseGooglePlaces(payload: unknown, center: NearbyCenter, catego
 }
 
 // Google responses stay only in the mounted view, never in localStorage or the OSM cache.
-export async function fetchGoogleNearby(center: NearbyCenter, category: NearbyCategory | 'all', lang: string, signal?: AbortSignal, scope: 'nearby' | 'city' = 'nearby'): Promise<NearbyResult> {
+export async function fetchGoogleNearby(center: NearbyCenter, category: NearbyCategory | 'all', lang: string, signal?: AbortSignal, scope: 'nearby' | 'city' = 'nearby', query = ''): Promise<NearbyResult> {
   if (!isValidCenter(center)) throw new NearbyError('invalid-location')
   const params = new URLSearchParams({ lat: String(center.lat), lng: String(center.lng), category, lang: ['en','tr','de','fr','ar','ru','zh','es'].includes(lang) ? lang : 'en' })
   params.set('scope', scope)
+  if(query.trim())params.set('q',query.trim().slice(0,200))
   try {
     const response = await fetch(`/api/places?${params}`, { credentials: 'same-origin', cache: 'no-store', signal: AbortSignal.any([...(signal ? [signal] : []), AbortSignal.timeout(11000)]) })
     if (response.status === 429) throw new NearbyError('busy')
     if (!response.ok) throw new NearbyError('unavailable')
-    return parseGooglePlaces(await response.json(), center, category, scope === 'city' ? 30000 : 2500)
+    return parseGooglePlaces(await response.json(), center, category, query && scope === 'city' ? Infinity : scope === 'city' ? 30000 : 2500)
   } catch (error) {
     if (signal?.aborted) throw signal.reason
     if (error instanceof NearbyError) throw error

@@ -51,10 +51,13 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
   const cities: Record<string, NearbyCenter> = searchDestinations;
   const browserLocation=useBrowserLocation()
   const query=browserLocation.split('?')[1]??''
+  const params=new URLSearchParams(query)
+  const textQuery=params.get('lookup')==='1'?(params.get('q')??'').trim().slice(0,200):''
+  const requiresLocation=params.get('near')==='1'
   const selectedCity=discoveryCity(query,initialCityName)
-  const setSelectedCity=(city:string)=>{saveDiscoveryArea(null);updateLocationQuery({city:destinationSlug(city),place:null})}
-  const [address, setAddress] = useState(()=>readDiscoveryArea()?.label??'')
-  const [addressPlace, setAddressPlace] = useState<TransitPlace | null>(()=>readDiscoveryArea())
+  const setSelectedCity=(city:string)=>{saveDiscoveryArea(null);updateLocationQuery({city:destinationSlug(city),place:null,q:null,lookup:null,near:null})}
+  const [address, setAddress] = useState(()=>textQuery||requiresLocation?'':readDiscoveryArea()?.label??'')
+  const [addressPlace, setAddressPlace] = useState<TransitPlace | null>(()=>textQuery||requiresLocation?null:readDiscoveryArea())
   const cityName = addressPlace?.label ?? selectedCity;
   const center = addressPlace ?? cities[selectedCity] ?? initialCenter;
   const locale = lang.toLowerCase()
@@ -104,7 +107,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
     setLimit(6)
     lastSearch.current=null
     return () => { generation.current += 1; controller.current?.abort(); if (locationTimer.current) clearTimeout(locationTimer.current) }
-  }, [kind, center.lat, center.lng, cityName, fixedCategory, locale])
+  }, [kind, center.lat, center.lng, cityName, fixedCategory, locale, textQuery, requiresLocation])
 
   const errorMessage = (reason: unknown) => {
     if (reason instanceof NearbyError && reason.code === 'busy') return text('Yer arama hizmeti yoğun. Lütfen 30 saniye sonra tekrar deneyin.', 'The place service is busy. Please try again in 30 seconds.')
@@ -124,10 +127,10 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
     if(!preserve)setLimit(6)
     try {
       const category=kind==='exchange'?'bureau_de_change':filter
-      const cityScope=Boolean(fixedCategory&&source==='city'&&!addressPlace)
+      const cityScope=Boolean((fixedCategory||textQuery)&&source==='city'&&!addressPlace)
       const [google,own]=await Promise.all([
-        fetchGoogleNearby(point,category,locale,request.signal,cityScope?'city':'nearby').then(data=>({data,error:null}),reason=>({data:null,error:reason})),
-        loadEditorialDiscovery(point,category,cityScope?30000:2500,request.signal,eventContext),
+        fetchGoogleNearby(point,category,locale,request.signal,cityScope?'city':'nearby',source==='location'?'':textQuery).then(data=>({data,error:null}),reason=>({data:null,error:reason})),
+        textQuery?Promise.resolve({places:[],failed:false}):loadEditorialDiscovery(point,category,cityScope?30000:2500,request.signal,eventContext),
       ])
       if (requestId !== generation.current || request.signal.aborted) return
       setResult(google.data);setEditorial(own.places);setEditorialFailed(own.failed)
@@ -145,13 +148,14 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
   // Directory pages load on entry and when their visible city/category changes.
   // Near Me and exchange retain explicit consent-driven location searches.
   useEffect(() => {
-    if (!fixedCategory && !addressPlace && !lastSearch.current) return
+    if (requiresLocation && !lastSearch.current && !addressPlace) return
+    if (!fixedCategory && !textQuery && !addressPlace && !lastSearch.current) return
     if (address.trim() && address !== addressPlace?.label) return
     const previous=lastSearch.current
     const timer = setTimeout(()=>previous?void search(previous.point,previous.source,++generation.current):searchCity(), 350)
     return () => clearTimeout(timer)
     // searchCity is deliberately captured only for the inputs that change a request.
-  }, [fixedCategory, center.lat, center.lng, cityName, filter, locale, addressPlace, address])
+  }, [fixedCategory, center.lat, center.lng, cityName, filter, locale, addressPlace, address, textQuery, requiresLocation])
   const searchLocation = () => {
     const requestId = ++generation.current
     controller.current?.abort()
@@ -205,7 +209,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-extrabold text-slate-900">{fixedCategory ? categoryLabel(fixedCategory) : kind === 'exchange' ? text('Yakındaki döviz büroları', 'Nearby exchange bureaux') : text('Yakınımdaki yerler', 'Nearby places')}</h2>
-          <p className="text-xs text-slate-600 mt-1">{fixedCategory ? text('Şehir ve çevresinden öne çıkan sonuçlar (30 km); tüm işletmelerin listesi değildir. Konum araması 2,5 km içindedir.', 'Selected results across the city area (30 km), not an exhaustive directory. Location searches cover 2.5 km.') : text('2,5 km içindeki kayıtlar; mesafeler kuş uçuşudur.', 'Published places within 2.5 km; distances are straight-line estimates.')}</p>
+          {!textQuery&&<p className="text-xs text-slate-600 mt-1">{fixedCategory ? text('Şehir ve çevresinden öne çıkan sonuçlar (30 km); tüm işletmelerin listesi değildir. Konum araması 2,5 km içindedir.', 'Selected results across the city area (30 km), not an exhaustive directory. Location searches cover 2.5 km.') : text('2,5 km içindeki kayıtlar; mesafeler kuş uçuşudur.', 'Published places within 2.5 km; distances are straight-line estimates.')}</p>}
         </div>
         <div className="flex flex-wrap gap-2">
           <select aria-label={text('Aranacak şehir', 'Search city')} value={selectedCity} onChange={event => {setAddress('');setAddressPlace(null);setSelectedCity(event.target.value)}} className="min-h-11 rounded-xl border border-sky-200 bg-white px-3 py-2 text-xs">{Object.keys(cities).map(city => <option key={city} value={city}>{cityDisplayName(city,locale)}</option>)}</select>
@@ -213,8 +217,8 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
         </div>
       </div>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-        <TransitAddressInput label={addressText[0]} placeholder={addressText[1]} value={address} selected={!!addressPlace && address === addressPlace.label} locale={locale} onChange={value=>{setAddress(value);setAddressPlace(null);saveDiscoveryArea(null);generation.current+=1;controller.current?.abort();setResult(null);setEditorial([]);setState('idle')}} onSelect={place=>{setAddress(place.label);setAddressPlace(place);saveDiscoveryArea(place)}} />
-        <button type="button" disabled={busy || (!!address.trim() && address !== addressPlace?.label)} onClick={searchCity} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#087FFF] px-5 py-3 text-sm font-bold text-white disabled:opacity-50"><Search className="h-4 w-4" />{addressText[2]}</button>
+        <TransitAddressInput label={addressText[0]} placeholder={addressText[1]} value={address} selected={!!addressPlace && address === addressPlace.label} locale={locale} onChange={value=>{setAddress(value);setAddressPlace(null);saveDiscoveryArea(null);generation.current+=1;controller.current?.abort();setResult(null);setEditorial([]);setState('idle')}} onSelect={place=>{setAddress(place.label);setAddressPlace(place);saveDiscoveryArea(place);updateLocationQuery({q:null,lookup:null,near:null})}} />
+        <button type="button" disabled={busy || (requiresLocation&&!addressPlace) || (!!address.trim() && address !== addressPlace?.label)} onClick={searchCity} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#087FFF] px-5 py-3 text-sm font-bold text-white disabled:opacity-50"><Search className="h-4 w-4" />{addressText[2]}</button>
       </div>
       <p className="text-[11px] leading-relaxed text-slate-500">{text('Konumunuzu seçerseniz arama için yaklaşık koordinatlarınız harita veri sağlayıcısına gönderilir; bu sitede kalıcı olarak saklanmaz.', 'If you use your location, approximate coordinates are sent to the map data service to run the search; this site does not permanently store them.')}</p>
 
@@ -244,7 +248,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
           {isEditorialPlace(place)?<><span className="mb-2 block text-xs font-semibold text-slate-500">{place.editorial.sponsored?editorialText[1]:editorialText[0]}</span><EditorialPlacePhoto place={place} expanded={detailId===place.id} onOpen={()=>openPlace(place.id)} lang={locale}/></>:<GooglePlacePhoto key={place.photo?.url ?? place.id} place={place} onOpen={() => openPlace(place.id)} onExpired={refreshExpiredPhotos} />}
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0"><span className="text-[10px] font-bold uppercase tracking-wide text-[#007EAD]">{place.typeLabel ?? categoryLabel(place.category)}</span><h3 className="mt-1 break-words font-bold text-slate-900"><button className="text-left min-h-11 hover:text-blue-700" onClick={() => openPlace(place.id)}>{place.name || categoryLabel(place.category)}</button></h3></div>
-            <span className="shrink-0 rounded-lg bg-sky-50 px-2 py-1 text-xs font-bold text-[#007EAD]">{formatDistance(place.distanceMeters)}</span>
+            {(!textQuery||origin==='location')&&<span className="shrink-0 rounded-lg bg-sky-50 px-2 py-1 text-xs font-bold text-[#007EAD]">{formatDistance(place.distanceMeters)}</span>}
           </div>
           <dl className="mt-3 space-y-2.5 text-xs leading-relaxed text-slate-600">
             {place.address && <div className="flex gap-2"><dt className="shrink-0"><MapPin className="mt-0.5 h-4 w-4" /><span className="sr-only">{text('Adres', 'Address')}</span></dt><dd className="break-words">{place.address}</dd></div>}

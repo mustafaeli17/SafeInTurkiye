@@ -19,6 +19,8 @@ export default async function handler(req: Request, res: Response) {
   const lat = Number(url.searchParams.get('lat')), lng = Number(url.searchParams.get('lng'))
   const category = url.searchParams.get('category') ?? 'all'
   const lang = url.searchParams.get('lang') ?? 'en'
+  const searchText = (url.searchParams.get('q') ?? '').trim()
+  if (searchText.length > 200 || [...searchText].some(char=>char.charCodeAt(0)<32)) return res.status(400).json({ error: 'INVALID_INPUT' })
   if (!url.searchParams.get('lat')?.trim() || !url.searchParams.get('lng')?.trim() || !Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180 || !(Object.hasOwn(types, category) || category === 'bureau_de_change') || !['en','tr','de','fr','ar','ru','zh','es'].includes(lang)) return res.status(400).json({ error: 'INVALID_INPUT' })
   const key = process.env.GOOGLE_PLACES_API_KEY
   if (!key) return res.status(503).json({ error: 'NOT_CONFIGURED' })
@@ -31,12 +33,12 @@ export default async function handler(req: Request, res: Response) {
   const circle = { center: { latitude: lat, longitude: lng }, radius }
   const exchange = category === 'bureau_de_change'
   try {
-    const upstream = await fetch(`https://places.googleapis.com/v1/places:${exchange ? 'searchText' : 'searchNearby'}`, {
+    const upstream = await fetch(`https://places.googleapis.com/v1/places:${exchange || searchText ? 'searchText' : 'searchNearby'}`, {
       method: 'POST', signal: AbortSignal.timeout(8000),
       headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': key,
         'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.location,places.types,places.primaryType,places.primaryTypeDisplayName,places.photos,places.googleMapsUri,places.businessStatus,places.rating,places.userRatingCount,places.currentOpeningHours,places.regularOpeningHours,places.internationalPhoneNumber,places.websiteUri,places.attributions' },
-      body: JSON.stringify(exchange
-        ? { textQuery: 'döviz bürosu currency exchange', locationBias: { circle }, pageSize: 20, languageCode: lang === 'zh' ? 'zh-CN' : lang }
+      body: JSON.stringify(exchange || searchText
+        ? { textQuery: searchText || 'döviz bürosu currency exchange', locationBias: { circle }, ...(searchText && types[category]?.length === 1 ? { includedType: types[category][0], strictTypeFiltering: true } : {}), pageSize: 20, languageCode: lang === 'zh' ? 'zh-CN' : lang }
         : { includedTypes: types[category], locationRestriction: { circle }, maxResultCount: 20, rankPreference: 'POPULARITY', languageCode: lang === 'zh' ? 'zh-CN' : lang }),
     })
     if (!upstream.ok) return res.status(upstream.status === 429 ? 429 : 503).json({ error: upstream.status === 429 ? 'BUSY' : 'PROVIDER_UNAVAILABLE' })
