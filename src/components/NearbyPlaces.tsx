@@ -129,7 +129,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
       const category=kind==='exchange'?'bureau_de_change':filter
       const cityScope=Boolean((fixedCategory||textQuery)&&source==='city'&&!addressPlace)
       const [google,own]=await Promise.all([
-        fetchGoogleNearby(point,category,locale,request.signal,cityScope?'city':'nearby',source==='location'?'':textQuery).then(data=>({data,error:null}),reason=>({data:null,error:reason})),
+        fetchGoogleNearby(point,category,locale,request.signal,cityScope?'city':'nearby',textQuery).then(data=>({data,error:null}),reason=>({data:null,error:reason})),
         textQuery?Promise.resolve({places:[],failed:false}):loadEditorialDiscovery(point,category,cityScope?30000:2500,request.signal,eventContext),
       ])
       if (requestId !== generation.current || request.signal.aborted) return
@@ -212,7 +212,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
           {!textQuery&&<p className="text-xs text-slate-600 mt-1">{fixedCategory ? text('Şehir ve çevresinden öne çıkan sonuçlar (30 km); tüm işletmelerin listesi değildir. Konum araması 2,5 km içindedir.', 'Selected results across the city area (30 km), not an exhaustive directory. Location searches cover 2.5 km.') : text('2,5 km içindeki kayıtlar; mesafeler kuş uçuşudur.', 'Published places within 2.5 km; distances are straight-line estimates.')}</p>}
         </div>
         <div className="flex flex-wrap gap-2">
-          <select aria-label={text('Aranacak şehir', 'Search city')} value={selectedCity} onChange={event => {setAddress('');setAddressPlace(null);setSelectedCity(event.target.value)}} className="min-h-11 rounded-xl border border-sky-200 bg-white px-3 py-2 text-xs">{Object.keys(cities).map(city => <option key={city} value={city}>{cityDisplayName(city,locale)}</option>)}</select>
+          <select aria-label={text('Aranacak şehir', 'Search city')} value={requiresLocation&&!addressPlace?'':selectedCity} onChange={event => {setAddress('');setAddressPlace(null);setSelectedCity(event.target.value)}} className="min-h-11 rounded-xl border border-sky-200 bg-white px-3 py-2 text-xs">{requiresLocation&&!addressPlace&&<option value="" disabled>{text('Aranacak şehir', 'Search city')}</option>}{Object.keys(cities).map(city => <option key={city} value={city}>{cityDisplayName(city,locale)}</option>)}</select>
           <button type="button" onClick={searchLocation} disabled={busy} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#00A3E0] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#0284C7] disabled:opacity-60 disabled:cursor-wait"><LocateFixed className="h-4 w-4" />{text('Konumumu kullan', 'Use my location')}</button>
         </div>
       </div>
@@ -238,7 +238,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
         {error && <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-amber-900">{error}</p>}
         {editorialFailed&&<p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-amber-900">{editorialText[3]}</p>}
         {state === 'idle' && <p className="rounded-2xl border border-sky-100 bg-white p-5">{text('Konumunuzu kullanın veya şehir merkezinde arama yapın.', 'Use your location or search around the city centre.')}</p>}
-        {state === 'ready' && <p>{origin === 'location' ? text('Konumunuzun çevresi', 'Around your location') : addressPlace ? addressPlace.label : `${cityName} ${fixedCategory ? text('ve çevresi', 'area') : text('merkezinin çevresi', 'city centre')}`} · {places.length} {text('kayıt', 'places')}{result && ` · ${text('Alındı', 'Retrieved')} ${new Date(result.fetchedAt).toLocaleTimeString(tr ? 'tr-TR' : 'en-GB', { hour: '2-digit', minute: '2-digit' })}`}</p>}
+        {state === 'ready' && <p>{origin === 'location' ? text('Konumunuzun çevresi', 'Around your location') : textQuery ? textQuery : addressPlace ? addressPlace.label : `${cityName} ${fixedCategory ? text('ve çevresi', 'area') : text('merkezinin çevresi', 'city centre')}`} · {places.length} {text('kayıt', 'places')}{result && ` · ${text('Alındı', 'Retrieved')} ${new Date(result.fetchedAt).toLocaleTimeString(tr ? 'tr-TR' : 'en-GB', { hour: '2-digit', minute: '2-digit' })}`}</p>}
       </div>
 
       {state === 'ready' && places.length === 0 && <div className="rounded-2xl border border-sky-100 bg-white p-5 text-sm text-slate-600">{text('Bu alanda ve kategoride kayıt bulunamadı. Bu, yakınlarda işletme olmadığı anlamına gelmez; harita kayıtları eksik olabilir.', 'No records were found in this area and category. This does not mean there are no places nearby; map coverage may be incomplete.')}</div>}
