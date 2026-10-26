@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import {tourSearchCopy} from '../services/tourSearch'
 import { publicCities } from '../lib/publicRoutes'
 import { toursLabel, tourFilterCopy } from '../lib/viatorCopy'
 const copy: Record<string, string[]> = {
@@ -13,21 +14,25 @@ const copy: Record<string, string[]> = {
 }
 type Result = { products: { code:string; title:string; description?:string; productUrl:string; photo?:string; fromPrice?:number; currency?:string;rating?:number;reviewCount?:number;durationMinutes?:{from:number;to:number};freeCancellation?:boolean }[]; totalCount:number; sandbox:boolean; language:string }
 const emptyFilters = { minPrice:'',maxPrice:'',duration:'any',rating:'any',date:'',sort:'recommended',currency:'EUR',private:false,freeCancellation:false,skipLine:false }
-export default function ViatorTours({ lang, initialCity='istanbul' }: { lang:string; initialCity?:string }) {
+export default function ViatorTours({ lang, initialCity='istanbul', initialQuery='' }: { lang:string; initialCity?:string; initialQuery?:string }) {
   const t=copy[lang] ?? copy.en
   const f=tourFilterCopy(lang)
+  const s=tourSearchCopy[lang]??tourSearchCopy.en
+  const [term,setTerm]=useState(initialQuery)
+  const autoSearched=useRef(false)
   const [city,setCity]=useState(initialCity), [result,setResult]=useState<Result|null>(null), [state,setState]=useState('idle'), [start,setStart]=useState(1)
   const [filters,setFilters]=useState(emptyFilters)
   const controller=useRef<AbortController|null>(null)
-  useEffect(()=>{controller.current?.abort();setResult(null);setState('idle');setStart(1);return()=>controller.current?.abort()},[lang,city,filters])
+  useEffect(()=>{controller.current?.abort();setResult(null);setState('idle');setStart(1);return()=>controller.current?.abort()},[lang,city,filters,term])
   const inputClass='min-h-11 w-full min-w-0 rounded-xl border border-blue-200 bg-white p-3'
   const today=new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Istanbul'})
   const update=(key:keyof typeof emptyFilters,value:string|boolean)=>setFilters(previous=>({...previous,[key]:value}))
-  async function search(offset=1) {
+  const search=useCallback(async(offset=1) => {
     controller.current?.abort(); const current=new AbortController();controller.current=current
     setState('loading');setResult(null)
     try {
       const query=new URLSearchParams({city,lang,start:String(offset)})
+      if(term.trim())query.set('q',term.trim())
       Object.entries(filters).forEach(([key,value])=>{if(value!==''&&value!==false)query.set(key,String(value))})
       const r=await fetch(`/api/viator?${query}`,{signal:AbortSignal.any([current.signal,AbortSignal.timeout(20000)]),cache:'no-store'})
       if(!r.ok) {
@@ -42,11 +47,17 @@ export default function ViatorTours({ lang, initialCity='istanbul' }: { lang:str
       if(current.signal.aborted) return
       setResult(data);setStart(offset);setState('ready')
     } catch {if(!current.signal.aborted) setState('error')}
-  }
+  },[city,lang,filters,term])
+  useEffect(()=>{
+    if(!initialQuery.trim()||autoSearched.current)return
+    const timer=setTimeout(()=>{autoSearched.current=true;void search()},0)
+    return()=>clearTimeout(timer)
+  },[initialQuery,search])
   return <section aria-labelledby="viator-heading" className="my-6 rounded-2xl border border-blue-100 bg-white p-4 sm:p-6">
     <h1 id="viator-heading" className="mb-4 text-3xl font-extrabold text-slate-900">{toursLabel(lang)}</h1>
     <p className="mb-4 text-sm text-slate-600">{f[20]}</p>
     <form onSubmit={e=>{e.preventDefault();void search()}} className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <label className="grid gap-1 text-sm sm:col-span-2 lg:col-span-3">{s[0]}<input type="search" maxLength={160} value={term} onChange={e=>setTerm(e.target.value)} placeholder={s[1]} className={inputClass}/></label>
       <label className="grid gap-1 text-sm">{t[1]}<select value={city} onChange={e=>setCity(e.target.value)} className={inputClass}>
         {publicCities.map(c=><option key={c.slug} value={c.slug}>{c.name}{c.slug==='mugla'?' · Bodrum':c.slug==='aydin'?' · Kuşadası':c.slug==='denizli'?' · Pamukkale':''}</option>)}
       </select></label>
@@ -59,7 +70,7 @@ export default function ViatorTours({ lang, initialCity='istanbul' }: { lang:str
       <label className="grid gap-1 text-sm">{f[13]}<input type="date" min={today} value={filters.date} onChange={e=>update('date',e.target.value)} className={inputClass}/></label>
       <div className="flex flex-wrap gap-3 sm:col-span-2 lg:col-span-3">{(['private','freeCancellation','skipLine'] as const).map((key,i)=><label key={key} className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" checked={filters[key]} onChange={e=>update(key,e.target.checked)} className="h-5 w-5"/>{f[14+i]}</label>)}</div>
       <button disabled={state==='loading'} className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white disabled:opacity-60">{state==='loading'?t[3]:t[2]}</button>
-      <button type="button" onClick={()=>setFilters({...emptyFilters})} className="min-h-11 rounded-xl border border-blue-200 px-4 py-3 text-blue-700">{f[18]}</button>
+      <button type="button" onClick={()=>{setTerm('');setFilters({...emptyFilters})}} className="min-h-11 rounded-xl border border-blue-200 px-4 py-3 text-blue-700">{f[18]}</button>
     </form>
     <div role="status" className="my-3 text-sm text-slate-600">{state==='error'?t[5]:state==='loading'?t[3]:result?.products.length===0?t[4]:''}</div>
     {result?.sandbox&&<p className="mb-3 text-sm text-amber-800">{t[9]}</p>}

@@ -20,8 +20,8 @@ it('separates explicitly labelled test records and calculates pending age only w
 it('draws taxi calculation geometry even when an independent embed key exists',()=>{
  const source=readFileSync('src/components/TaxiRouteMap.tsx','utf8');expect(source).toContain('if(key&&!geometry?.length)return');expect(source).toContain('L.polyline(geometry.map');
 });
-it('routes transfer searches to explicit options, preserving city and query in history',()=>{
- const source=readFileSync('src/App.tsx','utf8');expect(source).toContain("if (transferIntent(query)) navigateSearch('transit')");expect(source).toContain('new URLSearchParams({q:query})');expect(source).toContain("params.set('intent','transfer')");
+it('routes transfer searches to tour search, preserving city and query in history',()=>{
+ const source=readFileSync('src/App.tsx','utf8');expect(source).toContain("if (tourIntent(query)) navigateSearch('tours')");expect(source).toContain('new URLSearchParams({q:query})');expect(source).toContain("params.set('intent','transfer')");
 });
 it('preloads the responsive hero only on the home document, without downloading it for other routes',()=>{
  expect(readFileSync('dist/index.html','utf8')).toContain('rel="preload" as="image"');

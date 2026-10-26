@@ -47,6 +47,7 @@ import { readLanguagePreference,saveLanguagePreference } from './lib/languagePre
 import { cityPath,publicCities } from './lib/publicRoutes';
 import { regionalDescription } from './lib/regionalDescription';
 import { sectionFromPath,sectionPath,transferIntent,type Section } from './lib/sectionNavigation';
+import {tourIntent} from './services/tourSearch';
 import { updateSectionSeo } from './lib/seo';
 import { siteInformation } from './lib/siteInformation';
 import { supabaseConfigured } from './lib/supabase';
@@ -446,7 +447,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
     setActivityCategory('All');
     const cityMatch = Object.keys(citiesDetailedData).find(city => city.toLocaleLowerCase('tr-TR') === low || city.toLowerCase().replace(/i̇/g, 'i') === query.toLowerCase());
     if (cityMatch) { navigateTo(cityPath(cityMatch)); return; }
-    if (transferIntent(query)) navigateSearch('transit');
+    if (tourIntent(query)) navigateSearch('tours');
     else if (/taksi|taxi|fare|ücret|такси|تاكسي|出租车/.test(low)) navigateSearch('taxi');
     else if (/metro|métro|otobüs|bus|tren|train|vapur|ferry|marmaray|ulaşım|transit|route|rota|bahn|transport|транспорт|метро|автобус|مواصلات|مترو|حافل|地铁|公交|交通|火车/.test(low)) navigateSearch('transit');
     else if (/döviz|kur|exchange|currency|euro|usd|wechsel|change|валют|обмен|صرف|صراف|汇率|换汇/.test(low)) navigateSearch('currency');
@@ -847,7 +848,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
           </nav>}
         </header>
         {activeTab!=='home' && activeTab!=='taxi' && <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-3"><HomeButton lang={lang} currentPage={({assistant:tr('assistant'),transit:tr('transit'),currency:tr('currency'),city:selectedCityName,nearme:tr('nearMe'),stay:page('hotelsTitle'),food:page('diningTitle'),experiences:page('activitiesTitle'),tours:toursLabel(lang),safety:page('safety'),admin:'CMS Studio'} as Record<string,string>)[activeTab]} onClick={()=>{setActiveTab('home');setMobileMenuOpen(false);window.scrollTo(0,0);}}/></div>}
-        {activeTab!=='home'&&searchQuery&&<SearchContext query={searchQuery} city={new URLSearchParams(browserQuery).get('city')??undefined} transfer={new URLSearchParams(browserQuery).get('intent')==='transfer'} lang={lang}/>}
+        {activeTab!=='home'&&activeTab!=='tours'&&searchQuery&&<SearchContext query={searchQuery} city={new URLSearchParams(browserQuery).get('city')??undefined} transfer={new URLSearchParams(browserQuery).get('intent')==='transfer'} lang={lang}/>}
 
         {/* ====================================================================
             PAGE 1: EXPLORE
@@ -1130,7 +1131,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
           </main>
         )}
 
-        {activeTab === 'tours' && <main className="travel-catalog"><Suspense fallback={<PageLoading lang={lang}/>}><ViatorTours lang={lang} initialCity={publicCities.find(c=>c.name===selectedCityName)?.slug}/></Suspense></main>}
+        {activeTab === 'tours' && <main className="travel-catalog"><Suspense fallback={<PageLoading lang={lang}/>}><ViatorTours key={`${lang}:${browserQuery}`} lang={lang} initialQuery={searchQuery} initialCity={publicCities.find(c=>c.slug===new URLSearchParams(browserQuery).get('city'))?.slug??publicCities.find(c=>c.name===selectedCityName)?.slug}/></Suspense></main>}
 
         {/* ====================================================================
             PAGE 10: NEAR ME

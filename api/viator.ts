@@ -1,6 +1,7 @@
 // Affiliate search only: no bookings, payment data, reviews text or catalog ingestion.
 import { viatorFilters } from '../src/services/viatorFilters.js'
 import {viatorSummary} from '../src/server/viatorSummary.js'
+import {tourSearchTerm} from '../src/services/tourSearch.js'
 type Request = { method?: string; url?: string; headers: Record<string, string | string[] | undefined> }
 type Response = { status: (code: number) => Response; setHeader: (name: string, value: string) => void; json: (body: unknown) => void }
 type Destination = { destinationId: number; parentDestinationId?: number; name: string }
@@ -35,7 +36,8 @@ export default async function handler(req: Request, res: Response) {
   const start = Number(url.searchParams.get('start') ?? 1)
   if (!Object.hasOwn(destinations, city) || !Object.hasOwn(languages, lang) || !['EUR','USD','GBP','TRY','AED','CNY'].includes(currency) || !Number.isInteger(start) || start < 1 || start > 9997 || (start - 1) % 12) return res.status(400).json({ error: 'INVALID_INPUT' })
   let filters: ReturnType<typeof viatorFilters>
-  try { filters = viatorFilters(url.searchParams) } catch { return res.status(400).json({ error: 'INVALID_INPUT' }) }
+  let term: string
+  try { filters = viatorFilters(url.searchParams); term=tourSearchTerm(url.searchParams.get('q')??'') } catch { return res.status(400).json({ error: 'INVALID_INPUT' }) }
   const key = process.env.VIATOR_API_KEY?.trim()
   if (!key || /[^\x21-\x7e]/.test(key)) {
     console.warn('Viator configuration unavailable', { reason: key ? 'INVALID_KEY_FORMAT' : 'MISSING_KEY' })
@@ -84,7 +86,17 @@ export default async function handler(req: Request, res: Response) {
     }
     const destination = items.find(d => destinations[city].some(name => normalize(name) === normalize(d.name)) && inTurkey(d))
     if (!destination) return res.status(200).json({ products: [], totalCount: 0, sandbox, language: languages[lang] })
-    const data = await request('/products/search', { ...filters, filtering: { destination: String(destination.destinationId), ...filters.filtering }, pagination: { start, count: 12 }, currency })
+    const filtering={destination:String(destination.destinationId),...filters.filtering}
+    const raw = term ? await request('/search/freetext', {
+      searchTerm:term,
+      productFiltering:{destination:filtering.destination,
+        ...(filters.filtering.lowestPrice!==undefined||filters.filtering.highestPrice!==undefined?{price:{...(filters.filtering.lowestPrice!==undefined?{from:filters.filtering.lowestPrice}:{}),...(filters.filtering.highestPrice!==undefined?{to:filters.filtering.highestPrice}:{})}}:{}),
+        ...(filters.filtering.startDate?{dateRange:{from:filters.filtering.startDate,to:filters.filtering.endDate}}:{}),
+        ...Object.fromEntries(['rating','durationInMinutes','flags'].filter(key=>filters.filtering[key]!==undefined).map(key=>[key,filters.filtering[key]]))},
+      productSorting:{...filters.sorting,sort:filters.sorting.sort==='TRAVELER_RATING'?'REVIEW_AVG_RATING':filters.sorting.sort},
+      searchTypes:[{searchType:'PRODUCTS',pagination:{start,count:12}}],currency,
+    }) : await request('/products/search', { ...filters, filtering, pagination: { start, count: 12 }, currency })
+    const data=term?{products:raw.products?.results,totalCount:raw.products?.totalCount}:raw
     if (!Array.isArray(data.products)) throw new Error('PROVIDER_UNAVAILABLE')
     const products = data.products.flatMap((p: any) => {
       const productUrl = safeUrl(p.productUrl)
