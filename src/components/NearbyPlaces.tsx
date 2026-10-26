@@ -17,6 +17,7 @@ import {cityDisplayName} from '../lib/cityLocale'
 import {discoveryFilterCopy,filterDiscovery} from '../lib/discoveryFilters'
 import {readDiscoveryArea,saveDiscoveryArea} from '../lib/discoveryState'
 import {createPhotoRefreshGuard} from '../lib/photoRefresh'
+import {rememberSelectedPlace,selectedPlace} from '../lib/selectedDiscovery'
 import {discoverySupplement} from '../lib/discoveryCopy'
 import {combineDiscovery,isEditorialPlace,validEditorialDetailId} from '../lib/editorialDiscovery'
 import type {EditorialPlace} from '../lib/editorialDiscovery'
@@ -193,7 +194,8 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
 
   const busy = state === 'locating' || state === 'loading'
   const allPlaces = combineDiscovery(result?.places??[],editorial,kind==='exchange'?'bureau_de_change':filter)
-  const places=detailId?allPlaces:filterDiscovery(allPlaces,new URLSearchParams(query))
+  const detailPlace=selectedPlace(detailId,allPlaces)
+  const places=detailId?(detailPlace?[detailPlace]:[]):filterDiscovery(allPlaces,new URLSearchParams(query))
   const filtersCopy=discoveryFilterCopy[locale]??discoveryFilterCopy.en
   useEffect(()=>{
     if(!foundationEnabled||!eventRoot.current||!('IntersectionObserver' in window))return
@@ -201,7 +203,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
     eventRoot.current.querySelectorAll('[data-business-key]').forEach(node=>observer.observe(node))
     return()=>observer.disconnect()
   },[result,editorial,limit,detailId,eventContext])
-  const openPlace=(id:string)=>{setDetailId(id);const key=businessKey(id);if(key&&id!==detailId)trackBusinessEvent(key,'detail_open',eventContext)}
+  const openPlace=(id:string)=>{const place=allPlaces.find(p=>p.id===id);if(place)rememberSelectedPlace(place);setDetailId(id);const key=businessKey(id);if(key&&id!==detailId)trackBusinessEvent(key,'detail_open',eventContext)}
   const formatDistance = (meters: number) => meters < 1000 ? `${Math.round(meters)} m` : `${(meters / 1000).toLocaleString(tr ? 'tr-TR' : 'en-GB', { maximumFractionDigits: 1 })} km`
 
   return (
@@ -241,7 +243,8 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
         {state === 'ready' && <p>{origin === 'location' ? text('Konumunuzun çevresi', 'Around your location') : textQuery ? textQuery : addressPlace ? addressPlace.label : `${cityName} ${fixedCategory ? text('ve çevresi', 'area') : text('merkezinin çevresi', 'city centre')}`} · {places.length} {text('kayıt', 'places')}{result && ` · ${text('Alındı', 'Retrieved')} ${new Date(result.fetchedAt).toLocaleTimeString(tr ? 'tr-TR' : 'en-GB', { hour: '2-digit', minute: '2-digit' })}`}</p>}
       </div>
 
-      {state === 'ready' && places.length === 0 && <div className="rounded-2xl border border-sky-100 bg-white p-5 text-sm text-slate-600">{text('Bu alanda ve kategoride kayıt bulunamadı. Bu, yakınlarda işletme olmadığı anlamına gelmez; harita kayıtları eksik olabilir.', 'No records were found in this area and category. This does not mean there are no places nearby; map coverage may be incomplete.')}</div>}
+      {detailId&&!detailPlace&&<div role="status" className="rounded-2xl border border-sky-100 bg-white p-5 text-sm text-slate-600">{busy?text('Yakındaki yerler aranıyor…','Searching nearby places…'):text('Yer bilgileri şu anda alınamadı. Lütfen yeniden deneyin.','Place details could not be loaded. Please try again.')}<button disabled={busy} onClick={searchCity} className="block min-h-11 font-bold text-blue-700">{addressText[2]}</button></div>}
+      {!detailId&&state === 'ready' && places.length === 0 && <div className="rounded-2xl border border-sky-100 bg-white p-5 text-sm text-slate-600">{text('Bu alanda ve kategoride kayıt bulunamadı. Bu, yakınlarda işletme olmadığı anlamına gelmez; harita kayıtları eksik olabilir.', 'No records were found in this area and category. This does not mean there are no places nearby; map coverage may be incomplete.')}</div>}
       {detailId && <button type="button" className="min-h-11 text-blue-700 font-semibold" onClick={() => setDetailId(null)}>{text('← Listeye dön', '← Back to results')}</button>}
       <div className={detailId && places.some(place=>place.id===detailId) ? 'space-y-4' : 'grid grid-cols-1 gap-3 sm:grid-cols-2'}>
         {(detailId && places.some(place=>place.id===detailId)?places.filter(place=>place.id===detailId):places.slice(0, limit)).map(place => <article data-business-key={businessKey(place.id)} key={place.id} className="min-w-0 rounded-2xl border border-sky-100 bg-white p-4 shadow-sm">

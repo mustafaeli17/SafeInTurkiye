@@ -1,5 +1,42 @@
 export type TransitStep = { travelMode?: string; staticDuration?: string; distanceMeters?: number; navigationInstruction?: { instructions?: string }; transitDetails?: { headsign?: string; stopCount?: number; transitLine?: { name?: string; nameShort?: string; vehicle?: { type?: string } }; stopDetails?: { departureStop?: { name?: string }; arrivalStop?: { name?: string }; departureTime?: string; arrivalTime?: string } } }
 export type TransitRoute = { duration: string; distanceMeters?: number; polyline?: { encodedPolyline?: string }; legs: { steps: TransitStep[] }[]; travelAdvisory?: { transitFare?: { currencyCode?: string; units?: string | number; nanos?: number } } }
+export type WalkingStage=TransitStep&{instructions?:string[]}
+export function transitStages(route:TransitRoute):WalkingStage[]{
+ const stages:WalkingStage[]=[]
+ for(const leg of route.legs){
+  let walking:WalkingStage|undefined
+  for(const step of leg.steps){
+   if(step.travelMode!=='WALK'||step.transitDetails){walking=undefined;stages.push({...step});continue}
+   const instruction=step.navigationInstruction?.instructions
+   if(!walking){walking={...step,instructions:instruction?[instruction]:[]};stages.push(walking);continue}
+   if(instruction)walking.instructions!.push(instruction)
+   const seconds=(value?:string)=>value&&/^\d+(\.\d+)?s$/.test(value)?parseFloat(value):undefined
+   const a=seconds(walking.staticDuration),b=seconds(step.staticDuration)
+   walking.staticDuration=a!==undefined&&b!==undefined?`${a+b}s`:undefined
+   walking.distanceMeters=Number.isFinite(walking.distanceMeters)&&Number.isFinite(step.distanceMeters)?walking.distanceMeters!+step.distanceMeters!:undefined
+  }
+ }
+ return stages
+}
+export function transitTime(value:string|undefined,locale:string){
+ return value&&Number.isFinite(Date.parse(value))?new Date(value).toLocaleString(locale,{timeZone:'Europe/Istanbul',year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}):''
+}
+export function transferCount(count:number,locale:string){
+ const forms:Record<string,[string,string]>={en:['transfer','transfers'],tr:['aktarma','aktarma'],de:['Umstieg','Umstiege'],fr:['correspondance','correspondances'],es:['transbordo','transbordos'],ru:['пересадка','пересадки'],ar:['تبديل','تبديلات'],zh:['次换乘','次换乘']}
+ if(locale==='ru')return `${count} ${count===1?'пересадка':count>=2&&count<=4?'пересадки':'пересадок'}`
+ const words=forms[locale]??forms.en
+ return `${count} ${words[count===1?0:1]}`
+}
+export const transitDurationCopy:Record<string,[string,string]>={
+ en:['Journey duration','Not a countdown from now. Check the dated boarding and alighting times (Türkiye time).'],
+ tr:['Yolculuk süresi','Şu andan itibaren kalan süre değildir. Tarihli biniş ve iniş saatlerini kontrol edin (Türkiye saati).'],
+ de:['Fahrtdauer','Keine Restzeit ab jetzt. Beachten Sie Datum und Uhrzeit von Einstieg und Ausstieg (Türkei-Zeit).'],
+ fr:['Durée du trajet','Ce n’est pas un compte à rebours depuis maintenant. Vérifiez les dates et heures de montée et de descente (heure de Turquie).'],
+ es:['Duración del viaje','No es el tiempo restante desde ahora. Consulta las fechas y horas de subida y bajada (hora de Turquía).'],
+ ar:['مدة الرحلة','ليست المدة المتبقية من الآن. راجع تاريخ ووقت الصعود والنزول بتوقيت تركيا.'],
+ ru:['Длительность поездки','Не время до прибытия с текущего момента. Проверьте даты и время посадки и высадки (время Турции).'],
+ zh:['行程时长','并非从现在起的倒计时。请查看上车和下车的日期与时间（土耳其时间）。'],
+}
 export function transitDeparture(value: string, now = Date.now()): string | null {
   const time = value ? Date.parse(`${value}:00+03:00`) : now
   return Number.isFinite(time) && time >= now - 60000 && time <= now + 7 * 86400000 ? new Date(time).toISOString() : null

@@ -18,7 +18,8 @@ export function parseGooglePlaces(payload: unknown, center: NearbyCenter, catego
     if(category==='restaurant' && ['hotel','lodging','shopping_mall'].includes(p.primaryType))continue
     // A requested category is not proof that every provider result has that type.
     // Accept genuine secondary types too (e.g. a museum within an attraction).
-    if(category!=='all'&&acceptedTypes[category]&&Array.isArray(p.types)&&p.types.length&&!acceptedTypes[category]!.some(type=>p.types.includes(type)))continue
+    const providerTypes=[...(Array.isArray(p.types)?p.types:[]),...(typeof p.primaryType==='string'?[p.primaryType]:[])]
+    if(category!=='all'&&acceptedTypes[category]&&!acceptedTypes[category]!.some(type=>providerTypes.includes(type)))continue
     const point = { lat: p.location?.latitude, lng: p.location?.longitude }
     if (!isValidCenter(point) || !str(p.displayName?.text)) continue
     const distance = distanceInMeters(center, point)

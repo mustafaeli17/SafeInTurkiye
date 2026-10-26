@@ -24,7 +24,7 @@ describe('Google Places boundary', () => {
     const body=JSON.parse(f.mock.calls[0][1].body)
     expect(body.locationRestriction.circle.radius).toBe(30000)
     expect(body.includedTypes).toEqual(['movie_theater'])
-    const place={id:'across-town',displayName:{text:'Cinema'},location:{latitude:41.1,longitude:29},googleMapsUri:'https://maps.google.com/?cid=1'}
+    const place={id:'across-town',types:['movie_theater'],displayName:{text:'Cinema'},location:{latitude:41.1,longitude:29},googleMapsUri:'https://maps.google.com/?cid=1'}
     expect(parseGooglePlaces({places:[place]},{lat:41,lng:29},'cinema').places).toHaveLength(0)
     expect(parseGooglePlaces({places:[place]},{lat:41,lng:29},'cinema',30000).places).toHaveLength(1)
   })

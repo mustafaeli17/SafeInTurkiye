@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { LocateFixed } from 'lucide-react'
 import TransitAddressInput from './TransitAddressInput'
 import GoogleDirectionsMap from './GoogleDirectionsMap'
-import { requestTransitLocation, transitDeparture, transitFare, transitRequestTime, transitRoutes,transitSummary, type TransitRoute } from '../lib/transit'
+import { requestTransitLocation, transitDeparture, transitFare, transitRequestTime, transitRoutes,transitSummary,transitStages,transitTime,transferCount,transitDurationCopy, type TransitRoute } from '../lib/transit'
 import {transitComparisonCopy} from '../lib/transitComparisonCopy'
 import { transitCopy, transitVehicle } from '../lib/transitCopy'
 
@@ -55,9 +55,10 @@ export default function TransitJourney({ lang }: { lang: string }) {
   }
   const input = 'mt-1 w-full min-w-0 rounded-xl border border-sky-100 bg-slate-50 p-3 text-sm text-slate-900'
   const route = routes[selected]
-  const steps = route?.legs.flatMap(leg => leg.steps) ?? []
+  const steps = route?transitStages(route):[]
   const summary=route?transitSummary(route):null
-  const time = (value?:string) => value && Number.isFinite(Date.parse(value)) ? new Date(value).toLocaleString(locale,{timeZone:'Europe/Istanbul',hour:'2-digit',minute:'2-digit',day:'numeric',month:'short'}) : ''
+  const time = (value?:string) => transitTime(value,locale)
+  const durationCopy=transitDurationCopy[locale]??transitDurationCopy.en
   return <section aria-label={t.title} dir={locale==='ar'?'rtl':undefined} className="mb-6 space-y-4 rounded-2xl border border-sky-100 bg-white p-4 sm:p-6">
     <h2 className="text-xl font-extrabold text-slate-900">{t.title}</h2><p className="text-sm text-slate-600">{t.intro}</p>
     <form onSubmit={search} className="grid min-w-0 gap-3 sm:grid-cols-2">
@@ -68,9 +69,9 @@ export default function TransitJourney({ lang }: { lang: string }) {
       <button disabled={busy||locating} className="min-h-11 rounded-xl bg-[#087FFF] p-3 font-bold text-white disabled:opacity-50 sm:col-span-2">{busy?t.loading:t.search}</button>
     </form>
     <div role="status" aria-live="polite">{(message||busy)&&<p className="rounded-xl bg-sky-50 p-3 text-sm text-slate-700">{busy?t.loading:message?t[message]:''}</p>}</div>
-    {routes.length>0&&<div className="grid gap-2 sm:grid-cols-2">{routes.map((r,i)=>{const s=transitSummary(r);return <button key={i} type="button" aria-pressed={selected===i} onClick={()=>setSelected(i)} className={`min-h-11 rounded-xl border px-4 py-3 text-start text-sm ${selected===i?'border-blue-500 bg-blue-50 text-blue-800':'border-sky-100 text-slate-700'}`}><strong>{t.option} {i+1} · {Math.ceil(parseFloat(r.duration)/60)} {t.minutes}</strong><span className="block">{s.boarding?`${compare[0]}: ${time(s.boarding)}`:''}{s.alighting?` · ${compare[1]}: ${time(s.alighting)}`:''}</span><span className="block">{s.transfers} {t.change}{s.walkingMinutes!==undefined?` · ${compare[2]}: ${s.walkingMinutes} ${t.minutes}`:''}</span>{s.lines.length>0&&<span className="block">{s.lines.join(' → ')}</span>}<span className="block">{t.fare}: {transitFare(r,locale)??t.noFare}</span></button>})}</div>}
-    {route&&<>
-      <div className="flex flex-wrap gap-4 text-sm text-slate-700"><span>{Math.max(0,steps.filter(s=>s.transitDetails).length-1)} {t.change}</span>{typeof route.distanceMeters==='number'&&<span>{t.distance}: {new Intl.NumberFormat(locale,{maximumFractionDigits:1}).format(route.distanceMeters/1000)} km</span>}<span>{t.fare}: {transitFare(route,locale)??t.noFare}</span></div>
+    {routes.length>0&&<div className="grid gap-2 sm:grid-cols-2">{routes.map((r,i)=>{const s=transitSummary(r);return <button key={i} type="button" aria-pressed={selected===i} onClick={()=>setSelected(i)} className={`min-h-11 rounded-xl border px-4 py-3 text-start text-sm ${selected===i?'border-blue-500 bg-blue-50 text-blue-800':'border-sky-100 text-slate-700'}`}><strong>{t.option} {i+1} · {durationCopy[0]}: {Math.ceil(parseFloat(r.duration)/60)} {t.minutes}</strong><span className="block">{s.boarding?`${compare[0]}: ${time(s.boarding)}`:''}{s.alighting?` · ${compare[1]}: ${time(s.alighting)}`:''}</span><span className="block">{transferCount(s.transfers,locale)}{s.walkingMinutes!==undefined?` · ${compare[2]}: ${s.walkingMinutes} ${t.minutes}`:''}</span>{s.lines.length>0&&<span className="block">{s.lines.join(' → ')}</span>}<span className="block">{t.fare}: {transitFare(r,locale)??t.noFare}</span></button>})}</div>}
+    {route&&<><p className="text-sm text-slate-600">{durationCopy[1]}</p>
+      <div className="flex flex-wrap gap-4 text-sm text-slate-700"><span>{transferCount(summary?.transfers??0,locale)}</span>{typeof route.distanceMeters==='number'&&<span>{t.distance}: {new Intl.NumberFormat(locale,{maximumFractionDigits:1}).format(route.distanceMeters/1000)} km</span>}<span>{t.fare}: {transitFare(route,locale)??t.noFare}</span></div>
       <p className="text-xs text-slate-600">{summary?.boarding?`${compare[0]}: ${time(summary.boarding)} · `:''}{summary?.alighting?`${compare[1]}: ${time(summary.alighting)} · `:''}{compare[4]}</p>
       <GoogleDirectionsMap origin={origin} destination={destination} mode="transit" title={t.map} routePolyline={route.polyline?.encodedPolyline??''} fallback={<p className="rounded-xl bg-slate-50 p-4 text-sm">{t.noMap}</p>}/>
       <p className="flex gap-4 text-xs"><span className="text-green-700">● {t.from}</span><span className="text-rose-700">● {t.to}</span></p>
@@ -82,7 +83,7 @@ export default function TransitJourney({ lang }: { lang: string }) {
           <strong>{d.transitLine?.nameShort||d.transitLine?.name||t.transit}{d.headsign?` · ${d.headsign}`:''}</strong>
           <p>{d.stopDetails?.departureStop?.name} → {d.stopDetails?.arrivalStop?.name}</p>
           <p>{time(d.stopDetails?.departureTime)} → {time(d.stopDetails?.arrivalTime)}{typeof d.stopCount==='number'?` · ${d.stopCount} ${t.stops}`:''}</p>
-        </>:<><strong>{t.walk}</strong>{step.staticDuration&&<span> · {Math.ceil(parseFloat(step.staticDuration)/60)} {t.minutes}</span>}{typeof step.distanceMeters==='number'&&<span> · {new Intl.NumberFormat(locale).format(step.distanceMeters)} m</span>}{step.navigationInstruction?.instructions&&<details><summary className="min-h-11 cursor-pointer py-2">{compare[3]}</summary><p>{step.navigationInstruction.instructions}</p></details>}</>}</li>
+        </>:<><strong>{t.walk}</strong>{step.staticDuration&&<span> · {Math.ceil(parseFloat(step.staticDuration)/60)} {t.minutes}</span>}{typeof step.distanceMeters==='number'&&<span> · {new Intl.NumberFormat(locale).format(step.distanceMeters)} m</span>}{!!step.instructions?.length&&<details><summary className="min-h-11 cursor-pointer py-2">{compare[3]}</summary><ol>{step.instructions.map((instruction,j)=><li key={j}>{instruction}</li>)}</ol></details>}</>}</li>
       })}</ol>
       <p className="text-xs leading-relaxed text-slate-500">Google Maps · {t.notice}</p>
     </>}
