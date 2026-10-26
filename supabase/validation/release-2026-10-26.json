@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-26",
+  "authorization": "User explicitly approved test migration, production migration and publication after validation.",
+  "application_commit": "3eebe41",
+  "migration": {
+    "file": "0009_reservation_operations.sql",
+    "test_project": "qctltygvdxpzdaliczig",
+    "production_project": "lhwumnxvlolfaxdgrtmt",
+    "both_applied": true,
+    "verified": "audit RLS true; 2 notification fields; 2 triggers",
+    "production_booking_count_before": 6,
+    "production_booking_count_after": 6
+  },
+  "preview_acceptance": {
+    "deployment": "7kVHDJKf58TRvbP1hbVEpDdEqHd2",
+    "request": "SIT-2026-0000005, TEST ONLY Release Acceptance, isolated test project",
+    "result": "Create succeeded with canonical date/time/guests; staff confirmed; customer refresh displayed Confirmed; status audit actor/time verified; provider accepted notification once, no failed or pending queue jobs.",
+    "email_delivery": "Provider acceptance verified; inbox delivery not independently confirmed in this pass. Test notification to designated owner only.",
+    "production_test_requests": false
+  },
+  "production_smoke": {
+    "routes_http_200": ["/", "/restaurants?city=istanbul", "/transport", "/tours", "/exchange", "/api/reservations"],
+    "reservation_enabled": true,
+    "hero_webp_and_preload": true,
+    "admin": "Production session signed out; authenticated production UI acceptance remains unverified. Authenticated Preview admin acceptance passed."
+  },
+  "build_followup": "Vercel deployed successfully but logged missing Node types/default-lib compiler diagnostics. Root compiler options now specify Node/ES2023 and a dedicated API typecheck is included in the normal typecheck command.",
+  "baseline_validation": "453 tests passed; build/typecheck/lint passed before release. Follow-up changes are TypeScript configuration only.",
+  "limitations": ["Physical iOS/Android checks not performed", "90+ independent UX score not claimed", "Other documented limitations remain in platform-quality-2026-10-26.json"]
+}
