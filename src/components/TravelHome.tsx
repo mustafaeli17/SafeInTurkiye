@@ -2,7 +2,7 @@ import CityArtwork from './CityArtwork';
 import {sectionPath} from '../lib/sectionNavigation';
 import {cityDisplayName} from '../lib/cityLocale';
 import { Hotel, Utensils, Ticket, Compass, BookOpen, ArrowRight, Search } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import hero from '../data/heroPhoto.json'
 import {cityPath} from '../lib/publicRoutes'
 import {toursLabel} from '../lib/viatorCopy'
@@ -33,6 +33,7 @@ export default function TravelHome({ lang, cities, onNavigate, onCity, onSearch,
 }) {
   const t = translations[lang as keyof typeof translations] ?? translations.en
   const [query, setQuery] = useState(initialQuery)
+  useEffect(()=>setQuery(initialQuery),[initialQuery])
   const quick = [{ label: t[10], emoji: '🚕', page: 'taxi' }, { label: t[11], emoji: '💵', page: 'currency' }, { label: t[12], emoji: '🚌', page: 'transit' }, { label: t[13], emoji: '📍', page: 'nearme' }, { label: t[14], emoji: '🛡️', page: 'safety' }] as const
   const plan = [{ label: t[16], icon: Hotel, page: 'stay' }, { label: t[17], icon: Utensils, page: 'food' }, { label: t[18], icon: Ticket, page: 'experiences' }, { label: toursLabel(lang), icon: Compass, page: 'tours' }, { label: t[19], icon: BookOpen, page: 'assistant' }] as const
   return <main className="travel-home">
@@ -42,7 +43,7 @@ export default function TravelHome({ lang, cities, onNavigate, onCity, onSearch,
       <div className="travel-hero-copy">
         <h1>{t[0]}<br />{' '}<span>{t[1]}</span></h1>
         <p>{t[2]}</p>
-        <form onSubmit={event => { event.preventDefault(); onSearch(query) }} className="travel-search"><Search size={19} aria-hidden="true" /><input aria-label={t[3]} placeholder={t[3]} value={query} onChange={event => setQuery(event.target.value)} /><button type="submit">{t[4]}</button></form>
+        <form onSubmit={event => { event.preventDefault(); onSearch(query) }} className="travel-search"><Search size={19} aria-hidden="true" /><input aria-label={t[3]} placeholder={t[3]} maxLength={160} value={query} onChange={event => setQuery(event.target.value)} /><button type="submit">{t[4]}</button></form>
         <div className="travel-city-chips">{cities.map(city => <a key={city.key} href={cityPath(city.key)} onClick={event=>{if(!event.ctrlKey&&!event.metaKey&&!event.shiftKey){event.preventDefault();onCity(city.key);}}}>{cityDisplayName(city.name,lang)}</a>)}</div>
       </div>
     </section>

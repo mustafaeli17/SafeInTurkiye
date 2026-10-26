@@ -20,14 +20,15 @@ export function discoverySearch(query:string):{section:'food'|'stay'|'experience
   ['nearme','atm',/\batm\b|bankamatik|geldautomat|cajero|банкомат|صراف آلي|取款机/],
   ['nearme','barber',/berber|barber|barbier|barbero|барбер|حلاق|理发/],
   ['nearme','hair_salon',/kuafor|hair salon|friseur|coiffeur|peluquer|парикмахер|تصفيف|美发/],
-  ['food','restaurant',/restoran|restorant|restaurant|restaurante|ресторан|مطعم|مطاعم|餐厅/],
-  ['stay','hotel',/otel|hotel|konaklama|отел|гостиниц|فندق|فنادق|酒店|住宿/],
-  ['nearme','cafe',/\bcafe\b|coffee|kahve|cafeteria|кафе|مقهى|咖啡/],
+  ['food','restaurant',/restoran|restorant|restaurant|restaurante|yemek|\bfood\b|ресторан|مطعم|مطاعم|餐厅|餐饮/],
+  ['stay','hotel',/otel|hotel|konaklama|\bstay\b|отел|гостиниц|فندق|فنادق|酒店|住宿/],
+  ['nearme','cafe',/\bcafe\b|\bkafe\b|coffee|kahve|cafeteria|кафе|مقهى|咖啡/],
   ['experiences','museum',/muze|museum|musee|museo|музе|متحف|博物馆/],
   ['experiences','cinema',/sinema|cinema|kino|\bcine\b|кино|سينما|影院/],
   ['experiences','activity',/aktivite|activit|etkinlik|attraction|sehenswurd|развлеч|أنشط|活动|景点/],
  ]
  const match=entries.find(([, ,pattern])=>pattern.test(q))
+ if(!match&&wantsNearby(q))return {section:'nearme',category:'all'}
  return match?{section:match[0] as 'food'|'stay'|'experiences'|'nearme',category:match[1]}:undefined
 }
 export const searchHelp:Record<string,string>={tr:'Ne aramak istersin? Bir bölüm seç; yazdığın aramayı oraya taşıyalım.',en:'What would you like to find? Choose a section to continue with your search.',de:'Was suchen Sie? Wählen Sie einen Bereich für Ihre Suche.',fr:'Que recherchez-vous ? Choisissez une rubrique pour poursuivre votre recherche.',es:'¿Qué buscas? Elige una sección para continuar la búsqueda.',ar:'ما الذي تبحث عنه؟ اختر قسمًا لمتابعة بحثك.',ru:'Что вы ищете? Выберите раздел, чтобы продолжить поиск.',zh:'您想查找什么？请选择一个分类继续搜索。'}

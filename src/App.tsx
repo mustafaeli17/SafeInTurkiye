@@ -436,7 +436,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
     return () => window.removeEventListener('hashchange', openAdmin);
   }, [session,authLoading]);
   const handleGlobalSearch = (input = searchQuery) => {
-    const query = input.trim().slice(0,200);
+    const query = input.trim().slice(0,160);
     if (!query) return;
     if(activeTab==='home')navigateTo('/?'+new URLSearchParams({q:query}),{replace:true,scroll:false});
     const newCity=findCityGuide(query);

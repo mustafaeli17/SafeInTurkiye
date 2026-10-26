@@ -7,6 +7,9 @@ it.each(['Kadıköy restoran','Estambul restaurante','伊斯坦布尔餐厅','م
 it.each(['Antalya otel','فنادق أنطاليا','安塔利亚酒店'])('recognizes hotels: %s',q=>expect(discoverySearch(q)?.category).toBe('hotel'))
 it.each(['yakınımdaki döviz bürosu','restaurants near me','附近餐厅','مطاعم بالقرب مني'])('requires location for %s',q=>expect(wantsNearby(q)).toBe(true))
 it('does not guess a section for unknown text',()=>expect(discoverySearch('abcxyz')).toBeUndefined())
+it.each(['yakınımda','near me','in der Nähe','à proximité','cerca de mí','рядом','بالقرب مني','附近'])('keeps bare nearby query location-dependent: %s',q=>expect(discoverySearch(q)).toEqual({section:'nearme',category:'all'}))
+it.each([['Kadıköy kafe','cafe'],['Antalya yemek','restaurant'],['Istanbul food','restaurant'],['上海餐饮','restaurant'],['Bodrum stay','hotel']])('uses actual place search for %s', (q,category)=>expect(discoverySearch(q)?.category).toBe(category))
+it.each(['Antalya hotel','Antalya hôtel','Hotel Antalya','Antalya otel','hotel en Antalya','отели Антальи','فنادق أنطاليا','安塔利亚酒店'])('recognizes hotel vocabulary across site languages: %s',q=>expect(discoverySearch(q)?.category).toBe('hotel'))
 it('matches an Istanbulkart question without matching every FAQ',()=>{
  expect(guideSearch('İstanbulkart nasıl alınır?')).toBe(true)
  expect(matchesGuide('Istanbulkart satın alma ve kullanma','İstanbulkart nasıl alınır?')).toBe(true)
