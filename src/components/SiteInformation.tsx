@@ -2,6 +2,8 @@ import {useEffect,useState} from 'react';
 import {ArrowLeft,ArrowUpRight,BookOpen,Globe2,Info,Mail,Phone,ShieldCheck,UserRound} from 'lucide-react';
 import {siteInformation} from '../lib/siteInformation';
 import {privacyCopy} from '../lib/privacyCopy';
+import {restaurantRequestsEnabled} from '../lib/reservationAvailability';
+import {activeReservationPrivacy,activeReservationContact} from '../lib/activeReservationPolicy';
 import {operatorLabel,siteOperatorName,supportEmail} from '../lib/siteOperator';
 import {informationUi,informationLanguages} from '../lib/informationUi';
 import {readLanguagePreference,saveLanguagePreference} from '../lib/languagePreference';
@@ -11,7 +13,7 @@ const icons=[ShieldCheck,BookOpen,Info,Mail];
 export default function SiteInformation({page,initialLanguage}:{page:typeof pages[number];initialLanguage?:string}){
  const [lang,setLang]=useState(()=>initialLanguage&&initialLanguage in informationUi?initialLanguage:readLanguagePreference());
  const original=siteInformation[lang]??siteInformation.en;
- const t={...original,privacy:privacyCopy[lang]??privacyCopy.en};
+ const t={...original,privacy:restaurantRequestsEnabled?(activeReservationPrivacy[lang]??activeReservationPrivacy.en):(privacyCopy[lang]??privacyCopy.en),contact:restaurantRequestsEnabled?(activeReservationContact[lang]??activeReservationContact.en):original.contact};
  const ui=informationUi[lang]??informationUi.en;
  const active=pages.indexOf(page),Icon=icons[active];
  useEffect(()=>{document.title=t.labels[active]+' | SafeInTürkiye';document.documentElement.lang=lang;document.documentElement.dir=lang==='ar'?'rtl':'ltr';saveLanguagePreference(lang);},[lang,active,t]);

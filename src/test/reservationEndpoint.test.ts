@@ -24,6 +24,12 @@ it('does not lose a saved request if email fails; outbox remains retryable',asyn
 it('requires the private receipt and returns only status, not guest data',async()=>{vi.stubGlobal('fetch',provider());expect((await call({action:'status',requestId:request.requestId,receiptToken:'wrong'})).code).toBe(404);expect((await call({action:'status',requestId:request.requestId,receiptToken:request.receiptToken})).data).toEqual({status:'CONFIRMED'});});
 it('does not allow a signed-in ordinary user to process the notification queue',async()=>{vi.stubGlobal('fetch',provider());expect((await call({action:'notifications'},undefined,'Bearer ordinary-user')).code).toBe(403);});
 it('keeps the worker protected when no cron secret exists',async()=>{vi.stubEnv('CRON_SECRET','');let code=0;const res:any={status(n:number){code=n;return res;},json:vi.fn(),setHeader:vi.fn()};await worker({method:'GET',headers:{}},res);expect(code).toBe(403);});
+it('runs queued notification retries and retention only with the cron secret',async()=>{
+ vi.stubEnv('CRON_SECRET','test-cron-secret');const fetcher=provider();vi.stubGlobal('fetch',fetcher);
+ let code=0,data:any;const res:any={status(n:number){code=n;return res;},json(value:unknown){data=value;},setHeader:vi.fn()};
+ await worker({method:'GET',headers:{authorization:'Bearer wrong'}},res);expect(code).toBe(403);expect(fetcher).not.toHaveBeenCalled();
+ await worker({method:'GET',headers:{authorization:'Bearer test-cron-secret'}},res);expect(code).toBe(200);expect(data.sent).toBe(1);expect(fetcher.mock.calls.some(([url])=>String(url).includes('anonymize_expired_restaurant_requests'))).toBe(true);
+});
 it('requires valid future Turkish local date/time',()=>{expect(validateGuestRequest(request)).toBe(true);expect(validateGuestRequest({...request,date:'2020-01-01'})).toBe(false);});
 it('links Preview notifications to the isolated Preview admin, never a client-supplied host',()=>{
  vi.stubEnv('VERCEL_ENV','preview');vi.stubEnv('VERCEL_URL','safe-in-turkiye-test.vercel.app');

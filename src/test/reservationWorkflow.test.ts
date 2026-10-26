@@ -14,6 +14,8 @@ beforeAll(async()=>{
   await db.exec(await readFile('supabase/migrations/0006_restaurant_request_workflow.sql','utf8'));
   await db.exec(await readFile('supabase/migrations/0007_editorial_discovery_fields.sql','utf8'));
   await db.exec(await readFile('supabase/migrations/0007_editorial_discovery_fields.sql','utf8'));
+  await db.exec(await readFile('supabase/migrations/0008_reservation_retention.sql','utf8'));
+  await db.exec(await readFile('supabase/migrations/0008_reservation_retention.sql','utf8'));
   await db.exec('grant usage on schema public,auth to anon,authenticated,service_role;grant select on public.bookings to anon,authenticated;grant insert,update on public.bookings to authenticated;');
 },60000);
 afterAll(async()=>{if(db)await db.close();},60000);
@@ -40,4 +42,16 @@ it('guest intake is idempotent, rate-limited and private; notifications commit w
   await expect(submit()).rejects.toThrow();
   await db.query("update bookings set status='CONFIRMED' where id=$1",[first.id]);
   expect((await db.query('select status from bookings where id=$1',[first.id])).rows).toEqual([{status:'CONFIRMED'}]);
+  await expect(db.query('select anonymize_expired_restaurant_requests()')).rejects.toThrow();
+  await db.exec('reset role;alter table bookings disable trigger bookings_updated;');
+  await db.query("update bookings set updated_at=now()-interval '100 days',visit_date=current_date-100 where id=$1",[first.id]);
+  await db.query("update bookings set updated_at=now()-interval '100 days',visit_date=current_date-100 where request_id='00000000-0000-0000-0000-000000000102'");
+  await db.query("update bookings set updated_at=now()-interval '100 days',status='CONFIRMED' where request_id='00000000-0000-0000-0000-000000000103'");
+  await db.exec('alter table bookings enable trigger bookings_updated;set role service_role;');
+  expect((await db.query('select anonymize_expired_restaurant_requests() total')).rows).toEqual([{total:1}]);
+  expect((await db.query('select guest_name,guest_email,guest_phone,notes,user_id,receipt_hash,personal_data_removed_at from bookings where id=$1',[first.id])).rows[0]).toMatchObject({guest_name:'Removed',guest_email:'removed@example.invalid',guest_phone:null,notes:null,user_id:null});
+  const cleaned=(await db.query<{receipt_hash:string;personal_data_removed_at:Date}>('select receipt_hash,personal_data_removed_at from bookings where id=$1',[first.id])).rows[0];
+  expect(cleaned.receipt_hash).not.toBe(hash);expect(cleaned.personal_data_removed_at).toBeTruthy();
+  expect((await db.query('select anonymize_expired_restaurant_requests() total')).rows).toEqual([{total:0}]);
+  expect((await db.query("select count(*)::int total from bookings where personal_data_removed_at is null")).rows).toEqual([{total:4}]);
 },20000);
