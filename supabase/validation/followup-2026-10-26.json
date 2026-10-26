@@ -13,13 +13,18 @@
     "typecheck_lint_build": "Build passed; typecheck and lint also rerun successfully after final project-tag guard",
     "live_admin": "Authenticated dashboard and reservation list verified read-only",
     "local_browser": "TEST ONLY request loads business name, city, address, phone, website and map at 537px without horizontal overflow; mocked provider, not real Google acceptance",
-    "test_database": "qctltygvdxpzdaliczig: migration applied, three columns verified, RLS true, anon/authenticated RPC execute false, service_role true"
+    "test_database": "qctltygvdxpzdaliczig: migration applied, three columns verified, RLS true, anon/authenticated RPC execute false, service_role true",
+    "real_delivery_acceptance": "SIT-2026-0000006: real Preview browser request; Resend delivered to recipient server, signed email.delivered replay returned HTTP 200 {ok:true}; test database delivery_state DELIVERED and event time 2026-10-26T18:44:49.170Z verified read-only",
+    "receipt_reload": "Real Preview request reference and visit summary survived browser reload",
+    "secret_configuration": "Incorrectly formatted Preview signing secret diagnosed without logging its value; owner replaced it; same signed event then succeeded",
+    "temporary_access_cleanup": "Resend test webhook disabled, bypass query removed, temporary Vercel bypass revoked; standard login protection unchanged",
+    "latest_code_checks": "efb5d46: 6 webhook tests, typecheck and targeted lint passed; Vercel Preview build Ready. No code changed during final secret/replay verification"
   },
   "migration": "20261026181727_reservation_delivery_tracking.sql",
   "production_migration": "NOT APPLIED",
   "pending": [
-    "User must create prepared test Resend webhook and enter signing secret in branch-only Preview Secret RESEND_WEBHOOK_SECRET",
-    "Actual signed Resend delivery and Google admin lookup on Preview must be verified before completion",
+    "Production delivery tracking requires separate migration/configuration approval; test webhook intentionally disabled after acceptance",
+    "Actual Google admin lookup on Preview remains unverified",
     "Physical iPhone/Safari verification remains unperformed",
     "Mobile Lighthouse baseline remains 86; no new score claimed or invasive refactor undertaken"
   ]
