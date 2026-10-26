@@ -1,0 +1,11 @@
+import {beforeEach,expect,it,vi} from 'vitest';
+const mocks=vi.hoisted(()=>({from:vi.fn(),fail:new Set<string>(),tables:[] as string[],rows:[] as unknown[]}));
+vi.mock('../lib/supabase',()=>({supabaseConfigured:true,requireSupabase:()=>({from:mocks.from})}));
+vi.mock('../lib/foundationConfig',()=>({foundationEnabled:false}));
+import {loadEditorialDiscovery} from '../repositories/editorialDiscoveryRepository';
+beforeEach(()=>{mocks.fail.clear();mocks.tables=[];mocks.rows=[];mocks.from.mockImplementation((table:string)=>{mocks.tables.push(table);const q:any={};for(const method of ['select','eq','order','limit'])q[method]=vi.fn(()=>q);q.abortSignal=vi.fn(async()=>({error:mocks.fail.has(table)?{message:'private database error'}:null,data:mocks.rows}));return q;});});
+const point={lat:41.0082,lng:28.9784},signal=new AbortController().signal;
+it('queries only the needed category, enforces publication and does not read private tables',async()=>{expect(await loadEditorialDiscovery(point,'hotel',30000,signal,'hotels')).toEqual({places:[],failed:false});expect(mocks.tables).toEqual(['hotels']);const query=mocks.from.mock.results[0].value;expect(query.eq).toHaveBeenCalledWith('active',true);expect(query.eq).toHaveBeenCalledWith('status','PUBLISHED');expect(query.abortSignal).toHaveBeenCalledWith(signal);});
+it('returns a failure flag rather than pretending a CMS failure is an empty successful list',async()=>{mocks.fail.add('hotels');expect(await loadEditorialDiscovery(point,'hotel',2500,signal,'hotels')).toEqual({places:[],failed:true});});
+it('retains successful tables when one activity table fails',async()=>{mocks.fail.add('museums');mocks.rows=[{id:'00000000-0000-0000-0000-000000000001',name:'TEST',description:'TEST',address:'TEST',active:true,status:'PUBLISHED',city:{active:true,status:'PUBLISHED'},editorial_metadata:{coordinates:point}}];const result=await loadEditorialDiscovery(point,'activity',30000,signal,'activities');expect(result.failed).toBe(true);expect(result.places).toHaveLength(2);expect(mocks.tables).toEqual(['activities','museums','attractions']);});
+it('does not add CMS queries for unsupported categories or fetch sponsorship while disabled',async()=>{expect(await loadEditorialDiscovery(point,'barber',2500,signal,'nearby')).toEqual({places:[],failed:false});expect(mocks.from).not.toHaveBeenCalled();});

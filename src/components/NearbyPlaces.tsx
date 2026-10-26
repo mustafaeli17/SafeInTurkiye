@@ -16,6 +16,11 @@ import {destinationSlug,discoveryCity} from '../lib/discoveryNavigation'
 import {readDiscoveryArea,saveDiscoveryArea} from '../lib/discoveryState'
 import {createPhotoRefreshGuard} from '../lib/photoRefresh'
 import {discoverySupplement} from '../lib/discoveryCopy'
+import {combineDiscovery,isEditorialPlace,validEditorialDetailId} from '../lib/editorialDiscovery'
+import type {EditorialPlace} from '../lib/editorialDiscovery'
+import {loadEditorialDiscovery} from '../repositories/editorialDiscoveryRepository'
+import {editorialDiscoveryCopy} from '../lib/editorialDiscoveryCopy'
+import EditorialPlacePhoto from './EditorialPlacePhoto'
 import type { NearbyCategory, NearbyCenter, NearbyKind, NearbyResult } from '../services/nearbyPlaces'
 
 interface NearbyPlacesProps {
@@ -40,7 +45,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
   const eventRoot=useRef<HTMLElement>(null)
   const seenEvents=useRef(new Set<string>())
   const eventContext=kind==='exchange'?'exchange':fixedCategory==='restaurant'?'restaurants':fixedCategory==='hotel'?'hotels':fixedCategory==='activity'?'activities':'nearby'
-  const businessKey=(id:string)=>id.startsWith('google:')?`google/${id.slice(7)}`:undefined
+  const businessKey=(id:string)=>id.startsWith('google:')?`google/${id.slice(7)}`:validEditorialDetailId(id)?id.slice(4).replace(':','/'):undefined
   const cities: Record<string, NearbyCenter> = searchDestinations;
   const browserLocation=useBrowserLocation()
   const query=browserLocation.split('?')[1]??''
@@ -51,6 +56,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
   const cityName = addressPlace?.label ?? selectedCity;
   const center = addressPlace ?? cities[selectedCity] ?? initialCenter;
   const locale = lang.toLowerCase()
+  const editorialText=editorialDiscoveryCopy[locale]??editorialDiscoveryCopy.en
   const tr = locale.startsWith('tr')
   const addressText = ({es:['Dirección o zona','Introduce la zona y la ciudad; selecciona una sugerencia','Buscar'],en:['Address or area','Enter an area and city; select a suggestion','Search'],tr:['Adres veya bölge','Bölge ve şehir yazın; önerilerden seçin','Ara'],de:['Adresse oder Gebiet','Gebiet und Stadt eingeben; Vorschlag auswählen','Suchen'],fr:['Adresse ou quartier','Saisissez le quartier et la ville ; choisissez une suggestion','Rechercher'],ar:['العنوان أو المنطقة','أدخل المنطقة والمدينة واختر اقتراحًا','بحث'],ru:['Адрес или район','Введите район и город; выберите подсказку','Поиск'],zh:['地址或区域','输入区域和城市，然后选择建议','搜索']} as Record<string,string[]>)[locale] ?? ['Address or area','Enter an area and city; select a suggestion','Search']
   const translated: Record<string, Record<string, string>> = {
@@ -64,6 +70,8 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
   const text = (turkish: string, english: string) => tr ? turkish : discoverySupplement(english,locale) ?? translated[locale]?.[english] ?? english
   const categoryLabel = (category: NearbyCategory) => groomingCategoryLabel(category,locale) ?? text(categoryLabels[category][0],categoryLabels[category][1])
   const [result, setResult] = useState<NearbyResult | null>(null)
+  const [editorial,setEditorial]=useState<EditorialPlace[]>([])
+  const [editorialFailed,setEditorialFailed]=useState(false)
   const [state, setState] = useState<'idle' | 'locating' | 'loading' | 'ready' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
   const [origin, setOrigin] = useState<'location' | 'city'>('city')
@@ -72,7 +80,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
   const setFilter=(category:'all'|NearbyCategory)=>updateLocationQuery({category,place:null})
   const [limit, setLimit] = useState(6)
   const requestedPlace=new URLSearchParams(query).get('place')
-  const detailId=requestedPlace&&/^google:[A-Za-z0-9_-]{1,250}$/.test(requestedPlace)?requestedPlace:null
+  const detailId=requestedPlace&&(/^google:[A-Za-z0-9_-]{1,250}$/.test(requestedPlace)||validEditorialDetailId(requestedPlace))?requestedPlace:null
   const setDetailId=(id:string|null)=>{
     if(id){const url=new URL(window.location.href);url.searchParams.delete('place');updateLocationQuery({place:id},{state:{placeList:url.pathname+url.search}})}
     else if(detailId){const url=new URL(window.location.href);url.searchParams.delete('place');const list=url.pathname+url.search;if(window.history.state?.placeList===list)window.history.back();else updateLocationQuery({place:null},{replace:true})}
@@ -87,6 +95,8 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
     generation.current += 1
     controller.current?.abort()
     setResult(null)
+    setEditorial([])
+    setEditorialFailed(false)
     setState('idle')
     setError(null)
     setLimit(6)
@@ -107,14 +117,20 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
     controller.current = request
     setState('loading')
     setError(null)
-    if(!preserve)setResult(null)
+    if(!preserve){setResult(null);setEditorial([]);setEditorialFailed(false)}
     setOrigin(source)
     if(!preserve)setLimit(6)
     try {
-      const data = await fetchGoogleNearby(point, kind === 'exchange' ? 'bureau_de_change' : filter, locale, request.signal, fixedCategory && source === 'city' && !addressPlace ? 'city' : 'nearby')
+      const category=kind==='exchange'?'bureau_de_change':filter
+      const cityScope=Boolean(fixedCategory&&source==='city'&&!addressPlace)
+      const [google,own]=await Promise.all([
+        fetchGoogleNearby(point,category,locale,request.signal,cityScope?'city':'nearby').then(data=>({data,error:null}),reason=>({data:null,error:reason})),
+        loadEditorialDiscovery(point,category,cityScope?30000:2500,request.signal,eventContext),
+      ])
       if (requestId !== generation.current || request.signal.aborted) return
-      setResult(data)
-      setState('ready')
+      setResult(google.data);setEditorial(own.places);setEditorialFailed(own.failed)
+      if(google.error)setError(errorMessage(google.error))
+      setState(google.data||own.places.length?'ready':'error')
     } catch (reason) {
       if (requestId !== generation.current || request.signal.aborted) return
       setError(errorMessage(reason))
@@ -139,6 +155,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
     controller.current?.abort()
     setError(null)
     setResult(null)
+    setEditorial([])
     if (!navigator.geolocation) {
       setState('error')
       setError(text('Bu tarayıcı konum paylaşamıyor. Şehir merkezinde arama yapabilirsiniz.', 'This browser cannot share your location. You can search the city centre.'))
@@ -169,13 +186,13 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
   }
 
   const busy = state === 'locating' || state === 'loading'
-  const places = (result?.places ?? []).filter(place => filter === 'all' || place.category === filter)
+  const places = combineDiscovery(result?.places??[],editorial,kind==='exchange'?'bureau_de_change':filter)
   useEffect(()=>{
     if(!foundationEnabled||!eventRoot.current||!('IntersectionObserver' in window))return
     const observer=new IntersectionObserver(items=>{for(const item of items){const key=(item.target as HTMLElement).dataset.businessKey;if(item.isIntersecting&&key&&!seenEvents.current.has(key)){seenEvents.current.add(key);trackBusinessEvent(key,'impression',eventContext)}}},{threshold:0.5})
     eventRoot.current.querySelectorAll('[data-business-key]').forEach(node=>observer.observe(node))
     return()=>observer.disconnect()
-  },[result,limit,detailId,eventContext])
+  },[result,editorial,limit,detailId,eventContext])
   const openPlace=(id:string)=>{setDetailId(id);const key=businessKey(id);if(key&&id!==detailId)trackBusinessEvent(key,'detail_open',eventContext)}
   const formatDistance = (meters: number) => meters < 1000 ? `${Math.round(meters)} m` : `${(meters / 1000).toLocaleString(tr ? 'tr-TR' : 'en-GB', { maximumFractionDigits: 1 })} km`
 
@@ -183,7 +200,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
     <section ref={eventRoot} onClickCapture={event=>{const link=(event.target as HTMLElement).closest('a');const key=link?.closest('[data-business-key]')?.getAttribute('data-business-key');if(!link||!key)return;const href=link.getAttribute('href')??'';const type=href.startsWith('tel:')?'phone_click':href.includes('/maps/dir/')?'directions_click':link.dataset.event==='website'?'website_click':null;if(type)trackBusinessEvent(key,type,eventContext)}} className="space-y-4" aria-label={kind === 'exchange' ? text('Yakındaki döviz büroları', 'Nearby exchange bureaux') : text('Yakınımdaki yerler', 'Nearby places')}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg font-extrabold text-slate-900">{fixedCategory ? `${categoryLabel(fixedCategory)} · Google Maps` : kind === 'exchange' ? text('Yakındaki döviz büroları', 'Nearby exchange bureaux') : text('Yakınımdaki yerler', 'Nearby places')}</h2>
+          <h2 className="text-lg font-extrabold text-slate-900">{fixedCategory ? categoryLabel(fixedCategory) : kind === 'exchange' ? text('Yakındaki döviz büroları', 'Nearby exchange bureaux') : text('Yakınımdaki yerler', 'Nearby places')}</h2>
           <p className="text-xs text-slate-600 mt-1">{fixedCategory ? text('Şehir ve çevresinden öne çıkan sonuçlar (30 km); tüm işletmelerin listesi değildir. Konum araması 2,5 km içindedir.', 'Selected results across the city area (30 km), not an exhaustive directory. Location searches cover 2.5 km.') : text('2,5 km içindeki kayıtlar; mesafeler kuş uçuşudur.', 'Published places within 2.5 km; distances are straight-line estimates.')}</p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -192,7 +209,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
         </div>
       </div>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-        <TransitAddressInput label={addressText[0]} placeholder={addressText[1]} value={address} selected={!!addressPlace && address === addressPlace.label} locale={locale} onChange={value=>{setAddress(value);setAddressPlace(null);saveDiscoveryArea(null);generation.current+=1;controller.current?.abort();setResult(null);setState('idle')}} onSelect={place=>{setAddress(place.label);setAddressPlace(place);saveDiscoveryArea(place)}} />
+        <TransitAddressInput label={addressText[0]} placeholder={addressText[1]} value={address} selected={!!addressPlace && address === addressPlace.label} locale={locale} onChange={value=>{setAddress(value);setAddressPlace(null);saveDiscoveryArea(null);generation.current+=1;controller.current?.abort();setResult(null);setEditorial([]);setState('idle')}} onSelect={place=>{setAddress(place.label);setAddressPlace(place);saveDiscoveryArea(place)}} />
         <button type="button" disabled={busy || (!!address.trim() && address !== addressPlace?.label)} onClick={searchCity} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#087FFF] px-5 py-3 text-sm font-bold text-white disabled:opacity-50"><Search className="h-4 w-4" />{addressText[2]}</button>
       </div>
       <p className="text-[11px] leading-relaxed text-slate-500">{text('Konumunuzu seçerseniz arama için yaklaşık koordinatlarınız harita veri sağlayıcısına gönderilir; bu sitede kalıcı olarak saklanmaz.', 'If you use your location, approximate coordinates are sent to the map data service to run the search; this site does not permanently store them.')}</p>
@@ -208,6 +225,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
         {state === 'locating' && text('Konum izniniz bekleniyor…', 'Waiting for your location…')}
         {state === 'loading' && text('Yakındaki yerler aranıyor…', 'Searching nearby places…')}
         {error && <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-amber-900">{error}</p>}
+        {editorialFailed&&<p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-amber-900">{editorialText[3]}</p>}
         {state === 'idle' && <p className="rounded-2xl border border-sky-100 bg-white p-5">{text('Konumunuzu kullanın veya şehir merkezinde arama yapın.', 'Use your location or search around the city centre.')}</p>}
         {state === 'ready' && <p>{origin === 'location' ? text('Konumunuzun çevresi', 'Around your location') : addressPlace ? addressPlace.label : `${cityName} ${fixedCategory ? text('ve çevresi', 'area') : text('merkezinin çevresi', 'city centre')}`} · {places.length} {text('kayıt', 'places')}{result && ` · ${text('Alındı', 'Retrieved')} ${new Date(result.fetchedAt).toLocaleTimeString(tr ? 'tr-TR' : 'en-GB', { hour: '2-digit', minute: '2-digit' })}`}</p>}
       </div>
@@ -216,7 +234,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
       {detailId && <button type="button" className="min-h-11 text-blue-700 font-semibold" onClick={() => setDetailId(null)}>{text('← Listeye dön', '← Back to results')}</button>}
       <div className={detailId && places.some(place=>place.id===detailId) ? 'space-y-4' : 'grid grid-cols-1 gap-3 sm:grid-cols-2'}>
         {(detailId && places.some(place=>place.id===detailId)?places.filter(place=>place.id===detailId):places.slice(0, limit)).map(place => <article data-business-key={businessKey(place.id)} key={place.id} className="min-w-0 rounded-2xl border border-sky-100 bg-white p-4 shadow-sm">
-          <GooglePlacePhoto key={place.photo?.url ?? place.id} place={place} onOpen={() => openPlace(place.id)} onExpired={refreshExpiredPhotos} />
+          {isEditorialPlace(place)?<><span className="mb-2 block text-xs font-semibold text-slate-500">{place.editorial.sponsored?editorialText[1]:editorialText[0]}</span><EditorialPlacePhoto place={place} expanded={detailId===place.id} onOpen={()=>openPlace(place.id)} lang={locale}/></>:<GooglePlacePhoto key={place.photo?.url ?? place.id} place={place} onOpen={() => openPlace(place.id)} onExpired={refreshExpiredPhotos} />}
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0"><span className="text-[10px] font-bold uppercase tracking-wide text-[#007EAD]">{place.typeLabel ?? categoryLabel(place.category)}</span><h3 className="mt-1 break-words font-bold text-slate-900"><button className="text-left min-h-11 hover:text-blue-700" onClick={() => openPlace(place.id)}>{place.name || categoryLabel(place.category)}</button></h3></div>
             <span className="shrink-0 rounded-lg bg-sky-50 px-2 py-1 text-xs font-bold text-[#007EAD]">{formatDistance(place.distanceMeters)}</span>
@@ -229,6 +247,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
           {typeof place.openNow === 'boolean' && <p className="mt-2 text-xs">{place.openNow ? text('Şu an açık', 'Open now') : text('Şu an kapalı', 'Closed now')}</p>}
           {place.rating !== undefined && <p className="mt-2 text-xs">Google Maps · ★ {place.rating}{place.reviewCount !== undefined ? ` (${place.reviewCount})` : ''}</p>}
           {place.attributions?.map((a, i) => <p key={i} className="text-xs">{a.url ? <a href={a.url} target="_blank" rel="noopener noreferrer">{a.name}</a> : a.name}</p>)}
+          {isEditorialPlace(place)&&detailId===place.id&&<section className="mt-3 text-sm text-slate-600"><h4 className="font-semibold">{editorialText[2]}</h4><p className="whitespace-pre-wrap break-words">{place.editorial.description[locale]??place.editorial.fallbackDescription}</p></section>}
           <div className="mt-3 flex flex-wrap gap-4 border-t border-slate-100 pt-3 text-xs font-semibold text-[#007EAD]">
             <a href={place.sourceUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1">{text('Harita kaydı ve kaynak', 'Map record & source')}<ExternalLink className="h-3 w-3" /></a>
             <a href={`https://www.google.com/maps/dir/?api=1&destination=${place.coordinates.lat},${place.coordinates.lng}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-1">{directionsText[locale] ?? directionsText.en}<ExternalLink aria-hidden="true" className="h-3 w-3" /></a>
@@ -238,7 +257,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
         </article>)}
       </div>
       {state==='ready' && kind==='exchange' && <p className="text-xs text-slate-500">{text('Büro alış/satış kurları mevcut değil; işlemden önce net kur ve komisyonu işletmeden teyit edin.', 'Bureau buy/sell rates are not available; confirm the net rate and commission with the business before exchanging.')}</p>}
-      {places.length > limit && <button type="button" onClick={() => setLimit(value => value + 12)} className="rounded-xl border border-sky-200 bg-white px-4 py-2 text-xs font-bold text-[#007EAD]">{text('Daha fazla göster', 'Show more')}</button>}
+      {!detailId&&places.length > limit && <button type="button" onClick={() => setLimit(value => value + 12)} className="rounded-xl border border-sky-200 bg-white px-4 py-2 text-xs font-bold text-[#007EAD]">{text('Daha fazla göster', 'Show more')}</button>}
       {result && <div className="text-xs text-slate-600"><p className="text-sm font-medium" translate="no">Google Maps</p><p>{nearbyNotice(lang, filter === 'pharmacy' || filter === 'all' && !fixedCategory && kind !== 'exchange')}</p><a className="underline" href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google Privacy Policy</a> · <a className="underline" href="https://maps.google.com/help/terms_maps/" target="_blank" rel="noopener noreferrer">Google Maps Terms</a></div>}
     </section>
   )

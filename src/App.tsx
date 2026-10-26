@@ -848,7 +848,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
         {/* ====================================================================
             PAGE 1: EXPLORE
         ==================================================================== */}
-        {['city','stay','food','experiences'].includes(activeTab)&&<SponsoredBusinesses context={activeTab==='stay'?'hotels':activeTab==='food'?'restaurants':activeTab==='experiences'?'activities':'city'} city={activeTab==='city'?selectedCityName:undefined} lang={lang}/>}
+        {activeTab==='city'&&<SponsoredBusinesses context="city" city={selectedCityName} lang={lang}/>}
         {activeTab === 'home' && <TravelHome
           lang={lang}
           cities={publicCities.map(city=>({key:city.name,name:city.name}))}

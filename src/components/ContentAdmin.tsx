@@ -10,7 +10,8 @@ const EditorialAdmin=lazy(()=>import('./EditorialAdmin'));
 const BookingAdmin=lazy(()=>import('./BookingAdmin'));
 const SponsorshipAdmin=lazy(()=>import('./SponsorshipAdmin'));
 const BusinessMetricsAdmin=lazy(()=>import('./BusinessMetricsAdmin'));
-const tabs=[['overview','Genel bakış',LayoutDashboard],['reservations','Rezervasyonlar',Bell],['content','İçerik yönetimi',BookOpen],['sponsors','Sponsorlu yerleşimler',Ticket],['analytics','İstatistikler',BarChart3],['system','Sistem ve yayın',Settings]] as const;
+const CityReferenceAdmin=lazy(()=>import('./CityReferenceAdmin'));
+const tabs=[['overview','Genel bakış',LayoutDashboard],['reservations','Rezervasyonlar',Bell],['content','İçerik yönetimi',BookOpen],['cities','Şehir referansları',LayoutDashboard],['sponsors','Sponsorlu yerleşimler',Ticket],['analytics','İstatistikler',BarChart3],['system','Sistem ve yayın',Settings]] as const;
 export default function ContentAdmin({role,onSignOut}:{role:string;onSignOut?:()=>unknown}){
  const [tab,setTab]=useState('overview'),[dirty,setDirty]=useState(false),[count,setCount]=useState<number|null>(null),[cityCount,setCityCount]=useState<number|null>(null),[error,setError]=useState(''),[loading,setLoading]=useState(false);
  const onDirty=useCallback((value:boolean)=>setDirty(value),[]);
@@ -36,6 +37,7 @@ export default function ContentAdmin({role,onSignOut}:{role:string;onSignOut?:()
    <Suspense fallback={<p role="status" className="admin-panel">Bölüm yükleniyor…</p>}>
     {tab==='reservations'&&<BookingAdmin onChanged={()=>void refresh()}/>}
     {tab==='content'&&<EditorialAdmin role={role} onDirtyChange={onDirty}/>}
+    {tab==='cities'&&<CityReferenceAdmin role={role}/>}
     {tab==='sponsors'&&(foundationEnabled?<SponsorshipAdmin/>:<section className="admin-panel"><h2>Sponsorlu yerleşimler</h2><p>Foundation şeması bu ortamda etkin değil. Yanlış tabloya veya Google kayıtlarına reklam yazılmayacak.</p></section>)}
     {tab==='analytics'&&<><section className="admin-panel"><h2>Ziyaretçi istatistikleri</h2><p>Vercel’de ölçülen ziyaretçi, ülke, cihaz ve yönlendirme verileri. Fiziksel işletme ziyareti anlamına gelmez.</p><a className="admin-button" href="https://vercel.com/eli-1196/safe-in-turkiye/analytics" target="_blank" rel="noopener noreferrer">Vercel Analytics<ExternalLink size={15}/></a></section>{foundationEnabled&&<BusinessMetricsAdmin/>}</>}
    </Suspense>

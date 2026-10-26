@@ -10,6 +10,7 @@ const db=new PGlite();let emails=0;
 await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create schema storage;create table auth.users(id uuid primary key,email text,raw_user_meta_data jsonb);create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;create table storage.buckets(id text primary key,name text,public boolean);create table storage.objects(id uuid primary key default gen_random_uuid(),bucket_id text);`);
 for(const file of (await readdir('supabase/migrations')).filter(f=>/^000[1-4]_/.test(f)).sort())await db.exec((await readFile('supabase/migrations/'+file,'utf8')).replace('create extension if not exists pgcrypto;',''));
 await db.exec(await readFile('supabase/migrations/0006_restaurant_request_workflow.sql','utf8'));
+await db.exec(await readFile('supabase/migrations/0007_editorial_discovery_fields.sql','utf8'));
 const admin='00000000-0000-0000-0000-000000000001';
 await db.exec(`insert into auth.users(id,email,raw_user_meta_data) values('${admin}','admin@example.test','{}');update profiles set role='admin' where id='${admin}';grant usage on schema public,auth to authenticated,service_role;grant select,insert,update on all tables in schema public to authenticated;insert into cities(name,slug,status) values('TEST ONLY İstanbul','test-istanbul','PUBLISHED');insert into hotels(name,description,status) values('TEST ONLY Draft','Local QA','DRAFT');`);
 const columns=value=>{if(!/^(\*|[a-z_,]+)$/.test(value))throw Error('QA fields');return value;};
@@ -17,7 +18,7 @@ const tables=new Set(['hotels','restaurants','activities','museums','attractions
 async function tableQuery(tx,input){
  if(!tables.has(input.table))throw Error('QA table');const args=[],where=[];
  for(const [field,value]of input.filters??[]){columns(field);args.push(value);where.push(`${field}=$${args.length}`);}
- const condition=where.length?' where '+where.join(' and '):'';const fields=columns(input.fields??'*');
+ const condition=where.length?' where '+where.join(' and '):'';const joined=input.fields==='*,city:cities(name,slug,active,status)';const fields=columns(joined?'*':input.fields??'*');
  if(input.action==='update'){
   const set=Object.entries(input.payload).map(([field,value])=>{columns(field);args.push(value);return `${field}=$${args.length}`;}).join(',');
   return {data:(await tx.query(`update ${input.table} set ${set}${condition} returning ${fields}`,args)).rows};
@@ -29,6 +30,7 @@ async function tableQuery(tx,input){
  const count=(await tx.query(`select count(*)::int total from ${input.table}${condition}`,args)).rows[0].total;
  const orders=(input.sort??[]).map(([field,options])=>columns(field)+(options?.ascending===false?' desc':' asc')).join(',');
  const data=input.options?.head?[]:(await tx.query(`select ${fields} from ${input.table}${condition}${orders?' order by '+orders:''} limit ${Math.min(input.take??input.limit??50,1000)} offset ${input.offset??0}`,args)).rows;
+ if(joined)for(const row of data)row.city=(await tx.query('select name,slug,active,status from cities where id=$1',[row.city_id])).rows[0]??null;
  return {data,count};
 }
 globalThis.fetch=async(url,options={})=>{
@@ -47,7 +49,8 @@ globalThis.fetch=async(url,options={})=>{
 function adapt(res){return {setHeader:(key,value)=>res.setHeader(key,value),status(code){res.statusCode=code;return this;},json(data){res.setHeader('Content-Type','application/json');res.end(JSON.stringify(data));}};}
 const server=await createServer({mode:'qa-admin',define:{'import.meta.env.VITE_RESTAURANT_REQUESTS':'"true"','import.meta.env.VITE_PLATFORM_FOUNDATION':'"false"'},resolve:{alias:[{find:/^\.{1,2}\/lib\/supabase$/,replacement:fileURLToPath(new URL('../src/test/fixtures/adminSupabase.ts',import.meta.url))}]},server:{host:'127.0.0.1',port:5205,strictPort:true},plugins:[{name:'local-admin-workflow',configureServer(vite){vite.middlewares.use(async(req,res,next)=>{
  const path=new URL(req.url,'http://localhost').pathname;
- if(path==='/qa/admin'||path==='/qa/restaurant'){res.setHeader('Content-Type','text/html');res.end(await vite.transformIndexHtml(req.url,'<!doctype html><html lang="tr"><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><div id="root"></div><script type="module" src="/src/test/fixtures/AdminWorkflowDemo.tsx"></script></body></html>'));return;}
+ if(path==='/qa/admin'||path==='/qa/restaurant'||path==='/qa/discovery'){res.setHeader('Content-Type','text/html');res.end(await vite.transformIndexHtml(req.url,'<!doctype html><html lang="tr"><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><div id="root"></div><script type="module" src="/src/test/fixtures/AdminWorkflowDemo.tsx"></script></body></html>'));return;}
+ if(path==='/api/places'){adapt(res).status(200).json({places:[{id:'test-google-hotel',displayName:{text:'TEST ONLY Google Hotel'},location:{latitude:41.0083,longitude:28.9785},types:['hotel'],primaryType:'hotel',googleMapsUri:'https://maps.google.com/?cid=1',formattedAddress:'TEST ONLY İstanbul',rating:4.2,userRatingCount:10}]});return;}
  if(path==='/qa/stats'){res.setHeader('Content-Type','text/html');res.end('<h1>TEST ONLY — local counters</h1><pre>'+JSON.stringify({emails,bookings:(await db.query('select count(*)::int total from bookings')).rows[0].total})+'</pre>');return;}
  if(path!=='/__qa/query'&&path!=='/api/reservations'){next();return;}
  let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>10000){res.statusCode=413;res.end();return;}}

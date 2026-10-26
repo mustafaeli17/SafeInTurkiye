@@ -10,6 +10,8 @@ it('guest intake is idempotent, rate-limited and private; notifications commit w
   create table storage.buckets(id text primary key,name text,public boolean);create table storage.objects(id uuid primary key default gen_random_uuid(),bucket_id text);`);
   for(const file of (await readdir('supabase/migrations')).filter(f=>/^000[1-4]_/.test(f)).sort())await db.exec((await readFile('supabase/migrations/'+file,'utf8')).replace('create extension if not exists pgcrypto;',''));
   await db.exec(await readFile('supabase/migrations/0006_restaurant_request_workflow.sql','utf8'));
+  await db.exec(await readFile('supabase/migrations/0007_editorial_discovery_fields.sql','utf8'));
+  await db.exec(await readFile('supabase/migrations/0007_editorial_discovery_fields.sql','utf8'));
   await db.exec('grant usage on schema public,auth to anon,authenticated,service_role;grant select on public.bookings to anon,authenticated;grant insert,update on public.bookings to authenticated;');
   const request='00000000-0000-0000-0000-000000000101',hash='a'.repeat(64),ip='b'.repeat(64);
   const submit=(id=request,client=ip,token=hash)=>db.query(`select * from public.submit_restaurant_request($1,$2,$3,'TEST restaurant','TEST guest','guest@example.test','+90000000000',current_date+1,'19:00',2,'{"notes":"Test only"}')`,[id,token,client]);
