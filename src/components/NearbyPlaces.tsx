@@ -13,6 +13,8 @@ import {foundationEnabled} from '../lib/foundationConfig'
 import { searchDestinations, directionsText } from '../lib/searchDestinations'
 import {useBrowserLocation,updateLocationQuery} from '../lib/browserNavigation'
 import {destinationSlug,discoveryCity} from '../lib/discoveryNavigation'
+import {cityDisplayName} from '../lib/cityLocale'
+import {discoveryFilterCopy,filterDiscovery} from '../lib/discoveryFilters'
 import {readDiscoveryArea,saveDiscoveryArea} from '../lib/discoveryState'
 import {createPhotoRefreshGuard} from '../lib/photoRefresh'
 import {discoverySupplement} from '../lib/discoveryCopy'
@@ -186,7 +188,9 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
   }
 
   const busy = state === 'locating' || state === 'loading'
-  const places = combineDiscovery(result?.places??[],editorial,kind==='exchange'?'bureau_de_change':filter)
+  const allPlaces = combineDiscovery(result?.places??[],editorial,kind==='exchange'?'bureau_de_change':filter)
+  const places=detailId?allPlaces:filterDiscovery(allPlaces,new URLSearchParams(query))
+  const filtersCopy=discoveryFilterCopy[locale]??discoveryFilterCopy.en
   useEffect(()=>{
     if(!foundationEnabled||!eventRoot.current||!('IntersectionObserver' in window))return
     const observer=new IntersectionObserver(items=>{for(const item of items){const key=(item.target as HTMLElement).dataset.businessKey;if(item.isIntersecting&&key&&!seenEvents.current.has(key)){seenEvents.current.add(key);trackBusinessEvent(key,'impression',eventContext)}}},{threshold:0.5})
@@ -204,7 +208,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
           <p className="text-xs text-slate-600 mt-1">{fixedCategory ? text('Şehir ve çevresinden öne çıkan sonuçlar (30 km); tüm işletmelerin listesi değildir. Konum araması 2,5 km içindedir.', 'Selected results across the city area (30 km), not an exhaustive directory. Location searches cover 2.5 km.') : text('2,5 km içindeki kayıtlar; mesafeler kuş uçuşudur.', 'Published places within 2.5 km; distances are straight-line estimates.')}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <select aria-label={text('Aranacak şehir', 'Search city')} value={selectedCity} onChange={event => {setAddress('');setAddressPlace(null);setSelectedCity(event.target.value)}} className="rounded-xl border border-sky-200 bg-white px-3 py-2 text-xs">{Object.keys(cities).map(city => <option key={city}>{city}</option>)}</select>
+          <select aria-label={text('Aranacak şehir', 'Search city')} value={selectedCity} onChange={event => {setAddress('');setAddressPlace(null);setSelectedCity(event.target.value)}} className="min-h-11 rounded-xl border border-sky-200 bg-white px-3 py-2 text-xs">{Object.keys(cities).map(city => <option key={city} value={city}>{cityDisplayName(city,locale)}</option>)}</select>
           <button type="button" onClick={searchLocation} disabled={busy} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#00A3E0] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#0284C7] disabled:opacity-60 disabled:cursor-wait"><LocateFixed className="h-4 w-4" />{text('Konumumu kullan', 'Use my location')}</button>
         </div>
       </div>
@@ -215,12 +219,15 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
       <p className="text-[11px] leading-relaxed text-slate-500">{text('Konumunuzu seçerseniz arama için yaklaşık koordinatlarınız harita veri sağlayıcısına gönderilir; bu sitede kalıcı olarak saklanmaz.', 'If you use your location, approximate coordinates are sent to the map data service to run the search; this site does not permanently store them.')}</p>
 
       {fixedCategory === 'activity' && <div className="flex flex-wrap gap-2" aria-label={text('Aktivite kategorisi', 'Activity category')}>
-        {(['activity', 'museum', 'historical', 'cinema', 'entertainment', 'park'] as const).map(category => <button type="button" key={category} aria-pressed={filter === category} onClick={() => { generation.current += 1; controller.current?.abort(); setFilter(category); setResult(null); setError(null) }} className={`min-h-11 rounded-full border px-4 py-2 text-xs font-semibold ${filter === category ? 'border-[#087FFF] bg-[#087FFF] text-white' : 'border-sky-100 bg-white text-slate-700'}`}>{categoryLabel(category)}</button>)}
+        {(['activity', 'museum', 'historical', 'cinema', 'entertainment', 'park'] as const).map(category => <button type="button" key={category} aria-pressed={filter === category} onClick={() => { generation.current += 1; controller.current?.abort(); setFilter(category); setResult(null); setEditorial([]);setState('loading');setError(null) }} className={`min-h-11 rounded-full border px-4 py-2 text-xs font-semibold ${filter === category ? 'border-[#087FFF] bg-[#087FFF] text-white' : 'border-sky-100 bg-white text-slate-700'}`}>{categoryLabel(category)}</button>)}
       </div>}
+
+      {filter==='pharmacy'&&<p role="note" className="rounded-xl border border-amber-100 bg-amber-50 p-3 text-sm text-amber-900">{nearbyNotice(locale,true)}</p>}
       {kind === 'essential' && !fixedCategory && <div className="flex flex-wrap gap-2" aria-label={text('Yer türü', 'Place category')}>
         {(['all', 'restaurant', 'hotel', 'cafe', 'attraction', 'museum', 'pharmacy', 'hospital', 'atm', 'bureau_de_change', 'shopping', 'barber', 'hair_salon', 'police', 'taxi'] as const).map(category => <button type="button" key={category} aria-pressed={filter === category} onClick={() => { generation.current += 1; controller.current?.abort(); setFilter(category); setResult(null); setState('idle'); setError(null); setLimit(12) }} className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${filter === category ? 'border-[#00A3E0] bg-[#00A3E0] text-white' : 'border-slate-200 bg-white text-slate-700 hover:bg-sky-50'}`}>{category === 'all' ? text('Tümü', 'All') : categoryLabel(category)}</button>)}
       </div>}
 
+      {!detailId&&state==='ready'&&allPlaces.length>0&&<details className="rounded-xl border border-sky-100 bg-white p-3 text-sm"><summary className="min-h-11 cursor-pointer py-2">{filtersCopy[0]}</summary><div className="flex flex-wrap items-end gap-3"><label>{filtersCopy[1]}<select className="block min-h-11 rounded-xl border p-2" value={new URLSearchParams(query).get('order')??'recommended'} onChange={e=>updateLocationQuery({order:e.target.value})}>{['recommended','distance','rating'].map((value,i)=><option key={value} value={value}>{filtersCopy[2+i]}</option>)}</select></label><label>{filtersCopy[6]}<select className="block min-h-11 rounded-xl border p-2" value={new URLSearchParams(query).get('minRating')??'0'} onChange={e=>updateLocationQuery({minRating:e.target.value})}><option value="0">{filtersCopy[7]}</option><option value="3">3+</option><option value="4">4+</option><option value="4.5">4.5+</option></select></label><label className="flex min-h-11 items-center gap-2"><input type="checkbox" checked={new URLSearchParams(query).get('open')==='true'} onChange={e=>updateLocationQuery({open:e.target.checked?'true':null})}/>{filtersCopy[5]}</label><button className="min-h-11 px-3 text-blue-700" onClick={()=>updateLocationQuery({open:null,minRating:null,order:null})}>{filtersCopy[8]}</button></div></details>}
       <div aria-live="polite" role="status" className="text-xs text-slate-600">
         {state === 'locating' && text('Konum izniniz bekleniyor…', 'Waiting for your location…')}
         {state === 'loading' && text('Yakındaki yerler aranıyor…', 'Searching nearby places…')}
@@ -253,7 +260,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
             <a href={`https://www.google.com/maps/dir/?api=1&destination=${place.coordinates.lat},${place.coordinates.lng}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-1">{directionsText[locale] ?? directionsText.en}<ExternalLink aria-hidden="true" className="h-3 w-3" /></a>
             {place.website && <a data-event="website" href={place.website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1">{text('Web sitesi', 'Website')}<ExternalLink className="h-3 w-3" /></a>}
           </div>
-          {detailId === place.id && place.category === 'restaurant' && <RestaurantRequest businessKey={businessKey(place.id)} name={place.name ?? ''} source={place.sourceUrl} lang={locale} />}
+          {detailId === place.id && place.category === 'restaurant' && <RestaurantRequest businessKey={businessKey(place.id)} name={place.name ?? ''} city={selectedCity} source={place.sourceUrl} lang={locale} />}
         </article>)}
       </div>
       {state==='ready' && kind==='exchange' && <p className="text-xs text-slate-500">{text('Büro alış/satış kurları mevcut değil; işlemden önce net kur ve komisyonu işletmeden teyit edin.', 'Bureau buy/sell rates are not available; confirm the net rate and commission with the business before exchanging.')}</p>}

@@ -71,7 +71,11 @@ for(const entry of entries){
  }
 }
 const homeBody=`<main class="max-w-5xl mx-auto px-4 py-8 space-y-6"><h1 class="text-3xl font-extrabold">Türkiye, made easier.</h1><p>Practical local information for a safer, smarter and more enjoyable trip.</p><nav aria-label="Destinations"><h2>City guides</h2><ul>${entries.filter(entry=>entry.kind==='cities').map(entry=>`<li>${linkFor(entry)}</li>`).join('')}</ul></nav>${['hotels','restaurants','activities'].map(kind=>`<section><h2>${({hotels:'Hotels',restaurants:'Restaurants',activities:'Activities'})[kind]}</h2><ul>${entries.filter(entry=>entry.kind===kind).map(entry=>`<li>${linkFor(entry)}</li>`).join('')}</ul></section>`).join('')}</main>`;
-await writeFile('dist/index.html',base.replace('<div id="root"></div>',`<div id="root">${homeBody}</div>`));
+const hero=JSON.parse(await readFile('src/data/heroPhoto.json','utf8'));
+// Discover the LCP asset before React loads, only on the homepage. Other routes
+// must not download a hero they never display. Metadata is shared with the view.
+const heroPreload=`<link rel="preload" as="image" href="${escape(hero.src)}" imagesrcset="${escape(hero.srcSet)}" imagesizes="(max-width: 1200px) 100vw, 1180px" fetchpriority="high">`;
+await writeFile('dist/index.html',base.replace('</head>',heroPreload+'</head>').replace('<div id="root"></div>',`<div id="root">${homeBody}</div>`));
 // Static-host 404 body; not a catch-all rewrite to a successful homepage.
 await writeFile('dist/404.html',`<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>Page not found | SafeInTürkiye</title></head><body><main><a href="/">SafeInTürkiye</a><h1>Page not found</h1><p>This address does not match a public page.</p><a href="/">Back to SafeInTürkiye</a></main></body></html>`);
 await writeFile('dist/sitemap.xml',`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${locations.map(url=>`<url><loc>${url}</loc></url>`).join('')}</urlset>`);

@@ -55,7 +55,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .travel-guide-banner { display: flex; gap: 18px; align-items: center; margin-top: 25px; padding: 25px; border: 1px solid #dceaf6; border-radius: 16px; background: linear-gradient(110deg,#e1f3ff,#fff); }
 .travel-guide-banner > svg { color: #087fff; flex-shrink: 0; }
 .travel-guide-banner > div { flex: 1; }
-.travel-guide-banner button { display: flex; align-items: center; gap: 7px; }
+.travel-guide-banner button { display: flex; align-items: center; gap: 7px; background: #0064b7; color: white; min-height: 44px; }
 @media (max-width: 640px) {
   .travel-home { padding: 10px 12px 40px; }
   .travel-hero { min-height: 350px; border-radius: 14px; }

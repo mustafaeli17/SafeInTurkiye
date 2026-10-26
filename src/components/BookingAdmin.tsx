@@ -1,15 +1,16 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {Bell,Check,Clock,Mail,Phone,RefreshCw,Search,X} from 'lucide-react';
-import {requireSupabase} from '../lib/supabase';
-import {adminStatus,reservationDate,reservationDetails,reservationMatches,safeAdminUrl} from '../lib/adminReservations';
+import ReservationNotificationHealth from './ReservationNotificationHealth';
+import ReservationAudit from './ReservationAudit';
+import {adminStatus,isTestReservation,reservationUpdated,reservationWaiting,reservationDate,reservationDetails,reservationMatches,safeAdminUrl} from '../lib/adminReservations';
 import AccessibleDialog from './AccessibleDialog';
 import type {ReservationRow} from '../lib/adminReservations';
 import {changeReservationStatus,loadAdminReservations} from '../repositories/adminBookingRepository';
 export default function BookingAdmin({onChanged}:{onChanged?:()=>void}={}){
- const [rows,setRows]=useState<ReservationRow[]>([]),[total,setTotal]=useState<number|null>(null),[status,setStatus]=useState(''),[search,setSearch]=useState('');
+ const [rows,setRows]=useState<ReservationRow[]>([]),[total,setTotal]=useState<number|null>(null),[status,setStatus]=useState(''),[search,setSearch]=useState(()=>{const ref=new URLSearchParams(window.location.hash.split('?')[1]).get('request')??'';return /^SIT-[A-Z0-9-]{1,40}$/.test(ref)?ref:'';});
  const [message,setMessage]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false),[saving,setSaving]=useState<string|null>(null),[newCount,setNewCount]=useState(0);
- const [emailState,setEmailState]=useState(''),[emailBusy,setEmailBusy]=useState(false);
  const [confirming,setConfirming]=useState<{row:ReservationRow;next:string}|null>(null);
+ const [showTests,setShowTests]=useState(false);
  const controller=useRef<AbortController|null>(null),generation=useRef(0),seen=useRef(new Set<string>()),initialized=useRef(false),mutating=useRef(false);
  const load=useCallback(async(quiet=false,more=false)=>{
   if(mutating.current)return;
@@ -40,29 +41,20 @@ export default function BookingAdmin({onChanged}:{onChanged?:()=>void}={}){
   catch{setError('Kaydedilemedi veya kayıt başka bir oturumda değişti. Listeyi yenileyin; değişiklik başarılı sayılmadı.');}
   finally{mutating.current=false;setSaving(null);setConfirming(null);}
  }
- async function retryEmail(){
-  if(emailBusy)return;setEmailBusy(true);setEmailState('');
-  try{
-   const {data}=await requireSupabase().auth.getSession();if(!data.session)throw Error();
-   const response=await fetch('/api/reservations',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+data.session.access_token},body:JSON.stringify({action:'notifications'}),signal:AbortSignal.timeout(30000)});
-   const result=await response.json();if(!response.ok)throw Error();
-   setEmailState(!result.configured?'E-posta gönderimi henüz yapılandırılmamış. Panel içi talepler burada görünür.':`Gönderilen: ${result.sent} · Tekrar denenecek: ${result.failed}. Bu, gelen kutusuna teslim garantisi değildir.`);
-  }catch{setEmailState('Bildirim kuyruğu kontrol edilemedi. Sunucu yapılandırmasını ve yetkinizi kontrol edin.');}
-  finally{setEmailBusy(false);}
- }
- const filtered=rows.filter(row=>reservationMatches(row,search,''));
+ const filtered=rows.filter(row=>(showTests||!isTestReservation(row))&&reservationMatches(row,search,''));
  return <section className="admin-bookings">
   <div className="admin-section-heading"><div><p className="admin-eyebrow">OPERASYON</p><h2>Restoran rezervasyonları</h2><p>Restoranı arayın, ardından onay veya ret durumunu kaydedin.</p></div><button className="admin-button" disabled={busy||Boolean(saving)} onClick={()=>{setNewCount(0);void load();}}><RefreshCw size={16}/>{busy?'Yükleniyor…':'Yenile'}</button></div>
   {newCount>0&&<div role="status" className="admin-new-notice"><Bell size={18}/>{newCount} yeni talep geldi.<button onClick={()=>setNewCount(0)}>Gördüm</button></div>}
   <div className="admin-filter-bar"><label><Search size={17}/><span className="sr-only">Talep ara</span><input placeholder="Referans, restoran, müşteri veya telefon" value={search} onChange={e=>setSearch(e.target.value)}/></label><label><span className="sr-only">Talep durumu</span><select value={status} onChange={e=>{if(!saving){setRows([]);setStatus(e.target.value);}}} disabled={Boolean(saving)}><option value="">Tüm durumlar</option>{Object.entries(adminStatus).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label></div>
-  <p className="admin-caption">{total===null?'Toplam sayı alınamadı':`${total} talep`} · {rows.length} kayıt yüklendi · Açık sekmede 30 sn arayla yenilenir.</p>
+  <label className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" checked={showTests} onChange={e=>setShowTests(e.target.checked)}/>TEST ONLY kayıtlarını göster ({rows.filter(isTestReservation).length} yüklü)</label>
+  <p className="admin-caption">{total===null?'Toplam sayı alınamadı':`${total} toplam kayıt (testler dahil)`} · {rows.filter(row=>!isTestReservation(row)).length} gerçek talep yüklendi · Açık sekmede 30 sn arayla yenilenir.</p>
   {error&&<p role="alert" className="admin-error">{error}</p>}{message&&<p role="status" className="admin-success">{message}</p>}
   {!busy&&!filtered.length&&<div className="admin-empty"><Clock size={28}/><h3>{search?'Aramayla eşleşen talep yok':'Bu görünümde talep yok'}</h3><p>Farklı bir durum veya arama seçebilirsiniz.</p></div>}
   <div className="admin-request-grid">{filtered.map(row=>{const detail=reservationDetails(row),source=safeAdminUrl(detail.source),actions=row.status==='PENDING'?['CONFIRMED','REJECTED']:row.status==='CONFIRMED'?['CANCELLED']:[];
-   return <article key={row.id} className="admin-request-card"><div className="admin-request-top"><span className={'admin-badge admin-status-'+row.status}>{adminStatus[row.status]??'Bilinmeyen durum'}</span><bdi>{row.reference_code}</bdi></div><h3>{row.listing_name}</h3><p className="admin-request-date">{reservationDate(row.visit_date)} · {detail.time||'Saat belirtilmemiş'} · {row.guest_count} kişi</p><div className="admin-guest"><strong>{row.guest_name}</strong>{detail.phone&&/^[+0-9 ()-]{5,40}$/.test(detail.phone)&&<a href={'tel:'+detail.phone.replace(/[^+0-9]/g,'')}><Phone size={15}/>{detail.phone}</a>}<a href={'mailto:'+row.guest_email}><Mail size={15}/>{row.guest_email}</a></div>{detail.note&&<details><summary>Müşteri notu</summary><p className="whitespace-pre-wrap break-words">{detail.note}</p></details>}{source&&<a className="admin-source" href={source} target="_blank" rel="noopener noreferrer">Restoran kaydını aç ↗</a>}<div className="admin-request-actions">{actions.map(next=><button key={next} disabled={Boolean(saving)} className={next==='CONFIRMED'?'admin-button admin-primary':'admin-button'} onClick={()=>setConfirming({row,next})}>{saving===row.id?'…':next==='CONFIRMED'?<Check size={16}/>:<X size={16}/>} {next==='CONFIRMED'?'Onayla':next==='REJECTED'?'Reddet':'İptal et'}</button>)}</div></article>;
+   return <article key={row.id} className="admin-request-card"><div className="admin-request-top"><span className={'admin-badge admin-status-'+row.status}>{adminStatus[row.status]??'Bilinmeyen durum'}</span><bdi>{row.reference_code}</bdi></div><h3>{row.listing_name}</h3><p className="admin-request-date">{reservationDate(row.visit_date)} · {detail.time||'Saat belirtilmemiş'} · {row.guest_count} kişi</p><p className="admin-request-date">Son güncelleme: {reservationUpdated(row.updated_at)}{reservationWaiting(row)?` · Bekliyor: ${reservationWaiting(row)}`:''}{isTestReservation(row)?' · TEST ONLY':''}</p><div className="admin-guest"><strong>{row.guest_name}</strong>{detail.phone&&/^[+0-9 ()-]{5,40}$/.test(detail.phone)&&<a href={'tel:'+detail.phone.replace(/[^+0-9]/g,'')}><span>Müşteri telefonu: </span><Phone size={15}/>{detail.phone}</a>}<a href={'mailto:'+row.guest_email}><Mail size={15}/>{row.guest_email}</a></div>{detail.note&&<details><summary>Müşteri notu</summary><p className="whitespace-pre-wrap break-words">{detail.note}</p></details>}{source&&<a className="admin-source" href={source} target="_blank" rel="noopener noreferrer">Restoran kaydını aç ↗</a>}<ReservationAudit bookingId={row.id}/><div className="admin-request-actions">{actions.map(next=><button key={next} disabled={Boolean(saving)} className={next==='CONFIRMED'?'admin-button admin-primary':'admin-button'} onClick={()=>setConfirming({row,next})}>{saving===row.id?'…':next==='CONFIRMED'?<Check size={16}/>:<X size={16}/>} {next==='CONFIRMED'?'Onayla':next==='REJECTED'?'Reddet':'İptal et'}</button>)}</div></article>;
   })}</div>
   {total!==null&&rows.length<total&&<button disabled={busy||Boolean(saving)} className="admin-button" onClick={()=>void load(false,true)}>Daha fazla talep</button>}
-  <details className="admin-panel"><summary>Bildirim durumu</summary><p>Panel içi uyarılar bu sekme açıkken çalışır. E-posta için sunucu göndericisi, bildirim kuyruğu ve zamanlanmış tekrar deneme kurulmalıdır.</p><button className="admin-button" onClick={()=>void retryEmail()} disabled={emailBusy}>{emailBusy?'Kontrol ediliyor…':'E-posta kuyruğunu işle'}</button><p role="status">{emailState}</p></details>
+  <ReservationNotificationHealth/>
   {confirming&&<AccessibleDialog label="Rezervasyon durumunu kaydet" onClose={()=>{if(!saving)setConfirming(null);}}><div className="p-6 space-y-4"><h3 className="font-bold text-lg">{adminStatus[confirming.next]}</h3><p className="text-sm text-slate-600">{confirming.row.reference_code} · {confirming.next==='CONFIRMED'?'Restoranla görüşüp rezervasyonu kesinleştirdiniz mi?':'Bu durum müşteriye gösterilecek.'}</p><div className="flex gap-3"><button autoFocus disabled={Boolean(saving)} className="admin-button" onClick={()=>setConfirming(null)}>Vazgeç</button><button disabled={Boolean(saving)} className="admin-button admin-primary" onClick={()=>void update(confirming.row,confirming.next)}>{saving?'Kaydediliyor…':'Durumu kaydet'}</button></div></div></AccessibleDialog>}
  </section>;
 }

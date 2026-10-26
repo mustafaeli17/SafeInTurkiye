@@ -1,5 +1,5 @@
 import SearchAlternatives from './SearchAlternatives';
-import { useState } from 'react';
+import { useEffect,useState } from 'react';
 import {restaurantRequestsEnabled,reservationUnavailable} from '../lib/reservationAvailability';
 import { practicalFaq, practicalSources } from '../data/practicalFaq';
 
@@ -100,6 +100,7 @@ export function TransportCardGuide({ city, lang }: { city: string; lang: string 
 
 export default function TravelFaq({ lang, initialQuery = '' }: { lang: string; initialQuery?: string }) {
   const [query, setQuery] = useState(initialQuery);
+  useEffect(()=>setQuery(initialQuery),[initialQuery]);
   const [topic, setTopic] = useState(-1);
   const topicLabels = ({ es: ['Transporte', 'Dinero', 'Cerca de mí', 'Reservas', 'Actividades'], en: ['Transport', 'Money', 'Near me', 'Bookings', 'Activities'], tr: ['Ulaşım', 'Para', 'Yakınımda', 'Rezervasyon', 'Aktiviteler'], de: ['Verkehr', 'Geld', 'In der Nähe', 'Buchungen', 'Aktivitäten'], fr: ['Transports', 'Argent', 'À proximité', 'Réservations', 'Activités'], ar: ['المواصلات', 'المال', 'بالقرب مني', 'الحجوزات', 'الأنشطة'], ru: ['Транспорт', 'Деньги', 'Рядом', 'Бронирования', 'Развлечения'], zh: ['交通', '换汇', '附近', '预订', '活动'] } as Record<string, string[]>)[lang] ?? ['Transport', 'Money', 'Near me', 'Bookings', 'Activities'];
   const topicRows = [[0,1,2,3,4,5,19], [6,16], [7,10,14,15,18], [8,9,13,17], [11,12,18]];

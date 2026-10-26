@@ -16,6 +16,8 @@ beforeAll(async()=>{
   await db.exec(await readFile('supabase/migrations/0007_editorial_discovery_fields.sql','utf8'));
   await db.exec(await readFile('supabase/migrations/0008_reservation_retention.sql','utf8'));
   await db.exec(await readFile('supabase/migrations/0008_reservation_retention.sql','utf8'));
+  await db.exec(await readFile('supabase/migrations/0009_reservation_operations.sql','utf8'));
+  await db.exec(await readFile('supabase/migrations/0009_reservation_operations.sql','utf8'));
   await db.exec('grant usage on schema public,auth to anon,authenticated,service_role;grant select on public.bookings to anon,authenticated;grant insert,update on public.bookings to authenticated;');
 },60000);
 afterAll(async()=>{if(db)await db.close();},60000);
@@ -42,6 +44,10 @@ it('guest intake is idempotent, rate-limited and private; notifications commit w
   await expect(submit()).rejects.toThrow();
   await db.query("update bookings set status='CONFIRMED' where id=$1",[first.id]);
   expect((await db.query('select status from bookings where id=$1',[first.id])).rows).toEqual([{status:'CONFIRMED'}]);
+  expect((await db.query('select old_status,new_status,actor_id from reservation_status_audit where booking_id=$1',[first.id])).rows).toEqual([{old_status:'PENDING',new_status:'CONFIRMED',actor_id:'00000000-0000-0000-0000-000000000001'}]);
+  await expect(db.query("update bookings set status='PENDING' where id=$1",[first.id])).rejects.toThrow('INVALID_TRANSITION');
+  expect((await db.query('update bookings set status=\'CANCELLED\' where id=$1 and status=\'PENDING\' returning id',[first.id])).rows).toHaveLength(0);
+  const health=(await db.query<{last_attempt_at:Date}>('select last_attempt_at from reservation_notifications where booking_id=$1',[first.id])).rows[0];expect(health.last_attempt_at).toBeTruthy();
   await expect(db.query('select anonymize_expired_restaurant_requests()')).rejects.toThrow();
   await db.exec('reset role;alter table bookings disable trigger bookings_updated;');
   await db.query("update bookings set updated_at=now()-interval '100 days',visit_date=current_date-100 where id=$1",[first.id]);

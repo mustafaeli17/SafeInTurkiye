@@ -3,6 +3,11 @@ import type { NearbyCategory, NearbyCenter, NearbyPlaceRecord, NearbyResult } fr
 
 const mapping: [string, NearbyCategory][] = [['barber_shop','barber'],['hair_salon','hair_salon'],['hair_care','hair_salon'],['museum','museum'],['tourist_attraction','attraction'],['hotel','hotel'],['lodging','hotel'],['cafe','cafe'],['restaurant','restaurant'],['pharmacy','pharmacy'],['hospital','hospital'],['atm','atm'],['shopping_mall','shopping'],['police','police'],['taxi_stand','taxi']]
 const str = (value: unknown): string | null => typeof value === 'string' && value.trim() ? value.trim().slice(0, 2000) : null
+const acceptedTypes:Partial<Record<NearbyCategory,string[]>>={
+ cinema:['movie_theater'],museum:['museum'],historical:['historical_landmark'],park:['park'],
+ entertainment:['amusement_park','bowling_alley'],activity:['tourist_attraction','museum','historical_landmark','park','amusement_park','movie_theater','bowling_alley'],
+ hotel:['hotel','lodging'],restaurant:['restaurant'],cafe:['cafe'],pharmacy:['pharmacy'],hospital:['hospital'],atm:['atm'],shopping:['shopping_mall'],attraction:['tourist_attraction'],
+};
 export function parseGooglePlaces(payload: unknown, center: NearbyCenter, category: NearbyCategory | 'all', radius = 2500): NearbyResult {
   if (!payload || typeof payload !== 'object' || !('places' in payload) || !Array.isArray(payload.places)) throw new NearbyError('invalid-response')
   const records = new Map<string, NearbyPlaceRecord>()
@@ -11,6 +16,9 @@ export function parseGooglePlaces(payload: unknown, center: NearbyCenter, catego
     // A parent hotel/mall may list restaurant as a secondary service. Do not
     // advertise the whole parent property as an independently named restaurant.
     if(category==='restaurant' && ['hotel','lodging','shopping_mall'].includes(p.primaryType))continue
+    // A requested category is not proof that every provider result has that type.
+    // Accept genuine secondary types too (e.g. a museum within an attraction).
+    if(category!=='all'&&acceptedTypes[category]&&Array.isArray(p.types)&&p.types.length&&!acceptedTypes[category]!.some(type=>p.types.includes(type)))continue
     const point = { lat: p.location?.latitude, lng: p.location?.longitude }
     if (!isValidCenter(point) || !str(p.displayName?.text)) continue
     const distance = distanceInMeters(center, point)

@@ -47,7 +47,7 @@ export default function SponsorshipAdmin(){
   <button disabled={busy} onClick={()=>void load()} className="min-h-11 border rounded-lg px-4">Kayıtları getir / yenile</button>
   <form onSubmit={save} className="flex flex-wrap gap-3">
    <label>İşletme<select name="business" required className="block border p-2 max-w-full"><option value="">Seçin</option>{businesses.map(row=><option key={`${row.kind}/${row.id}`} value={`${row.kind}/${row.id}`}>{row.name} ({row.kind})</option>)}</select></label>
-   <label>Yerleşim<select name="context" className="block border p-2">{['city','hotels','restaurants','activities'].map(value=><option key={value}>{value}</option>)}</select></label>
+   <label>Yerleşim<select name="context" className="block border p-2">{Object.entries({city:'Şehir sayfası',hotels:'Oteller',restaurants:'Restoranlar',activities:'Aktiviteler'}).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
    <label>Başlangıç<input name="start" type="datetime-local" required className="block border p-2"/></label>
    <label>Bitiş<input name="end" type="datetime-local" required className="block border p-2"/></label>
    <label>Öncelik<input name="priority" type="number" min="0" max="1000" defaultValue="0" className="block border p-2 w-24"/></label>

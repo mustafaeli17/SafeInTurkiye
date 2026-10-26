@@ -26,6 +26,7 @@ const NearbyPlacesComponent=lazy(()=>import('./components/NearbyPlaces'));
 function NearbyPlaces(props:ComponentProps<typeof NearbyPlacesComponent>){return <Suspense fallback={<PageLoading lang={props.lang}/>}><NearbyPlacesComponent {...props}/></Suspense>;}
 import PageLoading from './components/PageLoading';
 const SafeRouteMap=lazy(()=>import('./components/TaxiRouteMap'));
+const FirstVisitPlan=lazy(()=>import('./components/FirstVisitPlan'));
 import PhotoCredits from './components/PhotoCredits';
 import SponsoredBusinesses from './components/SponsoredBusinesses';
 import TravelHome from './components/TravelHome';
@@ -54,8 +55,8 @@ import { routeFareRange } from './lib/taxiCalculation';
 import { taxiCityFromAddress,taxiReferenceCity,taxiUnavailableText } from './lib/taxiCity';
 import { taxiBudgetCopy,taxiDetailsCopy,taxiEstimateCopy,taxiIntroCopy } from './lib/taxiCopy';
 import { taxiErrorText,type TaxiErrorKey } from './lib/taxiErrors';
-import { taxiRouteNotice,taxiCalculationMapNotice } from './lib/taxiRouteNotice';
-import {taxiMapKey} from './lib/mapEnvironment';
+import {taxiCalculationMapNotice} from './lib/taxiRouteNotice';
+import SearchContext from './components/SearchContext';
 import { taxiSearchUrl } from './lib/taxiSearch';
 import { toursLabel } from './lib/viatorCopy';
 import { directoryText } from './lib/visitorDirectory';
@@ -377,7 +378,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
   const selectedCityName=publicCities.find(c=>cityPath(c.name)===browserPath)?.name??publicCities.find(c=>c.slug===new URLSearchParams(browserQuery).get('city'))?.name??'İstanbul';
   const setActiveTab = (tab:typeof activeTab) => {
     setAdminOpen(tab==='admin');
-    if(tab==='admin'){if(window.location.hash!=='#admin')window.location.hash='admin';return;}
+    if(tab==='admin'){if(window.location.hash!=='#admin')window.location.assign('#admin');return;}
     const path=tab==='city'?cityPath(selectedCityName):sectionPath(tab);
     const city=destinationSlug(discoveryCity(browserQuery,selectedCityName));
     const target=tab!=='home'&&tab!=='city'&&city?path+'?city='+city:path;
@@ -403,7 +404,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
     const candidate = initialLanguage || readLanguagePreference();
     return ['en','tr','de','fr','ar','ru','zh','es'].includes(candidate) ? candidate as SupportedLang : 'en';
   });
-  const [searchQuery, setSearchQuery] = useState('');
+  const searchQuery=new URLSearchParams(browserQuery).get('q')??'';
   const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -425,7 +426,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
   const [authBusy, setAuthBusy] = useState(false);
   useEffect(() => {
     const openAdmin = () => {
-      const open=window.location.hash==='#admin';setAdminOpen(open);
+      const open=window.location.hash.split('?')[0]==='#admin';setAdminOpen(open);
       if(open&&!session&&!authLoading)setAuthModalOpen(true);
     };
     openAdmin();
@@ -435,16 +436,17 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
   const handleGlobalSearch = (input = searchQuery) => {
     const query = input.trim();
     if (!query) return;
+    if(activeTab==='home')navigateTo('/?'+new URLSearchParams({q:query}),{replace:true,scroll:false});
     const newCity=findCityGuide(query);
     if(newCity){openCityGuide(newCity.slug,lang);return;}
     const low = query.toLocaleLowerCase('tr-TR');
     const normalized = normalizeSearch(query);
     const mentionedCity = publicCities.find(city => normalized.includes(normalizeSearch(city.name)));
-    const navigateSearch=(section:Section)=>mentionedCity?navigateTo(`${sectionPath(section)}?city=${mentionedCity.slug}`):setActiveTab(section);
+    const navigateSearch=(section:Section)=>{const params=new URLSearchParams({q:query});if(mentionedCity)params.set('city',mentionedCity.slug);if(transferIntent(query))params.set('intent','transfer');navigateTo(`${sectionPath(section)}?${params}`);};
     setActivityCategory('All');
     const cityMatch = Object.keys(citiesDetailedData).find(city => city.toLocaleLowerCase('tr-TR') === low || city.toLowerCase().replace(/i̇/g, 'i') === query.toLowerCase());
     if (cityMatch) { navigateTo(cityPath(cityMatch)); return; }
-    if (transferIntent(query)) navigateSearch('tours');
+    if (transferIntent(query)) navigateSearch('transit');
     else if (/taksi|taxi|fare|ücret|такси|تاكسي|出租车/.test(low)) navigateSearch('taxi');
     else if (/metro|métro|otobüs|bus|tren|train|vapur|ferry|marmaray|ulaşım|transit|route|rota|bahn|transport|транспорт|метро|автобус|مواصلات|مترو|حافل|地铁|公交|交通|火车/.test(low)) navigateSearch('transit');
     else if (/döviz|kur|exchange|currency|euro|usd|wechsel|change|валют|обмен|صرف|صراف|汇率|换汇/.test(low)) navigateSearch('currency');
@@ -829,6 +831,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
 
               <a
                 href="tel:112"
+                aria-label={`${tr('emergency')} 112`}
                 className="flex items-center justify-center gap-1.5 w-9 sm:w-auto sm:px-3.5 h-9 rounded-xl bg-red-600 hover:bg-red-700 text-white text-[12px] font-extrabold shadow-md shadow-red-600/20 active:scale-95 transition-all cursor-pointer"
               >
                 <PhoneCall className="w-3.5 h-3.5" />
@@ -844,6 +847,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
           </nav>}
         </header>
         {activeTab!=='home' && activeTab!=='taxi' && <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-3"><HomeButton lang={lang} currentPage={({assistant:tr('assistant'),transit:tr('transit'),currency:tr('currency'),city:selectedCityName,nearme:tr('nearMe'),stay:page('hotelsTitle'),food:page('diningTitle'),experiences:page('activitiesTitle'),tours:toursLabel(lang),safety:page('safety'),admin:'CMS Studio'} as Record<string,string>)[activeTab]} onClick={()=>{setActiveTab('home');setMobileMenuOpen(false);window.scrollTo(0,0);}}/></div>}
+        {activeTab!=='home'&&searchQuery&&<SearchContext query={searchQuery} city={new URLSearchParams(browserQuery).get('city')??undefined} transfer={new URLSearchParams(browserQuery).get('intent')==='transfer'} lang={lang}/>}
 
         {/* ====================================================================
             PAGE 1: EXPLORE
@@ -851,10 +855,11 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
         {activeTab==='city'&&<SponsoredBusinesses context="city" city={selectedCityName} lang={lang}/>}
         {activeTab === 'home' && <TravelHome
           lang={lang}
+          initialQuery={searchQuery}
           cities={publicCities.map(city=>({key:city.name,name:city.name}))}
           onNavigate={setActiveTab}
           onCity={city => navigateTo(cityPath(city))}
-          onSearch={query => { setSearchQuery(query); handleGlobalSearch(query); }}
+          onSearch={query => handleGlobalSearch(query)}
           onCategory={category => { setActivityCategory(category); setActiveTab('experiences'); }}
         />}
 
@@ -972,7 +977,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
 
                 {taxiRouteError && <p role={taxiRouteError === 'unavailable' ? 'status' : 'alert'} className="text-sm text-slate-700 bg-sky-50 rounded-xl p-3">{taxiRouteError === 'unavailable' ? taxiUnavailableText(lang) : taxiErrorText(lang, taxiRouteError)}</p>}
                 {taxiRouteResult && !fareCalculation && <div className="grid grid-cols-2 gap-2 rounded-xl bg-sky-50 p-3 text-sm" aria-live="polite"><p>{page('distance')}<br /><strong>{taxiRouteResult.distanceKm.toLocaleString(lang,{maximumFractionDigits:1})} km</strong></p><p>{page('duration')}<br /><strong>~{taxiRouteResult.durationMinutes} min</strong></p></div>}
-                {taxiRouteResult && <p className="text-sm leading-relaxed text-slate-600">{(taxiMapKey(window.location.hostname,import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY,import.meta.env.VITE_GOOGLE_MAPS_PREVIEW_BROWSER_KEY)?taxiRouteNotice:taxiCalculationMapNotice)[lang]}</p>}
+                {taxiRouteResult && <details className="text-sm leading-relaxed text-slate-600"><summary className="min-h-11 cursor-pointer">{taxiDetailsCopy[lang][0]}</summary><p>{taxiCalculationMapNotice[lang]}</p></details>}
                 {taxiRouteResult && fareCalculation && (
                   <div className="pt-3 border-t border-slate-100 space-y-3">
                     <div className="p-4 bg-sky-50 rounded-2xl border border-sky-100 space-y-2">
@@ -1088,7 +1093,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
               </div>
             </section>
 
-            <Suspense fallback={<PageLoading lang={lang}/>}><TransportCardGuide city={selectedCityName} lang={lang} /></Suspense>
+            <Suspense fallback={<PageLoading lang={lang}/>}><TransportCardGuide city={selectedCityName} lang={lang} /><FirstVisitPlan city={selectedCityName} lang={lang}/></Suspense>
 
           </main>
         )}
@@ -1230,7 +1235,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
             <img src={siteLogo} alt="SafeInTürkiye" className="w-48 h-auto object-contain mx-auto sm:mx-0 my-3" />
             <p>{footerCopy[lang].source}</p><PhotoCredits lang={lang} />
           </div>
-          <div className="flex flex-wrap items-center gap-4 text-sm font-bold text-[#087FFF]">
+          <div className="flex flex-wrap items-center gap-4 text-sm font-bold text-[#0064b7]">
             <a href="/privacy" className="underline">{footerCopy[lang].privacy}</a>
             <span>•</span>
             <a href="/terms" className="underline">{footerCopy[lang].terms}</a>

@@ -1,0 +1,72 @@
+{
+  "date": "2026-10-26",
+  "status": "LOCAL_IMPLEMENTATION_AND_VALIDATION; NOT_DEPLOYED; INDEPENDENT_90_SCORE_NOT_CLAIMED",
+  "baseline": "2c92b68 (production code 97ffd64)",
+  "production_mutations_this_sprint": false,
+  "real_customer_or_business_test_messages": false,
+  "new_paid_services_or_credentials": false,
+  "implemented": {
+    "reservation": ["Türkiye calendar minimum and inline past-time error", "native input-event persistence across locale remounts", "30-minute memory-only personal drafts scoped by business", "opaque pending submission credentials in session storage for reload-safe deduplication", "authoritative saved visit summary, not edited retry fields", "1-20 guest limit preserved", "server-side 7-day private receipt access cutoff", "reference copying and explicit same-tab tracking/support guidance", "unknown/invalid tracking never shown as confirmed or pending"],
+    "notifications": ["existing durable outbox and lease/idempotency mechanism preserved", "escaped responsive HTML plus plain-text email with authenticated request deep link", "no guest PII in email", "queue aggregate counts and recent attempts", "provider acceptance explicitly separated from delivery", "allowlisted last-error codes; old-schema fallback", "byte-length-safe cron authorization"],
+    "admin": ["pending age and last update", "customer phone explicitly labelled", "TEST ONLY records excluded from default operational display/count", "status audit UI and protected migration", "existing optimistic status/version filters preserved", "section/request deep links without granting authorization", "live server readiness separate from frontend flag", "CMS business names in metrics; unknown Google names not invented; technical IDs collapsed", "Turkish sponsorship context labels"],
+    "search": ["query and city kept in URL/history", "transfer searches show explicit transport options instead of claiming a transfer filter", "search context states navigation is not business-name filtering"],
+    "taxi": ["fare formula unchanged", "calculation geometry drawn on Leaflet/OSM even when independent Google embed key exists", "calculation-source notice collapsed", "existing stale-coordinate safeguards preserved"],
+    "discovery": ["provider primary/secondary type validation for cinema/museum/etc", "loading state clears old editorial/category results", "distance/rating/open-now filters over loaded results only", "pharmacy notice above results", "localized city selector"],
+    "transit": ["boarding/alighting, walking, transfers, lines and provider fare shown per alternative", "walking instructions collapsible", "unknown waiting/fare not invented; no shortest/earliest conflation"],
+    "content": ["optional Viator duration/rating/review count/free-cancellation flag mapped only when supplied", "no extra Viator calls or booking changes", "official-source flexible Istanbul/Antalya first-day guidance in eight languages", "existing disclosures and contact details preserved"],
+    "performance_accessibility": ["same Istanbul hero re-encoded to responsive WebP, no visual redesign", "homepage-only responsive preload from shared metadata", "112 icon link accessible name", "footer/banner contrast fixes"]
+  },
+  "automated": {
+    "full_suite": "FINAL: 453 passed in 73 files after all application changes, including saved-date normalization and home search history",
+    "typecheck": "FINAL passed",
+    "lint": "FINAL passed",
+    "build": "FINAL passed; 12 directory pages; no runtime bundle-size warning; build plugin timing notice only",
+    "database": "PGlite applied 0009 twice; transition denial, actor audit, stale status conditional update, outbox claims, RLS, retention and idempotency assertions passed",
+    "secret_scan": "No server secret variable names/test credentials found in built assets"
+  },
+  "browser": {
+    "environment": "127.0.0.1:5207, in-memory PGlite, dummy guest, local mock mail transport; not production and not real Resend delivery",
+    "verified": ["past date blocked with inline message", "TR to ES to AR to ZH fields preserved", "different restaurant empty form", "double click produces one booking and one local mail", "authoritative date/time/4 guests receipt", "reference copy success", "invalid receipt shows support, not a fake status", "admin confirmation, customer refresh, actor audit and queue counts", "default TEST ONLY separation", "production-build homepage transfer search preserves Istanbul city/query and shows explicit transport choices", "browser Back restores typed home search; Forward restores result context"],
+    "widths": [360,390,768,1366],
+    "viewport_method": "Real browser same-origin iframe viewports, not physical devices or mobile Safari; document width equal to content width (scrollbar can subtract 15px)",
+    "width_scope": "Reservation form and admin layouts; not every platform page/menu at every width",
+    "proofs": ["tmp/quality-form-360.png","tmp/quality-form-1366.png","tmp/quality-admin-360.png","tmp/quality-receipt-final.png","tmp/quality-admin-desktop-final.png","tmp/quality-home-desktop.png"]
+  },
+  "performance": {
+    "method": "Lighthouse 13.5.0 CLI, headless Chrome, default simulated mobile throttling, same localhost production-preview URL and CLI options; single runs, not field data or a statistically controlled experiment",
+    "baseline_report": "tmp/lighthouse-before.json",
+    "final_report": "tmp/lighthouse-preload-final.json",
+    "performance_before": 58,
+    "performance_after": 86,
+    "accessibility_before": 91,
+    "accessibility_after": 100,
+    "lcp_ms_before": 19000,
+    "lcp_ms_after": 3780,
+    "tbt_ms_before": 370,
+    "tbt_ms_after": 59.5,
+    "cls_before": 0,
+    "cls_after": 0.00104,
+    "transfer_kib_before": 3687,
+    "transfer_bytes_after": 1362354,
+    "entry_js_kb_before": 208.74,
+    "entry_js_kb_after": 209.95,
+    "note": "Intermediate runs scored 69-74 before homepage preload. Do not claim a 90+ independent UX score or perfect mobile performance. LCP remains above the 2.5s good threshold."
+  },
+  "remote_migration_required": {
+    "file": "supabase/migrations/0009_reservation_operations.sql",
+    "applied_remote": false,
+    "purpose": "Server-enforced status transitions, actor/timestamp audit, notification last-attempt/error fields",
+    "next_gate": "Approve isolated TEST project migration and real Preview acceptance before any production rollout"
+  },
+  "limitations_and_remaining": [
+    "No physical iOS/Android device acceptance or live Vercel Preview test of these new changes",
+    "No real new email delivery test; only isolated mock transport per instruction; previous production delivery proof is historical",
+    "No new delivery webhook integration; panel correctly reports provider acceptance, not inbox delivery",
+    "Restaurant verified phone/official website are not yet rehydrated into booking cards; source record link retained, no client-supplied contact trusted as verified",
+    "Google-only metric business names/cities unavailable without an authorized transient lookup or CMS mapping; not invented or persistently copied",
+    "No calendar closed-hours warning inferred from localized unstructured hours strings",
+    "Cuisine/price/hotel amenities filters and tour pickup/languages are not fabricated when absent from current payload",
+    "Taxi/Transit/Viator changes have regression/fixture checks, not fresh end-to-end real-provider browser acceptance in every city",
+    "Full-site independent UX review and 90/100 target remain open, not marked complete"
+  ]
+}

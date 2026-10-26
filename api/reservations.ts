@@ -23,7 +23,7 @@ export default async function handler(req:ReservationHttpRequest,res:Reservation
   }
   if(input.action==='status'){
    if(!/^[a-f0-9-]{36}$/.test(input.requestId??'')||!/^[a-f0-9]{64}$/.test(input.receiptToken??''))return res.status(404).json({error:'NOT_FOUND'});
-   const rows=await reservationDb(`bookings?select=status&request_id=eq.${input.requestId}&receipt_hash=eq.${receiptHash(input.receiptToken)}&listing_type=eq.restaurant&limit=1`);
+   const rows=await reservationDb(`bookings?select=status&request_id=eq.${input.requestId}&receipt_hash=eq.${receiptHash(input.receiptToken)}&listing_type=eq.restaurant&created_at=gte.${encodeURIComponent(new Date(Date.now()-7*86400000).toISOString())}&limit=1`);
    if(!rows[0])return res.status(404).json({error:'NOT_FOUND'});
    return res.status(200).json({status:rows[0].status});
   }
@@ -31,8 +31,11 @@ export default async function handler(req:ReservationHttpRequest,res:Reservation
   if(process.env.RESERVATIONS_ENABLED!=='true'||!emailConfigured()||!await reservationSchemaReady())return res.status(503).json({error:'UNAVAILABLE'});
   const rows=await reservationDb('rpc/submit_restaurant_request',{p_request_id:input.requestId,p_receipt_hash:receiptHash(input.receiptToken),p_client_hash:clientLimitHash(req),p_listing:input.listing,p_name:input.name,p_email:input.email,p_phone:input.phone,p_date:input.date,p_time:input.time,p_guests:input.guests,p_notes:JSON.stringify({source:input.source,notes:input.notes})});
   if(!rows[0]?.reference_code)throw Error('UNAVAILABLE');
+  const visits=await reservationDb(`bookings?select=listing_name,visit_date,visit_time,guest_count&request_id=eq.${input.requestId}&receipt_hash=eq.${receiptHash(input.receiptToken)}&limit=1`);
+  const visit=visits[0];if(!visit||typeof visit.listing_name!=='string'||typeof visit.visit_date!=='string'||typeof visit.visit_time!=='string'||!Number.isInteger(visit.guest_count))throw Error('UNAVAILABLE');
+  const summary={listing:visit.listing_name,date:visit.visit_date.slice(0,10),time:visit.visit_time.slice(0,5),guests:visit.guest_count};
   // Booking + queue commit atomically. Email failure must not discard a saved request.
   let notificationQueued=true;try{const result=await processReservationNotifications(rows[0].id);notificationQueued=result.failed>0;}catch{/* Retried by worker/admin. */}
-  return res.status(200).json({reference:rows[0].reference_code,status:rows[0].status,notificationQueued});
+  return res.status(200).json({reference:rows[0].reference_code,status:rows[0].status,notificationQueued,summary});
  }catch(error){return res.status(error instanceof Error&&error.message==='RATE_LIMIT'?429:503).json({error:error instanceof Error&&error.message==='RATE_LIMIT'?'BUSY':'UNAVAILABLE'});}
 }

@@ -1,5 +1,6 @@
 // Affiliate search only: no bookings, payment data, reviews text or catalog ingestion.
 import { viatorFilters } from '../src/services/viatorFilters.js'
+import {viatorSummary} from '../src/server/viatorSummary.js'
 type Request = { method?: string; url?: string; headers: Record<string, string | string[] | undefined> }
 type Response = { status: (code: number) => Response; setHeader: (name: string, value: string) => void; json: (body: unknown) => void }
 type Destination = { destinationId: number; parentDestinationId?: number; name: string }
@@ -91,7 +92,7 @@ export default async function handler(req: Request, res: Response) {
       if (!productUrl || !new URL(productUrl).searchParams.get('pid') || typeof p.title !== 'string' || typeof p.productCode !== 'string') return []
       const variants = (p.images?.find((i: any) => i.isCover) ?? p.images?.[0])?.variants
       const photo = Array.isArray(variants) ? [...variants].filter(v => safeUrl(v.url, true) && v.width >= 320).sort((a,b) => Math.abs(a.width-720)-Math.abs(b.width-720))[0]?.url : undefined
-      return [{ code: p.productCode, title: p.title, productUrl, photo,
+      return [{ code: p.productCode, title: p.title, productUrl, photo,...viatorSummary(p),
         description: typeof p.description === 'string' ? p.description.slice(0,1500) : undefined,
         fromPrice: Number.isFinite(p.pricing?.summary?.fromPrice) && p.pricing.summary.fromPrice >= 0 ? p.pricing.summary.fromPrice : undefined,
         currency: p.pricing?.currency === currency ? currency : undefined }]

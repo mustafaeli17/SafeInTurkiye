@@ -4,6 +4,11 @@ import { parseGooglePlaces, fetchGoogleNearby } from '../services/googleNearby'
 const response = () => ({ status: vi.fn().mockReturnThis(), setHeader: vi.fn(), json: vi.fn() })
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs() })
 describe('Google Places boundary', () => {
+  it('does not relabel an event venue as cinema; keeps a real secondary cinema type',()=>{
+    const place={id:'venue',displayName:{text:'Event venue'},location:{latitude:41,longitude:29},types:['event_venue'],googleMapsUri:'https://maps.google.com/?cid=1'};
+    expect(parseGooglePlaces({places:[place]},{lat:41,lng:29},'cinema').places).toHaveLength(0);
+    expect(parseGooglePlaces({places:[{...place,types:['event_venue','movie_theater']}]},{lat:41,lng:29},'cinema').places).toHaveLength(1);
+  })
   it.each([['barber',['barber_shop']],['hair_salon',['hair_salon','hair_care']]] as const)('requests supported grooming types for %s',async(category,types)=>{
     vi.stubEnv('GOOGLE_PLACES_API_KEY','test-only')
     const f=vi.fn().mockResolvedValue({ok:true,json:async()=>({places:[]})});vi.stubGlobal('fetch',f)

@@ -9,7 +9,7 @@ export default function TaxiRouteMap({originCoords,destCoords,geometry,color='#0
  const [failed,setFailed]=useState(false);
  const key=taxiMapKey(window.location.hostname,import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY,import.meta.env.VITE_GOOGLE_MAPS_PREVIEW_BROWSER_KEY);
  useEffect(()=>{
-  if(key)return;
+  if(key&&!geometry?.length)return;
   let cancelled=false,map:Leaflet.Map|undefined;
   setFailed(false);
   void import('leaflet').then(L=>{
@@ -41,7 +41,7 @@ export default function TaxiRouteMap({originCoords,destCoords,geometry,color='#0
  else if(point)params.set('q',`${point.lat},${point.lng}`);
  else{params.set('center','39,35');params.set('zoom','5');}
  return <div className="relative w-full min-h-[360px] overflow-hidden rounded-2xl border border-sky-100 bg-slate-100 shadow-sm">
-  {key?<iframe title={title} src={`https://www.google.com/maps/embed/v1/${mode}?${params}`} className="w-full h-full min-h-[360px] sm:min-h-[480px]" loading="lazy" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen/>:<div ref={host} role="region" aria-label={title} className="h-[360px] w-full sm:h-[480px]"/>}
+  {key&&!geometry?.length?<iframe title={title} src={`https://www.google.com/maps/embed/v1/${mode}?${params}`} className="w-full h-full min-h-[360px] sm:min-h-[480px]" loading="lazy" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen/>:<div ref={host} role="region" aria-label={title} className="h-[360px] w-full sm:h-[480px]"/>}
   {failed&&destCoords&&<a href={external.href} target="_blank" rel="noopener noreferrer" aria-label={title} className="absolute bottom-8 left-3 z-[1000] rounded-xl bg-white p-3 text-sm font-semibold text-blue-700 shadow">Google Maps ↗</a>}
  </div>;
 }

@@ -1,5 +1,11 @@
 export type ReservationRow={id:string;reference_code:string;listing_name:string;guest_name:string;guest_email:string;guest_phone?:string|null;visit_time?:string|null;visit_date:string;guest_count:number;notes:string|null;status:string;contact_stage?:string;created_at?:string;updated_at?:string};
 export const adminStatus:Record<string,string>={PENDING:'Yeni talep',CONFIRMED:'Onaylandı',REJECTED:'Reddedildi',CANCELLED:'İptal edildi'};
+export const isTestReservation=(row:Pick<ReservationRow,'guest_name'>&Partial<Pick<ReservationRow,'listing_name'>>)=>/^TEST ONLY\b/i.test(row.guest_name)||/^TEST ONLY\b/i.test(row.listing_name??'');
+export function reservationUpdated(value?:string){return value&&Number.isFinite(Date.parse(value))?new Intl.DateTimeFormat('tr',{dateStyle:'short',timeStyle:'short',timeZone:'Europe/Istanbul'}).format(new Date(value)):'Bilgi yok';}
+export function reservationWaiting(row:ReservationRow,now=Date.now()){
+ if(row.status!=='PENDING'||!row.created_at||!Number.isFinite(Date.parse(row.created_at)))return null;
+ const minutes=Math.max(0,Math.floor((now-Date.parse(row.created_at))/60000));return minutes<60?`${minutes} dk`:`${Math.floor(minutes/60)} sa ${minutes%60} dk`;
+}
 export function reservationDetails(row:ReservationRow){
  let old:Record<string,unknown>={};try{const parsed=JSON.parse(row.notes??'');if(parsed&&typeof parsed==='object'&&!Array.isArray(parsed))old=parsed;}catch{/* Old notes can be plain text. */}
  const text=(value:unknown)=>typeof value==='string'?value:'';

@@ -5,6 +5,13 @@ export function transitDeparture(value: string, now = Date.now()): string | null
   return Number.isFinite(time) && time >= now - 60000 && time <= now + 7 * 86400000 ? new Date(time).toISOString() : null
 }
 export function transitRequestTime() { return Date.now() }
+export function transitSummary(route:TransitRoute){
+ const steps=route.legs.flatMap(leg=>leg.steps),rides=steps.filter(step=>step.transitDetails);
+ const validTime=(value?:string)=>value&&Number.isFinite(Date.parse(value))?value:undefined;
+ const walks=steps.filter(step=>step.travelMode==='WALK');
+ const walkingMinutes=walks.every(step=>/^\d+(\.\d+)?s$/.test(step.staticDuration??''))?Math.ceil(walks.reduce((n,s)=>n+parseFloat(s.staticDuration!),0)/60):undefined;
+ return {boarding:validTime(rides[0]?.transitDetails?.stopDetails?.departureTime),alighting:validTime(rides.at(-1)?.transitDetails?.stopDetails?.arrivalTime),walkingMinutes,transfers:Math.max(0,rides.length-1),lines:rides.map(s=>s.transitDetails?.transitLine?.nameShort||s.transitDetails?.transitLine?.name).filter(Boolean)};
+}
 export function requestTransitLocation(location: Pick<Geolocation,'getCurrentPosition'> | undefined): Promise<{lat:number;lng:number}> {
   return new Promise((resolve,reject)=>{
     if(!location){reject(new Error('noLocation'));return}

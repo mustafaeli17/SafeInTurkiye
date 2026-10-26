@@ -1,5 +1,6 @@
 {
-  "src": "/photos/istanbul-hero-generated.png",
+  "src": "/photos/istanbul-hero-1280.webp",
+  "srcSet": "/photos/istanbul-hero-768.webp 768w, /photos/istanbul-hero-1280.webp 1280w, /photos/istanbul-hero-1942.webp 1942w",
   "width": 1942,
   "height": 809,
   "origin": "AI-generated decorative Istanbul panorama",

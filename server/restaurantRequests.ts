@@ -21,6 +21,11 @@ export function reservationAdminLink(){
  if(process.env.VERCEL_ENV==='preview'&&/^[a-z0-9-]+\.vercel\.app$/.test(host))return `https://${host}/#admin`;
  return 'https://www.safeinturkiye.com/#admin';
 }
+const emailEscape=(value:string)=>value.replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]!));
+export function reservationEmail(listing:string,reference:string){
+ const safeListing=emailEscape(listing),safeReference=emailEscape(reference),link=reservationAdminLink()+`?section=reservations&request=${encodeURIComponent(reference)}`;
+ return {text:`Yeni rezervasyon talebi: ${reference}\nRestoran: ${listing}\n\nTalebi yönet: ${link}\nMüşteri iletişim bilgileri yalnız yetkili panelindedir.`,html:`<!doctype html><html lang="tr"><body style="margin:0;background:#eff6fc;font:16px Arial,sans-serif;color:#123451"><main style="max-width:560px;margin:24px auto;padding:24px;background:#fff;border-radius:16px"><p style="color:#087fff;font-weight:bold">SafeInTürkiye</p><h1 style="font-size:23px">Yeni restoran talebi</h1><p>${safeReference}</p><h2 style="font-size:19px">${safeListing}</h2><p><a href="${emailEscape(link)}" style="display:inline-block;padding:14px 22px;background:#087fff;color:#fff;border-radius:10px;text-decoration:none">Talebi yönet</a></p><p style="font-size:13px;color:#52677c">Müşteri iletişim bilgileri yalnız yetkili panelindedir. Giriş ve yönetim yetkisi gereklidir.</p></main></body></html>`};
+}
 export function reservationOrigin(req:ReservationHttpRequest){
  const allowed=['https://www.safeinturkiye.com','https://safeinturkiye.com',...[process.env.VERCEL_URL,process.env.VERCEL_BRANCH_URL].filter(Boolean).map(host=>'https://'+host),...(process.env.RESERVATION_ALLOWED_ORIGINS??'').split(',').filter(Boolean)];
  return allowed.includes(String(req.headers.origin??''));
@@ -43,12 +48,14 @@ export async function processReservationNotifications(bookingId?:string){
  let sent=0,failed=0;
  for(const job of jobs){
   const cleanName=String(job.listing_name).replace(/[\r\n]/g,' ').slice(0,200);
-  let accepted=false;
+  let accepted=false,lastError='PROVIDER_UNAVAILABLE';const attemptedAt=new Date().toISOString();
   try{
-   const response=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+process.env.RESEND_API_KEY,'Content-Type':'application/json','Idempotency-Key':'reservation-'+job.booking_id},body:JSON.stringify({from:process.env.RESERVATION_EMAIL_FROM,to:[supportEmail],subject:'Yeni restoran talebi · '+job.reference_code,text:`Yeni rezervasyon talebi: ${job.reference_code}\nRestoran: ${cleanName}\n\nYetkili paneli: ${reservationAdminLink()}\nMüşteri iletişim bilgileri yalnız yetkili panelindedir.`}),signal:AbortSignal.timeout(7000)});
-   accepted=response.ok&&typeof (await response.json()).id==='string';
+    const response=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+process.env.RESEND_API_KEY,'Content-Type':'application/json','Idempotency-Key':'reservation-'+job.booking_id},body:JSON.stringify({from:process.env.RESERVATION_EMAIL_FROM,to:[supportEmail],subject:'Yeni restoran talebi · '+job.reference_code,...reservationEmail(cleanName,job.reference_code)}),signal:AbortSignal.timeout(7000)});
+   accepted=response.ok&&typeof (await response.json()).id==='string';lastError=response.ok?'INVALID_PROVIDER_RESPONSE':`PROVIDER_HTTP_${response.status}`;
   }catch{/* Keep the durable job retryable. Never log email payload or keys. */}
-  await reservationDb(`reservation_notifications?id=eq.${job.id}&lease_id=eq.${job.lease_id}&state=eq.PROCESSING`,{state:accepted?'SENT':'FAILED',available_at:new Date(Date.now()+10*60000).toISOString(),...(accepted?{sent_at:new Date().toISOString()}:{} )},'PATCH');
+  const path=`reservation_notifications?id=eq.${job.id}&lease_id=eq.${job.lease_id}&state=eq.PROCESSING`,patch={state:accepted?'SENT':'FAILED',available_at:new Date(Date.now()+10*60000).toISOString(),...(accepted?{sent_at:new Date().toISOString()}:{} )};
+  try{await reservationDb(path,{...patch,last_attempt_at:attemptedAt,last_error_code:accepted?null:lastError},'PATCH');}
+  catch{await reservationDb(path,patch,'PATCH');} // Compatible with pre-0009 schema; lease still protects concurrent workers.
   if(accepted)sent++;else failed++;
  }
  return {sent,failed,configured:true};

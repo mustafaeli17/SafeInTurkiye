@@ -5,6 +5,7 @@ class Query{
  constructor(table:string){this.table=table;}
  select(fields='*',options?:unknown){this.fields=fields;this.options=options;return this;}
  eq(field:string,value:unknown){this.filters.push([field,value]);return this;}
+ not(field:string,operator:string,value:unknown){this.filters.push([field,value,'not.'+operator]);return this;}
  order(field:string,options?:unknown){this.sort.push([field,options]);return this;}
  range(from:number,to:number){this.offset=from;this.take=to-from+1;return this;}
  limit(count:number){this.take=count;return this;}

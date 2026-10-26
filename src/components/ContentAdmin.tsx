@@ -13,7 +13,10 @@ const BusinessMetricsAdmin=lazy(()=>import('./BusinessMetricsAdmin'));
 const CityReferenceAdmin=lazy(()=>import('./CityReferenceAdmin'));
 const tabs=[['overview','Genel bakış',LayoutDashboard],['reservations','Rezervasyonlar',Bell],['content','İçerik yönetimi',BookOpen],['cities','Şehir referansları',LayoutDashboard],['sponsors','Sponsorlu yerleşimler',Ticket],['analytics','İstatistikler',BarChart3],['system','Sistem ve yayın',Settings]] as const;
 export default function ContentAdmin({role,onSignOut}:{role:string;onSignOut?:()=>unknown}){
- const [tab,setTab]=useState('overview'),[dirty,setDirty]=useState(false),[count,setCount]=useState<number|null>(null),[cityCount,setCityCount]=useState<number|null>(null),[error,setError]=useState(''),[loading,setLoading]=useState(false);
+ const hashSection=()=>new URLSearchParams(window.location.hash.split('?')[1]).get('section')??'overview';
+ const [tab,setTab]=useState(()=>tabs.some(([id])=>id===hashSection())?hashSection():'overview'),[dirty,setDirty]=useState(false),[count,setCount]=useState<number|null>(null),[cityCount,setCityCount]=useState<number|null>(null),[error,setError]=useState(''),[loading,setLoading]=useState(false);
+ const [serverState,setServerState]=useState<'checking'|'ready'|'closed'|'error'>('checking');
+ useEffect(()=>{if(tab!=='system')return;const controller=new AbortController();setServerState('checking');void fetch('/api/reservations',{cache:'no-store',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(10000)])}).then(async response=>{const data=await response.json();if(!controller.signal.aborted)setServerState(response.ok&&data.enabled===true?'ready':'closed');}).catch(()=>{if(!controller.signal.aborted)setServerState('error');});return()=>controller.abort();},[tab]);
  const onDirty=useCallback((value:boolean)=>setDirty(value),[]);
  const discard=useDiscardChanges(dirty);
  const permitted=['admin','editor','moderator'].includes(role);
@@ -21,13 +24,13 @@ export default function ContentAdmin({role,onSignOut}:{role:string;onSignOut?:()
   setLoading(true);setError('');
   try{
    const client=requireSupabase();
-   const [requests,cities]=await Promise.all([client.from('bookings').select('id',{count:'exact',head:true}).eq('listing_type','restaurant').eq('status','PENDING').abortSignal(AbortSignal.timeout(10000)),client.from('cities').select('id',{count:'exact',head:true}).abortSignal(AbortSignal.timeout(10000))]);
+   const [requests,cities]=await Promise.all([client.from('bookings').select('id',{count:'exact',head:true}).eq('listing_type','restaurant').eq('status','PENDING').not('guest_name','ilike','TEST ONLY%').not('listing_name','ilike','TEST ONLY%').abortSignal(AbortSignal.timeout(10000)),client.from('cities').select('id',{count:'exact',head:true}).abortSignal(AbortSignal.timeout(10000))]);
    if(requests.error||cities.error)throw Error();setCount(requests.count??null);setCityCount(cities.count??null);
   }catch{setError('Özet verileri alınamadı. Bilinmeyen değerler sıfır kabul edilmedi.');}
   finally{setLoading(false);}
  }
  useEffect(()=>{if(permitted)void refresh();},[permitted]);
- function navigate(next:string){discard.protect(()=>{setDirty(false);setTab(next);});}
+ function navigate(next:string){discard.protect(()=>{setDirty(false);setTab(next);window.history.replaceState(window.history.state,'',`#admin?section=${next}`);});}
  if(!permitted)return <p role="alert">Bu panel için yetkiniz yok.</p>;
  return <main className="admin-studio">
   <header className="admin-studio-header"><div><p className="admin-eyebrow">SAFEINTÜRKİYE · YÖNETİM</p><h1>Kontrol merkezi</h1><p>Rezervasyonlar, içerikler ve işletme yönetimi.</p></div><div className="admin-header-actions"><span className="admin-role"><ShieldCheck size={15}/>{role}</span>{onSignOut&&<button className="admin-button" onClick={()=>discard.protect(()=>{void onSignOut();})}><LogOut size={15}/>Çıkış</button>}</div></header>
@@ -41,7 +44,7 @@ export default function ContentAdmin({role,onSignOut}:{role:string;onSignOut?:()
     {tab==='sponsors'&&(foundationEnabled?<SponsorshipAdmin/>:<section className="admin-panel"><h2>Sponsorlu yerleşimler</h2><p>Foundation şeması bu ortamda etkin değil. Yanlış tabloya veya Google kayıtlarına reklam yazılmayacak.</p></section>)}
     {tab==='analytics'&&<><section className="admin-panel"><h2>Ziyaretçi istatistikleri</h2><p>Vercel’de ölçülen ziyaretçi, ülke, cihaz ve yönlendirme verileri. Fiziksel işletme ziyareti anlamına gelmez.</p><a className="admin-button" href="https://vercel.com/eli-1196/safe-in-turkiye/analytics" target="_blank" rel="noopener noreferrer">Vercel Analytics<ExternalLink size={15}/></a></section>{foundationEnabled&&<BusinessMetricsAdmin/>}</>}
    </Suspense>
-   {tab==='system'&&<section className="admin-panel admin-system"><h2>Sistem ve yayın</h2><dl><div><dt>İçerik kaynağı</dt><dd>Google Places keşfi + ayrı editoryal CMS kayıtları</dd></div><div><dt>Foundation</dt><dd>{foundationEnabled?'Etkin':'Etkin değil'}</dd></div><div><dt>Rezervasyon arayüzü</dt><dd>{restaurantRequestsEnabled?'Etkin':'Aktivasyon bekliyor'}</dd></div><div><dt>İçerik güncellemeleri</dt><dd>CMS kayıtları kalıcıdır. SEO/site haritası için onaylı build/yayın gerekir.</dd></div></dl><p>Şehir tasarımları, çeviriler, API anahtarları ve güvenlik ayarları burada değiştirilmez. Gerçekte çalışmayan “tüm siteyi değiştir” düğmeleri gösterilmez.</p><a className="admin-button" href="https://vercel.com/eli-1196/safe-in-turkiye" target="_blank" rel="noopener noreferrer">Yayın ve API ortamı<ExternalLink size={15}/></a></section>}
+   {tab==='system'&&<section className="admin-panel admin-system"><h2>Sistem ve yayın</h2><dl><div><dt>İçerik kaynağı</dt><dd>Google Places keşfi + ayrı editoryal CMS kayıtları</dd></div><div><dt>Foundation</dt><dd>{foundationEnabled?'Etkin':'Etkin değil'}</dd></div><div><dt>Rezervasyon arayüzü</dt><dd>{restaurantRequestsEnabled?'Etkin':'Aktivasyon bekliyor'}</dd></div><div><dt>Rezervasyon sunucusu</dt><dd>{{checking:'Kontrol ediliyor…',ready:'API yapılandırması ve şema kontrolü başarılı',closed:'Talep kabulüne hazır değil',error:'Durum alınamadı'}[serverState]}. E-posta teslimi ayrıca kuyruk/sağlayıcı üzerinden izlenir.</dd></div><div><dt>İçerik güncellemeleri</dt><dd>CMS kayıtları kalıcıdır. SEO/site haritası için onaylı build/yayın gerekir.</dd></div></dl><p>Şehir tasarımları, çeviriler, API anahtarları ve güvenlik ayarları burada değiştirilmez. Gerçekte çalışmayan “tüm siteyi değiştir” düğmeleri gösterilmez.</p><a className="admin-button" href="https://vercel.com/eli-1196/safe-in-turkiye" target="_blank" rel="noopener noreferrer">Yayın ve API ortamı<ExternalLink size={15}/></a></section>}
   </div></div>
  {discard.dialog}</main>;
 }
