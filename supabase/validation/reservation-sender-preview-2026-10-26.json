@@ -1,0 +1,28 @@
+{
+  "date": "2026-10-26",
+  "scope": "approved sender DNS setup and Preview-only email configuration",
+  "resend_domain": "notify.safeinturkiye.com",
+  "resend_region": "eu-west-1",
+  "resend_verification_status": "verified in Resend UI; DKIM and both sending CNAME records verified",
+  "dns_records_added": [
+    {"name": "resend._domainkey.notify", "type": "TXT", "purpose": "Resend-generated DKIM public key", "ttl": 60},
+    {"name": "rsend.notify", "type": "CNAME", "value": "rsend-euw1.forge.rmta.net", "ttl": 60},
+    {"name": "send.notify", "type": "CNAME", "value": "send.forge.rmta.net", "ttl": 60}
+  ],
+  "existing_root_dns_and_mail_records_changed": false,
+  "receiving_enabled": false,
+  "preview_config_saved": {
+    "RESERVATION_EMAIL_FROM": "SafeInTürkiye <reservations@notify.safeinturkiye.com>"
+  },
+  "resend_api_key_saved_to_vercel": true,
+  "resend_key_scope_verified": "Secret variable, Preview only; value not revealed or inspected",
+  "remaining": [
+    "Isolated test database Preview configuration and authenticated end-to-end acceptance",
+    "Scheduled notification retry setup"
+  ],
+  "production_deploy_by_agent": false,
+  "observed_existing_code_redeployment": {"environment": "Production", "commit": "fd765ba", "deployment": "EMoDzm8f5ky7cj9z4C7egeMNuDDM", "new_admin_code_included": false},
+  "production_database_changed": false,
+  "paid_plan_enabled": false,
+  "app_code_changed": false
+}

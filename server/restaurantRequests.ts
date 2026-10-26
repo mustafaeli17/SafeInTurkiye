@@ -16,6 +16,11 @@ export async function reservationDb(path:string,body?:unknown,method=body===unde
  return response.status===204?[]:await response.json();
 }
 export const emailConfigured=()=>Boolean(process.env.RESEND_API_KEY&&process.env.RESERVATION_EMAIL_FROM&&!/[\r\n]/.test(process.env.RESERVATION_EMAIL_FROM));
+export function reservationAdminLink(){
+ const host=process.env.VERCEL_URL??'';
+ if(process.env.VERCEL_ENV==='preview'&&/^[a-z0-9-]+\.vercel\.app$/.test(host))return `https://${host}/#admin`;
+ return 'https://www.safeinturkiye.com/#admin';
+}
 export function reservationOrigin(req:ReservationHttpRequest){
  const allowed=['https://www.safeinturkiye.com','https://safeinturkiye.com',...[process.env.VERCEL_URL,process.env.VERCEL_BRANCH_URL].filter(Boolean).map(host=>'https://'+host),...(process.env.RESERVATION_ALLOWED_ORIGINS??'').split(',').filter(Boolean)];
  return allowed.includes(String(req.headers.origin??''));
@@ -40,7 +45,7 @@ export async function processReservationNotifications(bookingId?:string){
   const cleanName=String(job.listing_name).replace(/[\r\n]/g,' ').slice(0,200);
   let accepted=false;
   try{
-   const response=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+process.env.RESEND_API_KEY,'Content-Type':'application/json','Idempotency-Key':'reservation-'+job.booking_id},body:JSON.stringify({from:process.env.RESERVATION_EMAIL_FROM,to:[supportEmail],subject:'Yeni restoran talebi · '+job.reference_code,text:`Yeni rezervasyon talebi: ${job.reference_code}\nRestoran: ${cleanName}\n\nYetkili paneli: https://www.safeinturkiye.com/#admin\nMüşteri iletişim bilgileri yalnız yetkili panelindedir.`}),signal:AbortSignal.timeout(7000)});
+   const response=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+process.env.RESEND_API_KEY,'Content-Type':'application/json','Idempotency-Key':'reservation-'+job.booking_id},body:JSON.stringify({from:process.env.RESERVATION_EMAIL_FROM,to:[supportEmail],subject:'Yeni restoran talebi · '+job.reference_code,text:`Yeni rezervasyon talebi: ${job.reference_code}\nRestoran: ${cleanName}\n\nYetkili paneli: ${reservationAdminLink()}\nMüşteri iletişim bilgileri yalnız yetkili panelindedir.`}),signal:AbortSignal.timeout(7000)});
    accepted=response.ok&&typeof (await response.json()).id==='string';
   }catch{/* Keep the durable job retryable. Never log email payload or keys. */}
   await reservationDb(`reservation_notifications?id=eq.${job.id}&lease_id=eq.${job.lease_id}&state=eq.PROCESSING`,{state:accepted?'SENT':'FAILED',available_at:new Date(Date.now()+10*60000).toISOString(),...(accepted?{sent_at:new Date().toISOString()}:{} )},'PATCH');

@@ -1,7 +1,7 @@
 import {afterEach,beforeEach,expect,it,vi} from 'vitest';
 import handler from '../../api/reservations';
 import worker from '../../api/reservation-notifications';
-import {receiptHash,validateGuestRequest} from '../../server/restaurantRequests';
+import {receiptHash,validateGuestRequest,reservationAdminLink} from '../../server/restaurantRequests';
 const request={action:'create',requestId:'00000000-0000-0000-0000-000000000123',receiptToken:'a'.repeat(64),listing:'TEST restaurant',name:'TEST guest',email:'guest@example.test',phone:'+90000000000',date:new Date(Date.now()+86400000).toISOString().slice(0,10),time:'19:00',guests:2,notes:'Test only',source:'https://maps.google.com/?cid=123'};
 let sequence=0;
 async function call(body:unknown=request,origin='https://www.safeinturkiye.com',authorization?:string){let code=0,data:any;const res:any={status(n:number){code=n;return res;},json(value:unknown){data=value;},setHeader:vi.fn()};await handler({method:'POST',headers:{origin,'x-forwarded-for':'test-'+ ++sequence,...(authorization?{authorization}:{})},body},res);return {code,data};}
@@ -25,3 +25,9 @@ it('requires the private receipt and returns only status, not guest data',async(
 it('does not allow a signed-in ordinary user to process the notification queue',async()=>{vi.stubGlobal('fetch',provider());expect((await call({action:'notifications'},undefined,'Bearer ordinary-user')).code).toBe(403);});
 it('keeps the worker protected when no cron secret exists',async()=>{vi.stubEnv('CRON_SECRET','');let code=0;const res:any={status(n:number){code=n;return res;},json:vi.fn(),setHeader:vi.fn()};await worker({method:'GET',headers:{}},res);expect(code).toBe(403);});
 it('requires valid future Turkish local date/time',()=>{expect(validateGuestRequest(request)).toBe(true);expect(validateGuestRequest({...request,date:'2020-01-01'})).toBe(false);});
+it('links Preview notifications to the isolated Preview admin, never a client-supplied host',()=>{
+ vi.stubEnv('VERCEL_ENV','preview');vi.stubEnv('VERCEL_URL','safe-in-turkiye-test.vercel.app');
+ expect(reservationAdminLink()).toBe('https://safe-in-turkiye-test.vercel.app/#admin');
+ for(const host of ['evil.example','safe.vercel.app/evil','safe.vercel.app@evil.example','safe.vercel.app\n']){vi.stubEnv('VERCEL_URL',host);expect(reservationAdminLink()).toBe('https://www.safeinturkiye.com/#admin');}
+ vi.stubEnv('VERCEL_ENV','production');vi.stubEnv('VERCEL_URL','safe-in-turkiye-test.vercel.app');expect(reservationAdminLink()).toBe('https://www.safeinturkiye.com/#admin');
+});
