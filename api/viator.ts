@@ -96,7 +96,7 @@ export default async function handler(req: Request, res: Response) {
       productSorting:{...filters.sorting,sort:filters.sorting.sort==='TRAVELER_RATING'?'REVIEW_AVG_RATING':filters.sorting.sort},
       searchTypes:[{searchType:'PRODUCTS',pagination:{start,count:12}}],currency,
     }) : await request('/products/search', { ...filters, filtering, pagination: { start, count: 12 }, currency })
-    const data=term?{products:raw.products?.results,totalCount:raw.products?.totalCount}:raw
+    const data=term?{products:raw.products?.results ?? (raw.products?.totalCount===0?[]:undefined),totalCount:raw.products?.totalCount}:raw
     if (!Array.isArray(data.products)) throw new Error('PROVIDER_UNAVAILABLE')
     const products = data.products.flatMap((p: any) => {
       const productUrl = safeUrl(p.productUrl)

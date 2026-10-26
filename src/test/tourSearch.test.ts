@@ -26,7 +26,7 @@ describe('Tour keyword search',()=>{
       if(path.endsWith('/destinations'))return {ok:true,json:async()=>({destinations:[{destinationId:1,name:'Turkey'},{destinationId:2,name:'Istanbul',parentDestinationId:1}]})}
       expect(path).toContain('/search/freetext')
       expect(JSON.parse(init.body as string)).toMatchObject({searchTerm:'airport transfer',productFiltering:{destination:'2',price:{from:10,to:100},flags:['PRIVATE_TOUR'],dateRange:{from:'2026-11-01',to:'2026-11-01'}},productSorting:{sort:'REVIEW_AVG_RATING'},searchTypes:[{searchType:'PRODUCTS',pagination:{start:13,count:12}}]})
-      return {ok:true,json:async()=>({products:{totalCount:found?20:0,results:found?[{productCode:'1P1',title:'Airport transfer',productUrl:link}]:[]}})}
+      return {ok:true,json:async()=>({products:{totalCount:found?20:0,...(found?{results:[{productCode:'1P1',title:'Airport transfer',productUrl:link}]}:{})}})}
     })
     vi.stubGlobal('fetch',fetcher);const res=response()
     await handler({method:'GET',url:'/?city=istanbul&q=airport%20transfer&minPrice=10&maxPrice=100&private=true&sort=rating&date=2026-11-01&start=13',headers:{'x-forwarded-for':String(found)}},res)
