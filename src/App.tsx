@@ -459,7 +459,9 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
     else if (/restoran|restaurant|yemek|food|cafe|kafe|ресторан|مطعم|مطاعم|餐厅|餐饮/.test(low)) navigateSearch('food');
     else if (/aktiv|activit|etkinlik|museum|musée|müze|gez|cinema|cinéma|музе|кино|متحف|أنشط|سينما|活动|博物馆|影院/.test(low)) navigateSearch('experiences');
     else if (/güven|safety|acil|emergency|sicher|sécurité|безопас|أمان|طوارئ|安全|紧急/.test(low)) navigateSearch('safety');
-    else navigateTo('/?'+new URLSearchParams({q:query,choose:'1'}),{replace:true,scroll:false});
+    // A place name need not contain a category (e.g. Topkapı Sarayı or Çiya).
+    // Search the provider without guessing a type; its empty/error state remains authoritative.
+    else navigateSearch('nearme','all');
   };
 
   // Taksi Durumları

@@ -14,7 +14,7 @@ export function discoverySearch(query:string):{section:'food'|'stay'|'experience
  const q=normalizeSearchText(query)
  if(wantsNearby(q)&&/doviz|exchange|currency|صراف|换汇/.test(q))return {section:'nearme',category:'bureau_de_change'}
  const entries:[string,string,RegExp][]=[
-  ['nearme','bureau_de_change',/doviz (?:buros|ofis)|exchange (?:office|bureau)|wechselstube|bureau de change|casa de cambio|обменн|مكاتب الصراف|换汇点|兑换点/],
+  ['nearme','bureau_de_change',/dovizci|doviz (?:buros|ofis)|exchange (?:office|bureau)|wechselstube|bureau de change|casa de cambio|обменн|مكاتب الصراف|换汇点|兑换点/],
   ['nearme','pharmacy',/eczane|pharmac|apotheke|farmacia|аптек|صيدلي|药房/],
   ['nearme','hospital',/hastane|hospital|krankenhaus|hopital|больниц|مستشفى|医院/],
   ['nearme','atm',/\batm\b|bankamatik|geldautomat|cajero|банкомат|صراف آلي|取款机/],
@@ -25,7 +25,7 @@ export function discoverySearch(query:string):{section:'food'|'stay'|'experience
   ['nearme','cafe',/\bcafe\b|\bkafe\b|coffee|kahve|cafeteria|кафе|مقهى|咖啡/],
   ['experiences','museum',/muze|museum|musee|museo|музе|متحف|博物馆/],
   ['experiences','cinema',/sinema|cinema|kino|\bcine\b|кино|سينما|影院/],
-  ['experiences','activity',/aktivite|activit|etkinlik|attraction|sehenswurd|развлеч|أنشط|活动|景点/],
+  ['experiences','activity',/aktivite|activit|etkinlik|eglence|bowling|lunapark|attraction|sehenswurd|развлеч|أنشط|活动|景点/],
  ]
  const match=entries.find(([, ,pattern])=>pattern.test(q))
  if(!match&&wantsNearby(q))return {section:'nearme',category:'all'}
