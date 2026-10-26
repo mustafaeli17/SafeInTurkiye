@@ -1,0 +1,26 @@
+{
+  "scope": "Remaining reservation/admin reliability follow-up; production unchanged",
+  "changes": [
+    "Saved reservation visit summary survives reload; regression coverage added",
+    "Staff-only, on-demand business lookup; Google metadata not persistently stored",
+    "Google metric rows grouped by business ID, one optional lookup per business",
+    "Signed Resend delivery webhook with bounded raw body and replay protection",
+    "Delivery metadata is monotonic/idempotent; production/test email separated by project tag"
+  ],
+  "verification": {
+    "full_suite_before_project_tag_guard": "467 passed, 75 files",
+    "targeted_after_project_tag_guard": "17 passed",
+    "typecheck_lint_build": "Build passed; typecheck and lint also rerun successfully after final project-tag guard",
+    "live_admin": "Authenticated dashboard and reservation list verified read-only",
+    "local_browser": "TEST ONLY request loads business name, city, address, phone, website and map at 537px without horizontal overflow; mocked provider, not real Google acceptance",
+    "test_database": "qctltygvdxpzdaliczig: migration applied, three columns verified, RLS true, anon/authenticated RPC execute false, service_role true"
+  },
+  "migration": "20261026181727_reservation_delivery_tracking.sql",
+  "production_migration": "NOT APPLIED",
+  "pending": [
+    "User must create prepared test Resend webhook and enter signing secret in branch-only Preview Secret RESEND_WEBHOOK_SECRET",
+    "Actual signed Resend delivery and Google admin lookup on Preview must be verified before completion",
+    "Physical iPhone/Safari verification remains unperformed",
+    "Mobile Lighthouse baseline remains 86; no new score claimed or invasive refactor undertaken"
+  ]
+}

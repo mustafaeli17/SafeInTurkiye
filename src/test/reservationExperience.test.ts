@@ -3,8 +3,15 @@ import {restaurantToday,validBookingTime} from '../lib/bookingTime';
 import {clearReservationDraft,readReservationDraft,reservationAttempt,writeReservationDraft} from '../lib/reservationDraft';
 import {reservationExperienceCopy} from '../lib/reservationExperienceCopy';
 import {reservationEmail} from '../../server/restaurantRequests';
-import {pendingReceipt,saveReceipt} from '../lib/reservationClient';
+import {pendingReceipt,saveReceipt,readReceipt,makeSavedReceipt} from '../lib/reservationClient';
 afterEach(()=>{vi.unstubAllEnvs();vi.unstubAllGlobals();});
+it('restores the visit summary after reload and drops invalid saved summaries',()=>{
+ const data=new Map<string,string>();vi.stubGlobal('sessionStorage',{getItem:(key:string)=>data.get(key)??null,setItem:(key:string,value:string)=>data.set(key,value),removeItem:(key:string)=>data.delete(key)});
+ const summary={listing:'Test restaurant',city:'İstanbul',date:'2030-05-02',time:'19:00',guests:2};
+ const receipt=makeSavedReceipt(pendingReceipt('summary'),'SIT-2026-123',summary);saveReceipt('summary',receipt);
+ expect(readReceipt('summary')?.summary).toEqual(summary);
+ saveReceipt('summary',{...receipt,summary:{...summary,time:'29:99'}});expect(readReceipt('summary')?.summary).toBeUndefined();
+});
 it('keeps only deduplication tokens across a reload, without unsubmitted personal details',()=>{
  const data=new Map<string,string>();vi.stubGlobal('sessionStorage',{getItem:(key:string)=>data.get(key)??null,setItem:(key:string,value:string)=>data.set(key,value),removeItem:(key:string)=>data.delete(key)});
  const first=pendingReceipt('qa-identity');expect(pendingReceipt('qa-identity')).toEqual(first);expect([...data.values()].join('')).not.toMatch(/guest|email|phone|notes/);

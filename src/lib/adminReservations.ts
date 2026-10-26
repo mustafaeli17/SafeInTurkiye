@@ -9,7 +9,7 @@ export function reservationWaiting(row:ReservationRow,now=Date.now()){
 export function reservationDetails(row:ReservationRow){
  let old:Record<string,unknown>={};try{const parsed=JSON.parse(row.notes??'');if(parsed&&typeof parsed==='object'&&!Array.isArray(parsed))old=parsed;}catch{/* Old notes can be plain text. */}
  const text=(value:unknown)=>typeof value==='string'?value:'';
- return {phone:row.guest_phone||text(old.phone),time:row.visit_time?.slice(0,5)||text(old.time),note:typeof old.notes==='string'?old.notes:row.notes??'',source:text(old.source)};
+ return {phone:row.guest_phone||text(old.phone),time:row.visit_time?.slice(0,5)||text(old.time),note:typeof old.notes==='string'?old.notes:row.notes??'',source:text(old.source),businessKey:text(old.businessKey)};
 }
 export function reservationMatches(row:ReservationRow,search:string,status:string){
  return (!status||row.status===status)&&[row.reference_code,row.listing_name,row.guest_name,row.guest_email,reservationDetails(row).phone].join(' ').toLocaleLowerCase('tr').includes(search.trim().toLocaleLowerCase('tr'));

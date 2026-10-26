@@ -1,5 +1,6 @@
 import {clientLimitHash,emailConfigured,processReservationNotifications,receiptHash,reservationBackend,reservationDb,reservationOrigin,reservationSchemaReady,reservationStaff,validateGuestRequest,withinReservationBudget} from '../server/restaurantRequests.js';
 import type {ReservationHttpRequest,ReservationHttpResponse} from '../server/restaurantRequests.js';
+import {validBusinessKey} from '../src/lib/businessIdentity.js';
 let readiness:{until:number;enabled:boolean}|undefined;
 export default async function handler(req:ReservationHttpRequest,res:ReservationHttpResponse){
  res.setHeader('Cache-Control','private, no-store');res.setHeader('X-Content-Type-Options','nosniff');
@@ -29,7 +30,8 @@ export default async function handler(req:ReservationHttpRequest,res:Reservation
   }
   if(input.action!=='create'||!validateGuestRequest(input)||input.website)return res.status(400).json({error:'INVALID_INPUT'});
   if(process.env.RESERVATIONS_ENABLED!=='true'||!emailConfigured()||!await reservationSchemaReady())return res.status(503).json({error:'UNAVAILABLE'});
-  const rows=await reservationDb('rpc/submit_restaurant_request',{p_request_id:input.requestId,p_receipt_hash:receiptHash(input.receiptToken),p_client_hash:clientLimitHash(req),p_listing:input.listing,p_name:input.name,p_email:input.email,p_phone:input.phone,p_date:input.date,p_time:input.time,p_guests:input.guests,p_notes:JSON.stringify({source:input.source,notes:input.notes})});
+  if(input.businessKey!==undefined&&!validBusinessKey(input.businessKey))return res.status(400).json({error:'INVALID_INPUT'});
+  const rows=await reservationDb('rpc/submit_restaurant_request',{p_request_id:input.requestId,p_receipt_hash:receiptHash(input.receiptToken),p_client_hash:clientLimitHash(req),p_listing:input.listing,p_name:input.name,p_email:input.email,p_phone:input.phone,p_date:input.date,p_time:input.time,p_guests:input.guests,p_notes:JSON.stringify({source:input.source,notes:input.notes,businessKey:input.businessKey})});
   if(!rows[0]?.reference_code)throw Error('UNAVAILABLE');
   const visits=await reservationDb(`bookings?select=listing_name,visit_date,visit_time,guest_count&request_id=eq.${input.requestId}&receipt_hash=eq.${receiptHash(input.receiptToken)}&limit=1`);
   const visit=visits[0];if(!visit||typeof visit.listing_name!=='string'||typeof visit.visit_date!=='string'||typeof visit.visit_time!=='string'||!Number.isInteger(visit.guest_count))throw Error('UNAVAILABLE');

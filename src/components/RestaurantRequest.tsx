@@ -37,7 +37,7 @@ function RequestForm({name,source,lang,businessKey,city}:Props){
   if(!validBookingTime(String(data.get('date')),String(data.get('time')))){setMessage(10);return;}
   credentials.current??=reservationAttempt(key,()=>pendingReceipt(key));submitting.current=true;setBusy(true);setMessage(null);
   try{
-   const result=await reservationCall({action:'create',...credentials.current,listing:name,source,name:String(data.get('name')).trim(),email:String(data.get('email')).trim(),phone:String(data.get('phone')).trim(),date:String(data.get('date')),time:String(data.get('time')),guests:Number(data.get('guests')),notes:String(data.get('notes')??''),website:String(data.get('website')??'')});
+   const result=await reservationCall({action:'create',...credentials.current,listing:name,source,businessKey,name:String(data.get('name')).trim(),email:String(data.get('email')).trim(),phone:String(data.get('phone')).trim(),date:String(data.get('date')),time:String(data.get('time')),guests:Number(data.get('guests')),notes:String(data.get('notes')??''),website:String(data.get('website')??'')});
    if(typeof result.reference!=='string'||!/^SIT-[A-Z0-9-]{1,40}$/.test(result.reference))throw Error();
    const visit=result.summary;
    if(!visit||typeof visit.listing!=='string'||typeof visit.date!=='string'||typeof visit.time!=='string'||!Number.isInteger(visit.guests))throw Error();

@@ -18,7 +18,8 @@
     "leaflet": "^1.9.4",
     "lucide-react": "^1.37.0",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "svix": "2.9.0"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.10",

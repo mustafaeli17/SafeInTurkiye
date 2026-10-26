@@ -18,9 +18,23 @@ beforeAll(async()=>{
   await db.exec(await readFile('supabase/migrations/0008_reservation_retention.sql','utf8'));
   await db.exec(await readFile('supabase/migrations/0009_reservation_operations.sql','utf8'));
   await db.exec(await readFile('supabase/migrations/0009_reservation_operations.sql','utf8'));
+  await db.exec(await readFile('supabase/migrations/20261026181727_reservation_delivery_tracking.sql','utf8'));
+  await db.exec(await readFile('supabase/migrations/20261026181727_reservation_delivery_tracking.sql','utf8'));
   await db.exec('grant usage on schema public,auth to anon,authenticated,service_role;grant select on public.bookings to anon,authenticated;grant insert,update on public.bookings to authenticated;');
 },60000);
 afterAll(async()=>{if(db)await db.close();},60000);
+it('delivery tracking is service-only, idempotent and resists out-of-order events',async()=>{
+ await db.exec('reset role;set role service_role;');
+ const mail='00000000-0000-0000-0000-000000000789';
+ const result=await db.query<{id:string}>(`select * from submit_restaurant_request('00000000-0000-0000-0000-000000000789',$1,$2,'TEST delivery','TEST guest','delivery@example.test','+90000000000',current_date+1,'19:00',2,'{}')`,['d'.repeat(64),'e'.repeat(64)]);
+ await db.query('update reservation_notifications set provider_email_id=$1 where booking_id=$2',[mail,result.rows[0].id]);
+ const record=(state:string)=>db.query('select record_reservation_delivery($1,$2,now())',[mail,state]);
+ await record('DELIVERED');await record('DELIVERED');await record('DELAYED');
+ expect((await db.query('select delivery_state from reservation_notifications where provider_email_id=$1',[mail])).rows).toEqual([{delivery_state:'DELIVERED'}]);
+ await record('BOUNCED');await record('DELIVERED');expect((await db.query('select delivery_state from reservation_notifications where provider_email_id=$1',[mail])).rows).toEqual([{delivery_state:'BOUNCED'}]);
+ await db.exec('reset role;set role authenticated;');await expect(record('DELIVERED')).rejects.toThrow();
+ await db.exec('reset role;');await db.query('delete from bookings where id=$1',[result.rows[0].id]);
+});
 it('guest intake is idempotent, rate-limited and private; notifications commit with booking',async()=>{
   const request='00000000-0000-0000-0000-000000000101',hash='a'.repeat(64),ip='b'.repeat(64);
   const submit=(id=request,client=ip,token=hash)=>db.query(`select * from public.submit_restaurant_request($1,$2,$3,'TEST restaurant','TEST guest','guest@example.test','+90000000000',current_date+1,'19:00',2,'{"notes":"Test only"}')`,[id,token,client]);

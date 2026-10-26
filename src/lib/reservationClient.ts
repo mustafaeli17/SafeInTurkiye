@@ -14,7 +14,7 @@ export function readReceipt(key:string):SavedReceipt|null{
   if(value&&Number.isFinite(value.expires)&&value.expires<=Date.now()){sessionStorage.removeItem('sit:request:'+key);return null;}
   if(!value||!/^[a-f0-9-]{36}$/.test(value.requestId)||!/^[a-f0-9]{64}$/.test(value.receiptToken)||!/^SIT-[A-Z0-9-]{1,40}$/.test(value.reference)||!Number.isFinite(value.expires)||value.expires>Date.now()+7*86400000)return null;
   const s=value.summary;
-  const summary=s&&typeof s.listing==='string'&&s.listing.length<=200&&/^\\d{4}-\\d{2}-\\d{2}$/.test(s.date)&&/^([01]\\d|2[0-3]):[0-5]\\d$/.test(s.time)&&Number.isInteger(s.guests)&&s.guests>=1&&s.guests<=20?{listing:s.listing,date:s.date,time:s.time,guests:s.guests,...(typeof s.city==='string'&&s.city.length<100?{city:s.city}:{})}:undefined;
+  const summary=s&&typeof s.listing==='string'&&s.listing.length<=200&&/^\d{4}-\d{2}-\d{2}$/.test(s.date)&&/^([01]\d|2[0-3]):[0-5]\d$/.test(s.time)&&Number.isInteger(s.guests)&&s.guests>=1&&s.guests<=20?{listing:s.listing,date:s.date,time:s.time,guests:s.guests,...(typeof s.city==='string'&&s.city.length<100?{city:s.city}:{})}:undefined;
   return {requestId:value.requestId,receiptToken:value.receiptToken,reference:value.reference,expires:value.expires,summary};
  }catch{return null;}
 }

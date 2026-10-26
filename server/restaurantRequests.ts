@@ -48,14 +48,14 @@ export async function processReservationNotifications(bookingId?:string){
  let sent=0,failed=0;
  for(const job of jobs){
   const cleanName=String(job.listing_name).replace(/[\r\n]/g,' ').slice(0,200);
-  let accepted=false,lastError='PROVIDER_UNAVAILABLE';const attemptedAt=new Date().toISOString();
+  let accepted=false,lastError='PROVIDER_UNAVAILABLE',providerId:string|undefined;const attemptedAt=new Date().toISOString();
   try{
-    const response=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+process.env.RESEND_API_KEY,'Content-Type':'application/json','Idempotency-Key':'reservation-'+job.booking_id},body:JSON.stringify({from:process.env.RESERVATION_EMAIL_FROM,to:[supportEmail],subject:'Yeni restoran talebi · '+job.reference_code,...reservationEmail(cleanName,job.reference_code)}),signal:AbortSignal.timeout(7000)});
-   accepted=response.ok&&typeof (await response.json()).id==='string';lastError=response.ok?'INVALID_PROVIDER_RESPONSE':`PROVIDER_HTTP_${response.status}`;
+    const response=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+process.env.RESEND_API_KEY,'Content-Type':'application/json','Idempotency-Key':'reservation-'+job.booking_id},body:JSON.stringify({from:process.env.RESERVATION_EMAIL_FROM,to:[supportEmail],tags:[{name:'sit_project',value:new URL(reservationBackend()!.url).hostname.split('.')[0]}],subject:'Yeni restoran talebi · '+job.reference_code,...reservationEmail(cleanName,job.reference_code)}),signal:AbortSignal.timeout(7000)});
+   const result=await response.json();accepted=response.ok&&typeof result.id==='string';providerId=accepted?result.id:undefined;lastError=response.ok?'INVALID_PROVIDER_RESPONSE':`PROVIDER_HTTP_${response.status}`;
   }catch{/* Keep the durable job retryable. Never log email payload or keys. */}
   const path=`reservation_notifications?id=eq.${job.id}&lease_id=eq.${job.lease_id}&state=eq.PROCESSING`,patch={state:accepted?'SENT':'FAILED',available_at:new Date(Date.now()+10*60000).toISOString(),...(accepted?{sent_at:new Date().toISOString()}:{} )};
-  try{await reservationDb(path,{...patch,last_attempt_at:attemptedAt,last_error_code:accepted?null:lastError},'PATCH');}
-  catch{await reservationDb(path,patch,'PATCH');} // Compatible with pre-0009 schema; lease still protects concurrent workers.
+  try{await reservationDb(path,{...patch,last_attempt_at:attemptedAt,last_error_code:accepted?null:lastError,...(providerId?{provider_email_id:providerId}:{})},'PATCH');}
+  catch{try{await reservationDb(path,{...patch,last_attempt_at:attemptedAt,last_error_code:accepted?null:lastError},'PATCH');}catch{await reservationDb(path,patch,'PATCH');}} // Older schemas remain usable; lease protects concurrent workers.
   if(accepted)sent++;else failed++;
  }
  return {sent,failed,configured:true};
