@@ -14,5 +14,19 @@
   "checks": {"tests": "438/438 passed, 70 files", "typecheck": "passed", "lint": "passed", "build": "passed, 12 directory pages"},
   "credentials": "Production Supabase key transferred by UI clipboard into Production Secret, without reading its value into chat/files; existing sending-only Resend secret expanded to Production; no frontend secret or test-key reuse",
   "paid_plan_change": false,
-  "deployment_smoke": "pending; update after actual deployment verification"
+  "deployment_smoke": {
+    "published_commit": "97ffd64",
+    "deployment": "9f2CpVy3CeBWhpVadn1j4XV8UTwP",
+    "status": "Production Ready after owner replaced Production server credential and redeployed",
+    "reservation_readiness": true,
+    "resolved_blocker": "Public readiness endpoint now returns enabled:true; server credential and required schema reads accepted",
+    "admin_current_browser_state": "Authorized live admin confirmed after reload; request visible and status changes persisted",
+    "request_reference": "SIT-2026-0000006",
+    "test_data": "Clearly labeled TEST ONLY; dummy guest contact; no restaurant contacted; final state CANCELLED; no permanent deletion",
+    "customer_flow": ["PENDING receipt", "CONFIRMED after admin action", "CANCELLED after test cleanup"],
+    "email": "Resend dashboard verified Delivered to owner for SIT-2026-0000006",
+    "cron_execution": "Enabled every 10 minutes; scheduled HTTP 200 at 02:20:28Z and manual HTTP 200 at 02:21:27Z verified in Vercel Request Logs",
+    "worker_unauthenticated": "403 NOT_ALLOWED verified",
+    "end_to_end_production_acceptance": "passed for request, owner email delivery, admin confirmation, customer status, cancellation, and protected scheduled worker"
+  }
 }
