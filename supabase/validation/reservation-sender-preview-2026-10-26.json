@@ -43,6 +43,7 @@
     "build": "passed; 12 directory pages generated"
   },
   "remaining": [
+    "Test service-role credential was included unmasked in a browser accessibility tool response during form save; owner-assisted test credential rotation is recommended before further rollout. No credential value is stored in this report.",
     "Scheduled notification retry setup is not configured; authenticated admin queue processing remains available",
     "Production schema/configuration and rollout require separate explicit approval",
     "Active-mode privacy/retention wording must be reviewed before production intake",
