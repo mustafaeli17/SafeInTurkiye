@@ -12,7 +12,7 @@ export function reservationBackend(){
 export async function reservationDb(path:string,body?:unknown,method=body===undefined?'GET':'POST'){
  const config=reservationBackend();if(!config)throw Error('UNAVAILABLE');
  const response=await fetch(config.url+'/rest/v1/'+path,{method,headers:{apikey:config.key,Authorization:'Bearer '+config.key,'Content-Type':'application/json',Prefer:'return=representation'},...(body===undefined?{}:{body:JSON.stringify(body)}),signal:AbortSignal.timeout(8000)});
- if(!response.ok){const data=await response.json().catch(()=>null);throw Error(data?.message==='RATE_LIMIT'?'RATE_LIMIT':'UNAVAILABLE');}
+ if(!response.ok){console.warn('reservation_database_unavailable',{status:response.status});const data=await response.json().catch(()=>null);throw Error(data?.message==='RATE_LIMIT'?'RATE_LIMIT':'UNAVAILABLE');}
  return response.status===204?[]:await response.json();
 }
 export const emailConfigured=()=>Boolean(process.env.RESEND_API_KEY&&process.env.RESERVATION_EMAIL_FROM&&!/[\r\n]/.test(process.env.RESERVATION_EMAIL_FROM));

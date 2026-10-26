@@ -4,7 +4,10 @@ let readiness:{until:number;enabled:boolean}|undefined;
 export default async function handler(req:ReservationHttpRequest,res:ReservationHttpResponse){
  res.setHeader('Cache-Control','private, no-store');res.setHeader('X-Content-Type-Options','nosniff');
  if(req.method==='GET'){
-  if(process.env.RESERVATIONS_ENABLED!=='true'||!reservationBackend()||!emailConfigured())return res.status(200).json({enabled:false});
+  if(process.env.RESERVATIONS_ENABLED!=='true'||!reservationBackend()||!emailConfigured()){
+   console.warn('reservation_readiness_config',{enabled:process.env.RESERVATIONS_ENABLED==='true',backend:Boolean(reservationBackend()),email:emailConfigured()});
+   return res.status(200).json({enabled:false});
+  }
   if(!readiness||readiness.until<Date.now())readiness={until:Date.now()+30000,enabled:await reservationSchemaReady()};
   return res.status(200).json({enabled:readiness.enabled});
  }
