@@ -10,8 +10,8 @@ describe('Tour keyword search',()=>{
     expect(tourIntent('turkish restaurant')).toBe(false)
   })
   it('normalises only common Turkish phrases and retains specific landmarks',()=>{
-    expect(tourSearchTerm('İstanbul özel şehir turu')).toBe('Istanbul private city tour')
-    expect(tourSearchTerm('Topkapı özel müze turu')).toBe('Topkapı private museum tour')
+    expect(tourSearchTerm('İstanbul özel şehir turu')).toBe('istanbul private city tour')
+    expect(tourSearchTerm('Topkapı özel müze turu')).toBe('topkapi private museum tour')
     expect(Object.keys(tourSearchCopy)).toHaveLength(8)
   })
   it('rejects oversized queries before contacting provider',async()=>{

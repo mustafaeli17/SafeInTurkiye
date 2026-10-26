@@ -38,7 +38,6 @@ import cityGuides from './data/cityGuides.json';
 import gaziantepCopy from './data/gaziantepCopy.json';
 import { useSupabaseAuth } from './hooks/useSupabaseAuth';
 import { navigateTo,useBrowserLocation } from './lib/browserNavigation';
-import { normalizeSearch } from './lib/catalog';
 import { cityDisplayName,cityLocale } from './lib/cityLocale';
 import { findCityGuide,openCityGuide } from './lib/cityNavigation';
 import { cityTransportText } from './lib/cityTransportCopy';
@@ -48,6 +47,7 @@ import { cityPath,publicCities } from './lib/publicRoutes';
 import { regionalDescription } from './lib/regionalDescription';
 import { sectionFromPath,sectionPath,transferIntent,type Section } from './lib/sectionNavigation';
 import {tourIntent} from './services/tourSearch';
+import {mentionedSearchCity} from './services/searchCities';
 import { updateSectionSeo } from './lib/seo';
 import { siteInformation } from './lib/siteInformation';
 import { supabaseConfigured } from './lib/supabase';
@@ -441,8 +441,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
     const newCity=findCityGuide(query);
     if(newCity){openCityGuide(newCity.slug,lang);return;}
     const low = query.toLocaleLowerCase('tr-TR');
-    const normalized = normalizeSearch(query);
-    const mentionedCity = publicCities.find(city => normalized.includes(normalizeSearch(city.name)));
+    const mentionedCity = publicCities.find(city => city.slug===mentionedSearchCity(query));
     const navigateSearch=(section:Section)=>{const params=new URLSearchParams({q:query});if(mentionedCity)params.set('city',mentionedCity.slug);if(transferIntent(query))params.set('intent','transfer');navigateTo(`${sectionPath(section)}?${params}`);};
     setActivityCategory('All');
     const cityMatch = Object.keys(citiesDetailedData).find(city => city.toLocaleLowerCase('tr-TR') === low || city.toLowerCase().replace(/i̇/g, 'i') === query.toLowerCase());
