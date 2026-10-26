@@ -1,7 +1,12 @@
 import {describe,it,expect} from 'vitest'
 import {mentionedSearchCity,searchCities} from '../services/searchCities'
-import {tourIntent,tourSearchTerm} from '../services/tourSearch'
+import {tourIntent,tourSearchTerm,localizedTourTerm} from '../services/tourSearch'
 describe('Multilingual destination and tour search',()=>{
+  it.each([
+    ['es','Estambul traslado al aeropuerto'],['de','istanbul Flughafentransfer'],['fr','istanbul transfert aéroport'],['en','istanbul airport transfer'],
+  ])('aligns common search with %s catalog',(language,expected)=>{
+    expect(localizedTourTerm(tourSearchTerm('伊斯坦布尔机场接送'),language)).toBe(expected)
+  })
   it.each([
     ['Istanbul airport transfer','istanbul airport transfer'],
     ['İstanbul havalimanı transferi','istanbul airport transfer'],

@@ -29,6 +29,19 @@ export function tourIntent(query:string) {
   if(query.length>160)return false
   try{return /\b(?:transfer|tour|tours)\b/i.test(tourSearchTerm(query))}catch{return false}
 }
+// Viator free-text matches its localized catalog. Keep query and catalog language aligned.
+export function localizedTourTerm(term:string,language:string){
+  const catalog:Record<string,Record<string,string>>={
+    es:{'airport transfer':'traslado al aeropuerto','private city tour':'visita privada por la ciudad','museum tour':'visita al museo','city tour':'visita por la ciudad','boat tour':'paseo en barco',private:'privado',airport:'aeropuerto',transfer:'traslado',tour:'excursión',istanbul:'Estambul',cappadocia:'Capadocia',izmir:'Esmirna'},
+    de:{'airport transfer':'Flughafentransfer','private city tour':'private Stadtführung','museum tour':'Museumsführung','city tour':'Stadtführung','boat tour':'Bootstour',private:'private',airport:'Flughafen',cappadocia:'Kappadokien'},
+    fr:{'airport transfer':'transfert aéroport','private city tour':'visite privée de la ville','museum tour':'visite du musée','city tour':'visite de la ville','boat tour':'tour en bateau',private:'privée',airport:'aéroport',transfer:'transfert',cappadocia:'Cappadoce'},
+  }
+  const map=catalog[language]
+  if(!map)return term
+  // One pass avoids translating pieces of the newly generated phrase a second time.
+  const pattern=new RegExp(`(?<![\\p{L}\\p{N}])(?:${Object.keys(map).sort((a,b)=>b.length-a.length).join('|')})(?![\\p{L}\\p{N}])`,'gu')
+  return term.replace(pattern,match=>map[match])
+}
 export const tourSearchCopy:Record<string,[string,string]>={
   en:['Search tours','Airport transfer, private city tour, museum…'],
   tr:['Tur ara','Havalimanı transferi, özel şehir turu, müze…'],

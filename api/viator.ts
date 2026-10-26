@@ -1,7 +1,7 @@
 // Affiliate search only: no bookings, payment data, reviews text or catalog ingestion.
 import { viatorFilters } from '../src/services/viatorFilters.js'
 import {viatorSummary} from '../src/server/viatorSummary.js'
-import {tourSearchTerm} from '../src/services/tourSearch.js'
+import {tourSearchTerm,localizedTourTerm} from '../src/services/tourSearch.js'
 type Request = { method?: string; url?: string; headers: Record<string, string | string[] | undefined> }
 type Response = { status: (code: number) => Response; setHeader: (name: string, value: string) => void; json: (body: unknown) => void }
 type Destination = { destinationId: number; parentDestinationId?: number; name: string }
@@ -88,7 +88,7 @@ export default async function handler(req: Request, res: Response) {
     if (!destination) return res.status(200).json({ products: [], totalCount: 0, sandbox, language: languages[lang] })
     const filtering={destination:String(destination.destinationId),...filters.filtering}
     const raw = term ? await request('/search/freetext', {
-      searchTerm:term,
+      searchTerm:localizedTourTerm(term,languages[lang]),
       productFiltering:{destination:filtering.destination,
         ...(filters.filtering.lowestPrice!==undefined||filters.filtering.highestPrice!==undefined?{price:{...(filters.filtering.lowestPrice!==undefined?{from:filters.filtering.lowestPrice}:{}),...(filters.filtering.highestPrice!==undefined?{to:filters.filtering.highestPrice}:{})}}:{}),
         ...(filters.filtering.startDate?{dateRange:{from:filters.filtering.startDate,to:filters.filtering.endDate}}:{}),
