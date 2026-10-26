@@ -3,7 +3,6 @@ import {readFile,readdir} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {PGlite} from '@electric-sql/pglite';
 import {createServer} from 'vite';
-import handler from '../api/reservations.ts';
 if(process.env.VERCEL)throw Error('Local QA only');
 Object.assign(process.env,{SUPABASE_URL:'https://isolated-admin.supabase.co',SUPABASE_SERVICE_ROLE_KEY:'LOCAL_TEST_ONLY',RESERVATIONS_ENABLED:'true',RESEND_API_KEY:'LOCAL_TEST_ONLY',RESERVATION_EMAIL_FROM:'qa@example.test',RESERVATION_ALLOWED_ORIGINS:'http://127.0.0.1:5205'});
 const db=new PGlite();let emails=0;
@@ -57,4 +56,5 @@ const server=await createServer({mode:'qa-admin',define:{'import.meta.env.VITE_R
  if(path==='/api/reservations'){await handler({method:req.method,headers:req.headers,body:raw?JSON.parse(raw):undefined},adapt(res));return;}
  try{const input=JSON.parse(raw);const result=await db.transaction(async tx=>{await tx.exec(`set local role authenticated;select set_config('request.jwt.claim.sub','${admin}',true);`);return tableQuery(tx,input);});if(input.singleRow)result.data=result.data[0]??null;adapt(res).status(200).json({...result,error:null});}catch{adapt(res).status(200).json({data:null,error:{code:'QA_ERROR'}});}
  });}}]});
+const {default:handler}=await server.ssrLoadModule('/api/reservations.ts');
 await server.listen();console.log('LOCAL TEST ONLY: http://127.0.0.1:5205/qa/admin and /qa/restaurant');

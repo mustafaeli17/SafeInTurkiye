@@ -1,6 +1,6 @@
 import {timingSafeEqual} from 'node:crypto';
-import {processReservationNotifications} from '../server/restaurantRequests.ts';
-import type {ReservationHttpRequest,ReservationHttpResponse} from '../server/restaurantRequests.ts';
+import {processReservationNotifications} from '../server/restaurantRequests.js';
+import type {ReservationHttpRequest,ReservationHttpResponse} from '../server/restaurantRequests.js';
 export default async function handler(req:ReservationHttpRequest,res:ReservationHttpResponse){
  res.setHeader('Cache-Control','private, no-store');
  const expected=process.env.CRON_SECRET?'Bearer '+process.env.CRON_SECRET:'',given=String(req.headers.authorization??'');

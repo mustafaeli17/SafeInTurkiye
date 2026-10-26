@@ -2,7 +2,7 @@
 // memory: no .env writes, console output, browser storage, or production access.
 import {createServer} from 'node:http';
 import {randomBytes,randomUUID,timingSafeEqual} from 'node:crypto';
-import handler from '../api/reservations.ts';
+import {createServer as createViteServer} from 'vite';
 process.loadEnvFile('.env.foundation.local');
 const target='https://qctltygvdxpzdaliczig.supabase.co',origin='http://127.0.0.1:5206';
 if(process.env.VERCEL||process.env.SUPABASE_URL!==target||!process.env.SUPABASE_SERVICE_ROLE_KEY)throw Error('Isolated test project required');
@@ -10,6 +10,9 @@ process.env.RESERVATION_ALLOWED_ORIGINS=origin;
 process.env.RESERVATIONS_ENABLED='true';
 process.env.RESERVATION_EMAIL_FROM='SafeInTurkiye test <onboarding@resend.dev>';
 delete process.env.RESEND_API_KEY;
+// Resolve production .js ESM specifiers against TypeScript sources in local QA.
+const modules=await createViteServer({server:{middlewareMode:true},appType:'custom'});
+const {default:handler}=await modules.ssrLoadModule('/api/reservations.ts');
 const nonce=randomBytes(32).toString('hex');let receipt=null,result=null,running=false;
 const escape=value=>String(value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 function response(res,body,code=200){res.writeHead(code,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Content-Security-Policy':"default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'"});res.end(body);}

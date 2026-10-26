@@ -1,6 +1,6 @@
 import {createHash,createHmac} from 'node:crypto';
-import {validBookingTime} from '../src/lib/bookingTime.ts';
-import {supportEmail} from '../src/lib/siteOperator.ts';
+import {validBookingTime} from '../src/lib/bookingTime.js';
+import {supportEmail} from '../src/lib/siteOperator.js';
 export type ReservationHttpRequest={method?:string;headers:Record<string,string|string[]|undefined>;body?:unknown};
 export type ReservationHttpResponse={status:(n:number)=>ReservationHttpResponse;json:(body:unknown)=>unknown;setHeader:(name:string,value:string)=>void};
 export function reservationBackend(){

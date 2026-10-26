@@ -1,5 +1,5 @@
-import {clientLimitHash,emailConfigured,processReservationNotifications,receiptHash,reservationBackend,reservationDb,reservationOrigin,reservationSchemaReady,reservationStaff,validateGuestRequest,withinReservationBudget} from '../server/restaurantRequests.ts';
-import type {ReservationHttpRequest,ReservationHttpResponse} from '../server/restaurantRequests.ts';
+import {clientLimitHash,emailConfigured,processReservationNotifications,receiptHash,reservationBackend,reservationDb,reservationOrigin,reservationSchemaReady,reservationStaff,validateGuestRequest,withinReservationBudget} from '../server/restaurantRequests.js';
+import type {ReservationHttpRequest,ReservationHttpResponse} from '../server/restaurantRequests.js';
 let readiness:{until:number;enabled:boolean}|undefined;
 export default async function handler(req:ReservationHttpRequest,res:ReservationHttpResponse){
  res.setHeader('Cache-Control','private, no-store');res.setHeader('X-Content-Type-Options','nosniff');
