@@ -16,9 +16,37 @@
   },
   "resend_api_key_saved_to_vercel": true,
   "resend_key_scope_verified": "Secret variable, Preview only; value not revealed or inspected",
+  "isolated_preview": {
+    "branch": "codex/three-phase-readiness",
+    "url": "https://safe-in-turkiye-git-codex-three-phase-readiness-eli-1196.vercel.app",
+    "database_project": "qctltygvdxpzdaliczig",
+    "database_configuration_scope": "Preview branch override only; production values unchanged",
+    "owner_test_admin": "Created by owner with owner-chosen password; approved admin role applied only to test project",
+    "reference": "SIT-2026-0000004",
+    "browser_guest_result": "Request received, then Confirmed after authenticated admin update",
+    "notification_queue": "SENT, attempts=1",
+    "email_receipt": "Owner confirmed receipt of SIT-2026-0000004 at approved Gmail address; Resend UI did not show delivery record at check time",
+    "narrow_browser_width": 537,
+    "narrow_browser_scroll_width": 537,
+    "metrics_origin": "Exact stable Preview hostname only"
+  },
+  "fixes_during_preview": [
+    "Reservation server functions use emitted .js ESM import paths, matching deployed Vercel runtime",
+    "Restaurants without external website/source use their own SafeInTurkiye detail permalink for request provenance",
+    "Preview notification emails point to Preview admin rather than production admin",
+    "PGlite WASM/schema setup moved to setup hook; actual workflow retains original 20-second assertion budget"
+  ],
+  "validation": {
+    "tests": "436/436 passed with maxWorkers=2 after database fixture setup separation",
+    "typecheck": "passed",
+    "lint": "full lint passed, subsequent modified files passed targeted lint",
+    "build": "passed; 12 directory pages generated"
+  },
   "remaining": [
-    "Isolated test database Preview configuration and authenticated end-to-end acceptance",
-    "Scheduled notification retry setup"
+    "Scheduled notification retry setup is not configured; authenticated admin queue processing remains available",
+    "Production schema/configuration and rollout require separate explicit approval",
+    "Active-mode privacy/retention wording must be reviewed before production intake",
+    "During Preview replacement an already open old build can lose unloaded chunks; refresh recovers. Automatic safe recovery remains backlog."
   ],
   "production_deploy_by_agent": false,
   "observed_existing_code_redeployment": {"environment": "Production", "commit": "fd765ba", "deployment": "EMoDzm8f5ky7cj9z4C7egeMNuDDM", "new_admin_code_included": false},

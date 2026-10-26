@@ -1,9 +1,11 @@
 import {readFile,readdir} from 'node:fs/promises';
 import {PGlite} from '@electric-sql/pglite';
-import {expect,it} from 'vitest';
-it('guest intake is idempotent, rate-limited and private; notifications commit with booking',async()=>{
- const db=new PGlite();
- try{
+import {afterAll,beforeAll,expect,it} from 'vitest';
+let db:PGlite;
+// WASM database startup + schema installation are fixture setup, not request latency.
+// Keep the actual workflow assertions on their original 20-second budget.
+beforeAll(async()=>{
+ db=new PGlite();
   await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create schema storage;
   create table auth.users(id uuid primary key,email text,raw_user_meta_data jsonb);
   create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
@@ -13,6 +15,9 @@ it('guest intake is idempotent, rate-limited and private; notifications commit w
   await db.exec(await readFile('supabase/migrations/0007_editorial_discovery_fields.sql','utf8'));
   await db.exec(await readFile('supabase/migrations/0007_editorial_discovery_fields.sql','utf8'));
   await db.exec('grant usage on schema public,auth to anon,authenticated,service_role;grant select on public.bookings to anon,authenticated;grant insert,update on public.bookings to authenticated;');
+},60000);
+afterAll(async()=>{if(db)await db.close();},60000);
+it('guest intake is idempotent, rate-limited and private; notifications commit with booking',async()=>{
   const request='00000000-0000-0000-0000-000000000101',hash='a'.repeat(64),ip='b'.repeat(64);
   const submit=(id=request,client=ip,token=hash)=>db.query(`select * from public.submit_restaurant_request($1,$2,$3,'TEST restaurant','TEST guest','guest@example.test','+90000000000',current_date+1,'19:00',2,'{"notes":"Test only"}')`,[id,token,client]);
   await db.exec('set role service_role;');
@@ -35,5 +40,4 @@ it('guest intake is idempotent, rate-limited and private; notifications commit w
   await expect(submit()).rejects.toThrow();
   await db.query("update bookings set status='CONFIRMED' where id=$1",[first.id]);
   expect((await db.query('select status from bookings where id=$1',[first.id])).rows).toEqual([{status:'CONFIRMED'}]);
- }finally{await db.close();}
 },20000);
