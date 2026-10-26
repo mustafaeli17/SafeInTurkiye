@@ -1,0 +1,54 @@
+{
+  "checked_on": "2026-10-26",
+  "project_ref": "qctltygvdxpzdaliczig",
+  "project_name": "safeinturkiye-foundation-test",
+  "environment": "isolated test",
+  "production_modified": false,
+  "applied_via": "Supabase SQL Editor with explicit owner approval",
+  "migrations": [
+    {"file": "0006_restaurant_request_workflow.sql", "sha256": "AD6CB953032BE0804A6D950EAA5EC33F8DBECBD40BCBCFFC5220DDBE30092B4D", "result": "success"},
+    {"file": "0007_editorial_discovery_fields.sql", "sha256": "EDA17284AB91E96E67FFBE4B4F260985253ABF25E4084432E4561B325427B781", "result": "success"}
+  ],
+  "checks": {
+    "queue_exists": true,
+    "queue_rls_enabled": true,
+    "anonymous_submit_rpc_blocked": true,
+    "authenticated_submit_rpc_blocked": true,
+    "service_role_submit_rpc_allowed": true,
+    "published_google_identity_indexes": 6,
+    "anonymous_bookings_http": 200,
+    "anonymous_visible_bookings": 0,
+    "anonymous_queue_http": 401,
+    "real_guest_intake_http": 200,
+    "test_reference": "SIT-2026-0000003",
+    "real_receipt_status_http": 200,
+    "real_receipt_final_status": "CONFIRMED",
+    "notification_queue_state": "SENT",
+    "notification_attempts": 1,
+    "resend_dashboard_delivery_status": "Delivered"
+  },
+  "email": {
+    "provider": "Resend",
+    "plan_changed_to_paid": false,
+    "credential_permission": "Sending access",
+    "credential_location": "local acceptance-test process memory only",
+    "sender": "onboarding@resend.dev",
+    "recipient": "approved account owner only",
+    "real_customer_data_used": false,
+    "mailbox_inbox_or_spam_placement_verified": false
+  },
+  "notes": [
+    "The paused test project was resumed, without a paid plan upgrade.",
+    "Existing test bookings were retained. Only the new TEST ONLY acceptance request was confirmed.",
+    "SQL Editor execution is recorded here; do not assume the CLI migration history was updated.",
+    "0006 is a one-time migration: inspect schema state instead of re-running it blindly.",
+    "No API key or receipt secret is stored in this report."
+  ],
+  "not_activated": [
+    "Production migration or deployment",
+    "Preview/production email credentials",
+    "Verified custom sending domain",
+    "Scheduled queue retries",
+    "Public intake activation and corresponding privacy/contact/retention review"
+  ]
+}
