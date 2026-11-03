@@ -2,7 +2,7 @@ import {afterEach,describe,it,expect,vi} from 'vitest'
 import handler from '../../api/viator'
 import {tourIntent,tourSearchTerm,tourSearchCopy} from '../services/tourSearch'
 const response=()=>({status:vi.fn().mockReturnThis(),setHeader:vi.fn(),json:vi.fn()})
-afterEach(()=>{vi.unstubAllGlobals();vi.unstubAllEnvs()})
+afterEach(()=>{vi.useRealTimers();vi.unstubAllGlobals();vi.unstubAllEnvs()})
 describe('Tour keyword search',()=>{
   it.each(['İstanbul airport transfer','özel şehir turu','özel müze turu','private city tour','机场接送'])('routes tour intent %s',q=>expect(tourIntent(q)).toBe(true))
   it('keeps public transport and restaurants out of tour intent',()=>{
@@ -20,6 +20,7 @@ describe('Tour keyword search',()=>{
     expect(res.status).toHaveBeenCalledWith(400);expect(fetcher).not.toHaveBeenCalled()
   })
   it.each([true,false])('uses full-catalog text search with city/filter/paging and handles results=%s',async found=>{
+    vi.useFakeTimers({toFake:['Date']});vi.setSystemTime(new Date('2026-10-26T12:00:00Z'))
     vi.stubEnv('VIATOR_API_KEY','test-secret');vi.stubEnv('VIATOR_ENVIRONMENT','sandbox')
     const link='https://www.viator.com/tours/Istanbul/transfer?pid=P123&mcid=42383'
     const fetcher=vi.fn().mockImplementation(async(path:string,init:RequestInit)=>{

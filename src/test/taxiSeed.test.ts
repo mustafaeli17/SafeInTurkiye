@@ -17,7 +17,12 @@ it('official seed is atomic/idempotent and anon rows feed the real calculator', 
   for(const file of (await readdir('supabase/migrations')).filter(f=>/^000[1-4]_/.test(f)).sort()) {
    await db.exec((await readFile('supabase/migrations/'+file,'utf8')).replace('create extension if not exists pgcrypto;',''));
   }
-  const seed=await readFile('supabase/seeds/taxi-istanbul-2026-07-20.sql','utf8');
+  const originalSeed=await readFile('supabase/seeds/taxi-istanbul-2026-07-20.sql','utf8');
+  // Freeze only this isolated historical fixture; never change the deployable seed.
+  const seedAt=(date:string)=>originalSeed.replace(/\bnow\(\)/g,`timestamptz '${date}'`);
+  await expect(db.exec(seedAt('2026-11-03T12:00:00Z'))).rejects.toThrow(/needs re-verification/);
+  await db.exec('rollback;');
+  const seed=seedAt('2026-09-29T12:00:00Z');
   await db.exec(seed);
   const before=(await db.query('select * from taxi_tariffs order by id')).rows;
   await db.exec(seed);
