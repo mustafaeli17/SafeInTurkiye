@@ -1,0 +1,73 @@
+SAFEINTÜRKİYE — TURİST ARAMA İHTİYAÇLARI VE İÇERİK KAPSAMI
+Tarih: 4 Kasım 2026
+
+AMAÇ
+Kullanıcının tek tek kelime vermesine ihtiyaç duymadan, mevcut ürünün karşılayabildiği arama niyetlerini mevcut şehir ve dil sayfalarına eşlemek. Her sorguda görünme veya sıralama garantisi verilmez. Site içi arama eşleştirmesi ile Google/Bing organik sıralaması farklı sistemlerdir.
+
+MEVCUT TEMEL — YENİ YAPILMIŞ GİBİ SUNULMAZ
+docs/seo-production-release-2026-11-04.md: 95242b0 yayın checkpoint'i, 216 temel URL, 12 şehir, 8 dil; sitemap Google Search Console'a gönderilmiş. Success/216 discovered ifadesi indekslenme veya sıralama kanıtı değildir.
+src/lib/searchPages.ts: canonical sayfa içerikleri ve iç bağlantılar.
+src/components/SearchGuide.tsx: hem statik HTML hem kullanıcıya gösterilen açılır rehber.
+scripts/build-directory-pages.mjs: statik dil sayfaları ve sitemap üretimi.
+91 eski API öncesi kayıt emekli; yeniden açılmadı. Google Places sonuçları kalıcı bağımsız SEO işletme kataloğu değildir.
+
+ARAŞTIRMA YÖNTEMİ VE KANIT SINIRI
+Web taramasında İngilizce, İspanyolca, Arapça, Çince, Almanca, Fransızca ve Rusça ulaşım/döviz konu örnekleri incelendi. Örnek sorgular: Istanbul taxi airport fare public transport tourists currency exchange; Estambul cambiar dinero transporte aeropuerto seguridad; اسطنبول صرف العملات المطار تاكسي; 伊斯坦布尔 机场 交通 兑换 外币; Istanbul Geld wechseln Flughafen Taxi Touristen; Стамбул обмен валюты аэропорт такси туристам; Istanbul changer argent aéroport transports touristes.
+Bu tarama piyasada bu konuların ele alındığını gösterir; kullanıcıların aynı kelimeleri hangi sıklıkta yazdığına dair ölçüm değildir. Arama sonuç sıraları kişiselleştirme/konum/tarihle değişir. Bu oturumda Search Console performans sorguları, Keyword Planner hacimleri veya Bing performansı alınmadı.
+Rakip sayfalardan fiyat, en iyi döviz bürosu, güvenlik veya kart geçerliliği iddiaları kopyalanmadı. Bazı sonuçlar çok eski fiyatlar ve çelişkili bilgiler içeriyordu.
+
+TEMEL KAYNAKLAR
+https://developers.google.com/search/docs/essentials/spam-policies
+Google: doorway ve scaled-content abuse; sırf sıralama için çok sayıda kopya sayfa üretmek uygun değil.
+https://developers.google.com/search/docs/fundamentals/creating-helpful-content
+Google: kullanıcıya faydalı, güvenilir içerik.
+https://developers.google.com/search/docs/specialty/international/localized-versions
+Google: gerçek dil sürümleri ve hreflang.
+https://www.turkishairlines.com/ru-int/istanbul-airport/faq/
+Birincil seyahat kaynağında Rusça havalimanı/para değiştirme soru-cevaplarının varlığı. Sabit güncel fiyat kanıtı olarak kullanılmadı.
+https://www.reddit.com/r/istanbul_tips/comments/1vucacn/where_to_exchange_currency/
+https://www.reddit.com/r/istanbul_tips/comments/1qg67nu/tips_for_carrying_cash_taking_transportation/
+Gerçek ziyaretçi soru konuları: para değiştirme, nakit ve ulaşım. Yanıtlardaki tavsiyeler doğrulanmış resmî bilgi sayılmadı; içerikleri kopyalanmadı.
+
+KONU HARİTASI
+1. Taksi fiyatı: /taxi; seçilen başlangıç/varış, tarife ve tahmin sınırları. IST ve SAW ayrı; şehir merkezi tek fiyat değil.
+2. Havalimanı ve şehir içi ulaşım: /transport; adres, kalkış zamanı, aktarma/yürüme, resmi işletmeci. Kapsam eksikliği ulaşımsızlık değildir.
+3. Döviz bürosu, kur ve komisyon: /exchange; referans kur ile gerçek gişe teklifi ayrılır, aynı miktarın net karşılığı karşılaştırılır.
+4. Yakındaki hizmet: /near-me; eczane, ATM, kafe, mağaza gibi kategori ve manuel adres. Eksik alan uydurulmaz.
+5. Otel keşfi: /hotels; konum/fotoğraf/iletişim. Oda fiyatı, müsaitlik veya kendi rezervasyon motoru vaat edilmez.
+6. Restoran: /restaurants; adres/iletişim, menü ve beslenme koşullarını doğrulama. Talep gönderildi = masa onaylandı değildir.
+7. Aktivite, müze ve eğlence: /activities; yer keşfi. Saat ve bilet işletmeden doğrulanır.
+8. Satın alınabilir tur ve transfer: /tours; program, dahil hizmetler, buluşma ve iptal koşulları; ödeme Viator'da.
+9. Güvenlik ve seyahat soruları: /safety ve /guides; mevcut practicalFaq korunur. Yeni güncel güvenlik garantisi eklenmedi.
+10. Yerel bağlam: /cities/{slug}; mevcut özgün şehir açıklamaları ve yerler korunur. Bursa=Uludağ, Denizli=Pamukkale gibi bağlı destinasyonlar aynı noktaymış gibi gösterilmez.
+
+DİLLER VE ŞEHİRLER
+en, tr, de, fr, es, ar, ru, zh. Yeni dil eklenmedi.
+İstanbul, Antalya, Kapadokya, Ankara, İzmir, Gaziantep, Muğla, Aydın, Denizli, Trabzon, Konya, Bursa.
+search-opportunities-2026-11-04.json dosyasında 12 şehir × 8 dil × 8 konu × 2 ifade = 1.536 aday var. Bunlar editoryal şablon varyasyonlarıdır; 1.536 ölçülmüş sorgu veya yeni sayfa değildir. monthlySearchVolume/currentRanking null tutulur. Dilbilgisi/yerel kullanım için arama verisi veya ana dil incelemesiyle iyileştirilebilir.
+Her kayıtta şehir açılış sayfası, şehir filtresi taşıyan araç bağlantısı ve gerçek canonical ayrı tutulur. ?city=... ayrı indekslenebilir yerel sayfa gibi sunulmaz.
+
+BU TURDA UYGULANAN
+8 araç sayfasına 8 dilde toplam 64 yerelleştirilmiş soru-cevap.
+Mevcut açılır rehber alanı kullanılır; görünür içerik ve statik HTML aynı kaynaktan gelir. Yeni route, sitemap sayısı, schema türü, fiyat, işletme veya yorum eklenmedi.
+Yeni içerik src/data/searchIntentGuides.ts içinde. Başlangıç bundle'ı ölçülen önceki 269,87 kB'den 295,87 kB'ye; gzip 105,66'dan 116,42 kB'ye çıktı. İçerik kapsamının bir maliyeti olduğu raporlandı; yeni büyük refactor yapılmadı.
+
+SONRAKİ ÖNCELİKLER
+1. Search Console'da markasız sorguları dil/şehir/sayfa bazında al; yeterli veri yoksa önce veri birikmesini bekle. Aday listeyi gerçek gösterim/tıklama ve uygun dönüşümle daralt.
+2. İngilizce İstanbul ulaşım ve döviz, Arapça İstanbul/Trabzon, Almanca Antalya, İspanyolca İstanbul/Kapadokya adaylarını mevcut sayfa kalitesiyle sınayarak ilerle. Bunlar hacim verisiyle kanıtlanmış öncelik sırası değil, ürün ve dil uyumuna dayalı başlangıç hipotezleridir.
+3. Özgün şehir-konu sayfaları ancak gerçekten farklı, doğrulanmış yerel bilgi ve kullanıcı yararı varsa hazırlanmalı. 12×8×kategori kombinasyonunu otomatik kopya sayfalarla doldurma.
+4. Havalimanı rehberleri için resmi operatör bağlantıları, güncel güzergâh/ücret kaynağı, kontrol tarihi ve veri eskimesi yönetimi gerekir. Bugünkü SEO metni tarife audit'inin yerine geçmez.
+5. Bing erişimi ve sitemap gönderimi eksik; doğru hesapta ayrıca doğrulanmalı.
+
+ÖLÇÜM
+Yayın sonrası karşılaştırılabilir 28 günlük dönemler: markalı/markasız gösterim, tıklama, CTR, sorgu dili ve sayfa; ortalama konumu bağlamıyla değerlendir. İlk gün veya sitemap keşfi başarı kanıtı değildir.
+Site içi araç kullanımını, tamamlanan hesaplamayı ve dış sağlayıcıya geçişi ayrı ölç. Kişisel adres/koordinat/telefonu reklam ölçümüne gönderme. Consent ve conversion uygulaması ayrı yayın öncesi engel olarak duruyor.
+
+YAYIN VE HARCAMA
+Bu turda production deploy, reklam yayınlama, ödeme, database veya hesap ayarı değişikliği yok. Değişiklikler yerel çalışma dalında. Taksi tarifesi güncelliği ve reklam dönüşüm ölçümü hâlâ reklam hazırlığının ayrı gereklilikleri.
+
+DOĞRULAMA SONUÇLARI
+Yeni iki davranış testi önce eksik içerik nedeniyle başarısız oldu, uygulamadan sonra geçti. Üçüncü test 64 yanıtın tamamını üretilmiş HTML ile karşılaştırıyor ve yanlış İngilizce fallback'i kontrol ediyor.
+Tam test paketi: 82 dosya / 587 test başarılı. Build: başarılı, 216 sayfa üretildi. Typecheck: başarılı. Lint: başarılı.
+Yerel gerçek tarayıcı: /exchange İngilizce açılır rehber ve doğru soru görüldü; /ar/exchange Arapça açılır rehber mobilde görüldü. Ölçülen clientWidth=375, scrollWidth=375. Kanıt: search-guide-ar-mobile-2026-11-04.jpg.
+İlk yerel açılış sunucu henüz hazır olmadığı için başarısız oldu; sunucu hazır olduktan sonra aynı uygulama başarılı kontrol edildi. Bu production/API uçtan uca yeniden testi değildir. Sekiz dilde içerik/statik HTML otomatik doğrulandı; bu turda yalnız iki dil gerçek tarayıcıda kontrol edildi.

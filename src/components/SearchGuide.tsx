@@ -3,11 +3,16 @@ import {localizePath} from '../lib/searchLocales';
 import {informationUi} from '../lib/informationUi';
 import {practicalFaq,practicalSources,practicalVerifiedAt} from '../data/practicalFaq';
 import {siteOperatorName,supportEmail} from '../lib/siteOperator';
+import {searchIntentGuides} from '../data/searchIntentGuides';
+import type {SearchLanguage} from '../lib/searchLocales';
 /** This content is rendered for users as well as in the initial HTML. */
 export function SearchGuide({path,lang,standalone=false}:{path:string;lang:string;standalone?:boolean}){
  const page=searchPage(path,lang);
+ const toolAnswers=searchIntentGuides[lang as SearchLanguage]??searchIntentGuides.en;
+ const answer=page.section?toolAnswers[page.section as keyof typeof toolAnswers]:undefined;
  const content=<div className="space-y-4">
   {page.paragraphs.map((p,i)=><p key={i}>{p}</p>)}
+  {answer&&<section className="space-y-2"><h2 className="font-semibold">{answer[0]}</h2><p>{answer[1]}</p></section>}
   {page.highlights.length>0&&<ul className="space-y-3">{page.highlights.map(h=><li key={h.name}><strong>{h.name}</strong>{h.detail&&<p>{h.detail}</p>}</li>)}</ul>}
   {page.source&&<a className="underline" href={page.source} rel="noopener noreferrer">GoTürkiye ↗</a>}
   {(page.section==='safety'||page.section==='assistant')&&<>
