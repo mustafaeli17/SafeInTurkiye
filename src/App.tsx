@@ -1,3 +1,4 @@
+import {navigationUi} from './lib/navigationUi';
 import {citiesDetailedData} from './data/originalCityDetails';
 import {localizePath,parseLocalePath} from './lib/searchLocales';
 import {searchPage,searchPageSchema} from './lib/searchPages';
@@ -724,7 +725,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
 
             {/* Dil ve SOS (112 Acil Arama Aktif) */}
             <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-              <button type="button" aria-label="Open navigation" onClick={() => setMobileMenuOpen(value => !value)} className="lg:hidden w-9 h-9 rounded-xl bg-sky-50 text-[#087FFF] flex items-center justify-center">
+              <button type="button" aria-label={navigationUi[lang][mobileMenuOpen?1:0]} aria-expanded={mobileMenuOpen} aria-controls="mobile-navigation" onClick={() => setMobileMenuOpen(value => !value)} className="lg:hidden w-11 h-11 rounded-xl bg-sky-50 text-[#087FFF] flex items-center justify-center">
                 {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
               <select
@@ -753,11 +754,11 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
               </a>
             </div>
           </div>
-          {mobileMenuOpen && <nav className="lg:hidden border-t border-sky-100 bg-white px-4 py-3 grid grid-cols-2 gap-2 text-[12px] font-bold">
+          {mobileMenuOpen && <nav id="mobile-navigation" aria-label={navigationUi[lang][0]} className="lg:hidden max-h-[calc(100dvh-80px)] overflow-y-auto border-t border-sky-100 bg-white px-4 py-3 grid grid-cols-2 gap-2 text-[12px] font-bold">
             {([
               ['assistant', tr('assistant')], ['taxi', tr('taxi')], ['transit', tr('transit')], ['currency', tr('currency')], ['city', tr('cityWeather')], ['nearme', tr('nearMe')], ['stay', tr('hotels')], ['food', tr('dining')], ['experiences', tr('activities')], ['tours',toursLabel(lang)], ['safety', page('safety')],
-            ] as const).map(([tab, label]) => <button key={tab} type="button" onClick={() => { setActiveTab(tab); setMobileMenuOpen(false); }} className={`rounded-xl px-3 py-2 text-left ${activeTab === tab ? 'bg-sky-50 text-[#087FFF]' : 'bg-slate-50 text-slate-700'}`}>{label}</button>)}
-            {isStaff && <button type="button" onClick={() => { setActiveTab('admin'); setMobileMenuOpen(false); }} className="rounded-xl px-3 py-2 text-left bg-slate-900 text-white">CMS Studio</button>}
+            ] as const).map(([tab, label]) => <button key={tab} type="button" onClick={() => { setActiveTab(tab); setMobileMenuOpen(false); }} className={`min-h-11 rounded-xl px-3 py-2 text-start ${activeTab === tab ? 'bg-sky-50 text-[#087FFF]' : 'bg-slate-50 text-slate-700'}`}>{label}</button>)}
+            {isStaff && <button type="button" onClick={() => { setActiveTab('admin'); setMobileMenuOpen(false); }} className="min-h-11 rounded-xl px-3 py-2 text-start bg-slate-900 text-white">CMS Studio</button>}
           </nav>}
         </header>
         {activeTab!=='home' && activeTab!=='taxi' && <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-3"><HomeButton lang={lang} currentPage={({assistant:tr('assistant'),transit:tr('transit'),currency:tr('currency'),city:cityDisplayName(selectedCityName,lang),nearme:tr('nearMe'),stay:page('hotelsTitle'),food:page('diningTitle'),experiences:page('activitiesTitle'),tours:toursLabel(lang),safety:page('safety'),admin:'CMS Studio'} as Record<string,string>)[activeTab]} onClick={()=>{setActiveTab('home');setMobileMenuOpen(false);window.scrollTo(0,0);}}/></div>}
@@ -795,6 +796,8 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
               <p className="text-[13px] text-slate-500">{taxiIntroCopy[lang]}</p>
             </div>
 
+
+            <SearchGuide path={browserPath} lang={lang}/>
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               <div className="lg:col-span-5 bg-white p-5 sm:p-6 rounded-2xl border border-sky-100 shadow-sm space-y-4">
 
@@ -945,6 +948,8 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
         {activeTab === 'currency' && (
           <main className="reference-page max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
             <h1 className="text-3xl font-extrabold text-slate-900">{({ es:'Divisas y casas de cambio', en: 'Currency and exchange bureaux', tr: 'Döviz ve döviz büroları', de: 'Wechselkurse und Wechselstuben', fr: 'Change et bureaux de change', ar: 'العملات ومكاتب الصرافة', ru: 'Валюта и обменные пункты', zh: '汇率与附近兑换点' } as Record<SupportedLang, string>)[lang]}</h1>
+
+            <SearchGuide path={browserPath} lang={lang}/>
             <CurrencyRates lang={lang} />
             <NearbyPlaces key={`exchange:${searchQuery}`} kind="exchange" lang={lang} center={{ lat: currentCityInfo.lat, lng: currentCityInfo.lng }} cityName={currentCityInfo.name} />
           </main>
@@ -1019,6 +1024,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
         {activeTab === 'stay' && (
           <main className="travel-catalog">
             <h1 className="text-3xl font-extrabold text-slate-900">{page('hotelsTitle')}</h1>
+            <SearchGuide path={browserPath} lang={lang}/>
 
             <NearbyPlaces key={`hotels-discovery:${searchQuery}`} kind="essential" fixedCategory="hotel" lang={lang} center={{lat:currentCityInfo.lat,lng:currentCityInfo.lng}} cityName={currentCityInfo.name} />
           </main>
@@ -1030,6 +1036,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
         {activeTab === 'food' && (
           <main className="travel-catalog">
             <h1 className="text-3xl font-extrabold text-slate-900">{page('diningTitle')}</h1>
+            <SearchGuide path={browserPath} lang={lang}/>
             <NearbyPlaces key={`restaurants-discovery:${searchQuery}`} kind="essential" fixedCategory="restaurant" lang={lang} center={{lat:currentCityInfo.lat,lng:currentCityInfo.lng}} cityName={currentCityInfo.name} />
           </main>
         )}
@@ -1040,6 +1047,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
         {activeTab === 'experiences' && (
           <main className="travel-catalog">
             <div><h1 className="text-3xl font-extrabold text-slate-900">{page('activitiesTitle')}</h1><p className="mt-1 text-sm text-slate-600">{page('activitiesSub')}</p></div>
+            <SearchGuide path={browserPath} lang={lang}/>
 
             <NearbyPlaces key={`activities-discovery:${searchQuery}`} kind="essential" fixedCategory="activity" initialCategory={activityCategory === 'Cinema' ? 'cinema' : activityCategory === 'Museum & Culture' ? 'museum' : activityCategory === 'Entertainment' ? 'entertainment' : 'activity'} lang={lang} center={{lat:currentCityInfo.lat,lng:currentCityInfo.lng}} cityName={currentCityInfo.name} />
           </main>
@@ -1053,6 +1061,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
         {activeTab === 'nearme' && (
           <main className="reference-page max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
             <h1 className="text-3xl font-extrabold text-slate-900">{tr('nearMe')}</h1>
+            <SearchGuide path={browserPath} lang={lang}/>
             <NearbyPlaces key={`nearby:${searchQuery}`} kind="essential" lang={lang} center={{ lat: currentCityInfo.lat, lng: currentCityInfo.lng }} cityName={currentCityInfo.name} />
           </main>
         )}
@@ -1138,7 +1147,6 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
       )}
 
       {/* FOOTER */}
-      {activeTab!=='admin'&&<SearchGuide path={browserPath} lang={lang}/>}
       <footer className="border-t border-sky-100 bg-white py-6 px-6 mt-12">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-[12px] text-slate-500">
           <div className="space-y-0.5 text-center sm:text-left">

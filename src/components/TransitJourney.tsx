@@ -1,3 +1,4 @@
+import {SearchGuide} from './SearchGuide';
 import { useEffect, useRef, useState } from 'react'
 import { LocateFixed } from 'lucide-react'
 import TransitAddressInput from './TransitAddressInput'
@@ -61,6 +62,7 @@ export default function TransitJourney({ lang }: { lang: string }) {
   const durationCopy=transitDurationCopy[locale]??transitDurationCopy.en
   return <section aria-label={t.title} dir={locale==='ar'?'rtl':undefined} className="mb-6 space-y-4 rounded-2xl border border-sky-100 bg-white p-4 sm:p-6">
     <h2 className="text-xl font-extrabold text-slate-900">{t.title}</h2><p className="text-sm text-slate-600">{t.intro}</p>
+    <SearchGuide path="/transport" lang={lang}/>
     <form onSubmit={search} className="grid min-w-0 gap-3 sm:grid-cols-2">
       <div className="flex min-w-0 items-end gap-2"><TransitAddressInput label={t.from} locale={locale} value={origin} selected={!!coordinates} onChange={value=>{reset();setCoordinates(null);setOrigin(value)}} onSelect={place=>{reset();setCoordinates(place);setOrigin(place.label)}} placeholder="Taksim, İstanbul"/><button type="button" onClick={useLocation} disabled={locating||busy} aria-label={t.locate} title={t.locate} className="min-h-11 min-w-11 rounded-xl border border-sky-200 bg-sky-50 p-3 text-sky-700 disabled:opacity-50"><LocateFixed size={20}/></button></div>
       <TransitAddressInput label={t.to} locale={locale} value={destination} selected={!!destinationCoordinates} onChange={value=>{reset();setDestinationCoordinates(null);setDestination(value)}} onSelect={place=>{reset();setDestinationCoordinates(place);setDestination(place.label)}} placeholder="Sultanahmet, İstanbul"/>

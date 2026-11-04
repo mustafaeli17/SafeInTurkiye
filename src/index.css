@@ -72,7 +72,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .travel-hero-copy > p { max-width: 240px; font-size: 12px; }
   .travel-hero-photo { object-position: 60% center; }
   .travel-search { gap: 6px; padding-inline-start: 10px; }
-  .travel-search input { font-size: 11px; }
+  .travel-search input { font-size: 16px; }
   .travel-search button { padding: 10px 12px; font-size: 11px; }
   .travel-quick-grid { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }
   .travel-plan-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
@@ -190,3 +190,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
  .travel-catalog-action { grid-column: 1 / -1; flex-direction: row; justify-content: space-between; align-items: center; text-align: start; }
  .travel-catalog-action > span, .travel-catalog-action > strong { max-width: 65%; }
 }
+
+.travel-search:focus-within { outline: 2px solid #087fff; outline-offset: 3px; }
+.travel-search button { min-height: 44px; }
+.travel-home a:focus-visible, .travel-home button:focus-visible { outline: 2px solid #087fff; outline-offset: 3px; }

@@ -1,3 +1,4 @@
+import {SearchGuide} from './SearchGuide';
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {tourSearchCopy} from '../services/tourSearch'
 import { publicCities } from '../lib/publicRoutes'
@@ -55,6 +56,7 @@ export default function ViatorTours({ lang, initialCity='istanbul', initialQuery
   },[initialQuery,search])
   return <section aria-labelledby="viator-heading" className="my-6 rounded-2xl border border-blue-100 bg-white p-4 sm:p-6">
     <h1 id="viator-heading" className="mb-4 text-3xl font-extrabold text-slate-900">{toursLabel(lang)}</h1>
+    <SearchGuide path="/tours" lang={lang}/>
     <p className="mb-4 text-sm text-slate-600">{f[20]}</p>
     <form onSubmit={e=>{e.preventDefault();void search()}} className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
       <label className="grid gap-1 text-sm sm:col-span-2 lg:col-span-3">{s[0]}<input type="search" maxLength={160} value={term} onChange={e=>setTerm(e.target.value)} placeholder={s[1]} className={inputClass}/></label>

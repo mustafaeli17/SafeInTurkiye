@@ -35,3 +35,12 @@ it('keeps practical questions scoped to the appropriate tool without changing ca
  expect(hotel).toContain('Can I compare hotel room prices and book here?');
  expect(hotel).toContain('does not provide room prices');
 });
+
+it('removes the repeated visit panel while retaining relevant localized tool help',()=>{
+ expect(renderToStaticMarkup(<SearchGuide path="/" lang="tr"/>)).toBe('');
+ expect(renderToStaticMarkup(<SearchGuide path="/cities/istanbul" lang="en"/>)).toBe('');
+ const tool=renderToStaticMarkup(<SearchGuide path="/exchange" lang="tr"/>);
+ expect(tool).not.toContain('Gezinizi planlayın');
+ expect(tool).not.toContain('<nav');
+ expect(tool).toContain('Türkiye’de uygun bir döviz bürosunu nasıl bulabilirim?');
+});
