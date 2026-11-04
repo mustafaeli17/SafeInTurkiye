@@ -26,4 +26,11 @@ const copy:Record<string,Record<string,string[]>>={
  'İzmir':['Эгейский бриз, набережная Кордон и оживлённые базары','Римские руины рядом с историческим базарным кварталом.','Местная кухня, ремёсла и покупки на оживлённых улицах.','Прогулки по набережной и паромы через залив.']}
 };
 export function cityLocale(city:string,lang:string){const row=copy[lang]?.[city],original=originals[city as keyof typeof originals];return row&&original?{tagline:row[0],highlights:original.highlights.map((h,i)=>({name:h.name,detail:row[i+1]}))}:{};}
-export function cityDisplayName(city:string,lang:string){return city.startsWith('Cappadocia')?({tr:'Kapadokya',en:'Cappadocia',de:'Kappadokien',fr:'Cappadoce',es:'Capadocia',ar:'كابادوكيا',ru:'Каппадокия',zh:'卡帕多奇亚'}[lang]??city):city;}
+// The same established spellings are accepted by services/searchCities.
+const cityNames:Record<string,Record<string,string>>={
+ es:{'İstanbul':'Estambul','İzmir':'Esmirna'},
+ ar:{'İstanbul':'إسطنبول',Antalya:'أنطاليا','İzmir':'إزمير',Ankara:'أنقرة','Muğla':'موغلا','Aydın':'أيدين',Denizli:'دنيزلي',Trabzon:'طرابزون',Konya:'قونية',Bursa:'بورصة',Gaziantep:'غازي عنتاب'},
+ ru:{'İstanbul':'Стамбул',Antalya:'Анталья','İzmir':'Измир',Ankara:'Анкара','Muğla':'Мугла','Aydın':'Айдын',Denizli:'Денизли',Trabzon:'Трабзон',Konya:'Конья',Bursa:'Бурса',Gaziantep:'Газиантеп'},
+ zh:{'İstanbul':'伊斯坦布尔',Antalya:'安塔利亚','İzmir':'伊兹密尔',Ankara:'安卡拉','Muğla':'穆拉','Aydın':'艾登',Denizli:'代尼兹利',Trabzon:'特拉布宗',Konya:'科尼亚',Bursa:'布尔萨',Gaziantep:'加济安泰普'}
+};
+export function cityDisplayName(city:string,lang:string){return city.startsWith('Cappadocia')?({tr:'Kapadokya',en:'Cappadocia',de:'Kappadokien',fr:'Cappadoce',es:'Capadocia',ar:'كابادوكيا',ru:'Каппадокия',zh:'卡帕多奇亚'}[lang]??city):cityNames[lang]?.[city]??city;}

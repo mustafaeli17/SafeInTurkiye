@@ -1,3 +1,5 @@
+import {searchCopy} from '../data/searchCopy';
+import {localizePath,searchLanguages} from './searchLocales';
 export const homeTitle = 'SafeInTürkiye — Your Guide to Türkiye';
 export const homeDescription = 'Plan your trip to Türkiye with trusted local information on transport, taxi fares, exchange rates, restaurants, attractions, safety and more.';
 const sections: Record<string, [string, string]> = {
@@ -17,9 +19,9 @@ export function sectionSeo(section: string, city: string, lang='en') {
  const keys=['taxi','transit','currency','nearme','stay','food','experiences','tours','safety','assistant'];
  const names:Record<string,string[]>={tr:['Taksi ücreti hesaplama','Toplu taşıma','Döviz kurları','Yakınımdaki yerler','Oteller','Restoranlar','Aktiviteler','Turlar ve deneyimler','Güvenlik rehberi','Seyahat soruları'],de:['Taxipreisrechner','Öffentliche Verkehrsmittel','Wechselkurse','Orte in der Nähe','Hotels','Restaurants','Aktivitäten','Touren und Erlebnisse','Sicherheit auf Reisen','Reisefragen'],fr:['Estimation du taxi','Transports en commun','Taux de change','Lieux à proximité','Hôtels','Restaurants','Activités','Excursions et expériences','Conseils de sécurité','Questions de voyage'],es:['Calculadora de taxi','Transporte público','Tipos de cambio','Lugares cercanos','Hoteles','Restaurantes','Actividades','Excursiones y experiencias','Guía de seguridad','Preguntas de viaje'],ar:['تقدير أجرة التاكسي','المواصلات العامة','أسعار الصرف','أماكن قريبة','الفنادق','المطاعم','الأنشطة','الجولات والتجارب','دليل السلامة','أسئلة السفر'],ru:['Расчёт стоимости такси','Общественный транспорт','Курсы валют','Места рядом','Отели','Рестораны','Развлечения','Экскурсии и впечатления','Безопасность','Вопросы о путешествии'],zh:['出租车费用估算','公共交通','汇率','附近地点','酒店','餐厅','活动','旅游与体验','安全指南','旅行问答']};
  const suffix:Record<string,string>={en:'Travel Guide',tr:'Gezi Rehberi',de:'Reiseführer',fr:'Guide de voyage',es:'Guía de viaje',ar:'دليل السفر',ru:'Путеводитель',zh:'旅行指南'};
- if (section === 'city') return {title: `${city==='Cappadocia'&&lang==='tr'?'Kapadokya':city} ${suffix[lang]??suffix.en} | SafeInTürkiye`, description: `Explore ${city} with city information, weather availability, attractions and public transport guidance from SafeInTürkiye.`};
+ if (section === 'city') return {title: `${city==='Cappadocia'&&lang==='tr'?'Kapadokya':city} ${suffix[lang]??suffix.en} | SafeInTürkiye`, description: `${city}: ${(searchCopy[lang]??searchCopy.en).intro}`};
  const entry = sections[section];
- return entry ? {title: `${names[lang]?.[keys.indexOf(section)]??entry[0]} | SafeInTürkiye`, description: entry[1]} : {title: homeTitle, description: homeDescription};
+ return entry ? {title: `${names[lang]?.[keys.indexOf(section)]??entry[0]} | SafeInTürkiye`, description: (searchCopy[lang]??searchCopy.en).sections[keys.indexOf(section)]??entry[1]} : {title: (searchCopy[lang]??searchCopy.en).home, description: (searchCopy[lang]??searchCopy.en).intro};
 }
 // Section and city route canonicals are owned by the navigation layer.
 export function updateSectionSeo(section: string, city: string,lang='en') {
@@ -29,4 +31,26 @@ export function updateSectionSeo(section: string, city: string,lang='en') {
   ['meta[name="description"]', description], ['meta[property="og:title"]', title],
   ['meta[property="og:description"]', description], ['meta[name="twitter:title"]', title], ['meta[name="twitter:description"]', description],
  ]) document.querySelector(selector)?.setAttribute('content', value);
+}
+
+/** Matches the reciprocal language links in generated HTML. */
+export function updateSearchHead(path:string,lang:string,title:string,description:string,schemaData?:unknown){
+ document.title=title;
+ document.documentElement.lang=lang;document.documentElement.dir=lang==='ar'?'rtl':'ltr';
+ const origin='https://www.safeinturkiye.com',url=origin+localizePath(path,lang);
+ for(const [selector,value] of [
+  ['meta[name="description"]',description],['meta[property="og:description"]',description],['meta[name="twitter:description"]',description],
+  ['meta[property="og:title"]',title],['meta[name="twitter:title"]',title],['meta[property="og:url"]',url]
+ ])document.querySelector(selector)?.setAttribute('content',value);
+ document.querySelector('link[rel="canonical"]')?.setAttribute('href',url);
+ if(schemaData){
+  let schema=document.getElementById('public-page-schema');
+  if(!schema){schema=document.createElement('script');schema.id='public-page-schema';schema.setAttribute('type','application/ld+json');document.head.appendChild(schema);}
+  schema.textContent=JSON.stringify(schemaData);
+ }
+ document.querySelectorAll('link[rel="alternate"][hreflang]').forEach(link=>link.remove());
+ for(const code of [...searchLanguages,'x-default']){
+  const link=document.createElement('link');link.rel='alternate';link.hreflang=code;
+  link.href=origin+localizePath(path,code==='x-default'?'en':code);document.head.appendChild(link);
+ }
 }

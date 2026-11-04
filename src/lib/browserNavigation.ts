@@ -1,4 +1,5 @@
 import {useSyncExternalStore} from 'react';
+import {localizePath,parseLocalePath} from './searchLocales';
 
 const navigationEvent='safeinturkiye:navigate';
 const currentLocation=()=>window.location.pathname+window.location.search;
@@ -10,10 +11,11 @@ function subscribe(listener:()=>void){
 export function useBrowserLocation(){return useSyncExternalStore(subscribe,currentLocation,()=>'/');}
 
 /** One history entry per user navigation. Rendering must never rewrite history. */
-export function navigateTo(path:string,{replace=false,scroll=true,state={}}:{replace?:boolean;scroll?:boolean;state?:Record<string,unknown>}={}){
+export function navigateTo(path:string,{replace=false,scroll=true,state={},language}:{replace?:boolean;scroll?:boolean;state?:Record<string,unknown>;language?:string}={}){
  const url=new URL(path,window.location.origin);
  if(url.origin!==window.location.origin)return;
- const target=url.pathname+url.search+url.hash;
+ const requestedLanguage=parseLocalePath(url.pathname).lang;
+ const target=localizePath(url.pathname+url.search+url.hash,language??(requestedLanguage!=='en'?requestedLanguage:parseLocalePath(window.location.pathname).lang));
  if(target===currentLocation()+window.location.hash)return;
  window.history[replace?'replaceState':'pushState']({...state},'',target);
  window.dispatchEvent(new Event(navigationEvent));

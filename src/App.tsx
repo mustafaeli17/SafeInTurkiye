@@ -1,3 +1,8 @@
+import {citiesDetailedData} from './data/originalCityDetails';
+import {localizePath,parseLocalePath} from './lib/searchLocales';
+import {searchPage,searchPageSchema} from './lib/searchPages';
+import {SearchGuide} from './components/SearchGuide';
+import {updateSearchHead} from './lib/seo';
 import AccessibleDialog from './components/AccessibleDialog';
 import {authCopy} from './lib/authCopy';
 import {
@@ -42,14 +47,13 @@ import { cityDisplayName,cityLocale } from './lib/cityLocale';
 import { findCityGuide,openCityGuide } from './lib/cityNavigation';
 import { cityTransportText } from './lib/cityTransportCopy';
 import { destinationSlug,discoveryCity } from './lib/discoveryNavigation';
-import { readLanguagePreference,saveLanguagePreference } from './lib/languagePreference';
+import { saveLanguagePreference } from './lib/languagePreference';
 import { cityPath,publicCities } from './lib/publicRoutes';
 import { regionalDescription } from './lib/regionalDescription';
 import { sectionFromPath,sectionPath,transferIntent,type Section } from './lib/sectionNavigation';
 import {tourIntent} from './services/tourSearch';
 import {mentionedSearchCity} from './services/searchCities';
 import {discoverySearch,guideSearch,wantsNearby} from './services/homeSearch';
-import { updateSectionSeo } from './lib/seo';
 import { siteInformation } from './lib/siteInformation';
 import { supabaseConfigured } from './lib/supabase';
 import { taxiBudgetRange } from './lib/taxiBudget';
@@ -93,18 +97,7 @@ interface GeocodedPlace {
   city?: string;
 }
 
-interface CityInfo {
-  name: string;
-  tagline: string;
-  lat: number;
-  lng: number;
-  temp: string;
-  weatherDesc: string;
-  humidity: string;
-  wind: string;
-  localTip: string;
-  highlights: { name: string; detail: string }[];
-}
+
 
 interface TaxiTariff {
   city: string;
@@ -289,79 +282,7 @@ const footerCopy: Record<SupportedLang, { signIn: string; source: string; privac
 // ============================================================================
 // 2. RESMİ TARİFELER & DÖVİZ
 // ============================================================================
-const citiesDetailedData: Record<string, CityInfo> = {
-  'Ankara': {
-    name: 'Ankara', tagline: 'Türkiye’s capital: museums, historic streets and parks',
-    lat: 39.9334, lng: 32.8597,
-    temp: '', weatherDesc: '', humidity: '', wind: '',
-    localTip: 'Use Başkent Kart Ulaşım for urban transport. Check EGO for routes and departure times.',
-    highlights: [
-      { name: 'Anıtkabir', detail: 'Memorial grounds and museum; check visiting hours before travel.' },
-      { name: 'Museum of Anatolian Civilizations', detail: 'Archaeological collections near Ankara Castle.' },
-      { name: 'Ankara Castle & Hamamönü', detail: 'Historic streets and city views.' },
-    ],
-  },
-  'İstanbul': {
-    name: 'İstanbul',
-    tagline: 'Bridging continents with vibrant history, ferries and culture',
-    lat: 41.0082, lng: 28.9784,
-    temp: '25°C',
-    weatherDesc: 'Sunny & Pleasant',
-    humidity: '58%',
-    wind: '18 km/h NE',
-    localTip: 'During 17:30 - 20:00, prefer Marmaray or Bosphorus ferries to avoid bridge gridlock.',
-    highlights: [
-      { name: 'Hagia Sophia & Sultanahmet', detail: 'Historic peninsula essentials; arrive early for shorter queues.' },
-      { name: 'Topkapı Palace', detail: 'Allow a half day for the palace, gardens and museum collections.' },
-      { name: 'Bosphorus ferries', detail: 'A practical and scenic way to cross between the European and Asian sides.' }
-    ]
-  },
-  'Cappadocia': {
-    name: 'Cappadocia (Kapadokya)',
-    tagline: 'Fairy chimneys, volcanic valleys and sunrise balloon corridors',
-    lat: 38.6431, lng: 34.8289,
-    temp: '22°C',
-    weatherDesc: 'Clear Sky & Calm',
-    humidity: '34%',
-    wind: '7 km/h SW',
-    localTip: 'Early dawn balloon flights depend on Civil Aviation wind approval checked at 05:00.',
-    highlights: [
-      { name: 'Göreme Open-Air Museum', detail: 'Rock-cut churches and frescoes; go first thing in the morning.' },
-      { name: 'Love & Rose Valleys', detail: 'Plan the walk before the midday sun and take water.' },
-      { name: 'Uçhisar Castle', detail: 'Wide valley views from the highest point in the area.' }
-    ]
-  },
-  'Antalya': {
-    name: 'Antalya',
-    tagline: 'Turquoise Mediterranean shores, waterfalls and Roman ruins',
-    lat: 36.8969, lng: 30.7133,
-    temp: '30°C',
-    weatherDesc: 'Warm & Sunny',
-    humidity: '64%',
-    wind: '12 km/h S',
-    localTip: 'Use AntRay tramway from the airport directly to Hadrian Gate in Kaleiçi.',
-    highlights: [
-      { name: 'Antalya Museum', detail: 'One of Türkiye’s strongest archaeology collections.' },
-      { name: 'Kaleiçi & Hadrian’s Gate', detail: 'Walkable old town lanes, harbour views and Roman history.' },
-      { name: 'Düden Waterfalls', detail: 'A short excursion with sea-cliff viewpoints.' }
-    ]
-  },
-  'İzmir': {
-    name: 'İzmir',
-    tagline: 'Aegean breeze, Kordon promenade, and lively bazaar alleys',
-    lat: 38.4237, lng: 27.1428,
-    temp: '28°C',
-    weatherDesc: 'Breezy & Sunny',
-    humidity: '50%',
-    wind: '22 km/h W',
-    localTip: 'Enjoy the sunset ferry from Alsancak to Karşıyaka with contactless credit card tap.',
-    highlights: [
-      { name: 'Agora Open Air Museum', detail: 'Roman-era remains beside the historic market district.' },
-      { name: 'Kemeraltı Bazaar', detail: 'A lively maze for food, crafts and local shopping.' },
-      { name: 'Kordon & ferry line', detail: 'An easy waterfront walk and a useful cross-bay connection.' }
-    ]
-  }
-};
+
 
 // ============================================================================
 // 3. ASLA ÇÖKMEYEN İNTERAKTİF HARİTA (Leaflet CDN)
@@ -374,7 +295,8 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
   const { session, isStaff, role, signIn,signOut,loading:authLoading } = useSupabaseAuth();
   const mockDataEnabled = import.meta.env.VITE_ENABLE_MOCK_DATA === 'true';
   const browserLocation=useBrowserLocation();
-  const [browserPath,browserQuery='']=browserLocation.split('?');
+  const [rawBrowserPath,browserQuery='']=browserLocation.split('?');
+  const {path:browserPath,lang:urlLanguage}=parseLocalePath(rawBrowserPath);
   const [adminOpen,setAdminOpen]=useState(false);
   const activeTab:'home'|'city'|Section|'admin'=adminOpen?'admin':browserPath.startsWith('/cities/')?'city':sectionFromPath(browserPath)??'home';
   const selectedCityName=publicCities.find(c=>cityPath(c.name)===browserPath)?.name??publicCities.find(c=>c.slug===new URLSearchParams(browserQuery).get('city'))?.name??'İstanbul';
@@ -387,25 +309,8 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
     navigateTo(target);
   };
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }); }, [activeTab]);
-  useEffect(() => {
-    updateSectionSeo(activeTab, selectedCityName);
-    // State-only sections must not retain a detail/city schema or language
-    // alternates left by the server document they were opened from.
-    if(activeTab!=='city')document.getElementById('public-page-schema')?.remove();
-    document.querySelectorAll('link[rel="alternate"][hreflang]').forEach(link=>link.remove());
-    const path=activeTab==='city'?cityPath(selectedCityName):sectionPath(activeTab);
-    if(activeTab==='city'){
-      let schema=document.getElementById('public-page-schema');
-      if(!schema){schema=document.createElement('script');schema.id='public-page-schema';schema.setAttribute('type','application/ld+json');document.head.appendChild(schema);}
-      schema.textContent=JSON.stringify({'@context':'https://schema.org','@type':'TouristDestination',name:selectedCityName,url:`https://www.safeinturkiye.com${path}`});
-    }
-    document.querySelector('link[rel="canonical"]')?.setAttribute('href',`https://www.safeinturkiye.com${path}`);
-    document.querySelector('meta[property="og:url"]')?.setAttribute('content',`https://www.safeinturkiye.com${path}`);
-  }, [activeTab, selectedCityName]);
-  const [lang, setLang] = useState<SupportedLang>(() => {
-    const candidate = initialLanguage || readLanguagePreference();
-    return ['en','tr','de','fr','ar','ru','zh','es'].includes(candidate) ? candidate as SupportedLang : 'en';
-  });
+  const lang=(initialLanguage??urlLanguage) as SupportedLang;
+  const setLang=(next:SupportedLang)=>navigateTo(window.location.pathname+window.location.search+window.location.hash,{language:next,scroll:false,state:window.history.state??{}});
   const searchQuery=new URLSearchParams(browserQuery).get('q')??'';
   const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -418,7 +323,10 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = lang;
     saveLanguagePreference(lang);
-    updateSectionSeo(activeTab,selectedCityName,lang);
+    if(activeTab==='admin')return;
+    const path=activeTab==='city'?cityPath(selectedCityName):sectionPath(activeTab);
+    const meta=searchPage(path,lang);
+    updateSearchHead(path,lang,meta.title,meta.description,searchPageSchema(path,lang));
   }, [lang,activeTab,selectedCityName]);
 
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -711,7 +619,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
           <div className="max-w-7xl mx-auto px-3 sm:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4">
 
             {/* Logo */}
-            <a href="/" onClick={event=>{if(event.button===0&&!event.ctrlKey&&!event.metaKey&&!event.shiftKey&&!event.altKey){event.preventDefault();setActiveTab('home');}}} className="flex items-center cursor-pointer shrink-0" aria-label="SafeInTürkiye home">
+            <a href={localizePath('/',lang)} onClick={event=>{if(event.button===0&&!event.ctrlKey&&!event.metaKey&&!event.shiftKey&&!event.altKey){event.preventDefault();setActiveTab('home');}}} className="flex items-center cursor-pointer shrink-0" aria-label="SafeInTürkiye home">
               <img src={siteLogo} alt="SafeInTürkiye" className="h-7 w-auto max-w-[100px] object-contain sm:h-10 sm:max-w-[185px]" />
             </a>
 
@@ -852,7 +760,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
             {isStaff && <button type="button" onClick={() => { setActiveTab('admin'); setMobileMenuOpen(false); }} className="rounded-xl px-3 py-2 text-left bg-slate-900 text-white">CMS Studio</button>}
           </nav>}
         </header>
-        {activeTab!=='home' && activeTab!=='taxi' && <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-3"><HomeButton lang={lang} currentPage={({assistant:tr('assistant'),transit:tr('transit'),currency:tr('currency'),city:selectedCityName,nearme:tr('nearMe'),stay:page('hotelsTitle'),food:page('diningTitle'),experiences:page('activitiesTitle'),tours:toursLabel(lang),safety:page('safety'),admin:'CMS Studio'} as Record<string,string>)[activeTab]} onClick={()=>{setActiveTab('home');setMobileMenuOpen(false);window.scrollTo(0,0);}}/></div>}
+        {activeTab!=='home' && activeTab!=='taxi' && <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-3"><HomeButton lang={lang} currentPage={({assistant:tr('assistant'),transit:tr('transit'),currency:tr('currency'),city:cityDisplayName(selectedCityName,lang),nearme:tr('nearMe'),stay:page('hotelsTitle'),food:page('diningTitle'),experiences:page('activitiesTitle'),tours:toursLabel(lang),safety:page('safety'),admin:'CMS Studio'} as Record<string,string>)[activeTab]} onClick={()=>{setActiveTab('home');setMobileMenuOpen(false);window.scrollTo(0,0);}}/></div>}
         {activeTab!=='home'&&activeTab!=='tours'&&searchQuery&&<SearchContext query={searchQuery} city={new URLSearchParams(browserQuery).get('city')??undefined} transfer={new URLSearchParams(browserQuery).get('intent')==='transfer'} resultsSearch={new URLSearchParams(browserQuery).get('lookup')==='1'} lang={lang}/>}
 
         {/* ====================================================================
@@ -1052,7 +960,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
                 <button
                   key={cname}
                   onClick={() => navigateTo(cityPath(cname))}
-                  className={`px-4 py-1.5 rounded-xl text-[12px] font-bold cursor-pointer transition-all ${
+                  className={`shrink-0 whitespace-nowrap px-4 py-1.5 rounded-xl text-[12px] font-bold cursor-pointer transition-all ${
                     selectedCityName === cname ? 'bg-[#087FFF] text-white shadow-sm' : 'bg-white border border-sky-100 text-slate-600 hover:bg-sky-50'
                   }`}
                 >
@@ -1088,7 +996,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
             <section className="bg-white p-5 rounded-2xl border border-sky-100 shadow-sm">
               <div className="flex items-center gap-2 mb-4">
                 <Building2 className="w-5 h-5 text-[#087FFF]" />
-                <h2 className="font-extrabold text-[16px] text-slate-900">{page('miss')} {currentCityInfo.name}</h2>
+                <h2 className="font-extrabold text-[16px] text-slate-900">{page('miss')} {cityDisplayName(currentCityInfo.name,lang)}</h2>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {currentCityInfo.highlights.map((highlight) => (
@@ -1230,6 +1138,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
       )}
 
       {/* FOOTER */}
+      {activeTab!=='admin'&&<SearchGuide path={browserPath} lang={lang}/>}
       <footer className="border-t border-sky-100 bg-white py-6 px-6 mt-12">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-[12px] text-slate-500">
           <div className="space-y-0.5 text-center sm:text-left">
@@ -1243,11 +1152,11 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
             <p>{footerCopy[lang].source}</p><PhotoCredits lang={lang} />
           </div>
           <div className="flex flex-wrap items-center gap-4 text-sm font-bold text-[#0064b7]">
-            <a href="/privacy" className="underline">{footerCopy[lang].privacy}</a>
+            <a href={localizePath('/privacy',lang)} className="underline">{footerCopy[lang].privacy}</a>
             <span>•</span>
-            <a href="/terms" className="underline">{footerCopy[lang].terms}</a>
-            <a href="/about" className="underline">{siteInformation[lang].labels[2]}</a>
-            <a href="/contact" className="underline">{siteInformation[lang].labels[3]}</a>
+            <a href={localizePath('/terms',lang)} className="underline">{footerCopy[lang].terms}</a>
+            <a href={localizePath('/about',lang)} className="underline">{siteInformation[lang].labels[2]}</a>
+            <a href={localizePath('/contact',lang)} className="underline">{siteInformation[lang].labels[3]}</a>
             <span>•</span>
             <span>{footerCopy[lang].rights}</span>
           </div>

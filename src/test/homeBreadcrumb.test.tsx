@@ -6,14 +6,14 @@ import { readFileSync } from 'node:fs';
 describe('Shared home breadcrumb',()=>{
  it.each([['tr','Ana sayfaya dön'],['en','Back to home'],['es','Volver al inicio'],['zh','返回首页']])('localizes %s with one home action',(lang,label)=>{
   const html=renderToStaticMarkup(<HomeButton lang={lang} currentPage="Destination"/>);
-  expect(html.match(/href="\/"/g)).toHaveLength(1);
+  expect([...html.matchAll(/href="([^"]*)"/g)].map(m=>m[1])).toEqual([lang==='en'?'/':'/'+lang]);
   expect(html).toContain(label);
   expect(html).toContain('aria-current="page"');
   expect(html).toContain('Destination');
  });
  it('supports in-app navigation and RTL without a duplicate link',()=>{
   const html=renderToStaticMarkup(<HomeButton lang="ar" currentPage="مدينة" onClick={()=>{}}/>);
-  expect(html.match(/href="\/"/g)).toHaveLength(1);
+  expect([...html.matchAll(/href="([^"]*)"/g)].map(m=>m[1])).toEqual(['/ar']);
   expect(html).not.toContain('<button');
   expect(html).toContain('dir="rtl"');
   expect(html).toContain('flex-wrap');

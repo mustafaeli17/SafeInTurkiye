@@ -28,6 +28,6 @@ export function openDirectoryEntry(id: string) {
   const entry = directory.find(item => item.id === id);
   if (!entry) return false;
   const prefix=readLanguagePreference()==='tr'&&entry.description.tr?'/tr':'';
-  navigateTo(prefix+entryPath(entry));
+  navigateTo(prefix+entryPath(entry),{language:prefix?'tr':'en'});
   return true;
 }

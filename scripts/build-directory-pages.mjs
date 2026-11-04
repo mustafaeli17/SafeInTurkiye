@@ -1,30 +1,18 @@
+import {createServer} from 'vite';
+import {createElement} from 'react';
+import {renderToStaticMarkup} from 'react-dom/server';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {publishedEditorialSnapshot} from './published-editorial-snapshot.mjs';
 const retired=new Set(JSON.parse(await readFile('src/data/retiredDirectory.json','utf8')).map(entry=>`/${entry.kind}/${entry.slug}`));
 const entries=[];
-const cities=JSON.parse(await readFile('src/data/cityGuides.json','utf8'));
-const originalCities=JSON.parse(await readFile('src/data/originalCityRoutes.json','utf8'));
 if(process.env.VITE_PLATFORM_FOUNDATION==='true'){
  const cms=await publishedEditorialSnapshot(process.env.VITE_SUPABASE_URL,process.env.VITE_SUPABASE_ANON_KEY);
  entries.push(...cms.filter(entry=>!retired.has(`/${entry.kind}/${entry.slug}`)));
 }
-entries.push(...[...originalCities,...cities].map(city=>({kind:'cities',slug:city.slug,name:city.name,description:city.description,website:city.source})));
 const base=await readFile('dist/index.html','utf8');
 const escape=value=>value.replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;').replaceAll('>','&gt;');
 const origin='https://www.safeinturkiye.com';
-const locations=[origin+'/'];
-const sectionRoutes={...JSON.parse(await readFile('src/data/sectionRoutes.json','utf8')),...Object.fromEntries(['privacy','terms','about','contact'].map(key=>[key,{path:'/'+key,title:({privacy:'Privacy information',terms:'Terms of use',about:'About SafeInTürkiye',contact:'Contact and support'})[key],description:'Information about SafeInTürkiye and using this website.'}]))};
-for(const route of Object.values(sectionRoutes)){
- const url=origin+route.path,title=escape(route.title+' | SafeInTürkiye'),description=escape(route.description);
- const html=base.replace(/<title>.*?<\/title>/,`<title>${title}</title>`)
- .replace(/(<meta (?:name="description"|property="og:description"|name="twitter:description") content=")[^"]*/g,`$1${description}`)
- .replace(/(<meta (?:property="og:title"|name="twitter:title") content=")[^"]*/g,`$1${title}`)
- .replace(/(<link rel="canonical" href=")[^"]*/,`$1${url}`)
- .replace(/(<meta property="og:url" content=")[^"]*/,`$1${url}`)
- .replace(/<script type="application\/ld\+json">.*?<\/script>/s,`<script type="application/ld+json">${JSON.stringify({'@context':'https://schema.org','@type':'WebPage',name:route.title,url,description:route.description})}</script>`)
- .replace('<div id="root"></div>',`<div id="root"><main class="max-w-5xl mx-auto p-6"><a href="/">SafeInTürkiye</a><h1>${title}</h1><p>${description}</p></main></div>`);
- await mkdir(`dist${route.path}`,{recursive:true});await writeFile(`dist${route.path}/index.html`,html);locations.push(url);
-}
+const locations=[];
 const routeFor=entry=>`/${entry.kind}/${entry.slug}`;
 const linkFor=entry=>`<a href="${routeFor(entry)}">${escape(entry.name)}</a>`;
 const safeExternal=value=>{try{const url=new URL(value);return url.protocol==='https:'&&!url.username&&!url.password?escape(url.href):null;}catch{return null;}};
@@ -70,13 +58,35 @@ for(const entry of entries){
   await mkdir(`dist/tr${path}`,{recursive:true});await writeFile(`dist/tr${path}/index.html`,trHtml);locations.push(trUrl);
  }
 }
-const homeBody=`<main class="max-w-5xl mx-auto px-4 py-8 space-y-6"><h1 class="text-3xl font-extrabold">Türkiye, made easier.</h1><p>Practical local information for a safer, smarter and more enjoyable trip.</p><nav aria-label="Destinations"><h2>City guides</h2><ul>${entries.filter(entry=>entry.kind==='cities').map(entry=>`<li>${linkFor(entry)}</li>`).join('')}</ul></nav>${['hotels','restaurants','activities'].map(kind=>`<section><h2>${({hotels:'Hotels',restaurants:'Restaurants',activities:'Activities'})[kind]}</h2><ul>${entries.filter(entry=>entry.kind===kind).map(entry=>`<li>${linkFor(entry)}</li>`).join('')}</ul></section>`).join('')}</main>`;
-const hero=JSON.parse(await readFile('src/data/heroPhoto.json','utf8'));
-// Discover the LCP asset before React loads, only on the homepage. Other routes
-// must not download a hero they never display. Metadata is shared with the view.
-const heroPreload=`<link rel="preload" as="image" href="${escape(hero.src)}" imagesrcset="${escape(hero.srcSet)}" imagesizes="(max-width: 1200px) 100vw, 1180px" fetchpriority="high">`;
-await writeFile('dist/index.html',base.replace('</head>',heroPreload+'</head>').replace('<div id="root"></div>',`<div id="root">${homeBody}</div>`));
+// Shared visible content: all existing public destinations and tools, in all supported languages.
+const renderer=await createServer({mode:'production',server:{middlewareMode:true},appType:'custom',logLevel:'error'});
+try{
+ const {searchPage,searchPagePaths,searchPageSchema}=await renderer.ssrLoadModule('/src/lib/searchPages.ts');
+ const {SearchGuide}=await renderer.ssrLoadModule('/src/components/SearchGuide.tsx');
+ const {searchLanguages,localizePath}=await renderer.ssrLoadModule('/src/lib/searchLocales.ts');
+ const hero=JSON.parse(await readFile('src/data/heroPhoto.json','utf8'));
+ for(const path of searchPagePaths){
+  const alternates=[...searchLanguages,'x-default'].map(lang=>'<link rel="alternate" hreflang="'+lang+'" href="'+origin+localizePath(path,lang==='x-default'?'en':lang)+'">').join('');
+  for(const lang of searchLanguages){
+   const localized=localizePath(path,lang),url=origin+localized,meta=searchPage(path,lang);
+   const title=escape(meta.title),description=escape(meta.description);
+   const schema=searchPageSchema(path,lang);
+   const preload=path==='/'?'<link rel="preload" as="image" href="'+escape(hero.src)+'" imagesrcset="'+escape(hero.srcSet)+'" imagesizes="(max-width: 1200px) 100vw, 1180px" fetchpriority="high">':'';
+   let html=base.replace(/<html lang="[^"]*"/,'<html lang="'+lang+'" dir="'+(lang==='ar'?'rtl':'ltr')+'"')
+    .replace(/<title>.*?<\/title>/,'<title>'+title+'</title>')
+    .replace(/(<meta (?:name="description"|property="og:description"|name="twitter:description") content=")[^"]*/g,'$1'+description)
+    .replace(/(<meta (?:property="og:title"|name="twitter:title") content=")[^"]*/g,'$1'+title)
+    .replace(/(<link rel="canonical" href=")[^"]*/,'$1'+url)
+    .replace(/(<meta property="og:url" content=")[^"]*/,'$1'+url)
+    .replace(/<script type="application\/ld\+json">.*?<\/script>/s,'<script id="public-page-schema" type="application/ld+json">'+JSON.stringify(schema).replaceAll('<','\\u003c')+'</script>')
+    .replace('</head>',alternates+preload+'</head>')
+    .replace('<div id="root"></div>','<div id="root">'+renderToStaticMarkup(createElement(SearchGuide,{path,lang,standalone:true}))+'</div>');
+   const dir='dist'+(localized==='/'?'':localized);
+   await mkdir(dir,{recursive:true});await writeFile(dir+'/index.html',html);locations.push(url);
+  }
+ }
+}finally{await renderer.close();}
 // Static-host 404 body; not a catch-all rewrite to a successful homepage.
 await writeFile('dist/404.html',`<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>Page not found | SafeInTürkiye</title></head><body><main><a href="/">SafeInTürkiye</a><h1>Page not found</h1><p>This address does not match a public page.</p><a href="/">Back to SafeInTürkiye</a></main></body></html>`);
 await writeFile('dist/sitemap.xml',`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${locations.map(url=>`<url><loc>${url}</loc></url>`).join('')}</urlset>`);
-console.log(`Built ${entries.length} directory pages with unique metadata and sitemap entries.`);
+console.log(`Built ${locations.length} public pages with unique metadata and sitemap entries.`);

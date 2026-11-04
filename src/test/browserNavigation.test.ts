@@ -20,6 +20,16 @@ function setup(start='https://www.safeinturkiye.com/'){
 afterEach(()=>vi.unstubAllGlobals());
 describe('browser navigation',()=>{
  beforeEach(()=>setup());
+ it('preserves locale on navigation and allows explicit language changes without losing query or state',()=>{
+  setup('https://www.safeinturkiye.com/ar/restaurants?city=aydin');
+  navigateTo('/hotels?city=aydin');
+  expect(window.location.pathname).toBe('/ar/hotels');
+  navigateTo('/hotels?city=aydin',{language:'en',state:{selectedArea:'Aydın'}});
+  expect(window.location.pathname+window.location.search).toBe('/hotels?city=aydin');
+  expect(window.history.state).toEqual({selectedArea:'Aydın'});
+  window.history.back();expect(window.location.pathname).toBe('/ar/hotels');
+  navigateTo('/de/taxi');expect(window.location.pathname).toBe('/de/taxi');
+ });
  it('keeps a distinct back/forward entry for each screen and city',()=>{
   const b=window;
   navigateTo('/restaurants?city=istanbul');navigateTo('/restaurants?city=antalya');navigateTo('/taxi?city=antalya');
@@ -55,5 +65,11 @@ describe('browser navigation',()=>{
   saveDiscoveryArea({label:'Test',lat:41,lng:29});saveDiscoveryArea(null);expect(readDiscoveryArea()).toBeNull();
   window.history.replaceState({discoveryArea:{scope:'/?city=',until:Date.now()+10000,place:{label:'Unsafe',lat:999,lng:29}}},'',window.location.href);
   expect(readDiscoveryArea()).toBeNull();
+ });
+ it('keeps a manually selected area through an explicit language switch',()=>{
+  setup('https://www.safeinturkiye.com/es/restaurants?city=istanbul');
+  const area={label:'Kadıköy',lat:40.99,lng:29.03};saveDiscoveryArea(area,1000);
+  navigateTo('/restaurants?city=istanbul',{language:'zh',state:window.history.state});
+  expect(readDiscoveryArea(2000)).toEqual(area);
  });
 });

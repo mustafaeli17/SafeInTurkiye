@@ -1,6 +1,7 @@
 import {isValidCenter} from '../services/nearbyPlaces';
+import {parseLocalePath} from './searchLocales';
 export type DiscoveryArea={label:string;lat:number;lng:number};
-const scope=()=>window.location.pathname+'?city='+(new URLSearchParams(window.location.search).get('city')??'');
+const scope=()=>parseLocalePath(window.location.pathname).path+'?city='+(new URLSearchParams(window.location.search).get('city')??'');
 // Tab history only: no URL, analytics, localStorage or server persistence of addresses.
 export function readDiscoveryArea(now=Date.now()):DiscoveryArea|null{
  if(typeof window==='undefined')return null;

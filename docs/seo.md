@@ -1,13 +1,32 @@
-# Search appearance
+# Search appearance and multilingual routes
 
-The homepage title, description, canonical, social cards and WebSite/Organization JSON-LD are in `index.html`, before JavaScript rendering. The social/organization logo is the existing unmodified brand asset, verified HTTP 200 on production on 2026-09-20. If that asset changes, update both metadata URLs and check the production URL before publishing.
+Updated 2026-11-04. Implementation branch: codex/multilingual-search; not a production-release record.
 
-Only `/` is currently a public crawlable page. Other views are React state tabs; `#admin` opens authentication and is not a public search landing page. `src/lib/seo.ts` updates tab-specific browser metadata without inventing paths or claiming independently indexable pages. The sitemap intentionally lists only the canonical homepage. Proper distinct search landing pages require a separately approved route/rendering migration.
+## Existing public content
 
-Favicon SVG uses a compact blue S/red sun inspired by the existing logo. The main wordmark is unchanged. `scripts/build-icons.mjs` renders PNG/ICO exports using sharp (pass its installed module path as the first argument). Generated files are checked in, so builds need no image generation dependency. ICO contains 16, 32 and 48px PNG frames; other icons are 96, 180, 192 and 512px.
+The existing homepage, ten feature pages, twelve city pages and four information pages have eight language variants: English (unprefixed), /tr, /de, /fr, /es, /ar, /ru, /zh. This produces 216 base URLs. URL slugs stay stable; visible city names can be localized. No Dutch locale was added.
 
-Homepage has one H1 and section H2s. Added a text separator across the H1 line break; old AI/live-advisor wording is not in the current homepage component. No visual redesign was made.
+src/lib/searchPages.ts supplies titles, descriptions, links and structured data; src/components/SearchGuide.tsx supplies shared visible content. scripts/build-directory-pages.mjs renders that content into initial HTML and builds the canonical sitemap. React displays the same guide in a compact expandable section. The interactive tools and external provider results still require JavaScript and working providers; they are not represented as static business inventory.
 
-After production approval: deploy the tested preview revision, verify all canonical/icon/robots/sitemap URLs, submit sitemap.xml in the domain's Google Search Console, and request indexing of https://www.safeinturkiye.com/. Google chooses its own title/snippet and favicon timing; changes require recrawling and are not immediate or guaranteed. Preview's canonical points to production; never submit preview URLs to Search Console.
+Every generated language variant has its own canonical, eight reciprocal language alternates and an English x-default. Homepages use WebSite/Organization structured data, cities TouristDestination, and the remaining base pages WebPage. Client navigation uses the same schema builder. No invented review, aggregate-rating, price, booking or safety claims are added.
 
-Reference: https://developers.google.com/search/docs/appearance/favicon-in-search and https://developers.google.com/search/docs/appearance/snippet
+Explicit URL language takes precedence over localStorage. Language switching preserves query, fragment and tab history state. Navigation and reload keep the URL language. Manual discovery areas remain scoped to the underlying section/city across language changes and expire after 30 minutes. Coordinates and addresses are not added to sitemap or telemetry.
+
+## CMS, dynamic results and retired pages
+
+The existing published CMS snapshot remains the source for editorial detail pages. English/Turkish detail variants are generated only when actual descriptions exist. Google Places and Viator results are not permanently copied into generated business pages. A public search/discovery query is canonicalized to its base feature page, not advertised as a new sitemap landing page.
+
+The 91 pre-API manual entries remain retired and excluded from sitemap. Existing permanent redirects remain; their Turkish versions now retain Turkish. Restaurant redirects without historical city metadata remain at the restaurant discovery page rather than guessing a city. Admin, API, QA and missing pages are not added to sitemap; unknown production paths must return 404.
+
+## Validation and release
+
+Run build before generated-content tests. localizedSeo.test.ts checks the complete, non-empty 216-page set, translated content, canonical/alternate reciprocity, shared structured data, internal targets and legacy redirect language. Navigation tests cover explicit language changes, history, filters and manual discovery state. Existing catalog, asset, privacy and security regressions remain enabled.
+
+Vite's preview SPA fallback can return homepage HTML for an extensionless nested URL; it is useful for client UI smoke tests but is not proof of hosted static routing. Verify raw nested responses on the Vercel preview, including 200/404, canonical, hreflang and body content. Do not weaken preview protection. Preview must stay excluded from indexing.
+
+After a separately approved production release: verify the public sitemap and representative language URLs; submit https://www.safeinturkiye.com/sitemap.xml in the correct Search Console property and connected Bing Webmaster Tools account. Do not submit preview URLs. Monitor queries, pages, countries and non-brand impressions/clicks over comparable date ranges. Indexing, rankings, snippets and favicon refresh timing are controlled by search engines, not guaranteed by this implementation.
+
+Official references:
+- https://developers.google.com/search/docs/specialty/international/managing-multi-regional-sites
+- https://developers.google.com/search/docs/specialty/international/localized-versions
+- https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics
