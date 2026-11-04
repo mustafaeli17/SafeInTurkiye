@@ -1,4 +1,7 @@
 // No search terms, query parameters, hash tokens, personal locations or custom events.
+export function trackingOptOut(browser: {doNotTrack?: string | null; globalPrivacyControl?: boolean}): boolean {
+ return browser.doNotTrack === '1' || browser.globalPrivacyControl === true;
+}
 export function analyticsUrl(rawUrl: string): string | null {
  try {
   const url = new URL(rawUrl);

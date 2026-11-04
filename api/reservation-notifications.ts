@@ -6,9 +6,11 @@ export default async function handler(req:ReservationHttpRequest,res:Reservation
  const expected=process.env.CRON_SECRET?'Bearer '+process.env.CRON_SECRET:'',given=String(req.headers.authorization??'');
  const expectedBytes=Buffer.from(expected),givenBytes=Buffer.from(given);
  if(req.method!=='GET'||!expected||expectedBytes.length!==givenBytes.length||!timingSafeEqual(expectedBytes,givenBytes))return res.status(403).json({error:'NOT_ALLOWED'});
- try{
-  const notifications=await processReservationNotifications();
-  const anonymized=await reservationDb('rpc/anonymize_expired_restaurant_requests',{});
-  return res.status(200).json({...notifications,anonymized});
- }catch{return res.status(503).json({error:'UNAVAILABLE'});}
+ // Independent duties: an email/outbox failure must never skip PII cleanup.
+ const [notifications,retention]=await Promise.allSettled([
+  processReservationNotifications(),
+  reservationDb('rpc/anonymize_expired_restaurant_requests',{}),
+ ]);
+ if(notifications.status==='rejected'||retention.status==='rejected')return res.status(503).json({error:'UNAVAILABLE'});
+ return res.status(200).json({...notifications.value,anonymized:retention.value});
 }

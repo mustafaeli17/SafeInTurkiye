@@ -33,6 +33,15 @@ it('runs queued notification retries and retention only with the cron secret',as
  await worker({method:'GET',headers:{authorization:'é'.repeat('Bearer test-cron-secret'.length)}},res);expect(code).toBe(403);expect(fetcher).not.toHaveBeenCalled();
  await worker({method:'GET',headers:{authorization:'Bearer test-cron-secret'}},res);expect(code).toBe(200);expect(data.sent).toBe(1);expect(fetcher.mock.calls.some(([url])=>String(url).includes('anonymize_expired_restaurant_requests'))).toBe(true);
 });
+it('still attempts retention when the notification queue fails',async()=>{
+ vi.stubEnv('CRON_SECRET','test-cron-secret');
+ const fetcher=vi.fn(async(url:string)=>{if(url.includes('claim_restaurant_notifications'))throw Error('private provider failure');return Response.json(0);});
+ vi.stubGlobal('fetch',fetcher);
+ let code=0,data:any;const res:any={status(n:number){code=n;return res;},json(value:unknown){data=value;},setHeader:vi.fn()};
+ await worker({method:'GET',headers:{authorization:'Bearer test-cron-secret'}},res);
+ expect(fetcher.mock.calls.some(([url])=>url.includes('anonymize_expired_restaurant_requests'))).toBe(true);
+ expect(code).toBe(503);expect(data).toEqual({error:'UNAVAILABLE'});
+});
 it('requires valid future Turkish local date/time',()=>{expect(validateGuestRequest(request)).toBe(true);expect(validateGuestRequest({...request,date:'2020-01-01'})).toBe(false);});
 it('links Preview notifications to the isolated Preview admin, never a client-supplied host',()=>{
  vi.stubEnv('VERCEL_ENV','preview');vi.stubEnv('VERCEL_URL','safe-in-turkiye-test.vercel.app');

@@ -1,0 +1,6 @@
+Inter variable upright, unchanged upstream binary.
+Source repository: https://github.com/rsms/inter
+Pinned source commit: 353b61b9f4430d5f420d56605a6e7993e0941470
+Source file: docs/font-files/InterVariable.woff2
+License: SIL Open Font License 1.1, included as Inter-LICENSE.txt.
+Downloaded: 2026-11-04. Self-hosted to avoid a Google Fonts request on page load.
