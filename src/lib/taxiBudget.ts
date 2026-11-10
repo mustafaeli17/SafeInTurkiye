@@ -10,7 +10,8 @@ const sample=(opening:number,km:number,minimum:number,after5?:number):Sample=>({
 export const budgetReviewedAt='2026-10-06';
 export const taxiBudgets:Record<string,Budget>={
  'Gaziantep':{samples:[sample(50,50,200)],sources:['https://www.i24haber.com/3515-gaziantep'],scope:'Gaziantep standard taxi; published local report, not a verified CMS tariff',reviewedAt:'2026-10-13'},
- 'İstanbul':{samples:[sample(71.94,47.92,230)],sources:['https://tuhim.ibb.gov.tr/media/27494/taksi-ta%C5%9F%C4%B1mac%C4%B1l%C4%B1%C4%9F%C4%B1-%C3%BCcret-tarifesi.pdf'],scope:'Standard taxi'},
+ // Rechecked against the taxi chamber's current published table; not an automatic date refresh.
+ 'İstanbul':{samples:[sample(71.94,47.92,230)],sources:['https://iteo.org.tr/ucret-tarifeleri','https://tuhim.ibb.gov.tr/media/27494/taksi-ta%C5%9F%C4%B1mac%C4%B1l%C4%B1%C4%9F%C4%B1-%C3%BCcret-tarifesi.pdf'],scope:'Standard taxi',reviewedAt:'2026-11-10'},
  'Ankara':{samples:[sample(65,40,200)],sources:['https://taksibartin.com/ankara-taksi-ucreti-hesaplama/'],scope:'Standard taxi'},
  'Antalya':{samples:[sample(40,50,200),sample(50,50,200)],sources:['https://www.antalyakorfez.com/taksimetreye-zam-yeni-tarifeler-bu-gece-yururluge-giriyor','https://www.dha.com.tr/amp/yerel-haberler/antalya/antalyada-taksi-ve-otobus-ucretlerine-zam-bel-2836074'],scope:'Central Antalya; published opening amounts differ'},
  'İzmir':{samples:[sample(40,54,210),sample(64,68,310)],sources:['https://www.izmir.bel.tr/IBB-IZMIRBB-C1/Paylasim/MeclisKararOzetleri/24042026_102247_KararOzet_04.524%20b%C3%BCt%C3%A7e.pdf'],scope:'Metropolitan and Çeşme standard taxi samples; regional budget range'},

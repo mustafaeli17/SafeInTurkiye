@@ -62,7 +62,8 @@ import { routeFareRange } from './lib/taxiCalculation';
 import { taxiCityFromAddress,taxiReferenceCity,taxiUnavailableText } from './lib/taxiCity';
 import { taxiBudgetCopy,taxiDetailsCopy,taxiEstimateCopy,taxiIntroCopy } from './lib/taxiCopy';
 import { taxiErrorText,type TaxiErrorKey } from './lib/taxiErrors';
-import {taxiCalculationMapNotice} from './lib/taxiRouteNotice';
+import {taxiCalculationMapNotice,taxiRouteNotice} from './lib/taxiRouteNotice';
+import {taxiMapKey} from './lib/mapEnvironment';
 import SearchContext from './components/SearchContext';
 import { taxiSearchUrl } from './lib/taxiSearch';
 import { toursLabel } from './lib/viatorCopy';
@@ -895,7 +896,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
 
                 {taxiRouteError && <p role={taxiRouteError === 'unavailable' ? 'status' : 'alert'} className="text-sm text-slate-700 bg-sky-50 rounded-xl p-3">{taxiRouteError === 'unavailable' ? taxiUnavailableText(lang) : taxiErrorText(lang, taxiRouteError)}</p>}
                 {taxiRouteResult && !fareCalculation && <div className="grid grid-cols-2 gap-2 rounded-xl bg-sky-50 p-3 text-sm" aria-live="polite"><p>{page('distance')}<br /><strong>{taxiRouteResult.distanceKm.toLocaleString(lang,{maximumFractionDigits:1})} km</strong></p><p>{page('duration')}<br /><strong>~{taxiRouteResult.durationMinutes} min</strong></p></div>}
-                {taxiRouteResult && <details className="text-sm leading-relaxed text-slate-600"><summary className="min-h-11 cursor-pointer">{taxiDetailsCopy[lang][0]}</summary><p>{taxiCalculationMapNotice[lang]}</p></details>}
+                {taxiRouteResult && <details className="text-sm leading-relaxed text-slate-600"><summary className="min-h-11 cursor-pointer">{taxiDetailsCopy[lang][0]}</summary><p>{taxiMapKey(window.location.hostname,import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY,import.meta.env.VITE_GOOGLE_MAPS_PREVIEW_BROWSER_KEY)?taxiRouteNotice[lang]:taxiCalculationMapNotice[lang]}</p></details>}
                 {taxiRouteResult && fareCalculation && (
                   <div className="pt-3 border-t border-slate-100 space-y-3">
                     <div className="p-4 bg-sky-50 rounded-2xl border border-sky-100 space-y-2">

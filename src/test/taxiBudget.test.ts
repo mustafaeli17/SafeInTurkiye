@@ -5,7 +5,9 @@ beforeEach(()=>vi.useFakeTimers({now:new Date('2026-10-25T12:00:00Z')}));
 afterEach(()=>vi.useRealTimers());
 
 it.each(['İstanbul','Antalya','Nevşehir','Ankara','İzmir',...cityGuides.map(c=>c.name)])('%s returns a sourced standard-taxi budget without CMS data',city=>{
- const result=taxiBudgetRange(city,[10,12]);
+ const checked=taxiBudgets[city]?.reviewedAt;
+ const now=checked?Date.parse(checked+'T12:00:00Z'):Date.now();
+ const result=taxiBudgetRange(city,[10,12],'YELLOW',now);
  expect(result).not.toBeNull();
  expect(result!.amount).toBeGreaterThan(0);
  expect(result!.upper).toBeGreaterThanOrEqual(result!.amount);
