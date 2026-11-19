@@ -1,6 +1,6 @@
 import {SearchGuide} from './SearchGuide';
 import { useEffect, useRef, useState } from 'react'
-import { LocateFixed } from 'lucide-react'
+import { LocateFixed, Clock3, Footprints, ArrowRightLeft, ExternalLink } from 'lucide-react'
 import TransitAddressInput from './TransitAddressInput'
 import GoogleDirectionsMap from './GoogleDirectionsMap'
 import { requestTransitLocation, transitDeparture, transitFare, transitRequestTime, transitRoutes,transitSummary,transitStages,transitTime,transferCount,transitDurationCopy, type TransitRoute } from '../lib/transit'
@@ -71,15 +71,20 @@ export default function TransitJourney({ lang }: { lang: string }) {
     </form>
     <div role="status" aria-live="polite">{(message||busy)&&<p className="rounded-xl bg-sky-50 p-3 text-sm text-slate-700">{busy?t.loading:message?t[message]:''}</p>}</div>
     <div className="transit-results-layout">
-    {routes.length>0&&<div className="transit-route-options grid gap-2">{routes.map((r,i)=>{const s=transitSummary(r);return <button key={i} type="button" aria-pressed={selected===i} onClick={()=>setSelected(i)} className={`min-h-11 rounded-xl border px-4 py-3 text-start text-sm ${selected===i?'border-blue-500 bg-blue-50 text-blue-800':'border-sky-100 text-slate-700'}`}><strong>{t.option} {i+1} · {durationCopy[0]}: {Math.ceil(parseFloat(r.duration)/60)} {t.minutes}</strong><span className="block">{s.boarding?`${compare[0]}: ${time(s.boarding)}`:''}{s.alighting?` · ${compare[1]}: ${time(s.alighting)}`:''}</span><span className="block">{transferCount(s.transfers,locale)}{s.walkingMinutes!==undefined?` · ${compare[2]}: ${s.walkingMinutes} ${t.minutes}`:''}</span>{s.lines.length>0&&<span className="block">{s.lines.join(' → ')}</span>}<span className="block">{t.fare}: {transitFare(r,locale)??t.noFare}</span></button>})}</div>}
-    {route&&<div className="transit-result-map"><GoogleDirectionsMap origin={origin} destination={destination} mode="transit" title={t.map} routePolyline={route.polyline?.encodedPolyline??''} fallback={<p className="rounded-xl bg-slate-50 p-4 text-sm">{t.noMap}</p>}/></div>}
+    {routes.length>0&&<div className="transit-route-options grid gap-2">{routes.map((r,i)=>{const s=transitSummary(r);const fare=transitFare(r,locale);return <button key={i} type="button" aria-pressed={selected===i} onClick={()=>setSelected(i)} className="transit-option">
+      <span className="transit-option-top"><span>{t.option} {i+1}</span><strong><Clock3 size={18} aria-hidden="true"/>{Math.ceil(parseFloat(r.duration)/60)} {t.minutes}</strong></span>
+      {s.lines.length>0&&<span className="transit-line-badges">{s.lines.map((line,j)=><span key={j}>{line}</span>)}</span>}
+      <span className="transit-option-facts"><span><ArrowRightLeft size={15} aria-hidden="true"/>{transferCount(s.transfers,locale)}</span>{s.walkingMinutes!==undefined&&<span><Footprints size={15} aria-hidden="true"/><span className="sr-only">{compare[2]}: </span>{s.walkingMinutes} {t.minutes}</span>}</span>
+      {fare&&<span className="transit-option-fare">{t.fare}: <strong>{fare}</strong></span>}
+    </button>})}</div>}
+    {route&&<div className="transit-result-map"><GoogleDirectionsMap origin={origin} destination={destination} mode="transit" title={t.map} routePolyline={route.polyline?.encodedPolyline??''} fallback={<div className="transit-map-fallback"><p>{t.noMap}</p><a href={'https://www.google.com/maps/dir/?'+new URLSearchParams({api:'1',origin:coordinates?`${coordinates.lat},${coordinates.lng}`:origin,destination:destinationCoordinates?`${destinationCoordinates.lat},${destinationCoordinates.lng}`:destination,travelmode:'transit'})} target="_blank" rel="noreferrer">Google Maps <ExternalLink size={16} aria-hidden="true"/></a></div>}/></div>}
     </div>
-    {route&&<><p className="text-sm text-slate-600">{durationCopy[1]}</p>
+    {route&&<details key={selected} className="transit-selected-details"><summary>{t.option} {selected+1} · {t.details}</summary><div className="transit-details-body"><p className="text-sm text-slate-600">{durationCopy[1]}</p>
       <div className="flex flex-wrap gap-4 text-sm text-slate-700"><span>{transferCount(summary?.transfers??0,locale)}</span>{typeof route.distanceMeters==='number'&&<span>{t.distance}: {new Intl.NumberFormat(locale,{maximumFractionDigits:1}).format(route.distanceMeters/1000)} km</span>}<span>{t.fare}: {transitFare(route,locale)??t.noFare}</span></div>
       <p className="text-xs text-slate-600">{summary?.boarding?`${compare[0]}: ${time(summary.boarding)} · `:''}{summary?.alighting?`${compare[1]}: ${time(summary.alighting)} · `:''}{compare[4]}</p>
 
       <p className="flex gap-4 text-xs"><span className="text-green-700">● {t.from}</span><span className="text-rose-700">● {t.to}</span></p>
-      <h3 className="font-bold">{t.details}</h3>
+
       <ol className="space-y-2">{steps.map((step,i)=>{
         const d=step.transitDetails
         return <li key={i} className="break-words rounded-xl bg-slate-50 p-3 text-sm text-slate-700">{d?<>
@@ -90,7 +95,7 @@ export default function TransitJourney({ lang }: { lang: string }) {
         </>:<><strong>{t.walk}</strong>{step.staticDuration&&<span> · {Math.ceil(parseFloat(step.staticDuration)/60)} {t.minutes}</span>}{typeof step.distanceMeters==='number'&&<span> · {new Intl.NumberFormat(locale).format(step.distanceMeters)} m</span>}{!!step.instructions?.length&&<details><summary className="min-h-11 cursor-pointer py-2">{compare[3]}</summary><ol>{step.instructions.map((instruction,j)=><li key={j}>{instruction}</li>)}</ol></details>}</>}</li>
       })}</ol>
       <p className="text-xs leading-relaxed text-slate-500">Google Maps · {t.notice}</p>
-    </>}
+    </div></details>}
     <SearchGuide path="/transport" lang={lang}/>
   </section>
 }

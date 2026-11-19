@@ -93,9 +93,10 @@ export default function TransitPlanner({ lang, initialCity = 'İstanbul' }: { la
     <header className="transit-hero">
       <CityArtwork city={city} lang={locale} hero className="transit-hero-image"/>
       <div className="transit-hero-shade"/>
-      <div className="transit-hero-copy"><span><Bus size={20} aria-hidden="true"/>Transit Navigator</span><h1>{t.title}</h1><p>{t.sub}</p></div>
+      <div className="transit-hero-copy"><h1>{t.title}</h1></div>
       <label className="transit-city"><span>{t.select}</span><select value={city} onChange={e=>setCity(e.target.value as City)}>{(Object.keys(data) as City[]).map(item=><option key={item} value={item}>{cityDisplayName(item,locale)}</option>)}</select></label>
     </header>
+    <div className="transit-intro"><p>{t.sub}</p></div>
     <div className="transit-tabs" role="tablist" aria-label={t.title} onKeyDown={event=>{const tabs=Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('[role=tab]'));const i=tabs.indexOf(event.target as HTMLButtonElement);const step=event.key==='ArrowRight'?(locale==='ar'?-1:1):event.key==='ArrowLeft'?(locale==='ar'?1:-1):0;const next=event.key==='Home'?0:event.key==='End'?3:step?(i+step+4)%4:-1;if(next>=0){event.preventDefault();setPanel(next);tabs[next].focus()}}}>
       {navigation.map((label,i)=>{const Icon=tabIcons[i];return <button type="button" key={i} id={`transit-tab-${i}`} role="tab" aria-selected={panel===i} aria-controls={`transit-panel-${i}`} tabIndex={panel===i?0:-1} onClick={()=>setPanel(i)}><Icon aria-hidden="true"/>{label}</button>})}
     </div>
@@ -107,6 +108,6 @@ export default function TransitPlanner({ lang, initialCity = 'İstanbul' }: { la
     </section>
     </section>
     <section id="transit-panel-3" role="tabpanel" aria-labelledby="transit-tab-3" hidden={panel!==3} tabIndex={0} className="transit-card-panel"><div className="rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 to-white p-5 shadow-sm"><MapPinned className="h-6 w-6 text-[#087FFF]" /><h2 className="mt-3 font-extrabold text-slate-900">{selected.card ? t.card : t.source}</h2><p className="mt-1 text-sm font-bold text-[#007EAD]">{selected.card || selected.modes[0].operator}</p><p className="mt-2 text-xs leading-relaxed text-slate-600">{selected.card ? t.cardText : t.notice}</p><a href={selected.cardUrl} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-[#007EAD] underline">{t.source}<ExternalLink className="h-3.5 w-3.5" /></a></div></section>
-    <nav className="transit-shortcuts" aria-label={t.modes}>{selected.modes.map((item,i)=>{const Icon=icons[item.icon];return <a key={`${item.operator}-${i}`} href={item.url} target="_blank" rel="noreferrer"><Icon aria-hidden="true"/><span><strong>{locale==='en'?item.name:modeNames[locale][item.icon]}</strong><small>{item.operator} · {t.stops}</small></span><ExternalLink size={16} aria-hidden="true"/></a>})}</nav>
+
   </main>
 }
