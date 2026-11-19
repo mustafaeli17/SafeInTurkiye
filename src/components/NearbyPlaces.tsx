@@ -1,3 +1,6 @@
+import NearMeResults from './NearMeResults'
+import {nearMeDesignCopy} from '../lib/nearMeDesignCopy'
+import {LayoutGrid,Utensils,Coffee,Camera,Landmark,Cross,Wallet,ShoppingBag,ChevronDown} from 'lucide-react'
 import {taxiMapKey} from '../lib/mapEnvironment'
 import { groomingCategoryLabel } from '../lib/groomingCopy'
 import { useEffect, useRef, useState } from 'react'
@@ -33,6 +36,7 @@ interface NearbyPlacesProps {
   center: NearbyCenter
   cityName: string
   fixedCategory?: NearbyCategory
+  discoveryLayout?: boolean
   showAreaMap?: boolean
   initialCategory?: NearbyCategory
 }
@@ -46,7 +50,10 @@ const categoryLabels: Record<NearbyCategory, [string, string]> = {
   activity: ['Gezilecek yerler ve etkinlikler', 'Things to do'], park: ['Park', 'Park'], historical: ['Tarihi yer', 'Historical place'], entertainment: ['Eğlence', 'Entertainment'], cinema: ['Sinema', 'Cinema'],
 }
 
-export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter, cityName: initialCityName, fixedCategory, initialCategory, showAreaMap=false }: NearbyPlacesProps) {
+export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter, cityName: initialCityName, fixedCategory, initialCategory, discoveryLayout=false, showAreaMap=false }: NearbyPlacesProps) {
+  const [moreCategories,setMoreCategories]=useState(false)
+  const designCopy=nearMeDesignCopy[lang.toLowerCase()]??nearMeDesignCopy.en
+  const categoryIcons={all:LayoutGrid,restaurant:Utensils,cafe:Coffee,attraction:Camera,museum:Landmark,pharmacy:Cross,atm:Wallet,shopping:ShoppingBag}
   const eventRoot=useRef<HTMLElement>(null)
   const seenEvents=useRef(new Set<string>())
   const eventContext=kind==='exchange'?'exchange':fixedCategory==='restaurant'?'restaurants':fixedCategory==='hotel'?'hotels':fixedCategory==='activity'?'activities':'nearby'
@@ -215,8 +222,9 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
   const formatDistance = (meters: number) => meters < 1000 ? `${Math.round(meters)} m` : `${(meters / 1000).toLocaleString(tr ? 'tr-TR' : 'en-GB', { maximumFractionDigits: 1 })} km`
 
   return (
-    <section ref={eventRoot} onClickCapture={event=>{const link=(event.target as HTMLElement).closest('a');const key=link?.closest('[data-business-key]')?.getAttribute('data-business-key');if(!link||!key)return;const href=link.getAttribute('href')??'';const type=href.startsWith('tel:')?'phone_click':href.includes('/maps/dir/')?'directions_click':link.dataset.event==='website'?'website_click':null;if(type)trackBusinessEvent(key,type,eventContext)}} className="space-y-4" aria-label={kind === 'exchange' ? text('Yakındaki döviz büroları', 'Nearby exchange bureaux') : text('Yakınımdaki yerler', 'Nearby places')}>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <section ref={eventRoot} onClickCapture={event=>{const link=(event.target as HTMLElement).closest('a');const key=link?.closest('[data-business-key]')?.getAttribute('data-business-key');if(!link||!key)return;const href=link.getAttribute('href')??'';const type=href.startsWith('tel:')?'phone_click':href.includes('/maps/dir/')?'directions_click':link.dataset.event==='website'?'website_click':null;if(type)trackBusinessEvent(key,type,eventContext)}} className={discoveryLayout?'nearby-discovery space-y-4':'space-y-4'} aria-label={kind === 'exchange' ? text('Yakındaki döviz büroları', 'Nearby exchange bureaux') : text('Yakınımdaki yerler', 'Nearby places')}>
+      <div className="nearby-controls">
+      <div className="nearby-control-heading flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-extrabold text-slate-900">{fixedCategory ? categoryLabel(fixedCategory) : kind === 'exchange' ? text('Yakındaki döviz büroları', 'Nearby exchange bureaux') : text('Yakınımdaki yerler', 'Nearby places')}</h2>
           {!textQuery&&<p className="text-xs text-slate-600 mt-1">{fixedCategory ? text('Şehir ve çevresinden öne çıkan sonuçlar (30 km); tüm işletmelerin listesi değildir. Konum araması 2,5 km içindedir.', 'Selected results across the city area (30 km), not an exhaustive directory. Location searches cover 2.5 km.') : text('2,5 km içindeki kayıtlar; mesafeler kuş uçuşudur.', 'Published places within 2.5 km; distances are straight-line estimates.')}</p>}
@@ -226,11 +234,12 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
           <button type="button" onClick={searchLocation} disabled={busy} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#00A3E0] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#0284C7] disabled:opacity-60 disabled:cursor-wait"><LocateFixed className="h-4 w-4" />{text('Konumumu kullan', 'Use my location')}</button>
         </div>
       </div>
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+      <div className="nearby-address-row flex flex-col gap-2 sm:flex-row sm:items-end">
         <TransitAddressInput label={addressText[0]} placeholder={addressText[1]} value={address} selected={!!addressPlace && address === addressPlace.label} locale={locale} onChange={value=>{setAddress(value);setAddressPlace(null);saveDiscoveryArea(null);generation.current+=1;controller.current?.abort();setResult(null);setEditorial([]);setState('idle')}} onSelect={place=>{setAddress(place.label);setAddressPlace(place);saveDiscoveryArea(place);updateLocationQuery({q:null,lookup:null,near:null})}} />
         <button type="button" disabled={busy || (requiresLocation&&!addressPlace) || (!!address.trim() && address !== addressPlace?.label)} onClick={searchCity} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#087FFF] px-5 py-3 text-sm font-bold text-white disabled:opacity-50"><Search className="h-4 w-4" />{addressText[2]}</button>
       </div>
-      <p className="text-[11px] leading-relaxed text-slate-500">{text('Konumunuzu seçerseniz arama için yaklaşık koordinatlarınız harita veri sağlayıcısına gönderilir; bu sitede kalıcı olarak saklanmaz.', 'If you use your location, approximate coordinates are sent to the map data service to run the search; this site does not permanently store them.')}</p>
+      </div>
+      <p className="nearby-location-note text-[11px] leading-relaxed text-slate-500">{text('Konumunuzu seçerseniz arama için yaklaşık koordinatlarınız harita veri sağlayıcısına gönderilir; bu sitede kalıcı olarak saklanmaz.', 'If you use your location, approximate coordinates are sent to the map data service to run the search; this site does not permanently store them.')}</p>
 
       {showAreaMap&&mapKey&&!detailId&&<iframe className="exchange-area-map" title={text('Yakındaki döviz büroları', 'Nearby exchange bureaux')} src={'https://www.google.com/maps/embed/v1/search?'+new URLSearchParams({key:mapKey,q:mapQuery,language:locale,region:'TR'})} loading="lazy" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen/>}
 
@@ -239,8 +248,8 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
       </div>}
 
       {filter==='pharmacy'&&<p role="note" className="rounded-xl border border-amber-100 bg-amber-50 p-3 text-sm text-amber-900">{nearbyNotice(locale,true)}</p>}
-      {kind === 'essential' && !fixedCategory && <div className="flex flex-wrap gap-2" aria-label={text('Yer türü', 'Place category')}>
-        {(['all', 'restaurant', 'hotel', 'cafe', 'attraction', 'museum', 'pharmacy', 'hospital', 'atm', 'bureau_de_change', 'shopping', 'barber', 'hair_salon', 'police', 'taxi'] as const).map(category => <button type="button" key={category} aria-pressed={filter === category} onClick={() => { generation.current += 1; controller.current?.abort(); setFilter(category); setResult(null); setState('idle'); setError(null); setLimit(12) }} className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${filter === category ? 'border-[#00A3E0] bg-[#00A3E0] text-white' : 'border-slate-200 bg-white text-slate-700 hover:bg-sky-50'}`}>{category === 'all' ? text('Tümü', 'All') : categoryLabel(category)}</button>)}
+      {kind === 'essential' && !fixedCategory && <div className="nearby-categories flex flex-wrap gap-2" aria-label={text('Yer türü', 'Place category')}>
+        {(['all', 'restaurant', 'cafe', 'attraction', 'museum', 'pharmacy', 'atm', 'shopping', 'hotel', 'hospital', 'bureau_de_change', 'barber', 'hair_salon', 'police', 'taxi'] as const).filter((category,index)=>!discoveryLayout||moreCategories||index<8||category===filter).map(category => <button type="button" key={category} aria-pressed={filter === category} onClick={() => { generation.current += 1; controller.current?.abort(); setFilter(category); setResult(null); setState('idle'); setError(null); setLimit(12) }} className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${filter === category ? 'border-[#00A3E0] bg-[#00A3E0] text-white' : 'border-slate-200 bg-white text-slate-700 hover:bg-sky-50'}`}>{discoveryLayout&&(()=>{const Icon=categoryIcons[category as keyof typeof categoryIcons]??MapPin;return <Icon size={18} aria-hidden="true"/>})()}{category === 'all' ? text('Tümü', 'All') : categoryLabel(category)}</button>)}{discoveryLayout&&<button type="button" aria-expanded={moreCategories} onClick={()=>setMoreCategories(!moreCategories)}>{designCopy.more}<ChevronDown size={16}/></button>}
       </div>}
 
       {!detailId&&state==='ready'&&allPlaces.length>0&&<details className="rounded-xl border border-sky-100 bg-white p-3 text-sm"><summary className="min-h-11 cursor-pointer py-2">{filtersCopy[0]}</summary><div className="flex flex-wrap items-end gap-3"><label>{filtersCopy[1]}<select className="block min-h-11 rounded-xl border p-2" value={new URLSearchParams(query).get('order')??'recommended'} onChange={e=>updateLocationQuery({order:e.target.value})}>{['recommended','distance','rating'].map((value,i)=><option key={value} value={value}>{filtersCopy[2+i]}</option>)}</select></label><label>{filtersCopy[6]}<select className="block min-h-11 rounded-xl border p-2" value={new URLSearchParams(query).get('minRating')??'0'} onChange={e=>updateLocationQuery({minRating:e.target.value})}><option value="0">{filtersCopy[7]}</option><option value="3">3+</option><option value="4">4+</option><option value="4.5">4.5+</option></select></label><label className="flex min-h-11 items-center gap-2"><input type="checkbox" checked={new URLSearchParams(query).get('open')==='true'} onChange={e=>updateLocationQuery({open:e.target.checked?'true':null})}/>{filtersCopy[5]}</label><button className="min-h-11 px-3 text-blue-700" onClick={()=>updateLocationQuery({open:null,minRating:null,order:null})}>{filtersCopy[8]}</button></div></details>}
@@ -256,7 +265,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
       {detailId&&!detailPlace&&<div role="status" className="rounded-2xl border border-sky-100 bg-white p-5 text-sm text-slate-600">{busy?text('Yakındaki yerler aranıyor…','Searching nearby places…'):text('Yer bilgileri şu anda alınamadı. Lütfen yeniden deneyin.','Place details could not be loaded. Please try again.')}<button disabled={busy} onClick={searchCity} className="block min-h-11 font-bold text-blue-700">{addressText[2]}</button></div>}
       {!detailId&&state === 'ready' && places.length === 0 && <div className="rounded-2xl border border-sky-100 bg-white p-5 text-sm text-slate-600">{text('Bu alanda ve kategoride kayıt bulunamadı. Bu, yakınlarda işletme olmadığı anlamına gelmez; harita kayıtları eksik olabilir.', 'No records were found in this area and category. This does not mean there are no places nearby; map coverage may be incomplete.')}</div>}
       {detailId && <button type="button" className="min-h-11 text-blue-700 font-semibold" onClick={() => setDetailId(null)}>{text('← Listeye dön', '← Back to results')}</button>}
-      <div className={detailId && places.some(place=>place.id===detailId) ? 'space-y-4' : 'grid grid-cols-1 gap-3 sm:grid-cols-2'}>
+      {discoveryLayout&&!detailId&&places.length>0?<NearMeResults places={places.slice(0,limit)} lang={locale} onOpen={openPlace} categoryLabel={categoryLabel} distance={formatDistance} text={text} directions={directionsText[locale]??directionsText.en} businessKey={businessKey} onExpired={refreshExpiredPhotos}/>:      <div className={detailId && places.some(place=>place.id===detailId) ? 'space-y-4' : 'grid grid-cols-1 gap-3 sm:grid-cols-2'}>
         {(detailId && places.some(place=>place.id===detailId)?places.filter(place=>place.id===detailId):places.slice(0, limit)).map(place => <article data-business-key={businessKey(place.id)} key={place.id} className="min-w-0 rounded-2xl border border-sky-100 bg-white p-4 shadow-sm">
           {isEditorialPlace(place)?<><span className="mb-2 block text-xs font-semibold text-slate-500">{place.editorial.sponsored?editorialText[1]:editorialText[0]}</span><EditorialPlacePhoto place={place} expanded={detailId===place.id} onOpen={()=>openPlace(place.id)} lang={locale}/></>:<GooglePlacePhoto key={place.photo?.url ?? place.id} place={place} onOpen={() => openPlace(place.id)} onExpired={refreshExpiredPhotos} />}
           <div className="flex items-start justify-between gap-3">
@@ -280,6 +289,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
           {detailId === place.id && place.category === 'restaurant' && <RestaurantRequest businessKey={businessKey(place.id)} name={place.name ?? ''} city={selectedCity} source={place.sourceUrl} lang={locale} />}
         </article>)}
       </div>
+      }
       {state==='ready' && kind==='exchange' && <p className="text-xs text-slate-500">{text('Büro alış/satış kurları mevcut değil; işlemden önce net kur ve komisyonu işletmeden teyit edin.', 'Bureau buy/sell rates are not available; confirm the net rate and commission with the business before exchanging.')}</p>}
       {!detailId&&places.length > limit && <button type="button" onClick={() => setLimit(value => value + 12)} className="rounded-xl border border-sky-200 bg-white px-4 py-2 text-xs font-bold text-[#007EAD]">{text('Daha fazla göster', 'Show more')}</button>}
       {result && <div className="text-xs text-slate-600"><p className="text-sm font-medium" translate="no">Google Maps</p><p>{nearbyNotice(lang, filter === 'pharmacy' || filter === 'all' && !fixedCategory && kind !== 'exchange')}</p><a className="underline" href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google Privacy Policy</a> · <a className="underline" href="https://maps.google.com/help/terms_maps/" target="_blank" rel="noopener noreferrer">Google Maps Terms</a></div>}

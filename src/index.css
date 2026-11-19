@@ -194,3 +194,67 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .travel-search:focus-within { outline: 2px solid #087fff; outline-offset: 3px; }
 .travel-search button { min-height: 44px; }
 .travel-home a:focus-visible, .travel-home button:focus-visible { outline: 2px solid #087fff; outline-offset: 3px; }
+/* Near Me reference layout; scoped so other discovery pages keep their design. */
+.nearby-page{max-width:1240px;color:#0b1646}
+.nearby-hero{position:relative;min-height:300px;margin:12px -24px 0;isolation:isolate;overflow:hidden;border-radius:26px 26px 0 0;background:#eaf4ff}
+.nearby-hero picture,.nearby-hero picture img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:-2}
+.nearby-hero:after{content:'';position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(244,249,255,.98) 0%,rgba(244,249,255,.94) 28%,rgba(244,249,255,.45) 51%,transparent 65%),linear-gradient(0deg,#f2f8ff 0%,transparent 22%)}
+.nearby-hero-copy{max-width:650px;padding:36px 32px 66px}
+.nearby-eyebrow{display:inline-flex;align-items:center;gap:8px;background:#daebff;border-radius:99px;padding:6px 14px;font-size:13px;font-weight:700}
+.nearby-hero h1{font-size:clamp(30px,3.5vw,46px);line-height:1.1;letter-spacing:-1.7px;font-weight:850;margin:12px 0}
+.nearby-hero h1 span{color:#087fff}
+.nearby-hero-copy>p{font-size:16px;line-height:1.6;max-width:520px}
+.nearby-discovery{position:relative;margin-top:-35px}
+.nearby-discovery .nearby-controls{position:relative;z-index:10;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:12px;padding:14px;background:rgba(255,255,255,.97);border:1px solid #dce9fc;box-shadow:0 5px 15px #173e7812;border-radius:28px}
+.nearby-discovery .nearby-control-heading{grid-column:2;grid-row:1}
+.nearby-discovery .nearby-control-heading>div:first-child{display:none}
+.nearby-discovery .nearby-control-heading>div:last-child{flex-wrap:nowrap;align-items:center}
+.nearby-discovery .nearby-control-heading select{max-width:140px;border-radius:22px;color:#172d54}
+.nearby-discovery .nearby-control-heading button{min-height:46px;border-radius:24px;background:#e5f1ff;color:#0675ec;font-size:13px}
+.nearby-discovery .nearby-address-row{grid-column:1;grid-row:1;align-items:center}
+.nearby-discovery .nearby-address-row>div>label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.nearby-discovery .nearby-address-row input{margin:0;border-radius:24px;min-height:46px;background:#f8faff;border-color:#bed4f7;padding-inline:18px;font-weight:600}
+.nearby-discovery .nearby-address-row>button{border-radius:24px;min-width:120px;min-height:46px}
+.nearby-discovery .nearby-location-note{font-size:11px;padding-inline:14px;margin-top:10px;color:#526785}
+.nearby-discovery .nearby-categories{gap:8px;margin-block:18px}
+.nearby-discovery .nearby-categories button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;border:1px solid #cddcf5;border-radius:25px;padding:8px 14px;font-size:13px;background:#fbfdff;color:#111d48;white-space:nowrap}
+.nearby-discovery .nearby-categories button[aria-pressed=true]{background:#087fff;color:#fff;border-color:#087fff;box-shadow:0 4px 12px #087fff18}
+.nearby-discovery button:focus-visible,.nearby-discovery a:focus-visible{outline:3px solid #006ce0;outline-offset:3px}
+.nearby-results-layout{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(300px,1fr);gap:18px;align-items:start}
+.nearby-result-list{display:grid;gap:12px;min-width:0}
+.nearby-place-card{display:grid;grid-template-columns:39% minmax(0,1fr);gap:16px;padding:10px;border-radius:22px;border:1px solid #d9e6fa;background:linear-gradient(130deg,#fff,#f6f9ff);box-shadow:0 4px 12px #23466e08;overflow:hidden}
+.nearby-card-photo{min-width:0}
+.nearby-card-photo figure{margin:0;border-radius:14px}
+.nearby-card-photo img{height:190px;aspect-ratio:auto;object-fit:cover}
+.nearby-card-photo figcaption{font-size:10px;line-height:1.4;padding:4px 2px}
+.nearby-card-body{padding:3px 3px 3px 0;min-width:0}
+.nearby-card-heading{display:flex;align-items:start;gap:6px;justify-content:space-between}
+.nearby-card-heading h3{font-size:18px;font-weight:800;line-height:1.25;letter-spacing:-.4px}
+.nearby-card-heading h3 button{text-align:start;min-height:44px}
+.nearby-distance{padding:4px 9px;background:#e6f1ff;color:#112953;font-size:12px;white-space:nowrap;border-radius:12px;font-weight:600}
+.nearby-card-category{font-size:12px;margin:2px 0 9px;color:#344866}
+.nearby-card-address{display:flex;gap:6px;align-items:start;font-size:12px;line-height:1.45;color:#344866}
+.nearby-card-address svg{flex-shrink:0;margin-top:2px}
+.nearby-card-rating,.nearby-card-hours{display:flex;gap:5px;align-items:center;flex-wrap:wrap;font-size:12px;margin-top:8px}
+.nearby-card-rating a{display:inline-flex;align-items:center;gap:3px;color:#087fff;text-decoration:underline}
+.nearby-card-hours{color:#44536c}
+.nearby-card-hours svg{color:#b85c16}
+.nearby-card-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.nearby-card-actions a{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:7px 12px;border-radius:22px;font-size:12px;font-weight:600;border:1px solid #bdd8ff;color:#065dc5}
+.nearby-card-actions a:first-child{background:#087fff;color:#fff;border-color:#087fff}
+.nearby-no-photo{grid-template-columns:1fr}.nearby-no-photo .nearby-card-photo{display:none}
+.nearby-map-panel{padding:10px;border:1px solid #d9e6fa;border-radius:24px;background:white;box-shadow:0 5px 14px #23466e12;position:sticky;top:110px;overflow:hidden}
+.nearby-results-map{height:610px;min-height:360px;border-radius:16px;background:#eaf2fa;overflow:hidden}
+.nearby-map-error{min-height:280px;display:grid;place-content:center;padding:24px;color:#465777}
+.nearby-view-toggle{display:none}
+[dir=rtl] .nearby-hero-copy{margin-inline-start:auto;text-align:right}
+[dir=rtl] .nearby-hero:after{background:linear-gradient(270deg,rgba(244,249,255,.98),rgba(244,249,255,.85) 40%,transparent 75%)}
+@media(max-width:950px){.nearby-results-layout{grid-template-columns:minmax(0,1fr) minmax(280px,.8fr)}.nearby-place-card{grid-template-columns:1fr}.nearby-card-photo img{height:190px}.nearby-discovery .nearby-controls{grid-template-columns:1fr}.nearby-discovery .nearby-control-heading{grid-column:1;grid-row:2}.nearby-discovery .nearby-control-heading>div:last-child{width:100%}.nearby-discovery .nearby-control-heading button{flex:1}.nearby-discovery .nearby-address-row{grid-column:1;grid-row:1}}
+@media(max-width:640px){.nearby-page{padding-inline:16px}.nearby-hero{margin:12px -16px 0;border-radius:0;min-height:310px}.nearby-hero picture img{object-position:70% center}.nearby-hero:after{background:linear-gradient(90deg,rgba(245,249,255,.96),rgba(245,249,255,.76) 43%,transparent 90%),linear-gradient(0deg,#f2f8ff,transparent 45%)}.nearby-hero-copy{padding:24px 20px 65px;max-width:320px}.nearby-hero h1{font-size:32px;letter-spacing:-1.1px}.nearby-hero-copy>p{font-size:13px;line-height:1.55;max-width:250px}.nearby-eyebrow{font-size:12px;padding:4px 10px}.nearby-discovery{margin-top:-36px}.nearby-discovery .nearby-controls{padding:12px;border-radius:22px}.nearby-discovery .nearby-address-row{flex-direction:column;align-items:stretch}.nearby-discovery .nearby-address-row>button{width:100%}.nearby-discovery .nearby-categories{flex-wrap:nowrap;overflow-x:auto;padding-bottom:7px;scrollbar-width:thin}.nearby-discovery .nearby-categories button{flex-shrink:0;font-size:12px}.nearby-view-toggle{display:flex;padding:5px;border-radius:22px;background:#e8f0fc;gap:8px}.nearby-view-toggle button{display:flex;align-items:center;justify-content:center;gap:9px;flex:1;border-radius:18px;min-height:44px;font-size:13px;font-weight:600}.nearby-view-toggle button[aria-pressed=true]{background:white;box-shadow:0 2px 7px #1234560b}.nearby-results-layout{display:block}.nearby-view-list .nearby-map-panel{display:none}.nearby-view-map .nearby-result-list{display:none}.nearby-place-card{padding:9px;gap:8px;border-radius:18px}.nearby-card-body{padding:0 4px 5px}.nearby-card-photo img{height:180px}.nearby-card-heading h3{font-size:18px}.nearby-map-panel{position:static;padding:6px}.nearby-results-map{height:480px}.nearby-card-actions a{flex:1}.nearby-location-note{line-height:1.5}}
+.nearby-hero picture img{object-position:center top}
+.nearby-place-card:not(:has(figure)){grid-template-columns:1fr}
+.nearby-place-card:not(:has(figure)) .nearby-card-photo{display:none}
+.nearby-map-pin{display:flex;align-items:center;gap:6px;min-height:44px;max-width:190px;padding:5px 10px 5px 5px;background:#fff;color:#102653;border:1px solid #b9d7ff;border-radius:22px;box-shadow:0 3px 12px #132f4b38;font:600 12px Inter,sans-serif;text-align:start;transform:translate(-50%,-100%)}
+.nearby-map-pin>span:first-child{display:grid;place-items:center;min-width:30px;height:30px;border-radius:50%;background:#087fff;color:#fff;font-weight:800}
+.nearby-map-pin:focus-visible{outline:3px solid #102653;outline-offset:2px}
+@media(max-width:640px){.nearby-discovery .nearby-controls{grid-template-columns:1fr 1fr;gap:10px}.nearby-discovery .nearby-address-row,.nearby-discovery .nearby-control-heading,.nearby-discovery .nearby-control-heading>div:last-child{display:contents}.nearby-discovery .nearby-address-row>div{grid-column:1/-1;grid-row:1}.nearby-discovery .nearby-address-row>button{grid-row:2;grid-column:2}.nearby-discovery .nearby-control-heading button{grid-row:2;grid-column:1;padding-inline:8px}.nearby-discovery .nearby-control-heading select{grid-row:3;grid-column:1/-1;max-width:none;width:100%;min-height:38px}.nearby-hero picture img{object-position:70% top}}

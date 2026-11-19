@@ -1,3 +1,4 @@
+import NearMeHero from './components/NearMeHero';
 import {navigationUi} from './lib/navigationUi';
 import {citiesDetailedData} from './data/originalCityDetails';
 import {localizePath,parseLocalePath} from './lib/searchLocales';
@@ -931,10 +932,10 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
             PAGE 10: NEAR ME
         ==================================================================== */}
         {activeTab === 'nearme' && (
-          <main className="reference-page max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
-            <h1 className="text-3xl font-extrabold text-slate-900">{tr('nearMe')}</h1>
-            <SearchGuide path={browserPath} lang={lang}/>
-            <NearbyPlaces key={`nearby:${searchQuery}`} kind="essential" lang={lang} center={{ lat: currentCityInfo.lat, lng: currentCityInfo.lng }} cityName={currentCityInfo.name} />
+          <main className="nearby-page mx-auto px-4 sm:px-6 pb-12">
+            <NearMeHero lang={lang}/>
+            <NearbyPlaces discoveryLayout key={`nearby:${searchQuery}`} kind="essential" lang={lang} center={{ lat: currentCityInfo.lat, lng: currentCityInfo.lng }} cityName={currentCityInfo.name} />
+            <div className="mt-6"><SearchGuide path={browserPath} lang={lang}/></div>
           </main>
         )}
 
