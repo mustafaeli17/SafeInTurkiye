@@ -18,7 +18,7 @@ it('separates explicitly labelled test records and calculates pending age only w
  expect(reservationWaiting({status:'PENDING',created_at:'2030-01-01T10:00:00Z'} as any,Date.parse('2030-01-01T11:05:00Z'))).toBe('1 sa 5 dk');
 });
 it('retains calculation geometry for the no-key fallback',()=>{
- const source=readFileSync('src/components/TaxiRouteMap.tsx','utf8');expect(source).toContain('if(key)return;');expect(source).toContain('L.polyline(geometry.map');
+ const source=readFileSync('src/components/TaxiRouteMap.tsx','utf8');expect(source).toContain('if(key||googleOnly)return;');expect(source).toContain('L.polyline(geometry.map');
 });
 it('routes transfer searches to tour search, preserving city and query in history',()=>{
  const source=readFileSync('src/App.tsx','utf8');expect(source).toContain("if (tourIntent(query)) navigateSearch('tours')");expect(source).toContain('new URLSearchParams({q:query})');expect(source).toContain("params.set('intent','transfer')");
@@ -27,3 +27,4 @@ it('preloads the responsive hero only on the home document, without downloading 
  expect(readFileSync('dist/index.html','utf8')).toContain('rel="preload" as="image"');
  for(const route of ['transport','restaurants','hotels','cities/istanbul'])expect(readFileSync(`dist/${route}/index.html`,'utf8')).not.toContain('rel="preload" as="image"');
 });
+

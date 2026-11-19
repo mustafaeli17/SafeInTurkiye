@@ -37,3 +37,10 @@ it('keeps the calculation-map fallback when no permitted browser key exists',()=
  const html=renderToStaticMarkup(<TaxiRouteMap originCoords={null} destCoords={null} geometry={null}/>);
  expect(html).not.toContain('<iframe');expect(html).toContain('role="region"');
 });
+it('does not place Google address results on a non-Google fallback map',()=>{
+ vi.stubGlobal('window',{location:{hostname:'localhost'}});
+ vi.stubGlobal('document',{documentElement:{lang:'en'}});
+ vi.stubEnv('VITE_GOOGLE_MAPS_PREVIEW_BROWSER_KEY','');
+ const html=renderToStaticMarkup(<TaxiRouteMap originCoords={null} destCoords={{lat:40.9,lng:29.3,provider:'google',mapQuery:'place_id:airport'}} geometry={null}/>);
+ expect(html).not.toContain('role="region"');expect(html).toContain('destination_place_id=airport');expect(html).toContain('Google Maps');
+});

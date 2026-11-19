@@ -65,8 +65,7 @@ import { taxiErrorText,type TaxiErrorKey } from './lib/taxiErrors';
 import {taxiCalculationMapNotice,taxiRouteNotice} from './lib/taxiRouteNotice';
 import {taxiMapKey} from './lib/mapEnvironment';
 import SearchContext from './components/SearchContext';
-import { taxiSearchUrl, parseTaxiPlaces } from './lib/taxiSearch';
-import {addressSearchText,type AddressSearchState} from './lib/addressSearchCopy';
+import TransitAddressInput from './components/TransitAddressInput';
 import { toursLabel } from './lib/viatorCopy';
 import { directoryText } from './lib/visitorDirectory';
 import { getCurrentTaxiTariffs } from './repositories/tariffRepository';
@@ -92,15 +91,6 @@ interface RouteGeometryPoint {
   lat: number;
   lng: number;
 }
-
-interface GeocodedPlace {
-  label: string;
-  lat: number;
-  lng: number;
-  city?: string;
-}
-
-
 
 interface TaxiTariff {
   city: string;
@@ -379,10 +369,8 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
   const [detectedTaxiCity, setDetectedTaxiCity] = useState<string>('');
   const [taxiOriginText, setTaxiOriginText] = useState('');
   const [taxiDestText, setTaxiDestText] = useState('');
-  const [taxiOriginCoords, setTaxiOriginCoords] = useState<(Coordinates & {mapQuery?:string}) | null>(null);
-  const [taxiDestCoords, setTaxiDestCoords] = useState<(Coordinates & {mapQuery?:string}) | null>(null);
-  const [taxiOriginSuggs, setTaxiOriginSuggs] = useState<GeocodedPlace[]>([]);
-  const [taxiDestSuggs, setTaxiDestSuggs] = useState<GeocodedPlace[]>([]);
+  const [taxiOriginCoords, setTaxiOriginCoords] = useState<(Coordinates & {mapQuery?:string;provider?:'google'}) | null>(null);
+  const [taxiDestCoords, setTaxiDestCoords] = useState<(Coordinates & {mapQuery?:string;provider?:'google'}) | null>(null);
   const taxiClass = 'Yellow';
 
   const [isTaxiLocating, setIsTaxiLocating] = useState(false);
@@ -421,55 +409,6 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
   }, [taxiOriginCoords, taxiDestCoords, taxiClass, detectedTaxiCity]);
 
   const taxiOriginLookupId = useRef(0);
-  const [originSearchState,setOriginSearchState]=useState<AddressSearchState>('');
-  const [destSearchState,setDestSearchState]=useState<AddressSearchState>('');
-
-  useEffect(() => {
-    setTaxiOriginSuggs([]);setOriginSearchState('');
-    if (taxiOriginText.trim().length<3 || taxiOriginCoords) {
-      setTaxiOriginSuggs([]);setOriginSearchState('');
-      return;
-    }
-    const controller = new AbortController();
-    const timer = setTimeout(async () => {
-      setOriginSearchState('loading');
-      try {
-        const res = await fetch(taxiSearchUrl(taxiOriginText),{signal:AbortSignal.any([controller.signal,AbortSignal.timeout(8000)])});
-        if (!res.ok) throw Error('provider');
-        const data = await res.json();
-        if (!Array.isArray(data?.features)) throw Error('response');
-        if (!controller.signal.aborted) {
-          const found=parseTaxiPlaces(data,taxiOriginText);
-          setTaxiOriginSuggs(found);setOriginSearchState(found.length?'':'empty');
-        }
-      } catch {if(!controller.signal.aborted)setOriginSearchState('error');}
-    }, 300);
-    return () => {clearTimeout(timer);controller.abort();};
-  }, [taxiOriginText, taxiOriginCoords]);
-
-  useEffect(() => {
-    setTaxiDestSuggs([]);setDestSearchState('');
-    if (taxiDestText.trim().length<3 || taxiDestCoords) {
-      setTaxiDestSuggs([]);setDestSearchState('');
-      return;
-    }
-    const controller = new AbortController();
-    const timer = setTimeout(async () => {
-      setDestSearchState('loading');
-      try {
-        const res = await fetch(taxiSearchUrl(taxiDestText),{signal:AbortSignal.any([controller.signal,AbortSignal.timeout(8000)])});
-        if (!res.ok) throw Error('provider');
-        const data = await res.json();
-        if (!Array.isArray(data?.features)) throw Error('response');
-        if (!controller.signal.aborted) {
-          const found=parseTaxiPlaces(data,taxiDestText);
-          setTaxiDestSuggs(found);setDestSearchState(found.length?'':'empty');
-        }
-      } catch {if(!controller.signal.aborted)setDestSearchState('error');}
-    }, 300);
-    return () => {clearTimeout(timer);controller.abort();};
-  }, [taxiDestText, taxiDestCoords]);
-
   const handleTaxiCurrentLocation = () => {
     const lookupId = ++taxiOriginLookupId.current;
     if (!('geolocation' in navigator)) {
@@ -803,7 +742,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
 
                 <div className="relative">
                   <div className="flex justify-between items-center mb-1">
-                    <label htmlFor="taxi-origin" className="text-[12px] font-bold text-slate-700">{page('origin')}</label>
+                    <span />
                     <button
                       type="button"
                       onClick={handleTaxiCurrentLocation}
@@ -814,77 +753,12 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
                       {page('locate')}
                     </button>
                   </div>
-                  <input
-                    id="taxi-origin"
-                    type="text"
-                    value={taxiOriginText}
-                    onChange={(e) => {
-                      taxiOriginLookupId.current++;
-                      setIsTaxiLocating(false);
-                      setTaxiOriginText(e.target.value);
-                      setTaxiOriginCoords(null);
-                      setDetectedTaxiCity('');
-                    }}
-                    placeholder={page('origin')}
-                    className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] font-medium focus:outline-none focus:border-[#087FFF]"
-                  />
-                  {originSearchState&&<p role="status" className="mt-2 text-xs text-slate-600">{addressSearchText(lang,originSearchState)}</p>}
-                  {taxiOriginSuggs.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 z-30 bg-white border border-slate-200 rounded-xl shadow-lg mt-1 max-h-48 overflow-y-auto">
-                      {taxiOriginSuggs.map((s, idx) => (
-                        <button type="button"
-                          key={idx}
-                          onClick={() => {
-                            taxiOriginLookupId.current++;
-                            setIsTaxiLocating(false);
-                            setTaxiOriginText(s.label);
-                            setTaxiOriginCoords({ lat: s.lat, lng: s.lng, mapQuery: s.label });
-                            setTaxiOriginSuggs([]);
-                            setDetectedTaxiCity(s.city || '');
-                          }}
-                          className="w-full text-left p-2.5 hover:bg-sky-50 cursor-pointer text-[12px] text-slate-700 border-b border-slate-100 last:border-none"
-                        >
-                          <MapPin className="w-3.5 h-3.5 text-[#087FFF] inline mr-1.5" />
-                          {s.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                  <TransitAddressInput id="taxi-origin" label={page('origin')} value={taxiOriginText} selected={!!taxiOriginCoords} locale={lang} placeholder={page('origin')}
+                    onChange={value=>{taxiOriginLookupId.current++;setIsTaxiLocating(false);setTaxiOriginText(value);setTaxiOriginCoords(null);setDetectedTaxiCity('')}}
+                    onSelect={place=>{taxiOriginLookupId.current++;setIsTaxiLocating(false);setTaxiOriginText(place.label);setTaxiOriginCoords(place);setDetectedTaxiCity(place.city)}} />
                 </div>
-
-                <div className="relative">
-                  <label htmlFor="taxi-destination" className="text-[12px] font-bold text-slate-700 block mb-1">{page('destination')}</label>
-                  <input
-                    id="taxi-destination"
-                    type="text"
-                    value={taxiDestText}
-                    onChange={(e) => {
-                      setTaxiDestText(e.target.value);
-                      setTaxiDestCoords(null);
-                    }}
-                    placeholder={page('destination')}
-                    className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] font-medium focus:outline-none focus:border-[#087FFF]"
-                  />
-                  {destSearchState&&<p role="status" className="mt-2 text-xs text-slate-600">{addressSearchText(lang,destSearchState)}</p>}
-                  {taxiDestSuggs.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 z-30 bg-white border border-slate-200 rounded-xl shadow-lg mt-1 max-h-48 overflow-y-auto">
-                      {taxiDestSuggs.map((s, idx) => (
-                        <button type="button"
-                          key={idx}
-                          onClick={() => {
-                            setTaxiDestText(s.label);
-                            setTaxiDestCoords({ lat: s.lat, lng: s.lng, mapQuery: s.label });
-                            setTaxiDestSuggs([]);
-                          }}
-                          className="w-full text-left p-2.5 hover:bg-sky-50 cursor-pointer text-[12px] text-slate-700 border-b border-slate-100 last:border-none"
-                        >
-                          <MapPin className="w-3.5 h-3.5 text-red-500 inline mr-1.5" />
-                          {s.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <TransitAddressInput id="taxi-destination" label={page('destination')} value={taxiDestText} selected={!!taxiDestCoords} locale={lang} placeholder={page('destination')}
+                  onChange={value=>{setTaxiDestText(value);setTaxiDestCoords(null)}} onSelect={place=>{setTaxiDestText(place.label);setTaxiDestCoords(place)}} />
 
                 <button
                   type="button"

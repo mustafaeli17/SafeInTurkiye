@@ -39,9 +39,9 @@ it('encodes query text as a value rather than extra parameters',()=>{
  expect(url.searchParams.get('q')).toBe('Ankara &lat=41');
  expect(url.searchParams.has('lat')).toBe(false);
 });
-it('uses the unbiased helper for both taxi address inputs',()=>{
+it('uses the shared address component for both taxi inputs',()=>{
  const app=readFileSync('src/App.tsx','utf8');
- expect(app).toContain('taxiSearchUrl(taxiOriginText)');
- expect(app).toContain('taxiSearchUrl(taxiDestText)');
+ expect(app).toContain('id="taxi-origin" label=');
+ expect(app).toContain('id="taxi-destination" label=');
  expect(app).not.toContain('&limit=5&lat=41.0082&lon=28.9784');
 });

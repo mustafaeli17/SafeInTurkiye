@@ -1,24 +1,48 @@
-import { useEffect, useId, useState } from 'react'
-import { taxiSearchUrl, parseTaxiPlaces } from '../lib/taxiSearch'
-
-export type TransitPlace = {label:string;lat:number;lng:number}
-const messages:Record<string,[string,string,string]>={es:['Buscando direcciones…','No hay sugerencias. Incluye la ciudad o la dirección completa.','Sugerencias no disponibles. Puedes introducir la dirección completa.'],en:['Searching addresses…','No suggestions. Include the city or enter the full address.','Suggestions unavailable. You can still enter the full address.'],tr:['Adresler aranıyor…','Öneri bulunamadı. Şehir ekle veya tam adresi yaz.','Adres önerileri alınamadı. Tam adresi yazarak devam edebilirsin.'],de:['Adressen werden gesucht…','Keine Vorschläge. Stadt oder vollständige Adresse eingeben.','Vorschläge nicht verfügbar. Vollständige Adresse eingeben.'],fr:['Recherche d’adresses…','Aucune suggestion. Ajoutez la ville ou l’adresse complète.','Suggestions indisponibles. Saisissez l’adresse complète.'],ar:['جارٍ البحث عن العناوين…','لا توجد اقتراحات. أضف المدينة أو العنوان الكامل.','الاقتراحات غير متاحة. يمكنك إدخال العنوان الكامل.'],ru:['Поиск адресов…','Нет вариантов. Добавьте город или полный адрес.','Подсказки недоступны. Введите полный адрес.'],zh:['正在搜索地址…','没有建议。请添加城市或输入完整地址。','暂时无法提供建议，仍可输入完整地址。']}
-export default function TransitAddressInput({label,value,onChange,onSelect,selected,locale,placeholder}:{label:string;value:string;onChange:(v:string)=>void;onSelect:(p:TransitPlace)=>void;selected:boolean;locale:string;placeholder:string}) {
-  const id=useId(),[items,setItems]=useState<TransitPlace[]>([]),[state,setState]=useState(''),[open,setOpen]=useState(false),[active,setActive]=useState(-1)
-  const t=messages[locale]??messages.en
-  useEffect(()=>{
-    setItems([]);setState('');setActive(-1)
-    if(selected||value.trim().length<3)return
-    const controller=new AbortController()
-    const timer=setTimeout(async()=>{
-      setState('loading')
-      try{const res=await fetch(taxiSearchUrl(value),{signal:AbortSignal.any([controller.signal,AbortSignal.timeout(8000)])});if(!res.ok)throw Error();const found=parseTaxiPlaces(await res.json(),value);if(!controller.signal.aborted){setItems(found);setState(found.length?'':'empty')}}catch{if(!controller.signal.aborted)setState('error')}
-    },350)
-    return()=>{clearTimeout(timer);controller.abort()}
-  },[value,selected])
-  const choose=(p:TransitPlace)=>{onSelect(p);setOpen(false);setItems([])}
-  return <div className="relative min-w-0 flex-1"><label htmlFor={id} className="text-sm font-semibold">{label}</label><input id={id} required minLength={3} maxLength={250} autoComplete="off" role="combobox" aria-autocomplete="list" aria-expanded={open&&items.length>0} aria-controls={`${id}-list`} aria-activedescendant={open&&active>=0?`${id}-${active}`:undefined} value={value} placeholder={placeholder} onFocus={()=>setOpen(true)} onBlur={()=>setOpen(false)} onChange={e=>{onChange(e.target.value);setOpen(true)}} onKeyDown={e=>{if(e.key==='Escape')setOpen(false);if(e.key==='ArrowDown'){e.preventDefault();setOpen(true);setActive(a=>Math.min(a+1,items.length-1))}if(e.key==='ArrowUp'){e.preventDefault();setActive(a=>Math.max(a-1,0))}if(e.key==='Enter'&&open&&active>=0&&items[active]){e.preventDefault();choose(items[active])}}} className="mt-1 w-full min-w-0 rounded-xl border border-sky-100 bg-slate-50 p-3 text-sm text-slate-900"/>
-    {open&&items.length>0&&<div className="absolute z-30 w-full rounded-xl border border-sky-100 bg-white p-1 shadow-lg"><ul id={`${id}-list`} role="listbox" aria-label={label}>{items.map((item,i)=><li key={`${item.lat},${item.lng},${item.label}`} id={`${id}-${i}`} role="option" aria-selected={active===i} onMouseDown={e=>e.preventDefault()} onClick={()=>choose(item)} className={`min-h-11 cursor-pointer break-words rounded-lg p-3 text-sm ${active===i?'bg-sky-100':'hover:bg-sky-50'}`}>{item.label}</li>)}</ul><a className="block px-3 py-1 text-xs text-slate-500" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap · Photon</a></div>}
-    {open&&state&&<p role="status" className="mt-1 text-xs text-slate-500">{t[state==='loading'?0:state==='empty'?1:2]}</p>}
-  </div>
+import { useEffect, useId, useRef, useState } from 'react'
+import {addressSearchText,type AddressSearchState} from '../lib/addressSearchCopy'
+export type TransitPlace={label:string;lat:number;lng:number;city:string;mapQuery:string;provider:'google';attributions?:{provider:string;uri?:string}[]}
+type Suggestion={label:string;placeId:string}
+export default function TransitAddressInput({label,value,onChange,onSelect,selected,locale,placeholder,id:providedId}:{label:string;value:string;onChange:(v:string)=>void;onSelect:(p:TransitPlace)=>void;selected:boolean;locale:string;placeholder:string;id?:string}) {
+ const generatedId=useId(),id=providedId??generatedId
+ const [items,setItems]=useState<Suggestion[]>([]),[state,setState]=useState<AddressSearchState>(''),[open,setOpen]=useState(false),[active,setActive]=useState(-1)
+ const [attributions,setAttributions]=useState<NonNullable<TransitPlace['attributions']>>([])
+ const session=useRef({token:'',started:0}),generation=useRef(0),selection=useRef<AbortController|null>(null)
+ const language=['en','tr','de','fr','es','ar','ru','zh'].includes(locale)?locale:'en'
+ useEffect(()=>{
+  const version=++generation.current
+  selection.current?.abort();setItems([]);setState('');setActive(-1)
+  if(selected)return
+  setAttributions([])
+  if(value.trim().length<3){session.current={token:'',started:0};return}
+  const controller=new AbortController()
+  const timer=setTimeout(async()=>{
+   if(!session.current.token||Date.now()-session.current.started>180000)session.current={token:crypto.randomUUID(),started:Date.now()}
+   setState('loading')
+   try{
+    const response=await fetch('/api/address',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'suggest',query:value,language,sessionToken:session.current.token}),signal:AbortSignal.any([controller.signal,AbortSignal.timeout(10000)])})
+    if(!response.ok)throw Error()
+    const data=await response.json();if(!Array.isArray(data.suggestions))throw Error()
+    const found=data.suggestions.filter((p:Suggestion)=>typeof p.placeId==='string'&&typeof p.label==='string')
+    if(!controller.signal.aborted&&version===generation.current){setItems(found);setState(found.length?'':'empty')}
+   }catch{if(!controller.signal.aborted&&version===generation.current)setState('error')}
+  },350)
+  return()=>{clearTimeout(timer);controller.abort();selection.current?.abort();generation.current++}
+ },[value,selected,language])
+ const choose=async(item:Suggestion)=>{
+  selection.current?.abort();const controller=new AbortController();selection.current=controller
+  const version=++generation.current,sessionToken=session.current.token
+  session.current={token:'',started:0};setItems([]);setOpen(false);setState('loading')
+  try{
+   const response=await fetch('/api/address',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'resolve',placeId:item.placeId,language,sessionToken}),signal:AbortSignal.any([controller.signal,AbortSignal.timeout(10000)])})
+   if(!response.ok)throw Error()
+   const {place}=await response.json()
+   if(!place||!Number.isFinite(place.lat)||!Number.isFinite(place.lng)||place.provider!=='google'||place.mapQuery!==`place_id:${item.placeId}`)throw Error()
+   if(!controller.signal.aborted&&version===generation.current){setState('');setAttributions(place.attributions??[]);onSelect({...place,label:item.label})}
+  }catch{if(!controller.signal.aborted&&version===generation.current)setState('error')}
+ }
+ return <div className="relative min-w-0 flex-1"><label htmlFor={id} className="text-sm font-semibold">{label}</label><input id={id} required minLength={3} maxLength={250} autoComplete="off" role="combobox" aria-autocomplete="list" aria-expanded={open&&items.length>0} aria-controls={`${id}-list`} aria-activedescendant={open&&active>=0?`${id}-${active}`:undefined} value={value} placeholder={placeholder} onFocus={()=>setOpen(true)} onBlur={()=>setOpen(false)} onChange={e=>{onChange(e.target.value);setOpen(true)}} onKeyDown={e=>{if(e.key==='Escape')setOpen(false);if(e.key==='ArrowDown'){e.preventDefault();setOpen(true);setActive(a=>Math.min(a+1,items.length-1))}if(e.key==='ArrowUp'){e.preventDefault();setActive(a=>Math.max(a-1,0))}if(e.key==='Enter'&&open&&active>=0&&items[active]){e.preventDefault();void choose(items[active])}}} className="mt-1 w-full min-w-0 rounded-xl border border-sky-100 bg-slate-50 p-3 text-sm text-slate-900"/>
+ {open&&items.length>0&&<div className="absolute z-30 w-full rounded-xl border border-sky-100 bg-white p-1 shadow-lg"><ul id={`${id}-list`} role="listbox" aria-label={label}>{items.map((item,i)=><li key={item.placeId} id={`${id}-${i}`} role="option" aria-selected={active===i} onMouseDown={e=>e.preventDefault()} onClick={()=>void choose(item)} className={`min-h-11 cursor-pointer break-words rounded-lg p-3 text-sm ${active===i?'bg-sky-100':'hover:bg-sky-50'}`}>{item.label}</li>)}</ul><span translate="no" className="block whitespace-nowrap px-3 py-1 text-xs font-normal text-[#5e5e5e]">Google Maps</span></div>}
+ {state&&<p role="status" className="mt-1 text-xs text-slate-500">{addressSearchText(locale,state)}</p>}
+ {selected&&<div className="mt-1 text-xs font-normal text-[#5e5e5e]"><span translate="no">Google Maps</span>{attributions.map((a,i)=>a.uri?<a key={i} href={a.uri} target="_blank" rel="noreferrer"> · {a.provider}</a>:<span key={i}> · {a.provider}</span>)}</div>}
+ </div>
 }
