@@ -3,7 +3,8 @@ import type * as Leaflet from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import {taxiMapKey} from '../lib/mapEnvironment';
 
-type Point={lat:number;lng:number};
+type Point={lat:number;lng:number;mapQuery?:string};
+const mapLocation=(point:Point)=>point.mapQuery?.trim()||`${point.lat},${point.lng}`;
 export default function TaxiRouteMap({originCoords,destCoords,geometry,color='#087FFF',title='Map'}:{originCoords:Point|null;destCoords:Point|null;geometry:Point[]|null;color?:string;title?:string}) {
  const host=useRef<HTMLDivElement>(null);
  const [failed,setFailed]=useState(false);
@@ -32,13 +33,13 @@ export default function TaxiRouteMap({originCoords,destCoords,geometry,color='#0
  const point=originCoords||destCoords;
  const external=new URL('https://www.google.com/maps/dir/');
  external.searchParams.set('api','1');
- if(originCoords)external.searchParams.set('origin',`${originCoords.lat},${originCoords.lng}`);
- if(destCoords)external.searchParams.set('destination',`${destCoords.lat},${destCoords.lng}`);
+ if(originCoords)external.searchParams.set('origin',mapLocation(originCoords));
+ if(destCoords)external.searchParams.set('destination',mapLocation(destCoords));
  external.searchParams.set('travelmode','driving');
  const params=new URLSearchParams({key:key??'',language:document.documentElement.lang||'en',region:'TR'});
  const mode=originCoords&&destCoords?'directions':point?'place':'view';
- if(originCoords&&destCoords){params.set('origin',`${originCoords.lat},${originCoords.lng}`);params.set('destination',`${destCoords.lat},${destCoords.lng}`);params.set('mode','driving');}
- else if(point)params.set('q',`${point.lat},${point.lng}`);
+ if(originCoords&&destCoords){params.set('origin',mapLocation(originCoords));params.set('destination',mapLocation(destCoords));params.set('mode','driving');}
+ else if(point)params.set('q',mapLocation(point));
  else{params.set('center','39,35');params.set('zoom','5');}
  return <div className="relative w-full min-h-[360px] overflow-hidden rounded-2xl border border-sky-100 bg-slate-100 shadow-sm">
   {key?<iframe title={title} src={`https://www.google.com/maps/embed/v1/${mode}?${params}`} className="w-full h-full min-h-[360px] sm:min-h-[480px]" loading="lazy" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen/>:<div ref={host} role="region" aria-label={title} className="h-[360px] w-full sm:h-[480px]"/>}

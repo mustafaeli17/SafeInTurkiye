@@ -65,7 +65,7 @@ import { taxiErrorText,type TaxiErrorKey } from './lib/taxiErrors';
 import {taxiCalculationMapNotice,taxiRouteNotice} from './lib/taxiRouteNotice';
 import {taxiMapKey} from './lib/mapEnvironment';
 import SearchContext from './components/SearchContext';
-import { taxiSearchUrl } from './lib/taxiSearch';
+import { taxiSearchUrl, parseTaxiPlaces } from './lib/taxiSearch';
 import { toursLabel } from './lib/viatorCopy';
 import { directoryText } from './lib/visitorDirectory';
 import { getCurrentTaxiTariffs } from './repositories/tariffRepository';
@@ -378,8 +378,8 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
   const [detectedTaxiCity, setDetectedTaxiCity] = useState<string>('');
   const [taxiOriginText, setTaxiOriginText] = useState('');
   const [taxiDestText, setTaxiDestText] = useState('');
-  const [taxiOriginCoords, setTaxiOriginCoords] = useState<Coordinates | null>(null);
-  const [taxiDestCoords, setTaxiDestCoords] = useState<Coordinates | null>(null);
+  const [taxiOriginCoords, setTaxiOriginCoords] = useState<(Coordinates & {mapQuery?:string}) | null>(null);
+  const [taxiDestCoords, setTaxiDestCoords] = useState<(Coordinates & {mapQuery?:string}) | null>(null);
   const [taxiOriginSuggs, setTaxiOriginSuggs] = useState<GeocodedPlace[]>([]);
   const [taxiDestSuggs, setTaxiDestSuggs] = useState<GeocodedPlace[]>([]);
   const taxiClass = 'Yellow';
@@ -434,12 +434,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
         if (!res.ok) return;
         const data = await res.json();
         if (!controller.signal.aborted && data.features) {
-          setTaxiOriginSuggs(data.features.map((f: any) => ({
-            label: [f.properties.name, f.properties.city, f.properties.country].filter(Boolean).join(', '),
-            lat: f.geometry.coordinates[1],
-            lng: f.geometry.coordinates[0],
-            city: taxiCityFromAddress(f.properties.countrycode, f.properties.state)
-          })));
+          setTaxiOriginSuggs(parseTaxiPlaces(data));
         }
       } catch {}
     }, 300);
@@ -459,12 +454,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
         if (!res.ok) return;
         const data = await res.json();
         if (!controller.signal.aborted && data.features) {
-          setTaxiDestSuggs(data.features.map((f: any) => ({
-            label: [f.properties.name, f.properties.city, f.properties.country].filter(Boolean).join(', '),
-            lat: f.geometry.coordinates[1],
-            lng: f.geometry.coordinates[0],
-            city: f.properties.city || f.properties.state
-          })));
+          setTaxiDestSuggs(parseTaxiPlaces(data));
         }
       } catch {}
     }, 300);
@@ -838,7 +828,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
                             taxiOriginLookupId.current++;
                             setIsTaxiLocating(false);
                             setTaxiOriginText(s.label);
-                            setTaxiOriginCoords({ lat: s.lat, lng: s.lng });
+                            setTaxiOriginCoords({ lat: s.lat, lng: s.lng, mapQuery: s.label });
                             setTaxiOriginSuggs([]);
                             setDetectedTaxiCity(s.city || '');
                           }}
@@ -872,7 +862,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
                           key={idx}
                           onClick={() => {
                             setTaxiDestText(s.label);
-                            setTaxiDestCoords({ lat: s.lat, lng: s.lng });
+                            setTaxiDestCoords({ lat: s.lat, lng: s.lng, mapQuery: s.label });
                             setTaxiDestSuggs([]);
                           }}
                           className="w-full text-left p-2.5 hover:bg-sky-50 cursor-pointer text-[12px] text-slate-700 border-b border-slate-100 last:border-none"
