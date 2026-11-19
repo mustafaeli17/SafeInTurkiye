@@ -25,9 +25,10 @@ export default function NearbyResultsMap({places,onOpen,title,errorText,lang,onE
     draw(){const point=this.getProjection().fromLatLngToDivPixel(new maps.LatLng(this.place.coordinates.lat,this.place.coordinates.lng));this.element.style.position='absolute';this.element.style.left=point.x+'px';this.element.style.top=point.y+'px'}
     onRemove(){this.element.remove()}
    }
-   places.forEach(place=>{bounds.extend(place.coordinates);overlays.push(new PlacePin(place))});setPins(overlays.map(pin=>({element:pin.element,place:pin.place})));map.fitBounds(bounds,45);maps.event.addListenerOnce(map,'idle',()=>{if(map.getZoom()>16)map.setZoom(16)})
+   places.forEach(place=>{bounds.extend(place.coordinates);overlays.push(new PlacePin(place))});setPins(overlays.map(pin=>({element:pin.element,place:pin.place})));map.fitBounds(bounds,{top:175,right:90,bottom:65,left:90});maps.event.addListenerOnce(map,'idle',()=>{if(map.getZoom()>16)map.setZoom(16)})
   }).catch(()=>{if(!cancelled)setFailed(true)})
   return()=>{cancelled=true;window.removeEventListener('transit-map-auth-error',auth);overlays.forEach(item=>item.setMap(null))}
  },[places,title])
  return failed?<p role="status" className="nearby-map-error">{errorText}</p>:<div ref={host} role="region" aria-label={title} className="nearby-results-map">{pins.map(({element,place})=>createPortal(<><button className="nearby-map-place-name" onClick={()=>callback.current(place.id)}>{place.name??title}</button>{isEditorialPlace(place)?<EditorialPlacePhoto place={place} expanded={false} lang={lang} onOpen={()=>callback.current(place.id)}/>:<GooglePlacePhoto place={place} onExpired={onExpired} onOpen={()=>callback.current(place.id)}/>}</>,element,place.id))}</div>
 }
+
