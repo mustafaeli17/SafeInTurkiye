@@ -14,7 +14,7 @@ describe('currency converter accessibility and languages', () => {
   });
   it.each(['en', 'tr', 'es', 'de', 'fr', 'ar', 'ru', 'zh'])('labels every input in %s', lang => {
     const html = renderToStaticMarkup(<CurrencyRates lang={lang} />);
-    expect(html.match(/aria-label=/g)).toHaveLength(3);
+    expect(html.match(/<(?:input|select)\b[^>]*aria-label=/g)).toHaveLength(3);
     expect(html).toContain('step="any"');
     if (lang !== 'en') expect(html).not.toContain('aria-label="Amount"');
     for (const currency of ['AED', 'SAR', 'CNY']) expect(html).toContain(`<option>${currency}</option>`);

@@ -3,7 +3,8 @@ import {renderToStaticMarkup} from 'react-dom/server';
 import CurrencyRates from '../components/CurrencyRates';
 it('offers navigable converter and reference sections without fabricated prices or changes',()=>{
  const html=renderToStaticMarkup(<CurrencyRates lang="en"/>);
- expect(html).toContain('href="#exchange-converter"');
+ expect(html).toContain('role="tab" aria-selected="true" aria-controls="exchange-converter"');
+ expect(html).toContain('aria-labelledby="exchange-rates-tab" hidden=""');
  expect(html).toContain('id="exchange-rates"');
  expect(html).toContain('Swap currencies');
  expect(html).not.toContain('+0.28%');
@@ -14,4 +15,11 @@ it.each(['tr','es','de','fr','ar','ru','zh'])('localizes the exchange redesign i
  expect(html).toContain('id="exchange-converter"');
  expect(html).not.toContain('Good to know');
  expect(html).not.toContain('You have');
+});
+
+it('uses the selected city artwork and local currency flags',()=>{
+ const html=renderToStaticMarkup(<CurrencyRates city="İzmir" lang="tr"/>);
+ expect(html).toContain('/photos/cities-2026/izmir-1536.webp');
+ expect(html).toContain('data-currency="EUR"');
+ expect(html).toContain('data-currency="TRY"');
 });

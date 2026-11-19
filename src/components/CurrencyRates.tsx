@@ -1,6 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { exchangeCopy } from '../lib/exchangeCopy';
 import './ExchangePage.css';
+import CityArtwork from './CityArtwork';
+import CurrencyFlag from './CurrencyFlag';
 import {currencyInputCopy,invalidCurrencyAmount} from '../lib/currencyInput';
 import { ArrowLeftRight, ChartNoAxesColumnIncreasing, Coins, Info, Loader2, MapPin, RefreshCw } from 'lucide-react';
 import { convertReferenceAmount, getReferenceRates, referencePublicationAge, TravelDataError, supportedCurrencies } from '../services/travelDataService';
@@ -28,7 +30,7 @@ const converterLabels: Record<string, [string, string, string, string]> = {
   zh: ['金额', '原币种', '目标币种', '这些汇率已超过7天。兑换前请确认当前报价。'],
 };
 
-export default function CurrencyRates({ lang = 'en', nearby, guide }: { lang?: string; nearby?: ReactNode; guide?: ReactNode }) {
+export default function CurrencyRates({ lang = 'en', nearby, guide, city = 'İstanbul' }: { city?: string; lang?: string; nearby?: ReactNode; guide?: ReactNode }) {
   const labels: Record<string, { title: string; ref: string; converter: string; unavailable: string; loading: string; tryAgain: string; disclaimer: string }> = {
     es:{title:'Tipos de cambio de referencia diarios',ref:'Referencia',converter:'Conversor de referencia',unavailable:'Los tipos de cambio no están disponibles ahora.',loading:'Cargando tipos de cambio…',tryAgain:'Intentar de nuevo',disclaimer:'No son cotizaciones de compra o venta de una casa de cambio.'},
     en: { title: 'Daily reference rates', ref: 'Reference', converter: 'Reference converter', unavailable: 'Reference rates are unavailable right now.', loading: 'Loading daily reference rates…', tryAgain: 'Try again', disclaimer: 'This is not a bureau buy/sell offer.' },
@@ -63,35 +65,44 @@ export default function CurrencyRates({ lang = 'en', nearby, guide }: { lang?: s
 
   const converted = rates && amount.trim() ? convertReferenceAmount(Number(amount), from, to, rates) : null;
   const copy = exchangeCopy[lang] ?? exchangeCopy.en;
-  const symbols: Record<CurrencyCode,string> = {EUR:'€',USD:'$',GBP:'£',CHF:'Fr',TRY:'₺',AED:'د.إ',SAR:'﷼',CNY:'¥'};
+
   const names = new Intl.DisplayNames([lang], {type:'currency'});
   const unit = rates ? convertReferenceAmount(1, from, to, rates) : null;
   const status = <div className="exchange-status" role="status">{!error && <Loader2 className="animate-spin" aria-hidden="true"/>}{error ? t.unavailable : t.loading}{error && <button type="button" onClick={()=>setRetry(v=>v+1)}><RefreshCw size={16} aria-hidden="true"/>{t.tryAgain}</button>}</div>;
   return <div className="exchange-experience" dir={lang==='ar'?'rtl':'ltr'}>
     <header className="exchange-hero">
-      <img className="exchange-hero-image" src="/photos/cities-2026/istanbul-1536.webp" alt="" width="1536" height="1024"/>
+      <CityArtwork city={city} lang={lang} hero className="exchange-hero-image"/>
       <div className="exchange-hero-wash"/>
       <div className="exchange-hero-copy"><span className="exchange-eyebrow"><Coins size={20} aria-hidden="true"/>{copy[0]}</span><h1>{copy[1]} <span>{copy[2]}</span></h1><p>{copy[3]}</p></div>
     </header>
-    <nav className="exchange-nav" onClick={event=>{const link=(event.target as HTMLElement).closest('a');if(!link)return;event.preventDefault();const id=link.hash.slice(1);setSection(id);const target=document.getElementById(id);target?.scrollIntoView({block:'start'});target?.focus({preventScroll:true})}}><a href="#exchange-converter" className={section==='exchange-converter'?'exchange-nav-primary':undefined}><ArrowLeftRight aria-hidden="true"/>{copy[4]}</a><a href="#exchange-rates" className={section==='exchange-rates'?'exchange-nav-primary':undefined}><ChartNoAxesColumnIncreasing aria-hidden="true"/>{copy[5]}</a>{nearby && <a href="#exchange-bureaux" className={section==='exchange-bureaux'?'exchange-nav-primary':undefined}><MapPin aria-hidden="true"/>{copy[6]}</a>}</nav>
-    <section id="exchange-converter" tabIndex={-1} className="exchange-card exchange-converter">
+    <div className="exchange-nav" role="tablist" aria-label={copy[0]} onKeyDown={event=>{
+      const tabs=Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+      const index=tabs.indexOf(event.target as HTMLButtonElement);
+      const step=event.key==='ArrowRight'?(lang==='ar'?-1:1):event.key==='ArrowLeft'?(lang==='ar'?1:-1):0;
+      const next=event.key==='Home'?0:event.key==='End'?tabs.length-1:step?(index+step+tabs.length)%tabs.length:-1;
+      if(next>=0){event.preventDefault();tabs[next].click();tabs[next].focus()}
+    }}>{[
+      {id:'exchange-converter',label:copy[4],icon:<ArrowLeftRight aria-hidden="true"/>},
+      {id:'exchange-rates',label:copy[5],icon:<ChartNoAxesColumnIncreasing aria-hidden="true"/>},
+      ...(nearby?[{id:'exchange-bureaux',label:copy[6],icon:<MapPin aria-hidden="true"/>}]:[]),
+    ].map(tab=><button key={tab.id} id={`${tab.id}-tab`} type="button" role="tab" aria-selected={section===tab.id} aria-controls={tab.id} tabIndex={section===tab.id?0:-1} className={section===tab.id?'exchange-nav-primary':undefined} onClick={()=>setSection(tab.id)}>{tab.icon}{tab.label}</button>)}</div>
+    <section id="exchange-converter" role="tabpanel" aria-labelledby="exchange-converter-tab" hidden={section!=='exchange-converter'} tabIndex={0} className="exchange-card exchange-converter">
       <div className="exchange-converter-grid">
-        <div><label className="exchange-field-label" htmlFor="exchange-amount">{copy[7]}</label><div className="exchange-value-box"><input id="exchange-amount" aria-label={fields[0]} aria-invalid={invalidCurrencyAmount(amount)} aria-describedby={invalidCurrencyAmount(amount)?'currency-input-error':undefined} type="number" min="0" step="any" value={amount} onChange={e=>setAmount(e.target.value)}/><span className="exchange-currency-symbol" aria-hidden="true">{symbols[from]}</span><select aria-label={fields[1]} value={from} onChange={e=>setFrom(e.target.value as CurrencyCode)}>{currencies.map(c=><option key={c}>{c}</option>)}</select></div></div>
+        <div><label className="exchange-field-label" htmlFor="exchange-amount">{copy[7]}</label><div className="exchange-value-box"><input id="exchange-amount" aria-label={fields[0]} aria-invalid={invalidCurrencyAmount(amount)} aria-describedby={invalidCurrencyAmount(amount)?'currency-input-error':undefined} type="number" min="0" step="any" value={amount} onChange={e=>setAmount(e.target.value)}/><CurrencyFlag code={from}/><select aria-label={fields[1]} value={from} onChange={e=>setFrom(e.target.value as CurrencyCode)}>{currencies.map(c=><option key={c}>{c}</option>)}</select></div></div>
         <button className="exchange-swap" type="button" title={copy[9]} onClick={()=>{setFrom(to);setTo(from)}}><ArrowLeftRight aria-hidden="true"/><span className="sr-only">{copy[9]}</span></button>
-        <div><span className="exchange-field-label">{copy[8]}</span><div className="exchange-value-box exchange-output"><output aria-live="polite" aria-atomic="true"><span className="sr-only">{copy[8]} </span>{converted===null?'—':converted.toLocaleString(lang,{minimumFractionDigits:2,maximumFractionDigits:2})}<span className="sr-only"> {to}</span></output><span className="exchange-currency-symbol" aria-hidden="true">{symbols[to]}</span><select aria-label={fields[2]} value={to} onChange={e=>setTo(e.target.value as CurrencyCode)}>{currencies.map(c=><option key={c}>{c}</option>)}</select></div></div>
+        <div><span className="exchange-field-label">{copy[8]}</span><div className="exchange-value-box exchange-output"><output aria-live="polite" aria-atomic="true"><span className="sr-only">{copy[8]} </span>{converted===null?'—':converted.toLocaleString(lang,{minimumFractionDigits:2,maximumFractionDigits:2})}<span className="sr-only"> {to}</span></output><CurrencyFlag code={to}/><select aria-label={fields[2]} value={to} onChange={e=>setTo(e.target.value as CurrencyCode)}>{currencies.map(c=><option key={c}>{c}</option>)}</select></div></div>
       </div>
       {invalidCurrencyAmount(amount)&&<p id="currency-input-error" role="status" className="text-sm text-red-700">{currencyInputCopy[lang]??currencyInputCopy.en}</p>}
       <div className="exchange-converter-meta">{unit!==null&&<strong dir="ltr">1 {from} ≈ {unit.toLocaleString(lang,{maximumFractionDigits:4})} {to}</strong>}<p><Info size={18} aria-hidden="true"/>{t.disclaimer}</p></div>
       {!rates&&status}
       {rates&&referencePublicationAge(rates.date)>7&&<p role="status" className="text-sm text-amber-800">{fields[3]}</p>}
     </section>
-    <div className="exchange-lower-grid">
-      <section id="exchange-rates" tabIndex={-1} className="exchange-card exchange-rates"><div className="exchange-section-heading"><ChartNoAxesColumnIncreasing aria-hidden="true"/><div><h2>{copy[5]}</h2><p>{copy[11]}</p></div></div>
-        {rates?<ul>{currencies.filter(c=>c!=='TRY').map(c=><li key={c}><span className="exchange-currency-symbol" aria-hidden="true">{symbols[c]}</span><strong>{c}</strong><span className="exchange-currency-name">{names.of(c)}</span><span className="exchange-rate-value" dir="ltr"><strong>{(rates.perEuro.TRY/rates.perEuro[c]).toLocaleString(lang,{minimumFractionDigits:2,maximumFractionDigits:4})}</strong> TRY</span></li>)}</ul>:status}
+
+      <section id="exchange-rates" role="tabpanel" aria-labelledby="exchange-rates-tab" hidden={section!=='exchange-rates'} tabIndex={0} className="exchange-card exchange-rates"><div className="exchange-section-heading"><ChartNoAxesColumnIncreasing aria-hidden="true"/><div><h2>{copy[5]}</h2><p>{copy[11]}</p></div></div>
+        {rates?<ul>{currencies.filter(c=>c!=='TRY').map(c=><li key={c}><CurrencyFlag code={c}/><strong>{c}</strong><span className="exchange-currency-name">{names.of(c)}</span><span className="exchange-rate-value" dir="ltr"><strong>{(rates.perEuro.TRY/rates.perEuro[c]).toLocaleString(lang,{minimumFractionDigits:2,maximumFractionDigits:4})}</strong> TRY</span></li>)}</ul>:status}
         {rates&&<p className="exchange-source"><time dateTime={rates.date}>{rates.date}</time> · <a href={rates.sourceUrl} target="_blank" rel="noreferrer">{rates.source}</a></p>}
       </section>
-      {nearby&&<section id="exchange-bureaux" tabIndex={-1} className="exchange-card exchange-bureaux">{nearby}</section>}
-    </div>
+      {nearby&&<section id="exchange-bureaux" role="tabpanel" aria-labelledby="exchange-bureaux-tab" hidden={section!=='exchange-bureaux'} tabIndex={0} className="exchange-card exchange-bureaux">{nearby}</section>}
     <aside className="exchange-card exchange-good"><Info aria-hidden="true"/><div><h2>{copy[10]}</h2><p>{t.disclaimer}</p>{guide}</div><Coins className="exchange-good-art" aria-hidden="true"/></aside>
   </div>;
 }
