@@ -1,7 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { exchangeCopy } from '../lib/exchangeCopy';
 import './ExchangePage.css';
-import CityArtwork from './CityArtwork';
+import {exchangeArtwork} from '../lib/exchangeArtwork';
+import {cityArtworkNotice} from '../lib/cityArtworkCopy';
 import CurrencyFlag from './CurrencyFlag';
 import {currencyInputCopy,invalidCurrencyAmount} from '../lib/currencyInput';
 import { ArrowLeftRight, ChartNoAxesColumnIncreasing, Coins, Info, Loader2, MapPin, RefreshCw } from 'lucide-react';
@@ -65,13 +66,14 @@ export default function CurrencyRates({ lang = 'en', nearby, guide, city = 'İst
 
   const converted = rates && amount.trim() ? convertReferenceAmount(Number(amount), from, to, rates) : null;
   const copy = exchangeCopy[lang] ?? exchangeCopy.en;
+  const artwork = exchangeArtwork(city);
 
   const names = new Intl.DisplayNames([lang], {type:'currency'});
   const unit = rates ? convertReferenceAmount(1, from, to, rates) : null;
   const status = <div className="exchange-status" role="status">{!error && <Loader2 className="animate-spin" aria-hidden="true"/>}{error ? t.unavailable : t.loading}{error && <button type="button" onClick={()=>setRetry(v=>v+1)}><RefreshCw size={16} aria-hidden="true"/>{t.tryAgain}</button>}</div>;
   return <div className="exchange-experience" dir={lang==='ar'?'rtl':'ltr'}>
     <header className="exchange-hero">
-      <CityArtwork city={city} lang={lang} hero className="exchange-hero-image"/>
+      {artwork&&<img className="exchange-hero-image" src={artwork.src} width={artwork.width} height={artwork.height} alt={`${artwork.name} — ${cityArtworkNotice[lang]??cityArtworkNotice.en}`} title={cityArtworkNotice[lang]??cityArtworkNotice.en} decoding="async"/>}
       <div className="exchange-hero-wash"/>
       <div className="exchange-hero-copy"><span className="exchange-eyebrow"><Coins size={20} aria-hidden="true"/>{copy[0]}</span><h1>{copy[1]} <span>{copy[2]}</span></h1><p>{copy[3]}</p></div>
     </header>

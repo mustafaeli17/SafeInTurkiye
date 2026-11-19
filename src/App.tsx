@@ -948,7 +948,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
         ==================================================================== */}
         {activeTab === 'currency' && (
           <main className="exchange-page">
-            <CurrencyRates lang={lang} city={selectedCityName} guide={<SearchGuide path={browserPath} lang={lang}/>} nearby={<NearbyPlaces key={`exchange:${searchQuery}`} kind="exchange" lang={lang} center={{ lat: currentCityInfo.lat, lng: currentCityInfo.lng }} cityName={currentCityInfo.name} showAreaMap />} />
+            <CurrencyRates lang={lang} city={discoveryCity(browserQuery,selectedCityName)} guide={<SearchGuide path={browserPath} lang={lang}/>} nearby={<NearbyPlaces key={`exchange:${searchQuery}`} kind="exchange" lang={lang} center={{ lat: currentCityInfo.lat, lng: currentCityInfo.lng }} cityName={currentCityInfo.name} showAreaMap />} />
           </main>
         )}
 
