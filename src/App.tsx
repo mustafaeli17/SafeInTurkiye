@@ -66,6 +66,7 @@ import {taxiCalculationMapNotice,taxiRouteNotice} from './lib/taxiRouteNotice';
 import {taxiMapKey} from './lib/mapEnvironment';
 import SearchContext from './components/SearchContext';
 import { taxiSearchUrl, parseTaxiPlaces } from './lib/taxiSearch';
+import {addressSearchText,type AddressSearchState} from './lib/addressSearchCopy';
 import { toursLabel } from './lib/viatorCopy';
 import { directoryText } from './lib/visitorDirectory';
 import { getCurrentTaxiTariffs } from './repositories/tariffRepository';
@@ -420,43 +421,51 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
   }, [taxiOriginCoords, taxiDestCoords, taxiClass, detectedTaxiCity]);
 
   const taxiOriginLookupId = useRef(0);
+  const [originSearchState,setOriginSearchState]=useState<AddressSearchState>('');
+  const [destSearchState,setDestSearchState]=useState<AddressSearchState>('');
 
   useEffect(() => {
-    setTaxiOriginSuggs([]);
-    if (!taxiOriginText || taxiOriginCoords) {
-      setTaxiOriginSuggs([]);
+    setTaxiOriginSuggs([]);setOriginSearchState('');
+    if (taxiOriginText.trim().length<3 || taxiOriginCoords) {
+      setTaxiOriginSuggs([]);setOriginSearchState('');
       return;
     }
     const controller = new AbortController();
     const timer = setTimeout(async () => {
+      setOriginSearchState('loading');
       try {
         const res = await fetch(taxiSearchUrl(taxiOriginText),{signal:AbortSignal.any([controller.signal,AbortSignal.timeout(8000)])});
-        if (!res.ok) return;
+        if (!res.ok) throw Error('provider');
         const data = await res.json();
-        if (!controller.signal.aborted && data.features) {
-          setTaxiOriginSuggs(parseTaxiPlaces(data));
+        if (!Array.isArray(data?.features)) throw Error('response');
+        if (!controller.signal.aborted) {
+          const found=parseTaxiPlaces(data,taxiOriginText);
+          setTaxiOriginSuggs(found);setOriginSearchState(found.length?'':'empty');
         }
-      } catch {}
+      } catch {if(!controller.signal.aborted)setOriginSearchState('error');}
     }, 300);
     return () => {clearTimeout(timer);controller.abort();};
   }, [taxiOriginText, taxiOriginCoords]);
 
   useEffect(() => {
-    setTaxiDestSuggs([]);
-    if (!taxiDestText || taxiDestCoords) {
-      setTaxiDestSuggs([]);
+    setTaxiDestSuggs([]);setDestSearchState('');
+    if (taxiDestText.trim().length<3 || taxiDestCoords) {
+      setTaxiDestSuggs([]);setDestSearchState('');
       return;
     }
     const controller = new AbortController();
     const timer = setTimeout(async () => {
+      setDestSearchState('loading');
       try {
         const res = await fetch(taxiSearchUrl(taxiDestText),{signal:AbortSignal.any([controller.signal,AbortSignal.timeout(8000)])});
-        if (!res.ok) return;
+        if (!res.ok) throw Error('provider');
         const data = await res.json();
-        if (!controller.signal.aborted && data.features) {
-          setTaxiDestSuggs(parseTaxiPlaces(data));
+        if (!Array.isArray(data?.features)) throw Error('response');
+        if (!controller.signal.aborted) {
+          const found=parseTaxiPlaces(data,taxiDestText);
+          setTaxiDestSuggs(found);setDestSearchState(found.length?'':'empty');
         }
-      } catch {}
+      } catch {if(!controller.signal.aborted)setDestSearchState('error');}
     }, 300);
     return () => {clearTimeout(timer);controller.abort();};
   }, [taxiDestText, taxiDestCoords]);
@@ -819,6 +828,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
                     placeholder={page('origin')}
                     className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] font-medium focus:outline-none focus:border-[#087FFF]"
                   />
+                  {originSearchState&&<p role="status" className="mt-2 text-xs text-slate-600">{addressSearchText(lang,originSearchState)}</p>}
                   {taxiOriginSuggs.length > 0 && (
                     <div className="absolute top-full left-0 right-0 z-30 bg-white border border-slate-200 rounded-xl shadow-lg mt-1 max-h-48 overflow-y-auto">
                       {taxiOriginSuggs.map((s, idx) => (
@@ -855,6 +865,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
                     placeholder={page('destination')}
                     className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] font-medium focus:outline-none focus:border-[#087FFF]"
                   />
+                  {destSearchState&&<p role="status" className="mt-2 text-xs text-slate-600">{addressSearchText(lang,destSearchState)}</p>}
                   {taxiDestSuggs.length > 0 && (
                     <div className="absolute top-full left-0 right-0 z-30 bg-white border border-slate-200 rounded-xl shadow-lg mt-1 max-h-48 overflow-y-auto">
                       {taxiDestSuggs.map((s, idx) => (

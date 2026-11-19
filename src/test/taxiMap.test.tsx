@@ -3,6 +3,15 @@ import {renderToStaticMarkup} from 'react-dom/server';
 import {afterEach,expect,it,vi} from 'vitest';
 import TaxiRouteMap from '../components/TaxiRouteMap';
 afterEach(()=>{vi.unstubAllGlobals();vi.unstubAllEnvs();});
+it.each(['Pera Palace Hotel, Beyoğlu, İstanbul, Türkiye','Bursa Şehir Hastanesi, Nilüfer, Bursa, Türkiye','Anıtkabir, Ankara, Türkiye','Atatürk Caddesi, Kuşadası, Aydın, Türkiye'])('preserves the selected destination %s before and after calculation',mapQuery=>{
+ vi.stubGlobal('window',{location:{hostname:'www.safeinturkiye.com'}});
+ vi.stubGlobal('document',{documentElement:{lang:'tr'}});
+ vi.stubEnv('VITE_GOOGLE_MAPS_BROWSER_KEY','test-public-browser-key');
+ for(const geometry of [null,[{lat:40,lng:29},{lat:41,lng:30}]]){
+  const html=renderToStaticMarkup(<TaxiRouteMap originCoords={{lat:40,lng:29}} destCoords={{lat:41,lng:30,mapQuery}} geometry={geometry}/>);
+  expect(html).toContain(new URLSearchParams({destination:mapQuery}).toString());
+ }
+});
 it('passes the selected named destination to Google instead of reverse-geocoding an airport centroid',()=>{
  vi.stubGlobal('window',{location:{hostname:'www.safeinturkiye.com'}});
  vi.stubGlobal('document',{documentElement:{lang:'tr'}});
