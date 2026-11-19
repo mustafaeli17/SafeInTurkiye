@@ -75,8 +75,9 @@ export default function CurrencyRates({ lang = 'en', nearby, guide, city = 'İst
     <header className="exchange-hero">
       {artwork&&<img className="exchange-hero-image" src={artwork.src} width={artwork.width} height={artwork.height} alt={`${artwork.name} — ${cityArtworkNotice[lang]??cityArtworkNotice.en}`} title={cityArtworkNotice[lang]??cityArtworkNotice.en} decoding="async"/>}
       <div className="exchange-hero-wash"/>
-      <div className="exchange-hero-copy"><span className="exchange-eyebrow"><Coins size={20} aria-hidden="true"/>{copy[0]}</span><h1>{copy[1]} <span>{copy[2]}</span></h1><p>{copy[3]}</p></div>
+      <div className="exchange-hero-copy"><h1>{copy[1]} <span>{copy[2]}</span></h1></div>
     </header>
+    <p className="exchange-hero-description">{copy[3]}</p>
     <div className="exchange-nav" role="tablist" aria-label={copy[0]} onKeyDown={event=>{
       const tabs=Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
       const index=tabs.indexOf(event.target as HTMLButtonElement);
