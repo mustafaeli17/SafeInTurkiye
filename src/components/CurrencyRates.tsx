@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { exchangeCopy } from '../lib/exchangeCopy';
+import './ExchangePage.css';
 import {currencyInputCopy,invalidCurrencyAmount} from '../lib/currencyInput';
-import { Calculator, Loader2, RefreshCw } from 'lucide-react';
+import { ArrowLeftRight, ChartNoAxesColumnIncreasing, Coins, Info, Loader2, MapPin, RefreshCw } from 'lucide-react';
 import { convertReferenceAmount, getReferenceRates, referencePublicationAge, TravelDataError, supportedCurrencies } from '../services/travelDataService';
 import type { CurrencyCode, ReferenceRates } from '../services/travelDataService';
 
@@ -26,7 +28,7 @@ const converterLabels: Record<string, [string, string, string, string]> = {
   zh: ['金额', '原币种', '目标币种', '这些汇率已超过7天。兑换前请确认当前报价。'],
 };
 
-export default function CurrencyRates({ lang = 'en' }: { lang?: string }) {
+export default function CurrencyRates({ lang = 'en', nearby, guide }: { lang?: string; nearby?: ReactNode; guide?: ReactNode }) {
   const labels: Record<string, { title: string; ref: string; converter: string; unavailable: string; loading: string; tryAgain: string; disclaimer: string }> = {
     es:{title:'Tipos de cambio de referencia diarios',ref:'Referencia',converter:'Conversor de referencia',unavailable:'Los tipos de cambio no están disponibles ahora.',loading:'Cargando tipos de cambio…',tryAgain:'Intentar de nuevo',disclaimer:'No son cotizaciones de compra o venta de una casa de cambio.'},
     en: { title: 'Daily reference rates', ref: 'Reference', converter: 'Reference converter', unavailable: 'Reference rates are unavailable right now.', loading: 'Loading daily reference rates…', tryAgain: 'Try again', disclaimer: 'This is not a bureau buy/sell offer.' },
@@ -41,6 +43,7 @@ export default function CurrencyRates({ lang = 'en' }: { lang?: string }) {
   const fields = converterLabels[lang.toLowerCase()] ?? converterLabels.en;
   const [rates, setRates] = useState<ReferenceRates | null>(null);
   const [error, setError] = useState<'unavailable' | 'timeout' | 'unconfigured' | null>(null);
+  const [section,setSection]=useState('exchange-converter');
   const [retry, setRetry] = useState(0);
   const [amount, setAmount] = useState('100');
   const [from, setFrom] = useState<CurrencyCode>('EUR');
@@ -59,25 +62,36 @@ export default function CurrencyRates({ lang = 'en' }: { lang?: string }) {
   }, [retry]);
 
   const converted = rates && amount.trim() ? convertReferenceAmount(Number(amount), from, to, rates) : null;
-  return <section className="space-y-4" aria-live="polite">
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-      {rates ? currencies.filter(currency => currency !== 'TRY').map((currency) => {
-        const value = rates.perEuro.TRY / rates.perEuro[currency as CurrencyCode];
-        return <div key={currency} className="p-4 bg-white rounded-2xl border border-sky-100 shadow-sm"><span className="text-[11px] font-bold text-slate-500 block">{currency} / TRY</span><strong className="text-[20px] font-black text-slate-900 block">{value.toFixed(4)} ₺</strong><span className="text-[11px] text-[#00A3E0]">{t.ref}</span></div>;
-      }) : <div className="col-span-full p-4 bg-white rounded-2xl border border-sky-100 text-[13px] text-slate-600 flex gap-2 items-center">{!error && <Loader2 className="w-4 h-4 animate-spin text-[#00A3E0]" />}{error ? t.unavailable : t.loading}</div>}
-    </div>
-    {error && <button onClick={() => setRetry(value => value + 1)} className="inline-flex gap-2 items-center px-3 py-2 rounded-xl border border-sky-200 text-[12px] font-bold text-sky-700"><RefreshCw className="w-3.5 h-3.5" />{t.tryAgain}</button>}
-    {rates && <p className="text-[11px] text-slate-500">{t.title}: {rates.date} · <a href={rates.sourceUrl} target="_blank" rel="noreferrer" className="underline">{rates.source}</a>. {t.disclaimer}</p>}
-    {rates && referencePublicationAge(rates.date) > 7 && <p role="status" className="text-sm text-amber-800">{fields[3]}</p>}
-    <div className="bg-white p-5 rounded-2xl border border-sky-100 shadow-sm space-y-3">
-      <div className="flex gap-2 items-center font-extrabold text-[15px] text-slate-900"><Calculator className="w-5 h-5 text-[#00A3E0]" />{t.converter}</div>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-        <input aria-label={fields[0]} aria-invalid={invalidCurrencyAmount(amount)} aria-describedby={invalidCurrencyAmount(amount)?'currency-input-error':undefined} type="number" min="0" step="any" value={amount} onChange={e => setAmount(e.target.value)} className="h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px]" />
-        <select aria-label={fields[1]} value={from} onChange={e => setFrom(e.target.value as CurrencyCode)} className="h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px]">{currencies.map(c => <option key={c}>{c}</option>)}</select>
-        <select aria-label={fields[2]} value={to} onChange={e => setTo(e.target.value as CurrencyCode)} className="h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px]">{currencies.map(c => <option key={c}>{c}</option>)}</select>
+  const copy = exchangeCopy[lang] ?? exchangeCopy.en;
+  const symbols: Record<CurrencyCode,string> = {EUR:'€',USD:'$',GBP:'£',CHF:'Fr',TRY:'₺',AED:'د.إ',SAR:'﷼',CNY:'¥'};
+  const names = new Intl.DisplayNames([lang], {type:'currency'});
+  const unit = rates ? convertReferenceAmount(1, from, to, rates) : null;
+  const status = <div className="exchange-status" role="status">{!error && <Loader2 className="animate-spin" aria-hidden="true"/>}{error ? t.unavailable : t.loading}{error && <button type="button" onClick={()=>setRetry(v=>v+1)}><RefreshCw size={16} aria-hidden="true"/>{t.tryAgain}</button>}</div>;
+  return <div className="exchange-experience" dir={lang==='ar'?'rtl':'ltr'}>
+    <header className="exchange-hero">
+      <img className="exchange-hero-image" src="/photos/cities-2026/istanbul-1536.webp" alt="" width="1536" height="1024"/>
+      <div className="exchange-hero-wash"/>
+      <div className="exchange-hero-copy"><span className="exchange-eyebrow"><Coins size={20} aria-hidden="true"/>{copy[0]}</span><h1>{copy[1]} <span>{copy[2]}</span></h1><p>{copy[3]}</p></div>
+    </header>
+    <nav className="exchange-nav" onClick={event=>{const link=(event.target as HTMLElement).closest('a');if(!link)return;event.preventDefault();const id=link.hash.slice(1);setSection(id);const target=document.getElementById(id);target?.scrollIntoView({block:'start'});target?.focus({preventScroll:true})}}><a href="#exchange-converter" className={section==='exchange-converter'?'exchange-nav-primary':undefined}><ArrowLeftRight aria-hidden="true"/>{copy[4]}</a><a href="#exchange-rates" className={section==='exchange-rates'?'exchange-nav-primary':undefined}><ChartNoAxesColumnIncreasing aria-hidden="true"/>{copy[5]}</a>{nearby && <a href="#exchange-bureaux" className={section==='exchange-bureaux'?'exchange-nav-primary':undefined}><MapPin aria-hidden="true"/>{copy[6]}</a>}</nav>
+    <section id="exchange-converter" tabIndex={-1} className="exchange-card exchange-converter">
+      <div className="exchange-converter-grid">
+        <div><label className="exchange-field-label" htmlFor="exchange-amount">{copy[7]}</label><div className="exchange-value-box"><input id="exchange-amount" aria-label={fields[0]} aria-invalid={invalidCurrencyAmount(amount)} aria-describedby={invalidCurrencyAmount(amount)?'currency-input-error':undefined} type="number" min="0" step="any" value={amount} onChange={e=>setAmount(e.target.value)}/><span className="exchange-currency-symbol" aria-hidden="true">{symbols[from]}</span><select aria-label={fields[1]} value={from} onChange={e=>setFrom(e.target.value as CurrencyCode)}>{currencies.map(c=><option key={c}>{c}</option>)}</select></div></div>
+        <button className="exchange-swap" type="button" title={copy[9]} onClick={()=>{setFrom(to);setTo(from)}}><ArrowLeftRight aria-hidden="true"/><span className="sr-only">{copy[9]}</span></button>
+        <div><span className="exchange-field-label">{copy[8]}</span><div className="exchange-value-box exchange-output"><output aria-live="polite" aria-atomic="true"><span className="sr-only">{copy[8]} </span>{converted===null?'—':converted.toLocaleString(lang,{minimumFractionDigits:2,maximumFractionDigits:2})}<span className="sr-only"> {to}</span></output><span className="exchange-currency-symbol" aria-hidden="true">{symbols[to]}</span><select aria-label={fields[2]} value={to} onChange={e=>setTo(e.target.value as CurrencyCode)}>{currencies.map(c=><option key={c}>{c}</option>)}</select></div></div>
       </div>
       {invalidCurrencyAmount(amount)&&<p id="currency-input-error" role="status" className="text-sm text-red-700">{currencyInputCopy[lang]??currencyInputCopy.en}</p>}
-      {converted !== null && <CurrencyResult amount={Number(amount)} from={from} to={to} converted={converted} lang={lang} label={t.ref} />}
+      <div className="exchange-converter-meta">{unit!==null&&<strong dir="ltr">1 {from} ≈ {unit.toLocaleString(lang,{maximumFractionDigits:4})} {to}</strong>}<p><Info size={18} aria-hidden="true"/>{t.disclaimer}</p></div>
+      {!rates&&status}
+      {rates&&referencePublicationAge(rates.date)>7&&<p role="status" className="text-sm text-amber-800">{fields[3]}</p>}
+    </section>
+    <div className="exchange-lower-grid">
+      <section id="exchange-rates" tabIndex={-1} className="exchange-card exchange-rates"><div className="exchange-section-heading"><ChartNoAxesColumnIncreasing aria-hidden="true"/><div><h2>{copy[5]}</h2><p>{copy[11]}</p></div></div>
+        {rates?<ul>{currencies.filter(c=>c!=='TRY').map(c=><li key={c}><span className="exchange-currency-symbol" aria-hidden="true">{symbols[c]}</span><strong>{c}</strong><span className="exchange-currency-name">{names.of(c)}</span><span className="exchange-rate-value" dir="ltr"><strong>{(rates.perEuro.TRY/rates.perEuro[c]).toLocaleString(lang,{minimumFractionDigits:2,maximumFractionDigits:4})}</strong> TRY</span></li>)}</ul>:status}
+        {rates&&<p className="exchange-source"><time dateTime={rates.date}>{rates.date}</time> · <a href={rates.sourceUrl} target="_blank" rel="noreferrer">{rates.source}</a></p>}
+      </section>
+      {nearby&&<section id="exchange-bureaux" tabIndex={-1} className="exchange-card exchange-bureaux">{nearby}</section>}
     </div>
-  </section>;
+    <aside className="exchange-card exchange-good"><Info aria-hidden="true"/><div><h2>{copy[10]}</h2><p>{t.disclaimer}</p>{guide}</div><Coins className="exchange-good-art" aria-hidden="true"/></aside>
+  </div>;
 }

@@ -1,3 +1,4 @@
+import {taxiMapKey} from '../lib/mapEnvironment'
 import { groomingCategoryLabel } from '../lib/groomingCopy'
 import { useEffect, useRef, useState } from 'react'
 import {locationErrorText} from '../lib/locationError'
@@ -32,6 +33,7 @@ interface NearbyPlacesProps {
   center: NearbyCenter
   cityName: string
   fixedCategory?: NearbyCategory
+  showAreaMap?: boolean
   initialCategory?: NearbyCategory
 }
 
@@ -44,7 +46,7 @@ const categoryLabels: Record<NearbyCategory, [string, string]> = {
   activity: ['Gezilecek yerler ve etkinlikler', 'Things to do'], park: ['Park', 'Park'], historical: ['Tarihi yer', 'Historical place'], entertainment: ['Eğlence', 'Entertainment'], cinema: ['Sinema', 'Cinema'],
 }
 
-export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter, cityName: initialCityName, fixedCategory, initialCategory }: NearbyPlacesProps) {
+export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter, cityName: initialCityName, fixedCategory, initialCategory, showAreaMap=false }: NearbyPlacesProps) {
   const eventRoot=useRef<HTMLElement>(null)
   const seenEvents=useRef(new Set<string>())
   const eventContext=kind==='exchange'?'exchange':fixedCategory==='restaurant'?'restaurants':fixedCategory==='hotel'?'hotels':fixedCategory==='activity'?'activities':'nearby'
@@ -80,6 +82,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
   const [editorialFailed,setEditorialFailed]=useState(false)
   const [state, setState] = useState<'idle' | 'locating' | 'loading' | 'ready' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
+  const [mapSearchPoint,setMapSearchPoint]=useState<NearbyCenter|null>(null)
   const [origin, setOrigin] = useState<'location' | 'city'>('city')
   const requestedCategory=new URLSearchParams(query).get('category')
   const filter:'all'|NearbyCategory=requestedCategory&&(requestedCategory==='all'||requestedCategory in categoryLabels)&&(!fixedCategory||fixedCategory==='activity'||requestedCategory===fixedCategory)?requestedCategory as 'all'|NearbyCategory:initialCategory??fixedCategory??'all'
@@ -107,6 +110,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
     setError(null)
     setLimit(6)
     lastSearch.current=null
+    setMapSearchPoint(null)
     return () => { generation.current += 1; controller.current?.abort(); if (locationTimer.current) clearTimeout(locationTimer.current) }
   }, [kind, center.lat, center.lng, cityName, fixedCategory, locale, textQuery, requiresLocation])
 
@@ -118,6 +122,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
 
   const search = async (point: NearbyCenter, source: 'location' | 'city', requestId: number, preserve=false) => {
     lastSearch.current={point,source}
+    setMapSearchPoint(point)
     controller.current?.abort()
     const request = new AbortController()
     controller.current = request
@@ -192,6 +197,9 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
     )
   }
 
+  const mapKey=showAreaMap?taxiMapKey(window.location.hostname,import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY,import.meta.env.VITE_GOOGLE_MAPS_PREVIEW_BROWSER_KEY):undefined
+  const mapArea=origin==='location'?mapSearchPoint:addressPlace
+  const mapQuery=mapArea?`currency exchange near ${mapArea.lat},${mapArea.lng}`:`currency exchange ${selectedCity}, Türkiye`
   const busy = state === 'locating' || state === 'loading'
   const allPlaces = combineDiscovery(result?.places??[],editorial,kind==='exchange'?'bureau_de_change':filter)
   const detailPlace=selectedPlace(detailId,allPlaces)
@@ -223,6 +231,8 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
         <button type="button" disabled={busy || (requiresLocation&&!addressPlace) || (!!address.trim() && address !== addressPlace?.label)} onClick={searchCity} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#087FFF] px-5 py-3 text-sm font-bold text-white disabled:opacity-50"><Search className="h-4 w-4" />{addressText[2]}</button>
       </div>
       <p className="text-[11px] leading-relaxed text-slate-500">{text('Konumunuzu seçerseniz arama için yaklaşık koordinatlarınız harita veri sağlayıcısına gönderilir; bu sitede kalıcı olarak saklanmaz.', 'If you use your location, approximate coordinates are sent to the map data service to run the search; this site does not permanently store them.')}</p>
+
+      {showAreaMap&&mapKey&&!detailId&&<iframe className="exchange-area-map" title={text('Yakındaki döviz büroları', 'Nearby exchange bureaux')} src={'https://www.google.com/maps/embed/v1/search?'+new URLSearchParams({key:mapKey,q:mapQuery,language:locale,region:'TR'})} loading="lazy" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen/>}
 
       {fixedCategory === 'activity' && <div className="flex flex-wrap gap-2" aria-label={text('Aktivite kategorisi', 'Activity category')}>
         {(['activity', 'museum', 'historical', 'cinema', 'entertainment', 'park'] as const).map(category => <button type="button" key={category} aria-pressed={filter === category} onClick={() => { generation.current += 1; controller.current?.abort(); setFilter(category); setResult(null); setEditorial([]);setState('loading');setError(null) }} className={`min-h-11 rounded-full border px-4 py-2 text-xs font-semibold ${filter === category ? 'border-[#087FFF] bg-[#087FFF] text-white' : 'border-sky-100 bg-white text-slate-700'}`}>{categoryLabel(category)}</button>)}

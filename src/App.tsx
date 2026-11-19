@@ -947,12 +947,8 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
             PAGE 5: EXCHANGE (CANLI KURLAR + YAKINLARDAKİ DÖVİZCİLER - DÜZELTİLDİ)
         ==================================================================== */}
         {activeTab === 'currency' && (
-          <main className="reference-page max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
-            <h1 className="text-3xl font-extrabold text-slate-900">{({ es:'Divisas y casas de cambio', en: 'Currency and exchange bureaux', tr: 'Döviz ve döviz büroları', de: 'Wechselkurse und Wechselstuben', fr: 'Change et bureaux de change', ar: 'العملات ومكاتب الصرافة', ru: 'Валюта и обменные пункты', zh: '汇率与附近兑换点' } as Record<SupportedLang, string>)[lang]}</h1>
-
-            <SearchGuide path={browserPath} lang={lang}/>
-            <CurrencyRates lang={lang} />
-            <NearbyPlaces key={`exchange:${searchQuery}`} kind="exchange" lang={lang} center={{ lat: currentCityInfo.lat, lng: currentCityInfo.lng }} cityName={currentCityInfo.name} />
+          <main className="exchange-page">
+            <CurrencyRates lang={lang} guide={<SearchGuide path={browserPath} lang={lang}/>} nearby={<NearbyPlaces key={`exchange:${searchQuery}`} kind="exchange" lang={lang} center={{ lat: currentCityInfo.lat, lng: currentCityInfo.lng }} cityName={currentCityInfo.name} showAreaMap />} />
           </main>
         )}
 
