@@ -24,16 +24,25 @@ export default function NearbyResultsMap({places,onOpen,title,errorText,lang,onE
     constructor(place:NearbyPlaceRecord){super();this.place=place;this.element=document.createElement('button');this.element.className='nearby-map-label';this.element.textContent=place.name??title;this.element.addEventListener('click',()=>setSelectedId(place.id));this.setMap(map)}
     onAdd(){this.getPanes().floatPane.append(this.stem,this.element);this.stem.style.cssText='position:absolute;width:1px;background:#087fff;pointer-events:none';maps.OverlayView.preventMapHitsAndGesturesFrom(this.element)}
     draw(){
-     const point=this.getProjection().fromLatLngToDivPixel(new maps.LatLng(this.place.coordinates.lat,this.place.coordinates.lng));
-     const width=this.element.offsetWidth,height=this.element.offsetHeight;let bottom=point.y;
-     // Move labels only, keeping a stem anchored to the actual place coordinates.
-     const preceding=overlays.slice(0,Math.max(0,overlays.indexOf(this)));
-     for(let attempt=0;attempt<places.length;attempt++){
-      const hit=preceding.some(pin=>{const x=parseFloat(pin.element.style.left),y=parseFloat(pin.element.style.top);return Number.isFinite(x)&&point.x-width/2<x+pin.element.offsetWidth/2+6&&point.x+width/2>x-pin.element.offsetWidth/2-6&&bottom>y-pin.element.offsetHeight-6&&bottom-height<y+6});
-      if(!hit)break;bottom-=height+8;
+     const projection=this.getProjection(),center=projection.fromLatLngToDivPixel(map.getCenter());
+     const width=host.current?.clientWidth??400,height=host.current?.clientHeight??610;
+     const minX=center.x-width/2+8,maxX=center.x+width/2-118,minY=center.y-height/2+8,maxY=center.y+height/2-210;
+     const placed:{x:number;y:number}[]=[];let target={x:0,y:0};
+     for(const place of places){
+      const anchor=projection.fromLatLngToDivPixel(new maps.LatLng(place.coordinates.lat,place.coordinates.lng));
+      const options:{x:number;y:number;cost:number}[]=[];
+      for(let row=-5;row<=5;row++)for(let col=-3;col<=3;col++){
+       const x=Math.max(minX,Math.min(maxX,anchor.x-55+col*118)),y=Math.max(minY,Math.min(maxY,anchor.y-60+row*68));
+       options.push({x,y,cost:Math.hypot(x+55-anchor.x,y+60-anchor.y)});
+      }
+      options.sort((a,b)=>a.cost-b.cost);
+      target=options.find(o=>!placed.some(p=>o.x<p.x+116&&o.x+116>p.x&&o.y<p.y+66&&o.y+66>p.y))??options[0];
+      placed.push(target);if(place.id===this.place.id)break;
      }
-     Object.assign(this.element.style,{position:'absolute',left:point.x+'px',top:bottom+'px'});
-     Object.assign(this.stem.style,{left:point.x+'px',top:bottom+'px',height:Math.max(0,point.y-bottom)+'px'});
+     const point=projection.fromLatLngToDivPixel(new maps.LatLng(this.place.coordinates.lat,this.place.coordinates.lng));
+     const x=target.x+55,y=target.y+60,dx=x-point.x,dy=y-point.y;
+     Object.assign(this.element.style,{position:'absolute',left:x+'px',top:y+'px'});
+     Object.assign(this.stem.style,{left:point.x+'px',top:point.y+'px',width:Math.hypot(dx,dy)+'px',height:'1px',transformOrigin:'0 0',transform:`rotate(${Math.atan2(dy,dx)}rad)`});
     }
     onRemove(){this.element.remove();this.stem.remove()}
    }
