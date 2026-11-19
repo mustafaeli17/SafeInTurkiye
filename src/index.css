@@ -271,10 +271,15 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .nearby-filter-panel select{width:100%;margin-top:6px;background:#f5f9ff;border-color:#c9dcf6;color:#102653}
 .nearby-filter-panel input{width:18px;height:18px;accent-color:#087fff}
 .nearby-filter-panel button{border-radius:14px;background:#edf5ff;font-size:13px}
-.nearby-map-place{width:140px;padding:5px;background:#fff;border:1px solid #b9d7ff;border-radius:12px;box-shadow:0 3px 12px #132f4b38;transform:translate(-50%,-100%);color:#102653}
-.nearby-map-place:hover,.nearby-map-place:focus-within{z-index:10}
-.nearby-map-place-name{display:block;width:100%;min-height:44px;padding:3px;font:600 12px/1.25 Inter,sans-serif;text-align:start}
-.nearby-map-place figure{margin:0}.nearby-map-place img{display:block;width:128px;height:65px;object-fit:cover;border-radius:7px}
-.nearby-map-place figcaption{font-size:10px;line-height:1.2;max-height:36px;overflow-y:auto;margin-top:4px}
-.nearby-map-place button:focus-visible,.nearby-map-place a:focus-visible{outline:3px solid #087fff;outline-offset:2px}
-@media(max-width:640px){.nearby-filter-panel>div{grid-template-columns:1fr 1fr}.nearby-discovery .nearby-categories button{min-height:44px;flex-grow:1}.nearby-map-place{width:120px}.nearby-map-place img{width:108px;height:55px}}
+@media(max-width:640px){.nearby-filter-panel>div{grid-template-columns:1fr 1fr}.nearby-discovery .nearby-categories button{min-height:44px;flex-grow:1}}
+
+.nearby-map-wrap{position:relative}
+.nearby-map-label{max-width:110px;min-height:44px;padding:7px 10px;border:1px solid #abd0ff;border-radius:14px;background:white;color:#102653;font:600 12px/1.2 Inter,sans-serif;box-shadow:0 2px 7px #15294025;transform:translate(-50%,-100%)}
+.nearby-map-label:hover,.nearby-map-label:focus-visible{z-index:5;background:#eaf4ff;outline:2px solid #087fff}
+.nearby-map-selection{position:absolute;bottom:32px;left:12px;right:12px;z-index:1;display:flex;align-items:center;gap:12px;padding:10px;border:1px solid #bdd8ff;border-radius:16px;background:white;box-shadow:0 3px 15px #17355530}
+.nearby-map-selection>div{flex:0 0 105px}.nearby-map-selection>div:empty{display:none}
+.nearby-map-selection figure{margin:0}.nearby-map-selection img{width:105px;height:64px;object-fit:cover;border-radius:8px}
+.nearby-map-selection figcaption{font-size:10px;line-height:1.2;max-height:36px;overflow-y:auto}
+.nearby-map-selection-name{min-height:44px;color:#102653;font-size:14px;font-weight:600;text-align:start}
+.nearby-map-selection button:focus-visible{outline:2px solid #087fff;outline-offset:3px}
+

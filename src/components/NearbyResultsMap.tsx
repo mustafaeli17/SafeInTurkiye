@@ -1,5 +1,4 @@
 import {useEffect,useRef,useState} from 'react'
-import {createPortal} from 'react-dom'
 import GooglePlacePhoto from './GooglePlacePhoto'
 import EditorialPlacePhoto from './EditorialPlacePhoto'
 import {isEditorialPlace} from '../lib/editorialDiscovery'
@@ -9,7 +8,8 @@ export default function NearbyResultsMap({places,onOpen,title,errorText,lang,onE
  const host=useRef<HTMLDivElement>(null),callback=useRef(onOpen)
  useEffect(()=>{callback.current=onOpen},[onOpen])
  const [failed,setFailed]=useState(false)
- const [pins,setPins]=useState<{element:HTMLDivElement;place:NearbyPlaceRecord}[]>([])
+ const [selectedId,setSelectedId]=useState<string|null>(null)
+ const selected=places.find(place=>place.id===selectedId)??places[0]
  useEffect(()=>{
   let cancelled=false;const overlays:any[]=[]
   const auth=()=>setFailed(true);window.addEventListener('transit-map-auth-error',auth);setFailed(false)
@@ -18,17 +18,16 @@ export default function NearbyResultsMap({places,onOpen,title,errorText,lang,onE
    const map=new maps.Map(host.current,{center:places[0].coordinates,zoom:14,mapTypeControl:false,streetViewControl:false,fullscreenControl:true,gestureHandling:'cooperative'})
    const bounds=new maps.LatLngBounds();
    class PlacePin extends maps.OverlayView {
-    element:HTMLDivElement
+    element:HTMLButtonElement
     place:NearbyPlaceRecord
-    constructor(place:NearbyPlaceRecord){super();this.place=place;this.element=document.createElement('div');this.element.className='nearby-map-place';this.setMap(map)}
+    constructor(place:NearbyPlaceRecord){super();this.place=place;this.element=document.createElement('button');this.element.className='nearby-map-label';this.element.textContent=place.name??title;this.element.addEventListener('click',()=>setSelectedId(place.id));this.setMap(map)}
     onAdd(){this.getPanes().floatPane.appendChild(this.element);maps.OverlayView.preventMapHitsAndGesturesFrom(this.element)}
     draw(){const point=this.getProjection().fromLatLngToDivPixel(new maps.LatLng(this.place.coordinates.lat,this.place.coordinates.lng));this.element.style.position='absolute';this.element.style.left=point.x+'px';this.element.style.top=point.y+'px'}
     onRemove(){this.element.remove()}
    }
-   places.forEach(place=>{bounds.extend(place.coordinates);overlays.push(new PlacePin(place))});setPins(overlays.map(pin=>({element:pin.element,place:pin.place})));map.fitBounds(bounds,{top:175,right:90,bottom:65,left:90});maps.event.addListenerOnce(map,'idle',()=>{if(map.getZoom()>16)map.setZoom(16)})
+   places.forEach(place=>{bounds.extend(place.coordinates);overlays.push(new PlacePin(place))});map.fitBounds(bounds,{top:65,right:80,bottom:190,left:80});maps.event.addListenerOnce(map,'idle',()=>{if(map.getZoom()>16)map.setZoom(16)})
   }).catch(()=>{if(!cancelled)setFailed(true)})
   return()=>{cancelled=true;window.removeEventListener('transit-map-auth-error',auth);overlays.forEach(item=>item.setMap(null))}
  },[places,title])
- return failed?<p role="status" className="nearby-map-error">{errorText}</p>:<div ref={host} role="region" aria-label={title} className="nearby-results-map">{pins.map(({element,place})=>createPortal(<><button className="nearby-map-place-name" onClick={()=>callback.current(place.id)}>{place.name??title}</button>{isEditorialPlace(place)?<EditorialPlacePhoto place={place} expanded={false} lang={lang} onOpen={()=>callback.current(place.id)}/>:<GooglePlacePhoto place={place} onExpired={onExpired} onOpen={()=>callback.current(place.id)}/>}</>,element,place.id))}</div>
+ return failed?<p role="status" className="nearby-map-error">{errorText}</p>:<div className="nearby-map-wrap"><div ref={host} role="region" aria-label={title} className="nearby-results-map"/>{selected&&<div className="nearby-map-selection"><div>{isEditorialPlace(selected)?<EditorialPlacePhoto place={selected} expanded={false} lang={lang} onOpen={()=>callback.current(selected.id)}/>:<GooglePlacePhoto key={selected.id} place={selected} onExpired={onExpired} onOpen={()=>callback.current(selected.id)}/>}</div><button className="nearby-map-selection-name" onClick={()=>callback.current(selected.id)}>{selected.name??title}<span aria-hidden="true"> →</span></button></div>}</div>
 }
-
