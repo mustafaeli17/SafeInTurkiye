@@ -60,10 +60,9 @@ export default function TransitJourney({ lang }: { lang: string }) {
   const summary=route?transitSummary(route):null
   const time = (value?:string) => transitTime(value,locale)
   const durationCopy=transitDurationCopy[locale]??transitDurationCopy.en
-  return <section aria-label={t.title} dir={locale==='ar'?'rtl':undefined} className="mb-6 space-y-4 rounded-2xl border border-sky-100 bg-white p-4 sm:p-6">
+  return <section aria-label={t.title} dir={locale==='ar'?'rtl':undefined} className="transit-journey mb-6 space-y-4 rounded-2xl border border-sky-100 bg-white p-4 sm:p-6">
     <h2 className="text-xl font-extrabold text-slate-900">{t.title}</h2><p className="text-sm text-slate-600">{t.intro}</p>
-    <SearchGuide path="/transport" lang={lang}/>
-    <form onSubmit={search} className="grid min-w-0 gap-3 sm:grid-cols-2">
+    <form onSubmit={search} className="transit-route-form grid min-w-0 gap-3 sm:grid-cols-2">
       <div className="flex min-w-0 items-end gap-2"><TransitAddressInput label={t.from} locale={locale} value={origin} selected={!!coordinates} onChange={value=>{reset();setCoordinates(null);setOrigin(value)}} onSelect={place=>{reset();setCoordinates(place);setOrigin(place.label)}} placeholder="Taksim, İstanbul"/><button type="button" onClick={useLocation} disabled={locating||busy} aria-label={t.locate} title={t.locate} className="min-h-11 min-w-11 rounded-xl border border-sky-200 bg-sky-50 p-3 text-sky-700 disabled:opacity-50"><LocateFixed size={20}/></button></div>
       <TransitAddressInput label={t.to} locale={locale} value={destination} selected={!!destinationCoordinates} onChange={value=>{reset();setDestinationCoordinates(null);setDestination(value)}} onSelect={place=>{reset();setDestinationCoordinates(place);setDestination(place.label)}} placeholder="Sultanahmet, İstanbul"/>
       <div className="min-w-0"><div className="flex flex-wrap gap-2"><button type="button" aria-pressed={!scheduled} onClick={()=>{reset();setScheduled(false);setDeparture('')}} className={`min-h-11 rounded-xl border px-3 text-sm ${!scheduled?'bg-sky-100 text-sky-800':'bg-white'}`}>{timing[locale][0]}</button><button type="button" aria-pressed={scheduled} onClick={()=>{reset();setScheduled(true)}} className="min-h-11 rounded-xl border px-3 text-sm">{timing[locale][1]}</button></div>{scheduled&&<label className="text-sm font-semibold">{t.departure.split(/[（(]/)[0].trim()}<input required type="datetime-local" value={departure} onChange={e=>{reset();setDeparture(e.target.value)}} className={input}/></label>}</div>
@@ -71,11 +70,14 @@ export default function TransitJourney({ lang }: { lang: string }) {
       <button disabled={busy||locating} className="min-h-11 rounded-xl bg-[#087FFF] p-3 font-bold text-white disabled:opacity-50 sm:col-span-2">{busy?t.loading:t.search}</button>
     </form>
     <div role="status" aria-live="polite">{(message||busy)&&<p className="rounded-xl bg-sky-50 p-3 text-sm text-slate-700">{busy?t.loading:message?t[message]:''}</p>}</div>
-    {routes.length>0&&<div className="grid gap-2 sm:grid-cols-2">{routes.map((r,i)=>{const s=transitSummary(r);return <button key={i} type="button" aria-pressed={selected===i} onClick={()=>setSelected(i)} className={`min-h-11 rounded-xl border px-4 py-3 text-start text-sm ${selected===i?'border-blue-500 bg-blue-50 text-blue-800':'border-sky-100 text-slate-700'}`}><strong>{t.option} {i+1} · {durationCopy[0]}: {Math.ceil(parseFloat(r.duration)/60)} {t.minutes}</strong><span className="block">{s.boarding?`${compare[0]}: ${time(s.boarding)}`:''}{s.alighting?` · ${compare[1]}: ${time(s.alighting)}`:''}</span><span className="block">{transferCount(s.transfers,locale)}{s.walkingMinutes!==undefined?` · ${compare[2]}: ${s.walkingMinutes} ${t.minutes}`:''}</span>{s.lines.length>0&&<span className="block">{s.lines.join(' → ')}</span>}<span className="block">{t.fare}: {transitFare(r,locale)??t.noFare}</span></button>})}</div>}
+    <div className="transit-results-layout">
+    {routes.length>0&&<div className="transit-route-options grid gap-2">{routes.map((r,i)=>{const s=transitSummary(r);return <button key={i} type="button" aria-pressed={selected===i} onClick={()=>setSelected(i)} className={`min-h-11 rounded-xl border px-4 py-3 text-start text-sm ${selected===i?'border-blue-500 bg-blue-50 text-blue-800':'border-sky-100 text-slate-700'}`}><strong>{t.option} {i+1} · {durationCopy[0]}: {Math.ceil(parseFloat(r.duration)/60)} {t.minutes}</strong><span className="block">{s.boarding?`${compare[0]}: ${time(s.boarding)}`:''}{s.alighting?` · ${compare[1]}: ${time(s.alighting)}`:''}</span><span className="block">{transferCount(s.transfers,locale)}{s.walkingMinutes!==undefined?` · ${compare[2]}: ${s.walkingMinutes} ${t.minutes}`:''}</span>{s.lines.length>0&&<span className="block">{s.lines.join(' → ')}</span>}<span className="block">{t.fare}: {transitFare(r,locale)??t.noFare}</span></button>})}</div>}
+    {route&&<div className="transit-result-map"><GoogleDirectionsMap origin={origin} destination={destination} mode="transit" title={t.map} routePolyline={route.polyline?.encodedPolyline??''} fallback={<p className="rounded-xl bg-slate-50 p-4 text-sm">{t.noMap}</p>}/></div>}
+    </div>
     {route&&<><p className="text-sm text-slate-600">{durationCopy[1]}</p>
       <div className="flex flex-wrap gap-4 text-sm text-slate-700"><span>{transferCount(summary?.transfers??0,locale)}</span>{typeof route.distanceMeters==='number'&&<span>{t.distance}: {new Intl.NumberFormat(locale,{maximumFractionDigits:1}).format(route.distanceMeters/1000)} km</span>}<span>{t.fare}: {transitFare(route,locale)??t.noFare}</span></div>
       <p className="text-xs text-slate-600">{summary?.boarding?`${compare[0]}: ${time(summary.boarding)} · `:''}{summary?.alighting?`${compare[1]}: ${time(summary.alighting)} · `:''}{compare[4]}</p>
-      <GoogleDirectionsMap origin={origin} destination={destination} mode="transit" title={t.map} routePolyline={route.polyline?.encodedPolyline??''} fallback={<p className="rounded-xl bg-slate-50 p-4 text-sm">{t.noMap}</p>}/>
+
       <p className="flex gap-4 text-xs"><span className="text-green-700">● {t.from}</span><span className="text-rose-700">● {t.to}</span></p>
       <h3 className="font-bold">{t.details}</h3>
       <ol className="space-y-2">{steps.map((step,i)=>{
@@ -89,5 +91,6 @@ export default function TransitJourney({ lang }: { lang: string }) {
       })}</ol>
       <p className="text-xs leading-relaxed text-slate-500">Google Maps · {t.notice}</p>
     </>}
+    <SearchGuide path="/transport" lang={lang}/>
   </section>
 }
