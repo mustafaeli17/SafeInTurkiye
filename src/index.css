@@ -258,3 +258,23 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .nearby-map-pin>span:first-child{display:grid;place-items:center;min-width:30px;height:30px;border-radius:50%;background:#087fff;color:#fff;font-weight:800}
 .nearby-map-pin:focus-visible{outline:3px solid #102653;outline-offset:2px}
 @media(max-width:640px){.nearby-discovery .nearby-controls{grid-template-columns:1fr 1fr;gap:10px}.nearby-discovery .nearby-address-row,.nearby-discovery .nearby-control-heading,.nearby-discovery .nearby-control-heading>div:last-child{display:contents}.nearby-discovery .nearby-address-row>div{grid-column:1/-1;grid-row:1}.nearby-discovery .nearby-address-row>button{grid-row:2;grid-column:2}.nearby-discovery .nearby-control-heading button{grid-row:2;grid-column:1;padding-inline:8px}.nearby-discovery .nearby-control-heading select{grid-row:3;grid-column:1/-1;max-width:none;width:100%;min-height:38px}.nearby-hero picture img{object-position:70% top}}
+
+/* Near Me: visible categories, compact filters and real photo map labels. */
+.nearby-discovery .nearby-categories{flex-wrap:wrap;overflow:visible;padding-bottom:0}
+.nearby-filter-panel{border:1px solid #d4e4f8;background:#fff;border-radius:20px;padding:8px 16px;color:#102653}
+.nearby-filter-panel summary{display:flex;align-items:center;gap:10px;list-style:none;font-size:14px;font-weight:600}
+.nearby-filter-panel summary::-webkit-details-marker{display:none}
+.nearby-filter-panel summary>svg:last-child{margin-inline-start:auto;transition:transform .15s}
+.nearby-filter-panel[open] summary>svg:last-child{transform:rotate(180deg)}
+.nearby-filter-panel>div{padding:12px 0 8px;border-top:1px solid #e4edf8;display:grid;grid-template-columns:1fr 1fr auto auto;align-items:end}
+.nearby-filter-panel label{font-size:13px;font-weight:500}
+.nearby-filter-panel select{width:100%;margin-top:6px;background:#f5f9ff;border-color:#c9dcf6;color:#102653}
+.nearby-filter-panel input{width:18px;height:18px;accent-color:#087fff}
+.nearby-filter-panel button{border-radius:14px;background:#edf5ff;font-size:13px}
+.nearby-map-place{width:140px;padding:5px;background:#fff;border:1px solid #b9d7ff;border-radius:12px;box-shadow:0 3px 12px #132f4b38;transform:translate(-50%,-100%);color:#102653}
+.nearby-map-place:hover,.nearby-map-place:focus-within{z-index:10}
+.nearby-map-place-name{display:block;width:100%;min-height:44px;padding:3px;font:600 12px/1.25 Inter,sans-serif;text-align:start}
+.nearby-map-place figure{margin:0}.nearby-map-place img{display:block;width:128px;height:65px;object-fit:cover;border-radius:7px}
+.nearby-map-place figcaption{font-size:10px;line-height:1.2;max-height:36px;overflow-y:auto;margin-top:4px}
+.nearby-map-place button:focus-visible,.nearby-map-place a:focus-visible{outline:3px solid #087fff;outline-offset:2px}
+@media(max-width:640px){.nearby-filter-panel>div{grid-template-columns:1fr 1fr}.nearby-discovery .nearby-categories button{min-height:44px;flex-grow:1}.nearby-map-place{width:120px}.nearby-map-place img{width:108px;height:55px}}
