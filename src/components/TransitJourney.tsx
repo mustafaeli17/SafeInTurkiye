@@ -1,6 +1,7 @@
 import {SearchGuide} from './SearchGuide';
 import { useEffect, useRef, useState } from 'react'
-import { LocateFixed, Clock3, Footprints, ArrowRightLeft, ExternalLink } from 'lucide-react'
+import { LocateFixed, Clock3, ArrowRightLeft, ExternalLink } from 'lucide-react'
+import {formatTransitDuration} from '../lib/transitDuration'
 import TransitAddressInput from './TransitAddressInput'
 import GoogleDirectionsMap from './GoogleDirectionsMap'
 import { requestTransitLocation, transitDeparture, transitFare, transitRequestTime, transitRoutes,transitSummary,transitStages,transitTime,transferCount,transitDurationCopy, type TransitRoute } from '../lib/transit'
@@ -72,9 +73,9 @@ export default function TransitJourney({ lang }: { lang: string }) {
     <div role="status" aria-live="polite">{(message||busy)&&<p className="rounded-xl bg-sky-50 p-3 text-sm text-slate-700">{busy?t.loading:message?t[message]:''}</p>}</div>
     <div className="transit-results-layout">
     {routes.length>0&&<div className="transit-route-options grid gap-2">{routes.map((r,i)=>{const s=transitSummary(r);const fare=transitFare(r,locale);return <button key={i} type="button" aria-pressed={selected===i} onClick={()=>setSelected(i)} className="transit-option">
-      <span className="transit-option-top"><span>{t.option} {i+1}</span><strong><Clock3 size={18} aria-hidden="true"/>{Math.ceil(parseFloat(r.duration)/60)} {t.minutes}</strong></span>
+      <span className="transit-option-top"><span>{t.option} {i+1}</span><strong><Clock3 size={18} aria-hidden="true"/>{formatTransitDuration(r.duration,locale)}</strong></span>
       {s.lines.length>0&&<span className="transit-line-badges">{s.lines.map((line,j)=><span key={j}>{line}</span>)}</span>}
-      <span className="transit-option-facts"><span><ArrowRightLeft size={15} aria-hidden="true"/>{transferCount(s.transfers,locale)}</span>{s.walkingMinutes!==undefined&&<span><Footprints size={15} aria-hidden="true"/><span className="sr-only">{compare[2]}: </span>{s.walkingMinutes} {t.minutes}</span>}</span>
+      <span className="transit-option-facts"><span><ArrowRightLeft size={15} aria-hidden="true"/>{transferCount(s.transfers,locale)}</span></span>
       {fare&&<span className="transit-option-fare">{t.fare}: <strong>{fare}</strong></span>}
     </button>})}</div>}
     {route&&<div className="transit-result-map"><GoogleDirectionsMap origin={origin} destination={destination} mode="transit" title={t.map} routePolyline={route.polyline?.encodedPolyline??''} fallback={<div className="transit-map-fallback"><p>{t.noMap}</p><a href={'https://www.google.com/maps/dir/?'+new URLSearchParams({api:'1',origin:coordinates?`${coordinates.lat},${coordinates.lng}`:origin,destination:destinationCoordinates?`${destinationCoordinates.lat},${destinationCoordinates.lng}`:destination,travelmode:'transit'})} target="_blank" rel="noreferrer">Google Maps <ExternalLink size={16} aria-hidden="true"/></a></div>}/></div>}
@@ -92,7 +93,7 @@ export default function TransitJourney({ lang }: { lang: string }) {
           <strong>{d.transitLine?.nameShort||d.transitLine?.name||t.transit}{d.headsign?` · ${d.headsign}`:''}</strong>
           <p>{d.stopDetails?.departureStop?.name} → {d.stopDetails?.arrivalStop?.name}</p>
           <p>{time(d.stopDetails?.departureTime)} → {time(d.stopDetails?.arrivalTime)}{typeof d.stopCount==='number'?` · ${d.stopCount} ${t.stops}`:''}</p>
-        </>:<><strong>{t.walk}</strong>{step.staticDuration&&<span> · {Math.ceil(parseFloat(step.staticDuration)/60)} {t.minutes}</span>}{typeof step.distanceMeters==='number'&&<span> · {new Intl.NumberFormat(locale).format(step.distanceMeters)} m</span>}{!!step.instructions?.length&&<details><summary className="min-h-11 cursor-pointer py-2">{compare[3]}</summary><ol>{step.instructions.map((instruction,j)=><li key={j}>{instruction}</li>)}</ol></details>}</>}</li>
+        </>:<><strong>{t.walk}</strong>{step.staticDuration&&<span> · {formatTransitDuration(step.staticDuration,locale)}</span>}{typeof step.distanceMeters==='number'&&<span> · {new Intl.NumberFormat(locale).format(step.distanceMeters)} m</span>}{!!step.instructions?.length&&<details><summary className="min-h-11 cursor-pointer py-2">{compare[3]}</summary><ol>{step.instructions.map((instruction,j)=><li key={j}>{instruction}</li>)}</ol></details>}</>}</li>
       })}</ol>
       <p className="text-xs leading-relaxed text-slate-500">Google Maps · {t.notice}</p>
     </div></details>}
