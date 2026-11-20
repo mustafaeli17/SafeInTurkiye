@@ -39,3 +39,13 @@ export const taxiIntroCopy:Record<string,string>={
  ru:'Выберите начало и конец маршрута, чтобы оценить стоимость такси.',
  zh:'选择出发地和目的地，估算出租车费用。',
 };
+export const taxiMinimumCopy:Record<string,[string,string]>={
+ tr:['Hesaplamadaki indi-bindi ücreti:','Tahmine dahildir; ayrıca eklenmez.'],
+ en:['Minimum fare used:','Included in the estimate, not an extra charge.'],
+ es:['Tarifa mínima utilizada:','Incluida en la estimación; no es un suplemento.'],
+ de:['Verwendeter Mindestpreis:','In der Schätzung enthalten, kein Aufpreis.'],
+ fr:['Tarif minimum utilisé :','Inclus dans l’estimation, sans supplément.'],
+ ar:['الحد الأدنى المستخدم للأجرة:','مشمول في التقدير، وليس رسومًا إضافية.'],
+ ru:['Минимальная стоимость в расчёте:','Уже учтена в оценке, не доплата.'],
+ zh:['计算采用的最低车费：','已计入估价，不另外加收。'],
+};

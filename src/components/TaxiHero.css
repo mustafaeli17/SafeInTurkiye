@@ -27,3 +27,7 @@
 
 .taxi-map-panel>div{min-height:0;border:0;border-radius:16px}.taxi-map-panel .leaflet-container{height:360px!important}
 @media(max-width:700px){.taxi-hero-stage{right:0}.taxi-map-panel .leaflet-container{height:260px!important}}
+.taxi-estimate-car{width:84px;height:56px;object-fit:contain;flex-shrink:0;animation:taxi-result-arrive 1.2s cubic-bezier(.16,.75,.23,1) both;filter:drop-shadow(0 3px 2px #183e5520)}
+@keyframes taxi-result-arrive{from{transform:translateX(18px) rotateY(-18deg);opacity:0}to{transform:translateX(0) rotateY(0);opacity:1}}
+.taxi-minimum-note{padding:10px 12px;border-radius:12px;background:#f0f7ff;font-size:12px;line-height:1.5;color:#385273}.taxi-minimum-note strong{color:#102653;white-space:nowrap}.taxi-minimum-note small{display:block;font-size:11px;margin-top:2px}
+@media(prefers-reduced-motion:reduce){.taxi-estimate-car{animation:none}}

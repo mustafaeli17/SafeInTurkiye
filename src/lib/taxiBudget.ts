@@ -39,5 +39,6 @@ export function taxiBudgetRange(city:string,distances:number[],vehicle='YELLOW',
  // Outward rounding to readable ten-lira amounts, not a traffic surcharge.
  const amount=Math.floor(Math.min(...fares)/10)*10;
  const upper=Math.ceil(Math.max(...fares)/10)*10;
- return {amount,upper,hasRange:upper>amount,source:city+' · '+(budget.reviewedAt??budgetReviewedAt),sourceUrls:budget.sources};
+ const minimumFare=budget.samples.every(s=>s.minimum===budget.samples[0].minimum)?budget.samples[0].minimum:undefined;
+ return {amount,upper,minimumFare,hasRange:upper>amount,source:city+' · '+(budget.reviewedAt??budgetReviewedAt),sourceUrls:budget.sources};
 }

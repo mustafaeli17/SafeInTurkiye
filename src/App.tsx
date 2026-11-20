@@ -69,7 +69,7 @@ import { supabaseConfigured } from './lib/supabase';
 import { taxiBudgetRange } from './lib/taxiBudget';
 import { routeFareRange } from './lib/taxiCalculation';
 import { taxiCityFromAddress,taxiReferenceCity,taxiUnavailableText } from './lib/taxiCity';
-import { taxiBudgetCopy,taxiDetailsCopy,taxiEstimateCopy,taxiIntroCopy } from './lib/taxiCopy';
+import { taxiMinimumCopy,taxiBudgetCopy,taxiDetailsCopy,taxiEstimateCopy,taxiIntroCopy } from './lib/taxiCopy';
 import { taxiErrorText,type TaxiErrorKey } from './lib/taxiErrors';
 import {taxiCalculationMapNotice,taxiRouteNotice} from './lib/taxiRouteNotice';
 import {taxiMapKey} from './lib/mapEnvironment';
@@ -408,7 +408,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
     source: string;
   } | null>(null);
 
-  const [fareCalculation, setFareCalculation] = useState<{ amount: number; upper:number; hasRange:boolean; source: string; sourceUrls?:string[]; verified?:boolean } | null>(null);
+  const [fareCalculation, setFareCalculation] = useState<{ amount: number; upper:number; hasRange:boolean; source: string; sourceUrls?:string[]; verified?:boolean; minimumFare?:number } | null>(null);
   const taxiRequest = useRef(0);
   useEffect(() => {
     taxiRequest.current++;
@@ -523,7 +523,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
       setFareCalculation({
         ...routeFareRange([distanceKm], tariff.openingFare, tariff.pricePerKm, tariff.minimumFare),
         source: tariff.city+' · '+taxiClass+' · '+tariff.source+' · '+tariff.lastUpdated,
-        sourceUrls:tariff.sourceUrl?[tariff.sourceUrl]:undefined, verified:true,
+        sourceUrls:tariff.sourceUrl?[tariff.sourceUrl]:undefined, verified:true, minimumFare:tariff.minimumFare,
       });
     } catch {
       if (request !== taxiRequest.current) return;
@@ -793,11 +793,12 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
                 {taxiRouteResult && fareCalculation && (
                   <div className="pt-3 border-t border-slate-100 space-y-3">
                     <div className="p-4 bg-sky-50 rounded-2xl border border-sky-100 space-y-2">
-                      <div className="reference-estimate-title"><span>{taxiEstimateCopy[lang][0]}</span><span aria-hidden="true">🚕</span></div>
+                      <div className="reference-estimate-title"><span>{taxiEstimateCopy[lang][0]}</span><img className="taxi-estimate-car" src="/photos/taxi-hero-cutout.webp" alt="" width="900" height="600" aria-hidden="true"/></div>
                       <span className="text-3xl font-black text-slate-900">
                         {taxiDetailsCopy[lang][1]} ₺{(fareCalculation.hasRange?Math.floor(fareCalculation.amount):Math.round(fareCalculation.amount)).toLocaleString(lang)}{fareCalculation.hasRange?` – ₺${Math.ceil(fareCalculation.upper).toLocaleString(lang)}`:''}
                       </span>
                       <span className="text-[11px] text-slate-500 block">{taxiEstimateCopy[lang][1]}</span>
+                      {fareCalculation.minimumFare!==undefined&&<p className="taxi-minimum-note"><span>{taxiMinimumCopy[lang][0]} <strong>{new Intl.NumberFormat(lang,{style:'currency',currency:'TRY',maximumFractionDigits:2}).format(fareCalculation.minimumFare)}</strong></span><small>{taxiMinimumCopy[lang][1]}</small></p>}
                       <details className="text-xs text-slate-500"><summary className="cursor-pointer min-h-8">{taxiDetailsCopy[lang][0]}</summary><p>{fareCalculation.source}</p>{fareCalculation.sourceUrls?.map((url)=><a key={url} className="block underline py-1" href={url} target="_blank" rel="noopener noreferrer">{new URL(url).hostname} ↗</a>)}<p>{fareCalculation.verified?taxiDetailsCopy[lang][2]:taxiBudgetCopy[lang]}</p></details>
                       <div className="grid grid-cols-2 gap-2 pt-2 border-t border-sky-200/60 text-[12px]">
                         <div>
