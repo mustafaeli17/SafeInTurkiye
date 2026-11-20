@@ -1,3 +1,4 @@
+import TaxiHero from './components/TaxiHero';
 import CityHighlightPhoto from './components/CityHighlightPhoto';
 import './components/CityGuidePage.css';
 import {cityGuideDesignCopy} from './lib/cityGuideDesignCopy';
@@ -735,18 +736,12 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
             PAGE 3: TAKİ HESAPLAYICI
         ==================================================================== */}
         {activeTab === 'taxi' && (
-          <main className="reference-page reference-taxi max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
+          <main className="reference-page reference-taxi taxi-redesign max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
             <HomeButton lang={lang} currentPage={page('taxiTitle')} onClick={()=>{setActiveTab('home');setMobileMenuOpen(false);window.scrollTo(0,0);}}/>
 
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">{page('taxiTitle')}</h1>
-              <p className="text-[13px] text-slate-500">{taxiIntroCopy[lang]}</p>
-            </div>
-
-
-            <SearchGuide path={browserPath} lang={lang}/>
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              <div className="lg:col-span-5 bg-white p-5 sm:p-6 rounded-2xl border border-sky-100 shadow-sm space-y-4">
+            <TaxiHero title={page('taxiTitle')} description={taxiIntroCopy[lang]} />
+            <div className="taxi-workspace">
+              <div className="taxi-form-panel">
 
                 <div className="relative">
                   <div className="flex justify-between items-center mb-1">
@@ -777,6 +772,21 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
                   {isTaxiRouting ? <Loader2 className="w-4 h-4 animate-spin" /> : page('calculate')}
                 </button>
 
+
+              </div>
+
+              <div className="taxi-map-panel">
+                <Suspense fallback={<PageLoading lang={lang}/>}>
+                <SafeRouteMap
+                  title={dict[lang].taxi}
+                  originCoords={taxiOriginCoords}
+                  destCoords={taxiDestCoords}
+                  geometry={taxiRouteResult ? taxiRouteResult.geometry : null}
+                  color="#087FFF"
+                />
+                </Suspense>
+              </div>
+              <section className="taxi-result-panel" aria-live="polite">
                 {taxiRouteError && <p role={taxiRouteError === 'unavailable' ? 'status' : 'alert'} className="text-sm text-slate-700 bg-sky-50 rounded-xl p-3">{taxiRouteError === 'unavailable' ? taxiUnavailableText(lang) : taxiErrorText(lang, taxiRouteError)}</p>}
                 {taxiRouteResult && !fareCalculation && <div className="grid grid-cols-2 gap-2 rounded-xl bg-sky-50 p-3 text-sm" aria-live="polite"><p>{page('distance')}<br /><strong>{taxiRouteResult.distanceKm.toLocaleString(lang,{maximumFractionDigits:1})} km</strong></p><p>{page('duration')}<br /><strong>~{taxiRouteResult.durationMinutes} min</strong></p></div>}
                 {taxiRouteResult && <details className="text-sm leading-relaxed text-slate-600"><summary className="min-h-11 cursor-pointer">{taxiDetailsCopy[lang][0]}</summary><p>{taxiMapKey(window.location.hostname,import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY,import.meta.env.VITE_GOOGLE_MAPS_PREVIEW_BROWSER_KEY)?taxiRouteNotice[lang]:taxiCalculationMapNotice[lang]}</p></details>}
@@ -802,22 +812,11 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
                     </div>
                   </div>
                 )}
-              </div>
-
-              <div className="lg:col-span-7 h-[360px] sm:h-[480px] lg:h-auto">
-                <Suspense fallback={<PageLoading lang={lang}/>}>
-                <SafeRouteMap
-                  title={dict[lang].taxi}
-                  originCoords={taxiOriginCoords}
-                  destCoords={taxiDestCoords}
-                  geometry={taxiRouteResult ? taxiRouteResult.geometry : null}
-                  color="#087FFF"
-                />
-                </Suspense>
-              </div>
+              </section>
             </div>
             <aside className="catalog-editorial-note"><a className="inline-flex min-h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-[#087FFF] px-6 py-3 font-bold text-white shadow-sm hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-700" href="https://www.bitaksi.com/home" target="_blank" rel="noopener noreferrer">🚕 {directoryText(lang, 3)} ↗</a><p className="mt-2">{directoryText(lang, 4)}</p></aside>
 
+            <SearchGuide path={browserPath} lang={lang}/>
           </main>
         )}
 
