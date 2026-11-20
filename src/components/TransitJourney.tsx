@@ -2,19 +2,25 @@ import {SearchGuide} from './SearchGuide';
 import { useEffect, useRef, useState } from 'react'
 import { LocateFixed, Clock3, ArrowRightLeft, ExternalLink } from 'lucide-react'
 import {formatTransitDuration} from '../lib/transitDuration'
-import TransitAddressInput from './TransitAddressInput'
+import TransitAddressInput, {type TransitPlace} from './TransitAddressInput'
+import {resolveTransitEndpoint} from '../lib/transitEndpoint'
+import {peekTransitHandoff,clearTransitHandoff} from '../lib/transitHandoff'
 import GoogleDirectionsMap from './GoogleDirectionsMap'
 import { requestTransitLocation, transitDeparture, transitFare, transitRequestTime, transitRoutes,transitSummary,transitStages,transitTime,transferCount,transitDurationCopy, type TransitRoute } from '../lib/transit'
 import {transitComparisonCopy} from '../lib/transitComparisonCopy'
 import { transitCopy, transitVehicle } from '../lib/transitCopy'
 
-export default function TransitJourney({ lang }: { lang: string }) {
+export default function TransitJourney({ lang, onShowLines, linesLabel }: { lang: string; onShowLines?:()=>void; linesLabel?:string }) {
   const locale = lang.toLowerCase() in transitCopy ? lang.toLowerCase() : 'en'
   const t = transitCopy[locale]
   const compare=transitComparisonCopy[locale]??transitComparisonCopy.en
-  const [origin, setOrigin] = useState(''), [destination, setDestination] = useState('')
-  const [coordinates, setCoordinates] = useState<{lat:number;lng:number} | null>(null)
-  const [destinationCoordinates,setDestinationCoordinates]=useState<{lat:number;lng:number}|null>(null)
+  const [handoff] = useState(peekTransitHandoff)
+  useEffect(() => clearTransitHandoff(), [])
+  const originSelection = useRef<Promise<TransitPlace|null>|null>(null)
+  const destinationSelection = useRef<Promise<TransitPlace|null>|null>(null)
+  const [origin, setOrigin] = useState(handoff?.origin.label ?? ''), [destination, setDestination] = useState(handoff?.destination.label ?? '')
+  const [coordinates, setCoordinates] = useState<{lat:number;lng:number} | null>(handoff?.origin ?? null)
+  const [destinationCoordinates,setDestinationCoordinates]=useState<{lat:number;lng:number}|null>(handoff?.destination ?? null)
   const [scheduled,setScheduled]=useState(false)
   const timing:Record<string,[string,string]>={es:['Ahora','Elegir otra hora'],en:['Now','Choose another time'],tr:['Şimdi','Başka saat seç'],de:['Jetzt','Andere Uhrzeit wählen'],fr:['Maintenant','Choisir une autre heure'],ar:['الآن','اختر وقتًا آخر'],ru:['Сейчас','Выбрать другое время'],zh:['现在','选择其他时间']}
   const [departure, setDeparture] = useState(''), [preference, setPreference] = useState('RECOMMENDED')
@@ -31,14 +37,21 @@ export default function TransitJourney({ lang }: { lang: string }) {
     event.preventDefault(); reset()
     const time = transitDeparture(scheduled?departure:'')
     if (!origin.trim() || !destination.trim() || !time) { setMessage('invalid'); return }
-    const key=JSON.stringify([coordinates??origin.trim(),destinationCoordinates??destination.trim(),scheduled?departure:'',preference,locale])
-    if(recent.current?.key===key && transitRequestTime()-recent.current.time<30000){setRoutes(recent.current.routes);return}
+    const id = generation.current
+    const fromPending = originSelection.current, toPending = destinationSelection.current
     setBusy(true)
-    const id = generation.current, controller = new AbortController()
+    const [fromPoint,toPoint] = await Promise.all([
+      resolveTransitEndpoint(fromPending,coordinates,origin),resolveTransitEndpoint(toPending,destinationCoordinates,destination)
+    ])
+    if (id !== generation.current) return
+    if (!fromPoint || !toPoint) { setBusy(false); setMessage('invalid'); return }
+    const key=JSON.stringify([fromPoint,toPoint,scheduled?departure:'',preference,locale])
+    if(recent.current?.key===key && transitRequestTime()-recent.current.time<30000){setRoutes(recent.current.routes);setBusy(false);return}
+    const controller = new AbortController()
     request.current = controller
     const timeout = setTimeout(() => controller.abort(), 20000)
     try {
-      const response = await fetch('/api/transit', { method:'POST', signal:controller.signal, headers:{'Content-Type':'application/json'}, body:JSON.stringify({origin:coordinates ?? origin.trim(),destination:destinationCoordinates??destination.trim(),departure:time,preference,language:locale}) })
+      const response = await fetch('/api/transit', { method:'POST', signal:controller.signal, headers:{'Content-Type':'application/json'}, body:JSON.stringify({origin:fromPoint,destination:toPoint,departure:time,preference,language:locale}) })
       if (id !== generation.current) return
       if (!response.ok) { setMessage(response.status === 429 ? 'busy' : response.status === 400 ? 'invalid' : 'error'); return }
       const data = await response.json()
@@ -50,6 +63,7 @@ export default function TransitJourney({ lang }: { lang: string }) {
     finally { clearTimeout(timeout); if (id === generation.current) setBusy(false) }
   }
   const useLocation = () => {
+    originSelection.current=null
     reset()
     const id = generation.current
     setLocating(true)
@@ -64,13 +78,15 @@ export default function TransitJourney({ lang }: { lang: string }) {
   return <section aria-label={t.title} dir={locale==='ar'?'rtl':undefined} className="transit-journey mb-6 space-y-4 rounded-2xl border border-sky-100 bg-white p-4 sm:p-6">
     <h2 className="text-xl font-extrabold text-slate-900">{t.title}</h2><p className="text-sm text-slate-600">{t.intro}</p>
     <form onSubmit={search} className="transit-route-form grid min-w-0 gap-3 sm:grid-cols-2">
-      <div className="flex min-w-0 items-end gap-2"><TransitAddressInput label={t.from} locale={locale} value={origin} selected={!!coordinates} onChange={value=>{reset();setCoordinates(null);setOrigin(value)}} onSelect={place=>{reset();setCoordinates(place);setOrigin(place.label)}} placeholder="Taksim, İstanbul"/><button type="button" onClick={useLocation} disabled={locating||busy} aria-label={t.locate} title={t.locate} className="min-h-11 min-w-11 rounded-xl border border-sky-200 bg-sky-50 p-3 text-sky-700 disabled:opacity-50"><LocateFixed size={20}/></button></div>
-      <TransitAddressInput label={t.to} locale={locale} value={destination} selected={!!destinationCoordinates} onChange={value=>{reset();setDestinationCoordinates(null);setDestination(value)}} onSelect={place=>{reset();setDestinationCoordinates(place);setDestination(place.label)}} placeholder="Sultanahmet, İstanbul"/>
+      <div className="flex min-w-0 items-end gap-2"><TransitAddressInput label={t.from} locale={locale} value={origin} selected={!!coordinates} onSelectionPending={pending=>{reset();originSelection.current=pending}} onChange={value=>{originSelection.current=null;reset();setCoordinates(null);setOrigin(value)}} onSelect={place=>{setCoordinates(place);setOrigin(place.label)}} placeholder="Taksim, İstanbul"/><button type="button" onClick={useLocation} disabled={locating||busy} aria-label={t.locate} title={t.locate} className="min-h-11 min-w-11 rounded-xl border border-sky-200 bg-sky-50 p-3 text-sky-700 disabled:opacity-50"><LocateFixed size={20}/></button></div>
+      <TransitAddressInput label={t.to} locale={locale} value={destination} selected={!!destinationCoordinates} onSelectionPending={pending=>{reset();destinationSelection.current=pending}} onChange={value=>{destinationSelection.current=null;reset();setDestinationCoordinates(null);setDestination(value)}} onSelect={place=>{setDestinationCoordinates(place);setDestination(place.label)}} placeholder="Sultanahmet, İstanbul"/>
       <div className="min-w-0"><div className="flex flex-wrap gap-2"><button type="button" aria-pressed={!scheduled} onClick={()=>{reset();setScheduled(false);setDeparture('')}} className={`min-h-11 rounded-xl border px-3 text-sm ${!scheduled?'bg-sky-100 text-sky-800':'bg-white'}`}>{timing[locale][0]}</button><button type="button" aria-pressed={scheduled} onClick={()=>{reset();setScheduled(true)}} className="min-h-11 rounded-xl border px-3 text-sm">{timing[locale][1]}</button></div>{scheduled&&<label className="text-sm font-semibold">{t.departure.split(/[（(]/)[0].trim()}<input required type="datetime-local" value={departure} onChange={e=>{reset();setDeparture(e.target.value)}} className={input}/></label>}</div>
       <label className="min-w-0 text-sm font-semibold">{t.preference}<select value={preference} onChange={e=>{reset();setPreference(e.target.value)}} className={input}><option value="RECOMMENDED">{t.recommended}</option><option value="LESS_WALKING">{t.walking}</option><option value="FEWER_TRANSFERS">{t.transfers}</option></select></label>
       <button disabled={busy||locating} className="min-h-11 rounded-xl bg-[#087FFF] p-3 font-bold text-white disabled:opacity-50 sm:col-span-2">{busy?t.loading:t.search}</button>
     </form>
     <div role="status" aria-live="polite">{(message||busy)&&<p className="rounded-xl bg-sky-50 p-3 text-sm text-slate-700">{busy?t.loading:message?t[message]:''}</p>}</div>
+    {onShowLines && ['empty','error','timeout','busy'].includes(message) &&
+      <button type="button" onClick={onShowLines} className="min-h-11 text-sm font-bold text-blue-700 underline">{linesLabel}</button>}
     <div className="transit-results-layout">
     {routes.length>0&&<div className="transit-route-options grid gap-2">{routes.map((r,i)=>{const s=transitSummary(r);const fare=transitFare(r,locale);return <button key={i} type="button" aria-pressed={selected===i} onClick={()=>setSelected(i)} className="transit-option">
       <span className="transit-option-top"><span>{t.option} {i+1}</span><strong><Clock3 size={18} aria-hidden="true"/>{formatTransitDuration(r.duration,locale)}</strong></span>

@@ -1,8 +1,31 @@
 import {afterEach,expect,it,vi} from 'vitest'
-import {discoverySearch,guideSearch,matchesGuide,wantsNearby} from '../services/homeSearch'
+import {discoverySearch,guideSearch,homeSearchDestination,matchesGuide,wantsNearby} from '../services/homeSearch'
+import {cityHighlightHref,highlightDescription} from '../lib/cityHighlights'
+import {searchLanguages} from '../lib/searchLocales'
 import {fetchGoogleNearby} from '../services/googleNearby'
 import handler from '../../api/places'
 afterEach(()=>{vi.unstubAllGlobals();vi.unstubAllEnvs()})
+it.each(['Is Istanbul safe for tourists?', 'İstanbul turistler için güvenli mi?', 'Wie sicher ist Istanbul?', 'Est-ce sûr pour les touristes à Istanbul ?', '¿Es seguro viajar a Estambul?', 'هل إسطنبول آمنة للسياح؟', 'Безопасно ли в Стамбуле?', '伊斯坦布尔对游客安全吗？'])('routes a safety question to the guide: %s',q=>{
+ expect(homeSearchDestination(q)).toEqual({section:'safety'})
+})
+it.each([
+ ['How do I find a pharmacy near me?', 'nearme'],['Wie finde ich ein Hotel in Antalya?', 'stay'],
+ ['Safe Hotel İstanbul','stay'],['un restaurant sur la côte','food'],
+ ['How do I calculate my taxi fare?','taxi'],['İstanbulkart nasıl alınır?','assistant'],
+ ['Estambul traslado al aeropuerto','tours'],['Topkapı Sarayı','nearme'],
+])('keeps explicit and named searches usable: %s',(query,section)=>expect(homeSearchDestination(query).section).toBe(section))
+it.each(searchLanguages)('opens the named city highlight in the current locale and keeps each Bursa description: %s',lang=>{
+ const href=new URL(cityHighlightHref('Bursa','Koza Han',lang),'https://www.safeinturkiye.com')
+ expect(href.pathname).toBe(lang==='en'?'/activities':`/${lang}/activities`)
+ expect(Object.fromEntries(href.searchParams)).toEqual({city:'bursa',category:'all',lookup:'1',q:'Koza Han, Bursa'})
+ for(const name of ['Koza Han','Ulu Cami','Uludağ','Gölyazı'])expect(highlightDescription('Bursa',name,lang)).toBeTruthy()
+ expect(new URL(cityHighlightHref('İstanbul','Ayasofya ve Sultanahmet',lang),href).searchParams.get('q')).toBe('Ayasofya, İstanbul')
+})
+it('keeps a named historical landmark even when Google omits tourist_attraction',async()=>{
+ const f=vi.fn().mockResolvedValue({ok:true,json:async()=>({places:[{id:'fixture',displayName:{text:'Fixture'},location:{latitude:40.18,longitude:29.06},primaryType:'historical_landmark',googleMapsUri:'https://maps.google.com/?cid=1'}]})})
+ vi.stubGlobal('fetch',f)
+ expect((await fetchGoogleNearby({lat:40.18,lng:29.06},'all','en',undefined,'city','Fixture, Bursa')).places[0].category).toBe('historical')
+})
 it.each(['Kadıköy restoran','Estambul restaurante','伊斯坦布尔餐厅','مطاعم إسطنبول','рестораны Стамбула','Berlin Restaurant'])('recognizes restaurant queries: %s',q=>expect(discoverySearch(q)?.category).toBe('restaurant'))
 it.each(['Antalya otel','فنادق أنطاليا','安塔利亚酒店'])('recognizes hotels: %s',q=>expect(discoverySearch(q)?.category).toBe('hotel'))
 it.each(['yakınımdaki döviz bürosu','restaurants near me','附近餐厅','مطاعم بالقرب مني'])('requires location for %s',q=>expect(wantsNearby(q)).toBe(true))

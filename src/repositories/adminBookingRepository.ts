@@ -1,9 +1,9 @@
 import {requireSupabase} from '../lib/supabase';
 import type {ReservationRow} from '../lib/adminReservations';
 const basic='id,reference_code,listing_name,guest_name,guest_email,visit_date,guest_count,notes,status,created_at,updated_at';
-export async function loadAdminReservations(status='',offset=0,signal?:AbortSignal,limit=50){
+export async function loadAdminReservations(status='',offset=0,signal?:AbortSignal,limit=50,reference?:string){
  const client=requireSupabase();
- async function run(fields:string){let query=client.from('bookings').select(fields,{count:'exact'}).eq('listing_type','restaurant');if(status)query=query.eq('status',status);query=query.order('created_at',{ascending:false}).order('id').range(offset,offset+Math.max(1,Math.min(1000,limit))-1);return await query.abortSignal(signal??AbortSignal.timeout(12000));}
+ async function run(fields:string){let query=client.from('bookings').select(fields,{count:'exact'}).eq('listing_type','restaurant');if(reference)query=query.eq('reference_code',reference);if(status)query=query.eq('status',status);query=query.order('created_at',{ascending:false}).order('id').range(offset,offset+Math.max(1,Math.min(1000,limit))-1);return await query.abortSignal(signal??AbortSignal.timeout(12000));}
  let result=await run(basic+',guest_phone,visit_time');
  if(result.error&&['42703','PGRST204'].includes(result.error.code))result=await run(basic);
  if(result.error)throw result.error;

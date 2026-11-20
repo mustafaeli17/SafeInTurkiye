@@ -20,7 +20,9 @@ export default async function handler(req:Request,res:Response){
  const retry=consume(req.headers);if(retry){res.setHeader('Retry-After',String(retry));return res.status(429).json({error:'BUSY'})}
  const languageCode=language==='zh'?'zh-CN':language
  try{
-  const detailParams=new URLSearchParams({sessionToken,languageCode,regionCode:'TR'})
+  // The traveller sees the suggestion in their chosen language. Resolve administrative
+  // names in Turkish so the taximeter jurisdiction is stable across all eight locales.
+  const detailParams=new URLSearchParams({sessionToken,languageCode:'tr',regionCode:'TR'})
   const upstream=await fetch(action==='suggest'?'https://places.googleapis.com/v1/places:autocomplete':`https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?${detailParams}`,{
    method:action==='suggest'?'POST':'GET',signal:AbortSignal.timeout(8000),
    headers:{'Content-Type':'application/json','X-Goog-Api-Key':key,'X-Goog-FieldMask':action==='suggest'?'suggestions.placePrediction.placeId,suggestions.placePrediction.text.text':'id,location,formattedAddress,addressComponents,attributions'},
@@ -38,8 +40,9 @@ export default async function handler(req:Request,res:Response){
   const components=Array.isArray(data.addressComponents)?data.addressComponents:[]
   const country=components.find((c:any)=>c.types?.includes('country'))?.shortText
   const province=components.find((c:any)=>c.types?.includes('administrative_area_level_1'))?.longText
+  const district=components.find((c:any)=>c.types?.includes('administrative_area_level_2'))?.longText
   if(country!=='TR'||data.id!==placeId||typeof lat!=='number'||typeof lng!=='number'||!Number.isFinite(lat)||!Number.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180)throw Error('response')
   const attributions=(Array.isArray(data.attributions)?data.attributions:[]).flatMap((a:any)=>typeof a.provider==='string'?[{provider:a.provider,...(typeof a.providerUri==='string'&&a.providerUri.startsWith('https://')?{uri:a.providerUri}:{})}]:[])
-  return res.status(200).json({place:{lat,lng,city:taxiCityFromAddress(country,province),mapQuery:`place_id:${data.id}`,provider:'google',attributions}})
+  return res.status(200).json({place:{lat,lng,city:taxiCityFromAddress(country,province),...(typeof district==='string' && district ? {district} : {}),mapQuery:`place_id:${data.id}`,provider:'google',attributions}})
  }catch(error){return res.status(502).json({error:error instanceof Error&&['TimeoutError','AbortError'].includes(error.name)?'TIMEOUT':'UNAVAILABLE'})}
 }

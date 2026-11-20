@@ -21,6 +21,7 @@ jobs:
       # Prerender regressions inspect the completed dist output.
       - run: npm test -- --maxWorkers=2
       - run: node scripts/check-photo-assets.mjs
+      - run: node scripts/check-taxi-coverage.mjs
       - run: node scripts/check-favicon-build.mjs
       - run: node scripts/check-seo-build.mjs
       - run: node scripts/check-bundle-budget.mjs

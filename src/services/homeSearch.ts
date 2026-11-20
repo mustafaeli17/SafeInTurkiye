@@ -1,6 +1,30 @@
 import {normalizeSearchText} from './searchCities'
+import {tourIntent} from './tourSearch'
 export function wantsNearby(query:string){return /yakinim|yakindaki|near me|nearby|in der nahe|a proximite|cerca de mi|рядом|поблизости|بالقرب|قريب مني|附近/.test(normalizeSearchText(query))}
 export function guideSearch(query:string){return /istanbulkart|istanbul kart|nas[iı]l|how (?:do|to|can)|comment|como |wie |как |كيف|如何|怎么/.test(normalizeSearchText(query))}
+
+function asksAboutSafety(q:string) {
+ // French “sur” also means “on”. Match the accented adjective in the original question.
+ const frenchQuestion=/\bs[uû]re?\s+pour\s+(?:les|un|une)\s+(?:touriste|voyageu)|\best[- ](?:elle|il)\s+sûr|\bc['’]est\s+sûr|\ben\s+sécurité/iu.test(q)
+ const term=normalizeSearchText(q).replace(/[\u064b-\u065f]/g,'')
+ return frenchQuestion || /\b(?:safety|emergency|scams?|pickpockets?|sicherheit|notfall|securite|urgence|seguridad|emergencia)\b|guvenli|dolandirici|\bacil\b|безопас|мошенни|экстренн|امن[ةه]?\s+(?:ل|في)|هل.{0,50}امن|الامان|الطوارئ|طوارئ|سلامة|安全|紧急|诈骗/u.test(term.replace(/[أإآ]/g,'ا')) ||
+  /\b(?:is|are|how|stay|travel|feel|it['’]s)\b.{0,60}\bsafe\b|\bsafe\s+(?:for|to)\b|\b(?:ist|wie|wie kann)\b.{0,60}\bsicher\b|\bsicher\s+(?:in|fur|reisen)\b|\b(?:es|viajar)\b.{0,50}\bsegur[oa]\b|\bsegur[oa]\s+para\b/u.test(term)
+}
+
+export function homeSearchDestination(query:string) {
+ const q=normalizeSearchText(query)
+ if (asksAboutSafety(query)) return {section:'safety'} as const
+ if (/istanbul\s*kart/.test(q) && guideSearch(q)) return {section:'assistant'} as const
+ if (tourIntent(query)) return {section:'tours'} as const
+ const discovery=discoverySearch(query)
+ if (discovery) return discovery
+ if (/taksi|taxi|такси|تاكسي|出租车/.test(q)) return {section:'taxi'} as const
+ if (/metro|otobus|\bbus\b|tren|train|vapur|ferry|marmaray|ulasim|transit|route|rota|bahn|transport|транспорт|метро|автобус|مواصلات|مترو|حافل|地铁|公交|交通|火车/.test(q)) return {section:'transit'} as const
+ if (/doviz|\bkur\b|exchange|currency|euro|usd|wechsel|change|валют|обмен|صرف|صراف|汇率|换汇/.test(q)) return {section:'currency'} as const
+ if (/yakin|near|polis|police|nahe|proximite|рядом|قريب|附近/.test(q)) return {section:'nearme',category:'all'} as const
+ if (guideSearch(q)) return {section:'assistant'} as const
+ return {section:'nearme',category:'all'} as const
+}
 export function matchesGuide(text:string,query:string){
  const normalized=normalizeSearchText(query).trim()
  if(!normalized)return true

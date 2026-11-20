@@ -8,7 +8,6 @@ import SiteInformation from './components/SiteInformation';
 import {parseLocalePath} from './lib/searchLocales';
 import { directoryEntry, registerPublishedEntry } from './lib/directory';
 import type { DirectoryEntry } from './lib/directory';
-import { requireSupabase } from './lib/supabase';
 import {publicCities} from './lib/publicRoutes';
 import {foundationEnabled} from './lib/foundationConfig';
 const DirectoryDetail=lazy(()=>import('./components/DirectoryDetail'));
@@ -27,6 +26,8 @@ export default function TravelApp() {
     let cancelled=false;
     void (async()=>{
       try {
+        const {requireSupabase}=await import('./lib/supabase');
+        if(cancelled)return;
         const {data,error}=await requireSupabase().from(route[1]).select('*, city:cities(name)').eq(foundationEnabled?'public_slug':'id',route[2]).eq('active',true).eq('status','PUBLISHED').abortSignal(AbortSignal.timeout(12000)).maybeSingle();
         if(cancelled)return;
         setRemote({path,...(error?{error:true}:data?{entry:registerPublishedEntry(data,route[1])}:{})});

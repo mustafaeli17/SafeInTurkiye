@@ -2,7 +2,10 @@ import {localizePath,parseLocalePath} from '../lib/searchLocales';
 import {navigateTo,useBrowserLocation} from '../lib/browserNavigation';
 import {searchPage,searchPageSchema} from '../lib/searchPages';
 import {updateSearchHead} from '../lib/seo';
-import {useEffect} from 'react';
+import {useEffect,useState} from 'react';
+import {productConsent,metricsConsentKey,metricsAvailable,metricsLabel} from '../lib/productMetrics';
+import {trackingOptOut} from '../lib/analytics';
+import {supportTopics} from '../lib/supportTopics';
 import {ArrowLeft,ArrowUpRight,BookOpen,Globe2,Info,Mail,Phone,ShieldCheck,UserRound} from 'lucide-react';
 import {siteInformation} from '../lib/siteInformation';
 import {restaurantRequestsEnabled} from '../lib/reservationAvailability';
@@ -18,6 +21,10 @@ export default function SiteInformation({page,initialLanguage}:{page:typeof page
  const location=useBrowserLocation();
  const lang=initialLanguage??parseLocalePath(location).lang;
  const setLang=(next:string)=>navigateTo(location+window.location.hash,{language:next,scroll:false,state:window.history.state??{}});
+ const [opted,setOpted]=useState(productConsent);
+ const [topic,setTopic]=useState('');
+ const [topicLabel,...topics]=supportTopics[lang]??supportTopics.en;
+ const subject=topics.includes(topic)?topic:'';
  const original=siteInformation[lang]??siteInformation.en;
  // Disabling new intake does not change how existing reservation data is handled.
  const t={...original,privacy:activeReservationPrivacy[lang]??activeReservationPrivacy.en,contact:restaurantRequestsEnabled?(activeReservationContact[lang]??activeReservationContact.en):original.contact};
@@ -39,8 +46,8 @@ export default function SiteInformation({page,initialLanguage}:{page:typeof page
     <nav className="information-nav" aria-label={ui[3]}><p>{ui[3]}</p>{pages.map((item,i)=>{const NavIcon=icons[i];return <a key={item} href={localizePath('/'+item,lang)} aria-current={page===item?'page':undefined}><NavIcon size={19} aria-hidden="true"/><span>{t.labels[i]}</span><ArrowUpRight size={15} className="information-nav-arrow" aria-hidden="true"/></a>;})}</nav>
     <div className="information-content">
      <article className="information-panel"><h2>{ui[5]}</h2><p className="information-copy">{t[page]}</p><div className="information-operator"><UserRound size={19} aria-hidden="true"/><div><span>{operatorLabel[lang]??operatorLabel.en}</span><p>{siteOperatorName}</p></div></div></article>
-     {page==='privacy'&&<section className="information-panel"><p className="information-copy">{privacyDetails[lang]??privacyDetails.en}</p><ul>{privacyProviders.map(([name,url])=><li key={name}><a href={url} target="_blank" rel="noopener noreferrer" className="underline">{name}</a></li>)}</ul></section>}
-     <section className="information-contact-panel" aria-labelledby="information-email"><span className="information-mail-icon"><Mail size={23} aria-hidden="true"/></span><div><h2 id="information-email">{ui[6]}</h2><p>{ui[7]}</p><a href={`mailto:${supportEmail}`} dir="ltr">{supportEmail}<ArrowUpRight size={17} aria-hidden="true"/></a></div></section>
+     {page==='privacy'&&<section className="information-panel"><p className="information-copy">{privacyDetails[lang]??privacyDetails.en}</p>{metricsAvailable && !trackingOptOut(navigator) && <label className="my-4 flex min-h-11 items-center gap-2"><input type="checkbox" checked={opted} onChange={e=>{try{if(e.target.checked)localStorage.setItem(metricsConsentKey,'yes');else localStorage.removeItem(metricsConsentKey);setOpted(productConsent());}catch{setOpted(false);}}}/>{metricsLabel[lang]??metricsLabel.en}</label>}<ul>{privacyProviders.map(([name,url])=><li key={name}><a href={url} target="_blank" rel="noopener noreferrer" className="underline">{name}</a></li>)}</ul></section>}
+     <section className="information-contact-panel" aria-labelledby="information-email"><span className="information-mail-icon"><Mail size={23} aria-hidden="true"/></span><div><h2 id="information-email">{ui[6]}</h2><p>{ui[7]}</p>{page==='contact'&&<label className="my-2 flex flex-wrap items-center gap-2 text-sm">{topicLabel}<select className="min-h-11 rounded-lg border border-sky-200 bg-white px-2" value={subject} onChange={e=>setTopic(e.target.value)}><option value="">—</option>{topics.map(v=><option key={v}>{v}</option>)}</select></label>}<a href={'mailto:'+supportEmail+(page==='contact'&&subject?'?subject='+encodeURIComponent('SafeInTürkiye · '+subject):'')} dir="ltr">{supportEmail}<ArrowUpRight size={17} aria-hidden="true"/></a></div></section>
      {page==='contact'&&<aside className="information-emergency"><Phone size={19} aria-hidden="true"/><div><a href="tel:112">{ui[8]}</a><p>{ui[9]}</p></div></aside>}
     </div>
    </div>

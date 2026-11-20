@@ -3,7 +3,7 @@ import CityHighlightPhoto from './components/CityHighlightPhoto';
 import './components/CityGuidePage.css';
 import {cityGuideDesignCopy} from './lib/cityGuideDesignCopy';
 import NearMeHero from './components/NearMeHero';
-import {navigationUi} from './lib/navigationUi';
+import {headerLabels,navigationUi} from './lib/navigationUi';
 import {citiesDetailedData} from './data/originalCityDetails';
 import {localizePath,parseLocalePath} from './lib/searchLocales';
 import {searchPage,searchPageSchema} from './lib/searchPages';
@@ -61,15 +61,18 @@ import { saveLanguagePreference } from './lib/languagePreference';
 import { cityPath,publicCities } from './lib/publicRoutes';
 import { regionalDescription } from './lib/regionalDescription';
 import { sectionFromPath,sectionPath,transferIntent,type Section } from './lib/sectionNavigation';
-import {tourIntent} from './services/tourSearch';
 import {mentionedSearchCity} from './services/searchCities';
-import {discoverySearch,guideSearch,wantsNearby} from './services/homeSearch';
+import {homeSearchDestination,wantsNearby} from './services/homeSearch';
+import {cityHighlightHref,highlightDescription} from './lib/cityHighlights';
 import { siteInformation } from './lib/siteInformation';
-import { supabaseConfigured } from './lib/supabase';
+import { supabaseConfigured } from './lib/supabaseConfig';
 import { taxiBudgetRange } from './lib/taxiBudget';
+import { setTransitHandoff } from './lib/transitHandoff';
+import { addressSearchText } from './lib/addressSearchCopy';
+import { trackProduct } from './lib/productMetrics';
 import { routeFareRange } from './lib/taxiCalculation';
 import { taxiCityFromAddress,taxiReferenceCity,taxiUnavailableText } from './lib/taxiCity';
-import { taxiMinimumCopy,taxiBudgetCopy,taxiDetailsCopy,taxiEstimateCopy,taxiIntroCopy } from './lib/taxiCopy';
+import { taxiCompareTransit,taxiMinimumCopy,taxiBudgetCopy,taxiDetailsCopy,taxiEstimateCopy,taxiIntroCopy } from './lib/taxiCopy';
 import { taxiErrorText,type TaxiErrorKey } from './lib/taxiErrors';
 import {taxiCalculationMapNotice,taxiRouteNotice} from './lib/taxiRouteNotice';
 import {taxiMapKey} from './lib/mapEnvironment';
@@ -77,7 +80,6 @@ import SearchContext from './components/SearchContext';
 import TransitAddressInput from './components/TransitAddressInput';
 import { toursLabel } from './lib/viatorCopy';
 import { directoryText } from './lib/visitorDirectory';
-import { getCurrentTaxiTariffs } from './repositories/tariffRepository';
 const CurrencyRates = lazy(()=>import('./components/CurrencyRates'));
 const SafetyTips = lazy(()=>import('./components/SafetyTips'));
 const TransitPlanner = lazy(()=>import('./components/TransitPlanner'));
@@ -260,14 +262,14 @@ const dict: Record<SupportedLang, Record<string, string>> = {
 };
 
 const pageCopy: Record<SupportedLang, Record<string, string>> = {
-  es: { more:'Más',safety:'Guía de seguridad',back:'Volver al inicio',taxiTitle:'Calculadora de taxi',taxiSub:'Calcula una estimación según la distancia por carretera y la tarifa de referencia.',origin:'Desde',destination:'Hasta',locate:'Usar mi ubicación',calculate:'Calcular ruta y tarifa',estimate:'Precio estimado',distance:'Distancia por carretera',duration:'Duración estimada',miss:'No te pierdas en',hotelsTitle:'Hoteles',night:'noche',book:'Solicitar estancia',diningTitle:'Restaurantes en Türkiye',hours:'Horario',average:'Promedio',reserve:'Solicitar mesa',activitiesTitle:'Actividades',activitiesSub:'Explora museos, cine, ocio y propuestas para el verano y el invierno.',details:'Información / solicitud',safetySub:'Consejos prácticos para un viaje más seguro y tranquilo.',emergencyTitle:'Emergencias',emergencyText:'En Türkiye, llama al 112 para ambulancias, bomberos y policía.',taxiSafety:'Pide que usen el taxímetro y guarda el recibo.',useful:'Lugares útiles',usefulText:'Encuentra farmacias, comisarías, cajeros y paradas de taxi cercanos.',cityTransport:'Transporte urbano',noTraffic:'No hay datos de tráfico en directo conectados.' },
-  en: { more: 'More', safety: 'Safety guide', back: 'Back to home', taxiTitle: 'Taxi fare calculator', taxiSub: 'Estimate the fare with road distance and the dated official municipal tariff.', origin: 'From (origin)', destination: 'To (destination)', locate: 'Use current location', calculate: 'Calculate route & fare', estimate: 'Estimated fare range', distance: 'Road distance', duration: 'Estimated duration', miss: "Don't miss in", hotelsTitle: 'Hotels', night: 'night', book: 'Request stay', diningTitle: 'Restaurants in Türkiye', hours: 'Hours', average: 'Average', reserve: 'Request table', activitiesTitle: 'Activities & tours', activitiesSub: 'Browse museums, cinema, entertainment, summer and winter ideas separately.', details: 'Details / request', safetySub: 'Practical essentials for a safer, calmer trip.', emergencyTitle: 'Emergency', emergencyText: 'Call 112 for ambulance, fire and police emergencies in Türkiye.', taxiSafety: 'Ask for the meter to be used and keep your receipt.', useful: 'Useful places', usefulText: 'Find published pharmacies, police desks, ATMs and taxi ranks nearby.', cityTransport: 'Getting around', noTraffic: 'Live traffic data is not connected; no fixed traffic percentage is shown.' },
-  tr: { more: 'Daha fazla', safety: 'Güvenlik rehberi', back: 'Ana sayfaya dön', taxiTitle: 'Taksi ücreti hesaplama', taxiSub: 'Yol mesafesi ve tarihli resmî belediye tarifesiyle tahmini ücret hesaplayın.', origin: 'Nereden', destination: 'Nereye', locate: 'Konumumu kullan', calculate: 'Rota ve ücreti hesapla', estimate: 'Tahmini ücret aralığı', distance: 'Yol mesafesi', duration: 'Tahmini süre', miss: 'Kaçırmayın:', hotelsTitle: 'Oteller', night: 'gece', book: 'Konaklama talebi', diningTitle: 'Türkiye’de restoranlar', hours: 'Saatler', average: 'Ortalama', reserve: 'Masa talebi', activitiesTitle: 'Aktiviteler ve turlar', activitiesSub: 'Müze, sinema, eğlence, yaz ve kış seçeneklerini ayrı inceleyin.', details: 'Bilgi / talep', safetySub: 'Daha güvenli ve sakin bir gezi için temel bilgiler.', emergencyTitle: 'Acil durum', emergencyText: 'Türkiye’de ambulans, itfaiye ve polis için 112’yi arayın.', taxiSafety: 'Taksimetrenin açılmasını isteyin ve fişinizi saklayın.', useful: 'Yararlı yerler', usefulText: 'Yakındaki kayıtlı eczane, polis noktası, ATM ve taksi duraklarını bulun.', cityTransport: 'Şehir içi ulaşım', noTraffic: 'Canlı trafik verisi bağlı değil; sabit trafik yüzdesi gösterilmiyor.' },
-  de: { more: 'Mehr', safety: 'Sicherheit', back: 'Zur Startseite', taxiTitle: 'Taxipreis berechnen', taxiSub: 'Schätzung mit Straßenentfernung und datiertem amtlichem Tarif.', origin: 'Von', destination: 'Nach', locate: 'Standort verwenden', calculate: 'Route & Preis berechnen', estimate: 'Geschätzter Preis', distance: 'Straßenentfernung', duration: 'Geschätzte Dauer', miss: 'Nicht verpassen in', hotelsTitle: 'Hotels', night: 'Nacht', book: 'Unterkunft anfragen', diningTitle: 'Restaurants in Türkiye', hours: 'Öffnungszeiten', average: 'Durchschnitt', reserve: 'Tisch anfragen', activitiesTitle: 'Aktivitäten & Touren', activitiesSub: 'Museen, Kino, Unterhaltung sowie Sommer- und Winterideen.', details: 'Details / Anfrage', safetySub: 'Praktische Grundlagen für eine sichere Reise.', emergencyTitle: 'Notfall', emergencyText: 'Rufen Sie in Türkiye für Rettung, Feuerwehr und Polizei 112 an.', taxiSafety: 'Taxameter einschalten lassen und Beleg aufbewahren.', useful: 'Nützliche Orte', usefulText: 'Apotheken, Polizei, Geldautomaten und Taxistände in der Nähe finden.', cityTransport: 'Nahverkehr', noTraffic: 'Keine Live-Verkehrsdaten; es wird kein fester Prozentsatz angezeigt.' },
-  fr: { more: 'Plus', safety: 'Sécurité', back: 'Retour à l’accueil', taxiTitle: 'Calcul du tarif taxi', taxiSub: 'Estimation selon la distance routière et le tarif municipal officiel daté.', origin: 'Départ', destination: 'Destination', locate: 'Utiliser ma position', calculate: 'Calculer trajet et tarif', estimate: 'Fourchette estimée', distance: 'Distance routière', duration: 'Durée estimée', miss: 'À ne pas manquer à', hotelsTitle: 'Hôtels', night: 'nuit', book: 'Demander un séjour', diningTitle: 'Restaurants en Türkiye', hours: 'Horaires', average: 'Moyenne', reserve: 'Demander une table', activitiesTitle: 'Activités et visites', activitiesSub: 'Musées, cinéma, loisirs et idées d’été ou d’hiver.', details: 'Détails / demande', safetySub: 'L’essentiel pour un voyage plus serein.', emergencyTitle: 'Urgence', emergencyText: 'Appelez le 112 pour ambulance, pompiers et police en Türkiye.', taxiSafety: 'Demandez le compteur et gardez le reçu.', useful: 'Lieux utiles', usefulText: 'Trouvez pharmacies, police, distributeurs et stations de taxi.', cityTransport: 'Se déplacer', noTraffic: 'Pas de trafic en direct ; aucun pourcentage fixe n’est affiché.' },
-  ar: { more: 'المزيد', safety: 'دليل الأمان', back: 'العودة للرئيسية', taxiTitle: 'حاسبة أجرة التاكسي', taxiSub: 'تقدير حسب مسافة الطريق والتعرفة البلدية الرسمية المؤرخة.', origin: 'من', destination: 'إلى', locate: 'استخدم موقعي', calculate: 'احسب الطريق والأجرة', estimate: 'نطاق الأجرة التقديري', distance: 'مسافة الطريق', duration: 'المدة المقدرة', miss: 'لا تفوّت في', hotelsTitle: 'الفنادق', night: 'ليلة', book: 'طلب إقامة', diningTitle: 'مطاعم تركيا', hours: 'الساعات', average: 'المتوسط', reserve: 'طلب طاولة', activitiesTitle: 'الأنشطة والجولات', activitiesSub: 'المتاحف والسينما والترفيه وأنشطة الصيف والشتاء.', details: 'التفاصيل / طلب', safetySub: 'أساسيات عملية لرحلة أكثر أمانًا.', emergencyTitle: 'طوارئ', emergencyText: 'اتصل بـ112 للإسعاف والإطفاء والشرطة في تركيا.', taxiSafety: 'اطلب تشغيل العداد واحتفظ بالإيصال.', useful: 'أماكن مفيدة', usefulText: 'اعثر على الصيدليات والشرطة وأجهزة الصراف ومواقف التاكسي.', cityTransport: 'التنقل في المدينة', noTraffic: 'بيانات المرور المباشرة غير متصلة ولا نعرض نسبة ثابتة.' },
-  ru: { more: 'Ещё', safety: 'Безопасность', back: 'На главную', taxiTitle: 'Расчёт стоимости такси', taxiSub: 'Оценка по дорожному расстоянию и датированному муниципальному тарифу.', origin: 'Откуда', destination: 'Куда', locate: 'Моё местоположение', calculate: 'Рассчитать маршрут и цену', estimate: 'Примерная стоимость', distance: 'Расстояние', duration: 'Примерное время', miss: 'Не пропустите в', hotelsTitle: 'Отели', night: 'ночь', book: 'Запросить проживание', diningTitle: 'Рестораны Турции', hours: 'Часы', average: 'Среднее', reserve: 'Запросить столик', activitiesTitle: 'Экскурсии и развлечения', activitiesSub: 'Музеи, кино, развлечения, летние и зимние идеи.', details: 'Подробнее / запрос', safetySub: 'Практические основы безопасной поездки.', emergencyTitle: 'Экстренная помощь', emergencyText: 'В Турции звоните 112 для скорой, пожарной и полиции.', taxiSafety: 'Попросите включить счётчик и сохраните чек.', useful: 'Полезные места', usefulText: 'Найдите аптеки, полицию, банкоматы и стоянки такси.', cityTransport: 'Транспорт', noTraffic: 'Онлайн-данные трафика не подключены; фиксированный процент не показывается.' },
-  zh: { more: '更多', safety: '安全指南', back: '返回首页', taxiTitle: '出租车费用计算', taxiSub: '根据道路距离和注明日期的官方市政资费估算。', origin: '出发地', destination: '目的地', locate: '使用当前位置', calculate: '计算路线和费用', estimate: '预计费用范围', distance: '道路距离', duration: '预计时间', miss: '不可错过：', hotelsTitle: '酒店', night: '晚', book: '申请住宿', diningTitle: '土耳其餐厅', hours: '营业时间', average: '平均', reserve: '申请订桌', activitiesTitle: '活动与游览', activitiesSub: '分别浏览博物馆、影院、娱乐以及夏季和冬季活动。', details: '详情 / 申请', safetySub: '让旅程更安全从容的实用基础信息。', emergencyTitle: '紧急情况', emergencyText: '在土耳其需要救护车、消防或警察时拨打112。', taxiSafety: '请司机打表并保留收据。', useful: '实用地点', usefulText: '查找附近公开登记的药房、警察、ATM和出租车站。', cityTransport: '市内交通', noTraffic: '尚未接入实时交通数据，不显示固定拥堵百分比。' },
+  es: { more:'Más',safety:'Guía de seguridad',back:'Volver al inicio',taxiTitle:'Calculadora de taxi',taxiSub:'Calcula una estimación según la distancia por carretera y la tarifa de referencia.',origin:'Desde',destination:'Hasta',locate:'Usar mi ubicación',calculate:'Calcular ruta y tarifa',estimate:'Precio estimado',distance:'Distancia por carretera',duration:'Duración estimada',miss:'No te pierdas en',hotelsTitle:'Hoteles',night:'noche',book:'Solicitar estancia',diningTitle:'Restaurantes en Türkiye',hours:'Horario',average:'Promedio',reserve:'Solicitar mesa',activitiesTitle:'Lugares que visitar',activitiesSub:'Explora museos, cine, ocio y propuestas para el verano y el invierno.',details:'Información / solicitud',safetySub:'Consejos prácticos para un viaje más seguro y tranquilo.',emergencyTitle:'Emergencias',emergencyText:'En Türkiye, llama al 112 para ambulancias, bomberos y policía.',taxiSafety:'Pide que usen el taxímetro y guarda el recibo.',useful:'Lugares útiles',usefulText:'Encuentra farmacias, comisarías, cajeros y paradas de taxi cercanos.',cityTransport:'Transporte urbano',noTraffic:'No hay datos de tráfico en directo conectados.' },
+  en: { more: 'More', safety: 'Safety guide', back: 'Back to home', taxiTitle: 'Taxi fare calculator', taxiSub: 'Estimate the fare with road distance and the dated official municipal tariff.', origin: 'From (origin)', destination: 'To (destination)', locate: 'Use current location', calculate: 'Calculate route & fare', estimate: 'Estimated fare range', distance: 'Road distance', duration: 'Estimated duration', miss: "Don't miss in", hotelsTitle: 'Hotels', night: 'night', book: 'Request stay', diningTitle: 'Restaurants in Türkiye', hours: 'Hours', average: 'Average', reserve: 'Request table', activitiesTitle: 'Places to visit', activitiesSub: 'Browse museums, cinema, entertainment, summer and winter ideas separately.', details: 'Details / request', safetySub: 'Practical essentials for a safer, calmer trip.', emergencyTitle: 'Emergency', emergencyText: 'Call 112 for ambulance, fire and police emergencies in Türkiye.', taxiSafety: 'Ask for the meter to be used and keep your receipt.', useful: 'Useful places', usefulText: 'Find published pharmacies, police desks, ATMs and taxi ranks nearby.', cityTransport: 'Getting around', noTraffic: 'Live traffic data is not connected; no fixed traffic percentage is shown.' },
+  tr: { more: 'Daha fazla', safety: 'Güvenlik rehberi', back: 'Ana sayfaya dön', taxiTitle: 'Taksi ücreti hesaplama', taxiSub: 'Yol mesafesi ve tarihli resmî belediye tarifesiyle tahmini ücret hesaplayın.', origin: 'Nereden', destination: 'Nereye', locate: 'Konumumu kullan', calculate: 'Rota ve ücreti hesapla', estimate: 'Tahmini ücret aralığı', distance: 'Yol mesafesi', duration: 'Tahmini süre', miss: 'Kaçırmayın:', hotelsTitle: 'Oteller', night: 'gece', book: 'Konaklama talebi', diningTitle: 'Türkiye’de restoranlar', hours: 'Saatler', average: 'Ortalama', reserve: 'Masa talebi', activitiesTitle: 'Gezilecek yerler', activitiesSub: 'Müze, sinema, eğlence, yaz ve kış seçeneklerini ayrı inceleyin.', details: 'Bilgi / talep', safetySub: 'Daha güvenli ve sakin bir gezi için temel bilgiler.', emergencyTitle: 'Acil durum', emergencyText: 'Türkiye’de ambulans, itfaiye ve polis için 112’yi arayın.', taxiSafety: 'Taksimetrenin açılmasını isteyin ve fişinizi saklayın.', useful: 'Yararlı yerler', usefulText: 'Yakındaki kayıtlı eczane, polis noktası, ATM ve taksi duraklarını bulun.', cityTransport: 'Şehir içi ulaşım', noTraffic: 'Canlı trafik verisi bağlı değil; sabit trafik yüzdesi gösterilmiyor.' },
+  de: { more: 'Mehr', safety: 'Sicherheit', back: 'Zur Startseite', taxiTitle: 'Taxipreis berechnen', taxiSub: 'Schätzung mit Straßenentfernung und datiertem amtlichem Tarif.', origin: 'Von', destination: 'Nach', locate: 'Standort verwenden', calculate: 'Route & Preis berechnen', estimate: 'Geschätzter Preis', distance: 'Straßenentfernung', duration: 'Geschätzte Dauer', miss: 'Nicht verpassen in', hotelsTitle: 'Hotels', night: 'Nacht', book: 'Unterkunft anfragen', diningTitle: 'Restaurants in Türkiye', hours: 'Öffnungszeiten', average: 'Durchschnitt', reserve: 'Tisch anfragen', activitiesTitle: 'Sehenswürdigkeiten und Freizeit', activitiesSub: 'Museen, Kino, Unterhaltung sowie Sommer- und Winterideen.', details: 'Details / Anfrage', safetySub: 'Praktische Grundlagen für eine sichere Reise.', emergencyTitle: 'Notfall', emergencyText: 'Rufen Sie in Türkiye für Rettung, Feuerwehr und Polizei 112 an.', taxiSafety: 'Taxameter einschalten lassen und Beleg aufbewahren.', useful: 'Nützliche Orte', usefulText: 'Apotheken, Polizei, Geldautomaten und Taxistände in der Nähe finden.', cityTransport: 'Nahverkehr', noTraffic: 'Keine Live-Verkehrsdaten; es wird kein fester Prozentsatz angezeigt.' },
+  fr: { more: 'Plus', safety: 'Sécurité', back: 'Retour à l’accueil', taxiTitle: 'Calcul du tarif taxi', taxiSub: 'Estimation selon la distance routière et le tarif municipal officiel daté.', origin: 'Départ', destination: 'Destination', locate: 'Utiliser ma position', calculate: 'Calculer trajet et tarif', estimate: 'Fourchette estimée', distance: 'Distance routière', duration: 'Durée estimée', miss: 'À ne pas manquer à', hotelsTitle: 'Hôtels', night: 'nuit', book: 'Demander un séjour', diningTitle: 'Restaurants en Türkiye', hours: 'Horaires', average: 'Moyenne', reserve: 'Demander une table', activitiesTitle: 'Lieux à découvrir', activitiesSub: 'Musées, cinéma, loisirs et idées d’été ou d’hiver.', details: 'Détails / demande', safetySub: 'L’essentiel pour un voyage plus serein.', emergencyTitle: 'Urgence', emergencyText: 'Appelez le 112 pour ambulance, pompiers et police en Türkiye.', taxiSafety: 'Demandez le compteur et gardez le reçu.', useful: 'Lieux utiles', usefulText: 'Trouvez pharmacies, police, distributeurs et stations de taxi.', cityTransport: 'Se déplacer', noTraffic: 'Pas de trafic en direct ; aucun pourcentage fixe n’est affiché.' },
+  ar: { more: 'المزيد', safety: 'دليل الأمان', back: 'العودة للرئيسية', taxiTitle: 'حاسبة أجرة التاكسي', taxiSub: 'تقدير حسب مسافة الطريق والتعرفة البلدية الرسمية المؤرخة.', origin: 'من', destination: 'إلى', locate: 'استخدم موقعي', calculate: 'احسب الطريق والأجرة', estimate: 'نطاق الأجرة التقديري', distance: 'مسافة الطريق', duration: 'المدة المقدرة', miss: 'لا تفوّت في', hotelsTitle: 'الفنادق', night: 'ليلة', book: 'طلب إقامة', diningTitle: 'مطاعم تركيا', hours: 'الساعات', average: 'المتوسط', reserve: 'طلب طاولة', activitiesTitle: 'أماكن تستحق الزيارة', activitiesSub: 'المتاحف والسينما والترفيه وأنشطة الصيف والشتاء.', details: 'التفاصيل / طلب', safetySub: 'أساسيات عملية لرحلة أكثر أمانًا.', emergencyTitle: 'طوارئ', emergencyText: 'اتصل بـ112 للإسعاف والإطفاء والشرطة في تركيا.', taxiSafety: 'اطلب تشغيل العداد واحتفظ بالإيصال.', useful: 'أماكن مفيدة', usefulText: 'اعثر على الصيدليات والشرطة وأجهزة الصراف ومواقف التاكسي.', cityTransport: 'التنقل في المدينة', noTraffic: 'بيانات المرور المباشرة غير متصلة ولا نعرض نسبة ثابتة.' },
+  ru: { more: 'Ещё', safety: 'Безопасность', back: 'На главную', taxiTitle: 'Расчёт стоимости такси', taxiSub: 'Оценка по дорожному расстоянию и датированному муниципальному тарифу.', origin: 'Откуда', destination: 'Куда', locate: 'Моё местоположение', calculate: 'Рассчитать маршрут и цену', estimate: 'Примерная стоимость', distance: 'Расстояние', duration: 'Примерное время', miss: 'Не пропустите в', hotelsTitle: 'Отели', night: 'ночь', book: 'Запросить проживание', diningTitle: 'Рестораны Турции', hours: 'Часы', average: 'Среднее', reserve: 'Запросить столик', activitiesTitle: 'Что посмотреть', activitiesSub: 'Музеи, кино, развлечения, летние и зимние идеи.', details: 'Подробнее / запрос', safetySub: 'Практические основы безопасной поездки.', emergencyTitle: 'Экстренная помощь', emergencyText: 'В Турции звоните 112 для скорой, пожарной и полиции.', taxiSafety: 'Попросите включить счётчик и сохраните чек.', useful: 'Полезные места', usefulText: 'Найдите аптеки, полицию, банкоматы и стоянки такси.', cityTransport: 'Транспорт', noTraffic: 'Онлайн-данные трафика не подключены; фиксированный процент не показывается.' },
+  zh: { more: '更多', safety: '安全指南', back: '返回首页', taxiTitle: '出租车费用计算', taxiSub: '根据道路距离和注明日期的官方市政资费估算。', origin: '出发地', destination: '目的地', locate: '使用当前位置', calculate: '计算路线和费用', estimate: '预计费用范围', distance: '道路距离', duration: '预计时间', miss: '不可错过：', hotelsTitle: '酒店', night: '晚', book: '申请住宿', diningTitle: '土耳其餐厅', hours: '营业时间', average: '平均', reserve: '申请订桌', activitiesTitle: '景点与活动', activitiesSub: '分别浏览博物馆、影院、娱乐以及夏季和冬季活动。', details: '详情 / 申请', safetySub: '让旅程更安全从容的实用基础信息。', emergencyTitle: '紧急情况', emergencyText: '在土耳其需要救护车、消防或警察时拨打112。', taxiSafety: '请司机打表并保留收据。', useful: '实用地点', usefulText: '查找附近公开登记的药房、警察、ATM和出租车站。', cityTransport: '市内交通', noTraffic: '尚未接入实时交通数据，不显示固定拥堵百分比。' },
 };
 
 const footerCopy: Record<SupportedLang, { signIn: string; source: string; privacy: string; terms: string; rights: string }> = {
@@ -301,7 +303,8 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
   const {path:browserPath,lang:urlLanguage}=parseLocalePath(rawBrowserPath);
   const [adminOpen,setAdminOpen]=useState(false);
   const activeTab:'home'|'city'|Section|'admin'=adminOpen?'admin':browserPath.startsWith('/cities/')?'city':sectionFromPath(browserPath)??'home';
-  const selectedCityName=publicCities.find(c=>cityPath(c.name)===browserPath)?.name??publicCities.find(c=>c.slug===new URLSearchParams(browserQuery).get('city'))?.name??'İstanbul';
+  const queryCity=publicCities.find(c=>c.slug===new URLSearchParams(browserQuery).get('city'));
+  const selectedCityName=publicCities.find(c=>cityPath(c.name)===browserPath)?.name??queryCity?.name??'İstanbul';
   const setActiveTab = (tab:typeof activeTab) => {
     setAdminOpen(tab==='admin');
     if(tab==='admin'){if(window.location.hash!=='#admin')window.location.assign('#admin');return;}
@@ -357,33 +360,28 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
     setActivityCategory('All');
     const cityMatch = Object.keys(citiesDetailedData).find(city => city.toLocaleLowerCase('tr-TR') === low || city.toLowerCase().replace(/i̇/g, 'i') === query.toLowerCase());
     if (cityMatch) { navigateTo(cityPath(cityMatch)); return; }
-    const discovery=discoverySearch(query);
-    if(guideSearch(query))navigateSearch('assistant');
-    else if (tourIntent(query)) navigateSearch('tours');
-    else if(discovery)navigateSearch(discovery.section,discovery.category);
-    else if (/taksi|taxi|fare|ücret|такси|تاكسي|出租车/.test(low)) navigateSearch('taxi');
-    else if (/metro|métro|otobüs|bus|tren|train|vapur|ferry|marmaray|ulaşım|transit|route|rota|bahn|transport|транспорт|метро|автобус|مواصلات|مترو|حافل|地铁|公交|交通|火车/.test(low)) navigateSearch('transit');
-    else if (/döviz|kur|exchange|currency|euro|usd|wechsel|change|валют|обмен|صرف|صراف|汇率|换汇/.test(low)) navigateSearch('currency');
-    else if (/yakın|near|eczane|pharmacy|hastane|hospital|atm|polis|police|nähe|apotheke|proximité|pharmacie|рядом|аптек|قريب|صيدلي|附近|药房/.test(low)) navigateSearch('nearme');
-    else if (/otel|hotel|hôtel|konak|stay|отел|гостиниц|فندق|فنادق|酒店|住宿/.test(low)) navigateSearch('stay');
-    else if (/restoran|restaurant|yemek|food|cafe|kafe|ресторан|مطعم|مطاعم|餐厅|餐饮/.test(low)) navigateSearch('food');
-    else if (/aktiv|activit|etkinlik|museum|musée|müze|gez|cinema|cinéma|музе|кино|متحف|أنشط|سينما|活动|博物馆|影院/.test(low)) navigateSearch('experiences');
-    else if (/güven|safety|acil|emergency|sicher|sécurité|безопас|أمان|طوارئ|安全|紧急/.test(low)) navigateSearch('safety');
-    // A place name need not contain a category (e.g. Topkapı Sarayı or Çiya).
-    // Search the provider without guessing a type; its empty/error state remains authoritative.
-    else navigateSearch('nearme','all');
+    const destination=homeSearchDestination(query);
+    navigateSearch(destination.section,'category' in destination ? destination.category : undefined);
   };
 
   // Taksi Durumları
   const [detectedTaxiCity, setDetectedTaxiCity] = useState<string>('');
   const [taxiOriginText, setTaxiOriginText] = useState('');
   const [taxiDestText, setTaxiDestText] = useState('');
-  const [taxiOriginCoords, setTaxiOriginCoords] = useState<(Coordinates & {mapQuery?:string;provider?:'google'}) | null>(null);
+  const [taxiOriginCoords, setTaxiOriginCoords] = useState<(Coordinates & {mapQuery?:string;provider?:'google';district?:string}) | null>(null);
   const [taxiDestCoords, setTaxiDestCoords] = useState<(Coordinates & {mapQuery?:string;provider?:'google'}) | null>(null);
   const taxiClass = 'Yellow';
 
   const [isTaxiLocating, setIsTaxiLocating] = useState(false);
   const [isTaxiRouting, setIsTaxiRouting] = useState(false);
+  const [taxiSelections,setTaxiSelections] = useState<Partial<Record<'origin'|'destination',Promise<unknown>>>>({});
+  const resolvingTaxiAddress = Boolean(taxiSelections.origin || taxiSelections.destination);
+  function trackTaxiSelection(field:'origin'|'destination',pending?:Promise<unknown>) {
+    setTaxiSelections(current => current[field]===pending ? current : {...current,[field]:pending});
+    if (!pending) return;
+    const finish = () => setTaxiSelections(current => current[field]===pending ? {...current,[field]:undefined} : current);
+    void pending.then(finish,finish);
+  }
   const [taxiRouteError, setTaxiRouteError] = useState<TaxiErrorKey | 'unavailable' | null>(null);
   const [taxiTariffs, setTaxiTariffs] = useState<Record<string, TaxiTariff>>({});
   const referenceTaxiCity = taxiReferenceCity(detectedTaxiCity);
@@ -392,7 +390,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
     setTaxiTariffs({});
     if (!supabaseConfigured || !referenceTaxiCity) return;
     let cancelled = false;
-    void getCurrentTaxiTariffs(referenceTaxiCity).then((tariffs) => {
+    void import('./repositories/tariffRepository').then(({getCurrentTaxiTariffs})=>getCurrentTaxiTariffs(referenceTaxiCity)).then((tariffs) => {
       if (cancelled) return;
       const next: Record<string, TaxiTariff> = {};
       for (const tariff of tariffs) next[tariff.vehicleClass] = { city: tariff.city, openingFare: tariff.openingFare, pricePerKm: tariff.perKm, minimumFare: tariff.minimumFare, waitingFarePerHour: tariff.waitingFare, source: tariff.sourceName + ' · ' + tariff.effectiveFrom, lastUpdated: tariff.lastVerified, sourceUrl:tariff.sourceUrl };
@@ -415,6 +413,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
     setFareCalculation(null);
     setTaxiRouteResult(null);
     setIsTaxiRouting(false);
+    setTaxiRouteError(null);
   }, [taxiOriginCoords, taxiDestCoords, taxiClass, detectedTaxiCity]);
 
   const taxiOriginLookupId = useRef(0);
@@ -437,20 +436,22 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
         setDetectedTaxiCity('');
 
         try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords.lat}&lon=${coords.lng}&zoom=16`, {signal: AbortSignal.timeout(8000)});
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords.lat}&lon=${coords.lng}&zoom=16&accept-language=tr`, {signal: AbortSignal.timeout(8000)});
           if (lookupId !== taxiOriginLookupId.current) return;
           if (res.ok) {
             const data = await res.json();
             if (lookupId !== taxiOriginLookupId.current) return;
             setTaxiOriginText(data.display_name || `${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}`);
-            setTaxiOriginCoords(coords);
+            setTaxiOriginCoords({...coords, district:data.address?.county ?? data.address?.town});
             setDetectedTaxiCity(taxiCityFromAddress(data.address?.country_code, data.address?.province ?? data.address?.state));
           } else {
             setTaxiOriginText(`${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}`);
+            setTaxiOriginCoords(coords);
           }
         } catch {
           if (lookupId !== taxiOriginLookupId.current) return;
           setTaxiOriginText(`${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}`);
+          setTaxiOriginCoords(coords);
         }
       },
       () => {
@@ -474,21 +475,24 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
     }
 
     setIsTaxiRouting(true);
+    trackProduct('taxi_search',lang);
 
     try {
       const url = `https://router.project-osrm.org/route/v1/driving/${taxiOriginCoords.lng},${taxiOriginCoords.lat};${taxiDestCoords.lng},${taxiDestCoords.lat}?overview=full&geometries=geojson&alternatives=true`;
       const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
       if (request !== taxiRequest.current) return;
-      setIsTaxiRouting(false);
-
       if (!res.ok) {
+        setIsTaxiRouting(false);
+        trackProduct('taxi_error',lang);
         setTaxiRouteError('routeFailed');
         return;
       }
 
       const data = await res.json();
       if (request !== taxiRequest.current) return;
+      setIsTaxiRouting(false);
       if (!data.routes || data.routes.length === 0) {
+        trackProduct('taxi_error',lang);
         setTaxiRouteError('noRoute');
         return;
       }
@@ -513,11 +517,15 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
       const selectedTariff = taxiTariffs[taxiClass.toUpperCase()];
       const tariff = selectedTariff?.city === referenceTaxiCity ? selectedTariff : undefined;
       if (!tariff) {
-        const budget=taxiBudgetRange(referenceTaxiCity,[distanceKm],taxiClass.toUpperCase());
-        if(budget){setFareCalculation(budget);setTaxiRouteError(null);setIsTaxiRouting(false);return;}
+        const budget=taxiBudgetRange(referenceTaxiCity,[distanceKm],taxiClass.toUpperCase(),Date.now(),taxiOriginCoords.district);
+        if(budget){
+          setFareCalculation(budget);
+          trackProduct('taxi_estimate',lang);
+          return;
+        }
         setFareCalculation(null);
         setTaxiRouteError('unavailable');
-        setIsTaxiRouting(false);
+        trackProduct('taxi_no_fare',lang);
         return;
       }
       setFareCalculation({
@@ -525,10 +533,12 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
         source: tariff.city+' · '+taxiClass+' · '+tariff.source+' · '+tariff.lastUpdated,
         sourceUrls:tariff.sourceUrl?[tariff.sourceUrl]:undefined, verified:true, minimumFare:tariff.minimumFare,
       });
+      trackProduct('taxi_estimate',lang);
     } catch {
       if (request !== taxiRequest.current) return;
       setIsTaxiRouting(false);
       setTaxiRouteError('network');
+      trackProduct('taxi_error',lang);
     }
   };
 
@@ -564,11 +574,12 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
           NAVBAR (TAŞMAYI ÖNLEYEN & TÜM SAYFALARI DESTEKLEYEN YAPI)
       ==================================================================== */}
       <div>
+        <a className="site-skip-link" href="#page-content" onClick={event=>{event.preventDefault();document.getElementById('page-content')?.focus();}}>{headerLabels[lang][1]}</a>
         <header className="sticky top-0 z-40 bg-white border-b border-sky-100 shadow-sm">
           <div className="max-w-7xl mx-auto px-3 sm:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4">
 
             {/* Logo */}
-            <a href={localizePath('/',lang)} onClick={event=>{if(event.button===0&&!event.ctrlKey&&!event.metaKey&&!event.shiftKey&&!event.altKey){event.preventDefault();setActiveTab('home');}}} className="flex items-center cursor-pointer shrink-0" aria-label="SafeInTürkiye home">
+            <a href={localizePath('/',lang)} onClick={event=>{if(event.button===0&&!event.ctrlKey&&!event.metaKey&&!event.shiftKey&&!event.altKey){event.preventDefault();setActiveTab('home');}}} className="flex items-center cursor-pointer shrink-0" aria-label={`SafeInTürkiye · ${page('back')}`}>
               <img src={siteLogo} alt="SafeInTürkiye" className="h-7 w-auto max-w-[100px] object-contain sm:h-10 sm:max-w-[185px]" />
             </a>
 
@@ -679,8 +690,8 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
               <select
                 value={lang}
                 onChange={(e) => setLang(e.target.value as SupportedLang)}
-                aria-label="Language"
-                className="h-9 w-[72px] px-1 sm:w-auto sm:px-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[11px] sm:text-[12px] font-bold text-slate-700 focus:outline-none cursor-pointer hover:bg-sky-50"
+                aria-label={headerLabels[lang][0]}
+                className="h-11 w-[72px] px-1 sm:w-auto sm:px-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[11px] sm:text-[12px] font-bold text-slate-700 cursor-pointer hover:bg-sky-50"
               >
                 <option value="en">English (EN)</option>
                 <option value="tr">Türkçe (TR)</option>
@@ -695,7 +706,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
               <a
                 href="tel:112"
                 aria-label={`${tr('emergency')} 112`}
-                className="flex items-center justify-center gap-1.5 w-9 sm:w-auto sm:px-3.5 h-9 rounded-xl bg-red-600 hover:bg-red-700 text-white text-[12px] font-extrabold shadow-md shadow-red-600/20 active:scale-95 transition-all cursor-pointer"
+                className="flex items-center justify-center gap-1.5 w-11 sm:w-auto sm:px-3.5 h-11 rounded-xl bg-red-600 hover:bg-red-700 text-white text-[12px] font-extrabold shadow-md shadow-red-600/20 active:scale-95 transition-all cursor-pointer"
               >
                 <PhoneCall className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">{tr('emergency')}</span>
@@ -709,6 +720,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
             {isStaff && <button type="button" onClick={() => { setActiveTab('admin'); setMobileMenuOpen(false); }} className="min-h-11 rounded-xl px-3 py-2 text-start bg-slate-900 text-white">CMS Studio</button>}
           </nav>}
         </header>
+        <div id="page-content" tabIndex={-1}>
         {activeTab!=='home' && activeTab!=='taxi' && <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-3"><HomeButton lang={lang} currentPage={({assistant:tr('assistant'),transit:tr('transit'),currency:tr('currency'),city:cityDisplayName(selectedCityName,lang),nearme:tr('nearMe'),stay:page('hotelsTitle'),food:page('diningTitle'),experiences:page('activitiesTitle'),tours:toursLabel(lang),safety:page('safety'),admin:'CMS Studio'} as Record<string,string>)[activeTab]} onClick={()=>{setActiveTab('home');setMobileMenuOpen(false);window.scrollTo(0,0);}}/></div>}
         {activeTab!=='home'&&activeTab!=='tours'&&searchQuery&&<SearchContext query={searchQuery} city={new URLSearchParams(browserQuery).get('city')??undefined} transfer={new URLSearchParams(browserQuery).get('intent')==='transfer'} resultsSearch={new URLSearchParams(browserQuery).get('lookup')==='1'} lang={lang}/>}
 
@@ -757,19 +769,23 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
                     </button>
                   </div>
                   <TransitAddressInput id="taxi-origin" label={page('origin')} value={taxiOriginText} selected={!!taxiOriginCoords} locale={lang} placeholder={page('origin')}
-                    onChange={value=>{taxiOriginLookupId.current++;setIsTaxiLocating(false);setTaxiOriginText(value);setTaxiOriginCoords(null);setDetectedTaxiCity('')}}
+                    onSelectionPending={pending=>trackTaxiSelection('origin',pending)}
+                    onChange={value=>{trackTaxiSelection('origin');taxiOriginLookupId.current++;setIsTaxiLocating(false);setTaxiOriginText(value);setTaxiOriginCoords(null);setDetectedTaxiCity('')}}
                     onSelect={place=>{taxiOriginLookupId.current++;setIsTaxiLocating(false);setTaxiOriginText(place.label);setTaxiOriginCoords(place);setDetectedTaxiCity(place.city)}} />
                 </div>
                 <TransitAddressInput id="taxi-destination" label={page('destination')} value={taxiDestText} selected={!!taxiDestCoords} locale={lang} placeholder={page('destination')}
-                  onChange={value=>{setTaxiDestText(value);setTaxiDestCoords(null)}} onSelect={place=>{setTaxiDestText(place.label);setTaxiDestCoords(place)}} />
+                  onSelectionPending={pending=>trackTaxiSelection('destination',pending)}
+                  onChange={value=>{trackTaxiSelection('destination');setTaxiDestText(value);setTaxiDestCoords(null)}} onSelect={place=>{setTaxiDestText(place.label);setTaxiDestCoords(place)}} />
 
                 <button
                   type="button"
                   onClick={handleCalculateTaxiRoute}
-                  disabled={isTaxiRouting}
-                  className="w-full h-11 bg-[#087FFF] hover:bg-[#0284C7] text-white font-bold rounded-xl text-[13px] shadow-sm cursor-pointer transition-all active:scale-98 flex items-center justify-center gap-2"
+                  disabled={isTaxiRouting || resolvingTaxiAddress}
+                  aria-busy={isTaxiRouting || resolvingTaxiAddress}
+                  className="w-full h-11 bg-[#087FFF] hover:bg-[#0284C7] text-white font-bold rounded-xl text-[13px] shadow-sm cursor-pointer disabled:cursor-wait disabled:opacity-80 transition-all active:scale-98 flex items-center justify-center gap-2"
                 >
-                  {isTaxiRouting ? <Loader2 className="w-4 h-4 animate-spin" /> : page('calculate')}
+                  {(isTaxiRouting || resolvingTaxiAddress) && <Loader2 aria-hidden="true" className="w-4 h-4 animate-spin" />}
+                  {resolvingTaxiAddress ? addressSearchText(lang,'loading') : page('calculate')}
                 </button>
 
 
@@ -789,7 +805,6 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
               <section className="taxi-result-panel" aria-live="polite">
                 {taxiRouteError && <p role={taxiRouteError === 'unavailable' ? 'status' : 'alert'} className="text-sm text-slate-700 bg-sky-50 rounded-xl p-3">{taxiRouteError === 'unavailable' ? taxiUnavailableText(lang) : taxiErrorText(lang, taxiRouteError)}</p>}
                 {taxiRouteResult && !fareCalculation && <div className="grid grid-cols-2 gap-2 rounded-xl bg-sky-50 p-3 text-sm" aria-live="polite"><p>{page('distance')}<br /><strong>{taxiRouteResult.distanceKm.toLocaleString(lang,{maximumFractionDigits:1})} km</strong></p><p>{page('duration')}<br /><strong>~{taxiRouteResult.durationMinutes} min</strong></p></div>}
-                {taxiRouteResult && <details className="text-sm leading-relaxed text-slate-600"><summary className="min-h-11 cursor-pointer">{taxiDetailsCopy[lang][0]}</summary><p>{taxiMapKey(window.location.hostname,import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY,import.meta.env.VITE_GOOGLE_MAPS_PREVIEW_BROWSER_KEY)?taxiRouteNotice[lang]:taxiCalculationMapNotice[lang]}</p></details>}
                 {taxiRouteResult && fareCalculation && (
                   <div className="pt-3 border-t border-slate-100 space-y-3">
                     <div className="p-4 bg-sky-50 rounded-2xl border border-sky-100 space-y-2">
@@ -799,7 +814,6 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
                       </span>
                       <span className="text-[11px] text-slate-500 block">{taxiEstimateCopy[lang][1]}</span>
                       {fareCalculation.minimumFare!==undefined&&<p className="taxi-minimum-note"><span>{taxiMinimumCopy[lang][0]} <strong>{new Intl.NumberFormat(lang,{style:'currency',currency:'TRY',maximumFractionDigits:2}).format(fareCalculation.minimumFare)}</strong></span><small>{taxiMinimumCopy[lang][1]}</small></p>}
-                      <details className="text-xs text-slate-500"><summary className="cursor-pointer min-h-8">{taxiDetailsCopy[lang][0]}</summary><p>{fareCalculation.source}</p>{fareCalculation.sourceUrls?.map((url)=><a key={url} className="block underline py-1" href={url} target="_blank" rel="noopener noreferrer">{new URL(url).hostname} ↗</a>)}<p>{fareCalculation.verified?taxiDetailsCopy[lang][2]:taxiBudgetCopy[lang]}</p></details>
                       <div className="grid grid-cols-2 gap-2 pt-2 border-t border-sky-200/60 text-[12px]">
                         <div>
                           <span className="text-slate-400 block text-[10px]">{page('distance')}</span>
@@ -813,6 +827,15 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
                     </div>
                   </div>
                 )}
+                {taxiRouteResult && (taxiRouteError==='unavailable' || referenceTaxiCity==='İstanbul') && taxiOriginCoords && taxiDestCoords && <button type="button" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-sky-200 px-4 font-semibold text-blue-700" onClick={()=>{
+                  setTransitHandoff({origin:{label:taxiOriginText,lat:taxiOriginCoords.lat,lng:taxiOriginCoords.lng},destination:{label:taxiDestText,lat:taxiDestCoords.lat,lng:taxiDestCoords.lng}});
+                  const originCity=publicCities.find(city=>city.name===referenceTaxiCity || (referenceTaxiCity==='Nevşehir' && city.slug==='cappadocia'));
+                  navigateTo(sectionPath('transit')+(originCity?'?city='+originCity.slug:''));
+                }}><BusFront size={18} aria-hidden="true"/>{fareCalculation?taxiCompareTransit[lang]:tr('transit')} <ArrowRight size={16} aria-hidden="true"/></button>}
+                {taxiRouteResult && <details className="text-sm leading-relaxed text-slate-600"><summary className="min-h-11 cursor-pointer">{taxiDetailsCopy[lang][0]}</summary>
+                  {fareCalculation && <><p>{fareCalculation.source}</p>{fareCalculation.sourceUrls?.map(url=><a key={url} className="block underline py-1" href={url} target="_blank" rel="noopener noreferrer">{new URL(url).hostname} ↗</a>)}<p>{fareCalculation.verified?taxiDetailsCopy[lang][2]:taxiBudgetCopy[lang]}</p></>}
+                  <p>{taxiMapKey(window.location.hostname,import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY,import.meta.env.VITE_GOOGLE_MAPS_PREVIEW_BROWSER_KEY)?taxiRouteNotice[lang]:taxiCalculationMapNotice[lang]}</p>
+                </details>}
               </section>
             </div>
             <aside className="catalog-editorial-note"><a className="inline-flex min-h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-[#087FFF] px-6 py-3 font-bold text-white shadow-sm hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-700" href="https://www.bitaksi.com/home" target="_blank" rel="noopener noreferrer">🚕 {directoryText(lang, 3)} ↗</a><p className="mt-2">{directoryText(lang, 4)}</p></aside>
@@ -885,12 +908,16 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
                 <h2 className="font-extrabold text-[16px] text-slate-900">{page('miss')} {cityDisplayName(currentCityInfo.name,lang)}</h2><button className="city-guide-more" onClick={()=>setActiveTab('experiences')}>{(cityGuideDesignCopy[lang]??cityGuideDesignCopy.en)[1]} <ArrowRight size={16}/></button>
               </div>
               <div className="city-guide-highlights-grid">
-                {currentCityInfo.highlights.map((highlight,index) => (
+                {currentCityInfo.highlights.map((highlight,index) => {
+                  const name=regionalCity?.places[index]??citiesTr[selectedCityName as keyof typeof citiesTr]?.highlights[index]?.name??highlight.name;
+                  const href=cityHighlightHref(selectedCityName,name,lang);
+                  const detail=highlight.detail||highlightDescription(selectedCityName,name,lang);
+                  return (
                   <article key={highlight.name} className="city-guide-place"><CityHighlightPhoto city={destinationSlug(selectedCityName)} index={index} name={highlight.name} lang={lang}/><div>
-                    <h3><button onClick={()=>navigateTo(`/activities?city=${destinationSlug(selectedCityName)}&q=${encodeURIComponent(highlight.name)}`)}>{highlight.name}<ArrowRight size={17} aria-hidden="true"/></button></h3>
-                    <p className="text-[11px] leading-relaxed text-slate-600 mt-1">{highlight.detail}</p>
+                    <h3><a href={href} onClick={event=>{if(event.button===0&&!event.ctrlKey&&!event.metaKey&&!event.shiftKey&&!event.altKey){event.preventDefault();navigateTo(href);}}}>{highlight.name}<ArrowRight size={17} aria-hidden="true"/></a></h3>
+                    {detail&&<p className="text-[11px] leading-relaxed text-slate-600 mt-1">{detail}</p>}
                   </div></article>
-                ))}
+                )})}
               </div>
             </section>
 
@@ -934,7 +961,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
           </main>
         )}
 
-        {activeTab === 'tours' && <main className="travel-catalog"><Suspense fallback={<PageLoading lang={lang}/>}><ViatorTours key={`${lang}:${browserQuery}`} lang={lang} initialQuery={searchQuery} initialCity={publicCities.find(c=>c.slug===new URLSearchParams(browserQuery).get('city'))?.slug??publicCities.find(c=>c.name===selectedCityName)?.slug}/></Suspense></main>}
+        {activeTab === 'tours' && <main className="travel-catalog"><Suspense fallback={<PageLoading lang={lang}/>}><ViatorTours key={`${lang}:${browserQuery}`} lang={lang} placesLabel={page('activitiesTitle')} initialQuery={searchQuery} hasCity={Boolean(queryCity)} initialCity={queryCity?.slug}/></Suspense></main>}
 
         {/* ====================================================================
             PAGE 10: NEAR ME
@@ -983,6 +1010,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
 
       </div>
 
+      </div>
       {authModalOpen && (
         <AccessibleDialog label={authCopy[lang][0]} onClose={()=>setAuthModalOpen(false)}>
           <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-4 text-center">

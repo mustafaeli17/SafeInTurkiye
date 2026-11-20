@@ -49,7 +49,10 @@ function RequestForm({name,source,lang,businessKey,city}:Props){
  if(receipt)return <ReservationReceipt {...receipt} lang={lang}/>;
  if(checking)return <p role="status" className="mt-4 text-sm">…</p>;
  if(!restaurantRequestsEnabled||!ready)return <p className="mt-4 text-sm text-slate-600">{reservationUnavailable[lang]??reservationUnavailable.en}</p>;
- const fields=[['name',t[2],'text'],['email',t[3],'email'],['phone',t[4],'tel'],['date',t[5],'date'],['time',t[6],'time'],['guests',t[7],'number']];
+ const fields=[
+  ['date',t[5],'date'],['time',t[6],'time'],['guests',t[7],'number'],
+  ['name',t[2],'text'],['email',t[3],'email'],['phone',t[4],'tel'],
+ ];
  return <form onInput={event=>{const field=event.target as HTMLInputElement;if(field.name in draft)change(field.name,field.value);}} onInvalid={event=>{const field=event.target as HTMLInputElement;if(['date','time'].includes(field.name)&&draft.date&&draft.time&&!validBookingTime(draft.date,draft.time))setMessage(10);}} onFocus={()=>{if(!started.current&&businessKey){started.current=true;trackBusinessEvent(businessKey,'reservation_started');}}} lang={lang} dir={lang==='ar'?'rtl':'ltr'} onSubmit={submit} className="mt-5 rounded-2xl border border-sky-100 bg-white p-5 space-y-4">
   <h4 className="font-bold text-lg">{t[0]}</h4><p className="font-semibold break-words">{name}{city?` · ${city}`:''}</p><p className="text-sm text-slate-600">{reservationIntro[lang]??reservationIntro.en}</p>
   {expiredReceipt&&<p role="status" className="rounded-xl bg-amber-50 p-3 text-sm">{experience[12]} <a href={`mailto:${supportEmail}`} className="underline">{experience[10]}</a></p>}

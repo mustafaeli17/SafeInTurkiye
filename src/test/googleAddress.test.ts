@@ -23,6 +23,13 @@ it.each([{}, {action:'suggest',query:'ab',language:'tr',sessionToken:token},{act
  const fetcher=vi.fn();vi.stubGlobal('fetch',fetcher);expect((await call(body)).code).toBe(400);expect(fetcher).not.toHaveBeenCalled()
 })
 it('rejects unrelated origins',async()=>{expect((await call({},'https://attacker.example')).code).toBe(403)})
+it.each(['zh','ar','ru','de','es','fr','en','tr'])('keeps %s suggestion text localized but resolves a stable tariff district',async language=>{
+ const fetcher=vi.fn().mockResolvedValue({ok:true,json:async()=>({id:'abc',location:{latitude:38.32,longitude:26.30},addressComponents:[{types:['country'],shortText:'TR'},{types:['administrative_area_level_1'],longText:'İzmir'},{types:['administrative_area_level_2'],longText:'Çeşme'}]})});
+ vi.stubGlobal('fetch',fetcher);
+ const r=await call({action:'resolve',placeId:'abc',language,sessionToken:token});
+ expect(new URL(fetcher.mock.calls[0][0]).searchParams.get('languageCode')).toBe('tr');
+ expect(r.body.place).toMatchObject({city:'İzmir',district:'Çeşme'});
+})
 it('does not expose provider errors or make up results',async()=>{
  vi.stubGlobal('fetch',vi.fn().mockResolvedValue({ok:false,status:429}));const r=await call({action:'suggest',query:'Airport',language:'en',sessionToken:token});expect(r.code).toBe(429);expect(r.body).toEqual({error:'BUSY'})
 })

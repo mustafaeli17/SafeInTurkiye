@@ -1,5 +1,4 @@
 import {useEffect,useState} from 'react'
-import {requireSupabase} from '../lib/supabase'
 import {foundationEnabled} from '../lib/foundationConfig'
 import {isRetiredDirectoryEntry} from '../lib/retiredDirectory'
 type Item={id:string;name:string;kind:string;slug:string;city_id:string}
@@ -11,6 +10,8 @@ export default function SponsoredBusinesses({context,lang,city}:{context:string;
   let cancelled=false
   void(async()=>{
    try{
+    const {requireSupabase}=await import('../lib/supabase')
+    if(cancelled)return
     const client=requireSupabase(),now=new Date().toISOString()
     const {data:placements,error}=await client.from('sponsored_placements').select('business_id,business_kind').eq('context',context).eq('active',true).lte('starts_at',now).gt('ends_at',now).order('priority',{ascending:false}).limit(12).abortSignal(AbortSignal.timeout(8000))
     if(error)throw error

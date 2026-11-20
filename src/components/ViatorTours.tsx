@@ -2,7 +2,10 @@ import {SearchGuide} from './SearchGuide';
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {tourSearchCopy} from '../services/tourSearch'
 import { publicCities } from '../lib/publicRoutes'
-import { toursLabel, tourFilterCopy } from '../lib/viatorCopy'
+import {trackProduct} from '../lib/productMetrics'
+import {ArrowRight} from 'lucide-react'
+import {discoverySwitchHref} from '../lib/discoveryNavigation'
+import { toursLabel, tourFilterCopy, tourFilterActions } from '../lib/viatorCopy'
 const copy: Record<string, string[]> = {
   en: ['Tours & experiences · Viator','Destination','Find tours','Searching…','No tours found for this destination.','Tours are temporarily unavailable. Please try again later.','From','View on Viator','We may earn a commission from qualifying bookings. Final price and availability are confirmed on Viator.','Sandbox preview — test results, not live availability.','Next','Previous','Product information is provided in English for this language.'],
   tr: ['Turlar ve deneyimler · Viator','Destinasyon','Turları bul','Aranıyor…','Bu destinasyonda tur bulunamadı.','Turlara şu an ulaşılamıyor. Lütfen daha sonra tekrar deneyin.','Başlangıç fiyatı','Viator’da incele','Uygun rezervasyonlardan komisyon kazanabiliriz. Son fiyat ve müsaitlik Viator’da doğrulanır.','Test önizlemesi — sonuçlar canlı müsaitlik bilgisi değildir.','Sonraki','Önceki','Bu dil için ürün bilgileri İngilizce sunulmaktadır.'],
@@ -15,26 +18,32 @@ const copy: Record<string, string[]> = {
 }
 type Result = { products: { code:string; title:string; description?:string; productUrl:string; photo?:string; fromPrice?:number; currency?:string;rating?:number;reviewCount?:number;durationMinutes?:{from:number;to:number};freeCancellation?:boolean }[]; totalCount:number; sandbox:boolean; language:string }
 const emptyFilters = { minPrice:'',maxPrice:'',duration:'any',rating:'any',date:'',sort:'recommended',currency:'EUR',private:false,freeCancellation:false,skipLine:false }
-export default function ViatorTours({ lang, initialCity='istanbul', initialQuery='' }: { lang:string; initialCity?:string; initialQuery?:string }) {
+type TourSearch = { city:string; term:string; filters:typeof emptyFilters }
+
+export default function ViatorTours({ lang, placesLabel, initialCity='istanbul', initialQuery='', hasCity=false }: { lang:string; placesLabel:string; initialCity?:string; initialQuery?:string; hasCity?:boolean }) {
   const t=copy[lang] ?? copy.en
   const f=tourFilterCopy(lang)
+  const actions=tourFilterActions[lang]??tourFilterActions.en
   const s=tourSearchCopy[lang]??tourSearchCopy.en
   const [term,setTerm]=useState(initialQuery)
-  const autoSearched=useRef(false)
   const [city,setCity]=useState(initialCity), [result,setResult]=useState<Result|null>(null), [state,setState]=useState('idle'), [start,setStart]=useState(1)
   const [filters,setFilters]=useState(emptyFilters)
+  const [applied,setApplied]=useState<TourSearch|null>(null)
   const controller=useRef<AbortController|null>(null)
-  useEffect(()=>{controller.current?.abort();setResult(null);setState('idle');setStart(1);return()=>controller.current?.abort()},[lang,city,filters,term])
+  const filtersPanel=useRef<HTMLDetailsElement>(null)
+  const changedCount=Object.entries(filters).filter(([key,value])=>value!==emptyFilters[key as keyof typeof emptyFilters]).length
+  const hasPendingEdits=applied!==null && (applied.city!==city || applied.term!==term.trim() || Object.keys(filters).some(key=>filters[key as keyof typeof filters]!==applied.filters[key as keyof typeof filters]))
   const inputClass='min-h-11 w-full min-w-0 rounded-xl border border-blue-200 bg-white p-3'
   const today=new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Istanbul'})
   const update=(key:keyof typeof emptyFilters,value:string|boolean)=>setFilters(previous=>({...previous,[key]:value}))
-  const search=useCallback(async(offset=1) => {
+  const search=useCallback(async(criteria:TourSearch,offset=1) => {
     controller.current?.abort(); const current=new AbortController();controller.current=current
-    setState('loading');setResult(null)
+    if(offset===1)trackProduct('tours_search',lang)
+    setState('loading')
     try {
-      const query=new URLSearchParams({city,lang,start:String(offset)})
-      if(term.trim())query.set('q',term.trim())
-      Object.entries(filters).forEach(([key,value])=>{if(value!==''&&value!==false)query.set(key,String(value))})
+      const query=new URLSearchParams({city:criteria.city,lang,start:String(offset)})
+      if(criteria.term)query.set('q',criteria.term)
+      Object.entries(criteria.filters).forEach(([key,value])=>{if(value!==''&&value!==false)query.set(key,String(value))})
       const r=await fetch(`/api/viator?${query}`,{signal:AbortSignal.any([current.signal,AbortSignal.timeout(20000)]),cache:'no-store'})
       if(!r.ok) {
         const failure=await r.json().catch(()=>null)
@@ -46,23 +55,37 @@ export default function ViatorTours({ lang, initialCity='istanbul', initialQuery
       const data=await r.json() as Result
       if(!Array.isArray(data.products)) throw new Error('invalid')
       if(current.signal.aborted) return
-      setResult(data);setStart(offset);setState('ready')
-    } catch {if(!current.signal.aborted) setState('error')}
-  },[city,lang,filters,term])
+      if(offset===1)trackProduct(data.products.length?'tours_results':'tours_empty',lang)
+      setResult(data);setApplied(criteria);setStart(offset);setState('ready')
+    } catch {
+      if(current.signal.aborted)return
+      if(offset===1)trackProduct('tours_error',lang)
+      setState('error')
+    }
+  },[lang])
   useEffect(()=>{
-    if(!initialQuery.trim()||autoSearched.current)return
-    const timer=setTimeout(()=>{autoSearched.current=true;void search()},0)
-    return()=>clearTimeout(timer)
-  },[initialQuery,search])
+    const timer=(hasCity||initialQuery.trim())?setTimeout(()=>{void search({city:initialCity,term:initialQuery.trim(),filters:emptyFilters})},0):undefined
+    return()=>{clearTimeout(timer);controller.current?.abort()}
+  },[initialCity,initialQuery,hasCity,search])
   return <section aria-labelledby="viator-heading" className="my-6 rounded-2xl border border-blue-100 bg-white p-4 sm:p-6">
     <h1 id="viator-heading" className="mb-4 text-3xl font-extrabold text-slate-900">{toursLabel(lang)}</h1>
-    <SearchGuide path="/tours" lang={lang}/>
-    <p className="mb-4 text-sm text-slate-600">{f[20]}</p>
-    <form onSubmit={e=>{e.preventDefault();void search()}} className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      <label className="grid gap-1 text-sm sm:col-span-2 lg:col-span-3">{s[0]}<input type="search" maxLength={160} value={term} onChange={e=>setTerm(e.target.value)} placeholder={s[1]} className={inputClass}/></label>
+    <form onSubmit={e=>{
+      e.preventDefault()
+      const panel=filtersPanel.current
+      if(panel?.open){
+        if(panel.contains(document.activeElement))panel.querySelector('summary')?.focus()
+        panel.open=false
+      }
+      void search({city,term:term.trim(),filters})
+    }} className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_2fr_auto]">
       <label className="grid gap-1 text-sm">{t[1]}<select value={city} onChange={e=>setCity(e.target.value)} className={inputClass}>
         {publicCities.map(c=><option key={c.slug} value={c.slug}>{c.name}{c.slug==='mugla'?' · Bodrum':c.slug==='aydin'?' · Kuşadası':c.slug==='denizli'?' · Pamukkale':''}</option>)}
       </select></label>
+      <label className="grid gap-1 text-sm">{s[0]}<input type="search" maxLength={160} value={term} onChange={e=>setTerm(e.target.value)} placeholder={s[1]} className={inputClass}/></label>
+      <button disabled={state==='loading'} className="min-h-11 self-end rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white disabled:opacity-60">{state==='loading'?t[3]:result&&hasPendingEdits?actions[1]:t[2]}</button>
+      <details ref={filtersPanel} onInvalidCapture={()=>{if(filtersPanel.current)filtersPanel.current.open=true}} className="rounded-xl border border-blue-100 px-3 sm:col-span-2 lg:col-span-3">
+      <summary className="min-h-11 cursor-pointer py-3 text-sm font-semibold text-blue-700">{actions[0]}{changedCount>0 && ` · ${changedCount}`}</summary>
+      <div className="grid gap-3 pb-3 sm:grid-cols-2 lg:grid-cols-3">
       <label className="grid gap-1 text-sm">{f[0]}<select value={filters.sort} onChange={e=>update('sort',e.target.value)} className={inputClass}>{['recommended','priceAsc','priceDesc','rating'].map((v,i)=><option key={v} value={v}>{f[1+i]}</option>)}</select></label>
       <label className="grid gap-1 text-sm">{f[17]}<select value={filters.currency} onChange={e=>update('currency',e.target.value)} className={inputClass}>{['EUR','USD','GBP','TRY','AED','CNY'].map(v=><option key={v}>{v}</option>)}</select></label>
       <label className="grid gap-1 text-sm">{f[5]} ({filters.currency})<input type="number" min="0" max={filters.maxPrice||100000} step="0.01" value={filters.minPrice} onChange={e=>update('minPrice',e.target.value)} className={inputClass}/></label>
@@ -71,21 +94,24 @@ export default function ViatorTours({ lang, initialCity='istanbul', initialQuery
       <label className="grid gap-1 text-sm">{f[12]}<select value={filters.rating} onChange={e=>update('rating',e.target.value)} className={inputClass}><option value="any">{f[8]}</option><option value="3">3+ / 5</option><option value="4">4+ / 5</option></select></label>
       <label className="grid gap-1 text-sm">{f[13]}<input type="date" min={today} value={filters.date} onChange={e=>update('date',e.target.value)} className={inputClass}/></label>
       <div className="flex flex-wrap gap-3 sm:col-span-2 lg:col-span-3">{(['private','freeCancellation','skipLine'] as const).map((key,i)=><label key={key} className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" checked={filters[key]} onChange={e=>update(key,e.target.checked)} className="h-5 w-5"/>{f[14+i]}</label>)}</div>
-      <button disabled={state==='loading'} className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white disabled:opacity-60">{state==='loading'?t[3]:t[2]}</button>
-      <button type="button" onClick={()=>{setTerm('');setFilters({...emptyFilters})}} className="min-h-11 rounded-xl border border-blue-200 px-4 py-3 text-blue-700">{f[18]}</button>
+      <button disabled={state==='loading'} className="min-h-11 rounded-xl bg-blue-600 px-4 py-2 font-semibold text-white disabled:opacity-60">{actions[1]}</button>
+      <button type="button" onClick={()=>setFilters(emptyFilters)} className="min-h-11 rounded-xl border border-blue-200 px-4 py-2 text-blue-700">{f[18]}</button>
+      </div></details>
     </form>
+    <a href={discoverySwitchHref('activities',lang,applied?.city??initialCity,applied?.term??initialQuery)} className="inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-blue-700 underline underline-offset-4">{placesLabel}<ArrowRight size={15} aria-hidden="true" className="rtl:rotate-180"/></a>
+    <SearchGuide path="/tours" lang={lang}/>
     <div role="status" className="my-3 text-sm text-slate-600">{state==='error'?t[5]:state==='loading'?t[3]:result?.products.length===0?t[4]:''}</div>
     {result?.sandbox&&<p className="mb-3 text-sm text-amber-800">{t[9]}</p>}
     {result?.language==='en'&&lang!=='en'&&<p className="mb-3 text-sm text-slate-600">{t[12]}</p>}
-    {result&&result.products.length>0&&<p className="my-3 text-sm text-slate-600">{f[19]}: {new Intl.NumberFormat(lang).format(result.totalCount)} · {start}–{start+result.products.length-1}</p>}
+    {result&&result.products.length>0&&applied&&<p className="my-3 text-sm text-slate-600">{publicCities.find(c=>c.slug===applied.city)?.name}{applied.term && ` · ${applied.term}`} · {f[19]}: {new Intl.NumberFormat(lang).format(result.totalCount)} · {start}–{start+result.products.length-1}</p>}
     {result?.products.map(p=><article key={p.code} className="travel-catalog-row">
       <div className="travel-catalog-photo">{p.photo&&<img src={p.photo} alt={p.title} width={720} height={480} loading="lazy" referrerPolicy="no-referrer" onError={e=>{e.currentTarget.style.visibility='hidden'}}/>}</div>
       <div className="travel-catalog-info"><h2 className="font-semibold">{p.title}</h2><span className="text-sm text-slate-600">Viator</span><div className="mt-2 flex flex-wrap gap-3 text-sm text-slate-600">{p.rating!==undefined&&<span>★ {new Intl.NumberFormat(lang,{maximumFractionDigits:1}).format(p.rating)} / 5{p.reviewCount!==undefined?` (${new Intl.NumberFormat(lang).format(p.reviewCount)})`:''}</span>}{p.durationMinutes&&<span>{f[7]}: {new Intl.NumberFormat(lang).format(p.durationMinutes.from)}{p.durationMinutes.to!==p.durationMinutes.from?`–${new Intl.NumberFormat(lang).format(p.durationMinutes.to)}`:''} min</span>}{p.freeCancellation&&<span>{f[15]}</span>}</div>{p.description&&<details className="mt-2 text-sm text-slate-600"><summary className="min-h-11 cursor-pointer py-2 text-blue-700">{f[21]}</summary><p>{p.description}</p></details>}</div>
       <div className="travel-catalog-action">{p.fromPrice!==undefined&&p.currency&&<span>{t[6]} {new Intl.NumberFormat(lang,{style:'currency',currency:p.currency}).format(p.fromPrice)}</span>}
-        <a href={p.productUrl} target="_blank" rel="sponsored noopener noreferrer" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#087FFF] px-5 py-3 text-center text-sm font-bold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">{t[7]} <span aria-hidden="true">↗</span></a>
+        <a href={p.productUrl} onClick={()=>trackProduct('viator_open',lang)} target="_blank" rel="sponsored noopener noreferrer" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#087FFF] px-5 py-3 text-center text-sm font-bold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">{t[7]} <span aria-hidden="true">↗</span></a>
       </div>
     </article>)}
-    {result&&<div className="mt-3 flex gap-3">{start>1&&<button className="rounded-xl border p-3" onClick={()=>void search(start-12)}>{t[11]}</button>}{result.products.length>0&&start+12<=result.totalCount&&start<9997&&<button className="rounded-xl border p-3" onClick={()=>void search(start+12)}>{t[10]}</button>}</div>}
+    {result&&applied&&<div className="mt-3 flex gap-3">{start>1&&<button disabled={state==='loading'||hasPendingEdits} className="rounded-xl border p-3 disabled:opacity-50" onClick={()=>void search(applied,start-12)}>{t[11]}</button>}{result.products.length>0&&start+12<=result.totalCount&&start<9997&&<button disabled={state==='loading'||hasPendingEdits} className="rounded-xl border p-3 disabled:opacity-50" onClick={()=>void search(applied,start+12)}>{t[10]}</button>}</div>}
     {result&&result.products.length>0&&<p className="mt-8 border-t border-slate-200 pt-4 text-xs leading-relaxed text-slate-600" data-testid="tour-disclosure">{t[8]}</p>}
   </section>
 }

@@ -1,5 +1,16 @@
 export const toursLabel = (lang:string) => ({en:'Tours & experiences',tr:'Turlar ve deneyimler',de:'Touren & Erlebnisse',fr:'Excursions et expériences',ar:'الجولات والتجارب',ru:'Экскурсии и впечатления',zh:'旅游与体验',es:'Excursiones y experiencias'}[lang] ?? 'Tours & experiences')
 
+export const tourFilterActions:Record<string,readonly [string,string]>={
+ en:['Filters','Apply filters'],
+ tr:['Filtreler','Filtreleri uygula'],
+ es:['Filtros','Aplicar filtros'],
+ de:['Filter','Filter anwenden'],
+ fr:['Filtres','Appliquer les filtres'],
+ ar:['عوامل التصفية','تطبيق عوامل التصفية'],
+ ru:['Фильтры','Применить фильтры'],
+ zh:['筛选条件','应用筛选'],
+}
+
 // Same filter semantics in every supported interface language.
 const filters: Record<string,string[]> = {
  en:['Sort by','Viator recommendations','Price: low to high','Price: high to low','Traveler rating','Minimum price','Maximum price','Duration','Any','Up to 4 hours','4–24 hours','Multi-day','Minimum rating','Travel date (optional)','Private tour','Free cancellation','Skip the line','Currency','Reset filters','Results','Final price, options and availability are confirmed on Viator.','Read more','Show less'],

@@ -46,6 +46,7 @@ export default function CurrencyRates({ lang = 'en', nearby, guide, city = 'İst
   const fields = converterLabels[lang.toLowerCase()] ?? converterLabels.en;
   const [rates, setRates] = useState<ReferenceRates | null>(null);
   const [error, setError] = useState<'unavailable' | 'timeout' | 'unconfigured' | null>(null);
+  const [reverseIcon,setReverseIcon]=useState(false);
   const [section,setSection]=useState('exchange-converter');
   const [retry, setRetry] = useState(0);
   const [amount, setAmount] = useState('100');
@@ -92,11 +93,15 @@ export default function CurrencyRates({ lang = 'en', nearby, guide, city = 'İst
     <section id="exchange-converter" role="tabpanel" aria-labelledby="exchange-converter-tab" hidden={section!=='exchange-converter'} tabIndex={0} className="exchange-card exchange-converter">
       <div className="exchange-converter-grid">
         <div><label className="exchange-field-label" htmlFor="exchange-amount">{copy[7]}</label><div className="exchange-value-box"><input id="exchange-amount" aria-label={fields[0]} aria-invalid={invalidCurrencyAmount(amount)} aria-describedby={invalidCurrencyAmount(amount)?'currency-input-error':undefined} type="number" min="0" step="any" value={amount} onChange={e=>setAmount(e.target.value)}/><CurrencyFlag code={from}/><select aria-label={fields[1]} value={from} onChange={e=>setFrom(e.target.value as CurrencyCode)}>{currencies.map(c=><option key={c}>{c}</option>)}</select></div></div>
-        <button className="exchange-swap" type="button" title={copy[9]} onClick={()=>{setFrom(to);setTo(from)}}><ArrowLeftRight aria-hidden="true"/><span className="sr-only">{copy[9]}</span></button>
+        <button className="exchange-swap" data-reversed={reverseIcon} type="button" title={copy[9]} onClick={()=>{setFrom(to);setTo(from);setReverseIcon(value=>!value)}}><ArrowLeftRight aria-hidden="true"/><span className="sr-only">{copy[9]}</span></button>
         <div><span className="exchange-field-label">{copy[8]}</span><div className="exchange-value-box exchange-output"><output aria-live="polite" aria-atomic="true"><span className="sr-only">{copy[8]} </span>{converted===null?'—':converted.toLocaleString(lang,{minimumFractionDigits:2,maximumFractionDigits:2})}<span className="sr-only"> {to}</span></output><CurrencyFlag code={to}/><select aria-label={fields[2]} value={to} onChange={e=>setTo(e.target.value as CurrencyCode)}>{currencies.map(c=><option key={c}>{c}</option>)}</select></div></div>
       </div>
       {invalidCurrencyAmount(amount)&&<p id="currency-input-error" role="status" className="text-sm text-red-700">{currencyInputCopy[lang]??currencyInputCopy.en}</p>}
       <div className="exchange-converter-meta">{unit!==null&&<strong dir="ltr">1 {from} ≈ {unit.toLocaleString(lang,{maximumFractionDigits:4})} {to}</strong>}<p><Info size={18} aria-hidden="true"/>{t.disclaimer}</p></div>
+      {rates && <p className="exchange-source">
+        <time dateTime={rates.date}>{new Intl.DateTimeFormat(lang, {dateStyle:'medium', timeZone:'UTC'}).format(new Date(rates.date+'T00:00:00Z'))}</time>
+        {' · '}<a href={rates.sourceUrl} target="_blank" rel="noreferrer">{rates.source}</a>
+      </p>}
       {!rates&&status}
       {rates&&referencePublicationAge(rates.date)>7&&<p role="status" className="text-sm text-amber-800">{fields[3]}</p>}
     </section>

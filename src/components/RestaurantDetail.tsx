@@ -2,6 +2,7 @@ import {lazy,Suspense,useMemo,useState} from 'react';
 import {CalendarDays,Clock3,ExternalLink,Globe,MapPin,Navigation,Phone,Star,Utensils} from 'lucide-react';
 import type {NearbyPlaceRecord} from '../services/nearbyPlaces';
 import {isEditorialPlace} from '../lib/editorialDiscovery';
+import {editorialDiscoveryCopy} from '../lib/editorialDiscoveryCopy';
 import {restaurantRequestCopy} from '../lib/restaurantRequestCopy';
 import GooglePlacePhoto from './GooglePlacePhoto';
 import EditorialPlacePhoto from './EditorialPlacePhoto';
@@ -12,15 +13,21 @@ const labels:Record<string,[string,string,string,string]>={en:['Overview','Reser
 type Props={place:NearbyPlaceRecord;lang:string;city:string;businessKey?:string;distance?:string;text:(tr:string,en:string)=>string;directions:string;onExpired:()=>void};
 export default function RestaurantDetail({place,lang,city,businessKey,distance,text,directions,onExpired}:Props){
  const [tab,setTab]=useState('overview');const t=labels[lang]??labels.en;const request=(restaurantRequestCopy[lang]??restaurantRequestCopy.en)[0];const mapPlaces=useMemo(()=>[place],[place]);
- const description=isEditorialPlace(place)?place.editorial.description[lang]??place.editorial.fallbackDescription:null;
+ const editorial=isEditorialPlace(place)?place.editorial:null;
+ const editorialText=editorialDiscoveryCopy[lang]??editorialDiscoveryCopy.en;
+ const description=editorial?.description[lang]??editorial?.fallbackDescription;
+ // The official website already has its own action. Only show the source link
+ // when it points to an independent map record.
+ const showMapSource=!editorial || place.sourceUrl!==place.website;
+ const mapLabel=editorial||place.id.startsWith('google:')?'Google Maps':'OpenStreetMap';
  const route=`https://www.google.com/maps/dir/?api=1&destination=${place.coordinates.lat},${place.coordinates.lng}${place.id.startsWith('google:')?'&destination_place_id='+encodeURIComponent(place.id.slice(7)):''}`;
  const showRequest=()=>{setTab('reservation');requestAnimationFrame(()=>document.getElementById('restaurant-request-panel')?.scrollIntoView({behavior:'smooth',block:'start'}));};
  return <article className="restaurant-detail" data-business-key={businessKey} dir={lang==='ar'?'rtl':'ltr'}>
   <div className="restaurant-detail-main">
    <div className="restaurant-detail-photo">{isEditorialPlace(place)?<EditorialPlacePhoto place={place} expanded onOpen={()=>{}} lang={lang}/>:<GooglePlacePhoto key={place.photo?.url??place.id} place={place} onExpired={onExpired}/>}</div>
-   <div className="restaurant-detail-badges"><span><Utensils size={16}/>{text('Restoran','Restaurant')}</span>{distance&&<span><MapPin size={15}/>{distance}</span>}</div>
+   <div className="restaurant-detail-badges"><span><Utensils size={16}/>{text('Restoran','Restaurant')}</span>{editorial&&<span>{editorial.sponsored?editorialText[1]:editorialText[0]}</span>}{distance&&<span><MapPin size={15}/>{distance}</span>}</div>
    <h2>{place.name}</h2>
-   <div className="restaurant-detail-rating">{place.rating!==undefined&&<span><Star size={20} fill="#ffbd16" stroke="#ffbd16"/><strong>{place.rating}</strong>{place.reviewCount!==undefined&&` (${new Intl.NumberFormat(lang).format(place.reviewCount)})`}</span>}<a href={place.sourceUrl} target="_blank" rel="noopener noreferrer">Google Maps <ExternalLink size={14}/></a>{typeof place.openNow==='boolean'&&<span className={place.openNow?'is-open':'is-closed'}>{place.openNow?text('Şu an açık','Open now'):text('Şu an kapalı','Closed now')}</span>}</div>
+   <div className="restaurant-detail-rating">{place.rating!==undefined&&<span><Star size={20} fill="#ffbd16" stroke="#ffbd16"/><strong>{place.rating}</strong>{place.reviewCount!==undefined&&` (${new Intl.NumberFormat(lang).format(place.reviewCount)})`}</span>}{showMapSource&&<a href={place.sourceUrl} target="_blank" rel="noopener noreferrer">{mapLabel} <ExternalLink size={14}/></a>}{typeof place.openNow==='boolean'&&<span className={place.openNow?'is-open':'is-closed'}>{place.openNow?text('Şu an açık','Open now'):text('Şu an kapalı','Closed now')}</span>}</div>
    <div className="restaurant-detail-actions"><a className="primary" href={route} target="_blank" rel="noopener noreferrer"><Navigation size={18}/>{directions}</a>{place.website&&<a data-event="website" href={place.website} target="_blank" rel="noopener noreferrer"><Globe size={18}/>{text('Web sitesi','Website')}<ExternalLink size={14}/></a>}{place.telephoneUrl&&<a href={place.telephoneUrl}><Phone size={18}/>{text('Telefon','Phone')}</a>}</div>
    <nav className="restaurant-detail-tabs" aria-label={place.name??text('Restoran','Restaurant')}>{['overview','map'].map((value,i)=><button key={value} type="button" aria-pressed={tab===value} onClick={()=>setTab(value)}>{t[i===0?0:2]}</button>)}</nav>
    <section className={`restaurant-detail-overview ${tab==='overview'?'is-active':''}`}>

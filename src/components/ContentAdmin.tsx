@@ -5,6 +5,7 @@ import {foundationEnabled} from '../lib/foundationConfig';
 import {restaurantRequestsEnabled} from '../lib/reservationAvailability';
 import {publicCities} from '../lib/publicRoutes';
 import {useDiscardChanges} from './useDiscardChanges';
+import TaxiBudgetReview from './TaxiBudgetReview';
 import './ContentAdmin.css';
 const EditorialAdmin=lazy(()=>import('./EditorialAdmin'));
 const BookingAdmin=lazy(()=>import('./BookingAdmin'));
@@ -45,6 +46,7 @@ export default function ContentAdmin({role,onSignOut}:{role:string;onSignOut?:()
     {tab==='analytics'&&<><section className="admin-panel"><h2>Ziyaretçi istatistikleri</h2><p>Vercel’de ölçülen ziyaretçi, ülke, cihaz ve yönlendirme verileri. Fiziksel işletme ziyareti anlamına gelmez.</p><a className="admin-button" href="https://vercel.com/eli-1196/safe-in-turkiye/analytics" target="_blank" rel="noopener noreferrer">Vercel Analytics<ExternalLink size={15}/></a></section>{foundationEnabled&&<BusinessMetricsAdmin/>}</>}
    </Suspense>
    {tab==='system'&&<section className="admin-panel admin-system"><h2>Sistem ve yayın</h2><dl><div><dt>İçerik kaynağı</dt><dd>Google Places keşfi + ayrı editoryal CMS kayıtları</dd></div><div><dt>Foundation</dt><dd>{foundationEnabled?'Etkin':'Etkin değil'}</dd></div><div><dt>Rezervasyon arayüzü</dt><dd>{restaurantRequestsEnabled?'Etkin':'Aktivasyon bekliyor'}</dd></div><div><dt>Rezervasyon sunucusu</dt><dd>{{checking:'Kontrol ediliyor…',ready:'API yapılandırması ve şema kontrolü başarılı',closed:'Talep kabulüne hazır değil',error:'Durum alınamadı'}[serverState]}. E-posta teslimi ayrıca kuyruk/sağlayıcı üzerinden izlenir.</dd></div><div><dt>İçerik güncellemeleri</dt><dd>CMS kayıtları kalıcıdır. SEO/site haritası için onaylı build/yayın gerekir.</dd></div></dl><p>Şehir tasarımları, çeviriler, API anahtarları ve güvenlik ayarları burada değiştirilmez. Gerçekte çalışmayan “tüm siteyi değiştir” düğmeleri gösterilmez.</p><a className="admin-button" href="https://vercel.com/eli-1196/safe-in-turkiye" target="_blank" rel="noopener noreferrer">Yayın ve API ortamı<ExternalLink size={15}/></a></section>}
+   {tab==='system'&&<TaxiBudgetReview/>}
   </div></div>
  {discard.dialog}</main>;
 }

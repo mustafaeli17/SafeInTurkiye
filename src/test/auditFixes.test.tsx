@@ -4,7 +4,7 @@ import {expiredGooglePhoto,createPhotoRefreshGuard} from '../lib/photoRefresh';
 import {discoveryKeys,discoveryTranslations,discoverySupplement} from '../lib/discoveryCopy';
 import {authCopy} from '../lib/authCopy';
 import {privacyCopy} from '../lib/privacyCopy';
-import {budgetIsCurrent,taxiBudgetRange} from '../lib/taxiBudget';
+import {budgetIsCurrent,budgetReviewExpiresAt,taxiBudgetRange,taxiBudgets} from '../lib/taxiBudget';
 import {currencyInputCopy,invalidCurrencyAmount} from '../lib/currencyInput';
 import TravelFaq from '../components/TravelFaq';
 import fs from 'node:fs';
@@ -30,8 +30,9 @@ it('rejects stale, future or invalid budget review dates without altering curren
  const now=Date.parse('2026-10-25T12:00:00Z');
  expect(budgetIsCurrent('2026-10-06',now)).toBe(true);
  for(const date of ['2026-09-01','2026-10-26','2026-02-30','nonsense'])expect(budgetIsCurrent(date,now)).toBe(false);
- expect(taxiBudgetRange('Ankara',[10],'YELLOW',now)).toMatchObject({amount:460,upper:470});
- expect(taxiBudgetRange('Ankara',[10],'YELLOW',Date.parse('2026-11-10'))).toBeNull();
+ const expiry=budgetReviewExpiresAt(taxiBudgets.Ankara.reviewedAt);
+ expect(taxiBudgetRange('Ankara',[10],'YELLOW',expiry-1)).toMatchObject({amount:470,upper:470,hasRange:false});
+ expect(taxiBudgetRange('Ankara',[10],'YELLOW',expiry)).toBeNull();
 });
 it('keeps paused booking flows out of public FAQ and removes dishonest seasonal shortcuts',()=>{
  expect(renderToStaticMarkup(<TravelFaq lang="en"/>)).toContain('Our reservation request service is not available yet.');

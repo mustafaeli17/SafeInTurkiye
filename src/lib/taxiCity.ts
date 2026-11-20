@@ -29,6 +29,7 @@ export const taxiCitySelectionCopy:Record<string,[string,string]>={
 };
 
 const unavailable: Record<string, string> = {
+  es: 'Tu ruta está lista. Aún no hemos podido verificar la tarifa local para este origen. Consulta la distancia y la duración abajo y confirma el precio con un taxi local o con BiTaksi donde esté disponible.',
   tr: 'Rotanız hazır. Bu başlangıç noktası için güncel yerel ücret henüz doğrulanmadı. Mesafe ve süreyi aşağıda görebilir, ücreti yerel taksiden veya hizmet veriyorsa BiTaksi üzerinden kontrol edebilirsiniz.',
   en: 'Your route is ready. A current local fare for this starting point has not yet been verified. See distance and duration below; check pricing with a local taxi or BiTaksi where available.',
   de: 'Ihre Route ist bereit. Ein aktueller Ortstarif für diesen Startpunkt ist noch nicht bestätigt. Entfernung und Dauer stehen unten; fragen Sie ein örtliches Taxi oder BiTaksi, sofern verfügbar.',

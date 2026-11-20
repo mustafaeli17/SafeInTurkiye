@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { viatorFilters } from '../services/viatorFilters'
 import { tourFilterCopy, toursLabel } from '../lib/viatorCopy'
+import {discoverySwitchHref} from '../lib/discoveryNavigation'
 import { readFileSync } from 'node:fs'
 
 const parse=(s:string)=>viatorFilters(new URLSearchParams(s),'2026-10-10')
@@ -8,12 +9,19 @@ describe('Viator full-catalog filters',()=>{
  it('keeps one readable disclosure after results and preserves sponsored tracking links',()=>{
   const source=readFileSync('src/components/ViatorTours.tsx','utf8')
   expect(source.match(/\{t\[8\]\}/g)).toHaveLength(1)
-  expect(source.indexOf('data-testid="tour-disclosure"')).toBeGreaterThan(source.indexOf('search(start+12)'))
+  expect(source.indexOf('data-testid="tour-disclosure"')).toBeGreaterThan(source.indexOf('rel="sponsored noopener noreferrer"'))
   expect(source).toContain('href={p.productUrl}')
   expect(source).toContain('rel="sponsored noopener noreferrer"')
   expect(source).not.toContain('affiliateLabel')
  })
  it('keeps the existing unfiltered request unchanged',()=>expect(parse('')).toEqual({filtering:{},sorting:{sort:'DEFAULT'}}))
+ it('links district activities to the supported tour region and keeps an applied place search on return',()=>{
+  expect(discoverySwitchHref('tours','es','bodrum','Bodrum')).toBe('/es/tours?city=mugla&q=Bodrum')
+  const back=new URL(discoverySwitchHref('activities','tr','bursa','Koza Han'),'https://example.test')
+  expect(back.pathname).toBe('/tr/activities')
+  expect(Object.fromEntries(back.searchParams)).toEqual({city:'bursa',q:'Koza Han',lookup:'1'})
+  expect(discoverySwitchHref('tours','de',undefined,'')).toBe('/de/tours')
+ })
  it('maps documented price, duration, rating, date and flags',()=>{
   expect(parse('minPrice=20&maxPrice=100&duration=short&rating=4&date=2026-10-12&private=true&freeCancellation=true&skipLine=true&sort=priceAsc')).toEqual({
    filtering:{lowestPrice:20,highestPrice:100,durationInMinutes:{from:0,to:240},rating:{from:4,to:5},startDate:'2026-10-12',endDate:'2026-10-12',flags:['PRIVATE_TOUR','FREE_CANCELLATION','SKIP_THE_LINE']},sorting:{sort:'PRICE',order:'ASCENDING'},

@@ -4,12 +4,16 @@ import EditorialPlacePhoto from './EditorialPlacePhoto'
 import {isEditorialPlace} from '../lib/editorialDiscovery'
 import {loadMaps} from '../lib/loadGoogleMaps'
 import type {NearbyPlaceRecord} from '../services/nearbyPlaces'
-export default function NearbyResultsMap({places,onOpen,title,errorText,lang,onExpired}:{lang:string;onExpired:()=>void;places:NearbyPlaceRecord[];onOpen:(id:string)=>void;title:string;errorText:string}){
+export default function NearbyResultsMap({places,onOpen,title,errorText,lang,onExpired,activeId,onPick}:{activeId?:string|null;onPick?:(id:string)=>void;lang:string;onExpired:()=>void;places:NearbyPlaceRecord[];onOpen:(id:string)=>void;title:string;errorText:string}){
  const host=useRef<HTMLDivElement>(null),callback=useRef(onOpen)
  useEffect(()=>{callback.current=onOpen},[onOpen])
  const [failed,setFailed]=useState(false)
  const [selectedId,setSelectedId]=useState<string|null>(null)
- const selected=places.find(place=>place.id===selectedId)??places[0]
+ const pinNodes=useRef(new Map<string,HTMLButtonElement>())
+ const selected=places.find(place=>place.id===(activeId??selectedId))??places[0]
+ const selectedKey=selected?.id
+ const activePin=useRef(selectedKey)
+ useEffect(()=>{activePin.current=selectedKey;for(const [id,node] of pinNodes.current)node.setAttribute('aria-pressed',String(id===selectedKey))},[selectedKey])
  useEffect(()=>{
   let cancelled=false;const overlays:any[]=[]
   const auth=()=>setFailed(true);window.addEventListener('transit-map-auth-error',auth);setFailed(false)
@@ -21,7 +25,7 @@ export default function NearbyResultsMap({places,onOpen,title,errorText,lang,onE
     element:HTMLButtonElement
     stem=document.createElement('div')
     place:NearbyPlaceRecord
-    constructor(place:NearbyPlaceRecord){super();this.place=place;this.element=document.createElement('button');this.element.className='nearby-map-label';this.element.textContent=place.name??title;this.element.addEventListener('click',()=>setSelectedId(place.id));this.setMap(map)}
+    constructor(place:NearbyPlaceRecord){super();this.place=place;this.element=document.createElement('button');this.element.className='nearby-map-label';this.element.textContent=place.name??title;pinNodes.current.set(place.id,this.element);this.element.setAttribute('aria-pressed',String(activePin.current===place.id));this.element.addEventListener('click',()=>{setSelectedId(place.id);onPick?.(place.id)});this.setMap(map)}
     onAdd(){this.getPanes().floatPane.append(this.stem,this.element);this.stem.style.cssText='position:absolute;width:1px;background:#087fff;pointer-events:none';maps.OverlayView.preventMapHitsAndGesturesFrom(this.element)}
     draw(){
      const projection=this.getProjection(),center=projection.fromLatLngToDivPixel(map.getCenter());
@@ -44,11 +48,11 @@ export default function NearbyResultsMap({places,onOpen,title,errorText,lang,onE
      Object.assign(this.element.style,{position:'absolute',left:x+'px',top:y+'px'});
      Object.assign(this.stem.style,{left:point.x+'px',top:point.y+'px',width:Math.hypot(dx,dy)+'px',height:'1px',transformOrigin:'0 0',transform:`rotate(${Math.atan2(dy,dx)}rad)`});
     }
-    onRemove(){this.element.remove();this.stem.remove()}
+    onRemove(){pinNodes.current.delete(this.place.id);this.element.remove();this.stem.remove()}
    }
    places.forEach(place=>{bounds.extend(place.coordinates);overlays.push(new PlacePin(place))});map.fitBounds(bounds,{top:65,right:80,bottom:190,left:80});maps.event.addListenerOnce(map,'idle',()=>{if(map.getZoom()>16)map.setZoom(16)})
   }).catch(()=>{if(!cancelled)setFailed(true)})
   return()=>{cancelled=true;window.removeEventListener('transit-map-auth-error',auth);overlays.forEach(item=>item.setMap(null))}
- },[places,title])
+ },[places,title,onPick])
  return failed?<p role="status" className="nearby-map-error">{errorText}</p>:<div className="nearby-map-wrap"><div ref={host} role="region" aria-label={title} className="nearby-results-map"/>{selected&&<div className="nearby-map-selection"><div>{isEditorialPlace(selected)?<EditorialPlacePhoto place={selected} expanded={false} lang={lang} onOpen={()=>callback.current(selected.id)}/>:<GooglePlacePhoto key={selected.id} place={selected} onExpired={onExpired} onOpen={()=>callback.current(selected.id)}/>}</div><button className="nearby-map-selection-name" onClick={()=>callback.current(selected.id)}>{selected.name??title}<span aria-hidden="true"> →</span></button></div>}</div>
 }

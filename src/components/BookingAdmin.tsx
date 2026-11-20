@@ -12,13 +12,16 @@ export default function BookingAdmin({onChanged}:{onChanged?:()=>void}={}){
  const [message,setMessage]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false),[saving,setSaving]=useState<string|null>(null),[newCount,setNewCount]=useState(0);
  const [confirming,setConfirming]=useState<{row:ReservationRow;next:string}|null>(null);
  const [showTests,setShowTests]=useState(false);
+ const enteredReference = /^SIT-\d{4}-\d{1,12}$/i.test(search.trim()) ? search.trim().toUpperCase() : undefined;
+ const [reference,setReference]=useState(enteredReference);
+ useEffect(()=>{const timer=setTimeout(()=>setReference(enteredReference),250);return()=>clearTimeout(timer);},[enteredReference]);
  const controller=useRef<AbortController|null>(null),generation=useRef(0),seen=useRef(new Set<string>()),initialized=useRef(false),mutating=useRef(false);
  const load=useCallback(async(quiet=false,more=false)=>{
   if(mutating.current)return;
   controller.current?.abort();const abort=new AbortController();controller.current=abort;const request=++generation.current;
   if(!quiet)setBusy(true);setError('');
   try{
-   const result=await loadAdminReservations(status,more?rows.length:0,AbortSignal.any([abort.signal,AbortSignal.timeout(12000)]),quiet?Math.max(50,rows.length):50);
+   const result=await loadAdminReservations(status,more?rows.length:0,AbortSignal.any([abort.signal,AbortSignal.timeout(12000)]),quiet?Math.max(50,rows.length):50,reference);
    if(request!==generation.current)return;
    const incoming=result.rows.filter(row=>row.status==='PENDING'&&!seen.current.has(row.id));
    if(initialized.current&&quiet&&incoming.length)setNewCount(n=>n+incoming.length);
@@ -27,8 +30,8 @@ export default function BookingAdmin({onChanged}:{onChanged?:()=>void}={}){
    setRows(old=>more?[...old,...result.rows.filter(row=>!old.some(item=>item.id===row.id))]:result.rows);setTotal(result.total);
   }catch{if(!abort.signal.aborted)setError('Talepler yüklenemedi. Önceki liste korunuyor; bağlantıyı kontrol edip yenileyin.');}
   finally{if(request===generation.current)setBusy(false);}
- },[status,rows.length]);
- useEffect(()=>{void load();return()=>{generation.current++;controller.current?.abort();};},[status]);
+ },[status,rows.length,reference]);
+ useEffect(()=>{void load();return()=>{generation.current++;controller.current?.abort();};},[status,reference]);
  useEffect(()=>{
   const refresh=()=>{if(document.visibilityState==='visible'&&!mutating.current)void load(true);};
   const timer=setInterval(refresh,30000);window.addEventListener('focus',refresh);

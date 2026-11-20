@@ -1,4 +1,4 @@
-// No search terms, query parameters, hash tokens, personal locations or custom events.
+// Page-view reporting is limited to the clean homepage URL.
 export function trackingOptOut(browser: {doNotTrack?: string | null; globalPrivacyControl?: boolean}): boolean {
  return browser.doNotTrack === '1' || browser.globalPrivacyControl === true;
 }

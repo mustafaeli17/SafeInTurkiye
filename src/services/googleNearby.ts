@@ -24,7 +24,9 @@ export function parseGooglePlaces(payload: unknown, center: NearbyCenter, catego
     if (!isValidCenter(point) || !str(p.displayName?.text)) continue
     const distance = distanceInMeters(center, point)
     if (distance > radius) continue
-    const matched = category === 'all' ? mapping.find(([type]) => Array.isArray(p.types) && p.types.includes(type))?.[1] : category
+    const matched = category === 'all'
+      ? mapping.find(([type]) => providerTypes.includes(type))?.[1] ?? (Object.entries(acceptedTypes) as [NearbyCategory,string[]][]).find(([,types]) => types.some(type=>providerTypes.includes(type)))?.[0]
+      : category
     if (!matched) continue
     const phone = safeTelephone(p.internationalPhoneNumber)
     const hours = p.currentOpeningHours ?? p.regularOpeningHours

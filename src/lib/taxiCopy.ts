@@ -1,3 +1,8 @@
+export const taxiCompareTransit:Record<string,string> = {
+ tr:'Toplu taşımayla karşılaştır', en:'Compare with public transport', es:'Comparar con transporte público',
+ de:'Mit öffentlichen Verkehrsmitteln vergleichen', fr:'Comparer avec les transports en commun',
+ ar:'قارن بوسائل النقل العام', ru:'Сравнить с общественным транспортом', zh:'与公共交通比较',
+};
 export const taxiEstimateCopy: Record<string, [string,string]> = {
  es:['Estimación según la distancia','No incluye esperas, peajes ni suplementos.'],
  tr:['Mesafeye göre tahmini ücret','Bekleme, geçiş ücretleri ve ek ücretler dahil değildir.'],

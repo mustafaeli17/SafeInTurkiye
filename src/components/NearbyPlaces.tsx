@@ -7,7 +7,7 @@ import { groomingCategoryLabel } from '../lib/groomingCopy'
 import { useEffect, useRef, useState } from 'react'
 import {locationErrorText} from '../lib/locationError'
 import { nearbyNotice } from '../lib/nearbyNotice'
-import { Clock3, ExternalLink, LocateFixed, MapPin, Phone, Search } from 'lucide-react'
+import { ArrowRight, Clock3, ExternalLink, Globe, LocateFixed, MapPin, Navigation, Phone, Search } from 'lucide-react'
 import { NearbyError } from '../services/nearbyPlaces'
 import { fetchGoogleNearby } from '../services/googleNearby'
 import GooglePlacePhoto from './GooglePlacePhoto'
@@ -17,7 +17,9 @@ import {trackBusinessEvent} from '../lib/businessEvents'
 import {foundationEnabled} from '../lib/foundationConfig'
 import { searchDestinations, directionsText } from '../lib/searchDestinations'
 import {useBrowserLocation,updateLocationQuery} from '../lib/browserNavigation'
-import {destinationSlug,discoveryCity} from '../lib/discoveryNavigation'
+import {destinationSlug,destinationRegion,discoveryCity,discoverySwitchHref} from '../lib/discoveryNavigation'
+import {mentionedSearchCity} from '../services/searchCities'
+import {toursLabel} from '../lib/viatorCopy'
 import {cityDisplayName} from '../lib/cityLocale'
 import {discoveryFilterCopy,filterDiscovery} from '../lib/discoveryFilters'
 import {readDiscoveryArea,saveDiscoveryArea} from '../lib/discoveryState'
@@ -209,8 +211,21 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
   const mapArea=origin==='location'?mapSearchPoint:addressPlace
   const mapQuery=mapArea?`currency exchange near ${mapArea.lat},${mapArea.lng}`:`currency exchange ${selectedCity}, Türkiye`
   const busy = state === 'locating' || state === 'loading'
-  const allPlaces = combineDiscovery(result?.places??[],editorial,kind==='exchange'?'bureau_de_change':filter)
+  // Text Search ranks the requested name. Distance from a city centre is only
+  // a search bias and must not move unrelated places ahead of the named one.
+  const allPlaces = textQuery && origin==='city' && !addressPlace
+    ? result?.places??[]
+    : combineDiscovery(result?.places??[],editorial,kind==='exchange'?'bureau_de_change':filter)
   const detailPlace=selectedPlace(detailId,allPlaces)
+  const hotelDetail=detailPlace?.category==='hotel'?detailPlace:null
+  let relatedToursHref='/tours'
+  if(fixedCategory==='activity'){
+    const city=origin==='location'||requiresLocation||addressPlace
+      ?mentionedSearchCity(detailPlace?.address??addressPlace?.label??'')
+      :destinationSlug(selectedCity)
+    const term=detailPlace?.name||textQuery||(city&&destinationRegion(city)!==city?selectedCity:'')
+    relatedToursHref=discoverySwitchHref('tours',locale,city,city?term:'')
+  }
   const places=detailId?(detailPlace?[detailPlace]:[]):filterDiscovery(allPlaces,new URLSearchParams(query))
   const filtersCopy=discoveryFilterCopy[locale]??discoveryFilterCopy.en
   useEffect(()=>{
@@ -244,6 +259,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
 
       {showAreaMap&&mapKey&&!detailId&&<iframe className="exchange-area-map" title={text('Yakındaki döviz büroları', 'Nearby exchange bureaux')} src={'https://www.google.com/maps/embed/v1/search?'+new URLSearchParams({key:mapKey,q:mapQuery,language:locale,region:'TR'})} loading="lazy" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen/>}
 
+      {fixedCategory === 'activity' && <a href={relatedToursHref} className="inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-blue-700 underline underline-offset-4">{toursLabel(locale)}<ArrowRight size={15} aria-hidden="true" className="rtl:rotate-180"/></a>}
       {fixedCategory === 'activity' && <div className="flex flex-wrap gap-2" aria-label={text('Aktivite kategorisi', 'Activity category')}>
         {(['activity', 'museum', 'historical', 'cinema', 'entertainment', 'park'] as const).map(category => <button type="button" key={category} aria-pressed={filter === category} onClick={() => { generation.current += 1; controller.current?.abort(); setFilter(category); setResult(null); setEditorial([]);setState('loading');setError(null) }} className={`min-h-11 rounded-full border px-4 py-2 text-xs font-semibold ${filter === category ? 'border-[#087FFF] bg-[#087FFF] text-white' : 'border-sky-100 bg-white text-slate-700'}`}>{categoryLabel(category)}</button>)}
       </div>}
@@ -263,6 +279,8 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
         {state === 'ready' && <p>{origin === 'location' ? text('Konumunuzun çevresi', 'Around your location') : textQuery ? textQuery : addressPlace ? addressPlace.label : `${cityName} ${fixedCategory ? text('ve çevresi', 'area') : text('merkezinin çevresi', 'city centre')}`} · {places.length} {text('kayıt', 'places')}{result && ` · ${text('Alındı', 'Retrieved')} ${new Date(result.fetchedAt).toLocaleTimeString(tr ? 'tr-TR' : 'en-GB', { hour: '2-digit', minute: '2-digit' })}`}</p>}
       </div>
 
+      {textQuery && (state==='error'||(state==='ready'&&!places.length)) &&
+        <a className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-blue-700 underline" href={`https://www.google.com/maps/search/?${new URLSearchParams({api:'1',query:textQuery})}`} target="_blank" rel="noopener noreferrer">Google Maps · {textQuery}<ExternalLink size={15} aria-hidden="true"/></a>}
       {detailId&&!detailPlace&&<div role="status" className="rounded-2xl border border-sky-100 bg-white p-5 text-sm text-slate-600">{busy?text('Yakındaki yerler aranıyor…','Searching nearby places…'):text('Yer bilgileri şu anda alınamadı. Lütfen yeniden deneyin.','Place details could not be loaded. Please try again.')}<button disabled={busy} onClick={searchCity} className="block min-h-11 font-bold text-blue-700">{addressText[2]}</button></div>}
       {!detailId&&state === 'ready' && places.length === 0 && <div className="rounded-2xl border border-sky-100 bg-white p-5 text-sm text-slate-600">{text('Bu alanda ve kategoride kayıt bulunamadı. Bu, yakınlarda işletme olmadığı anlamına gelmez; harita kayıtları eksik olabilir.', 'No records were found in this area and category. This does not mean there are no places nearby; map coverage may be incomplete.')}</div>}
       {detailId && <button type="button" className="min-h-11 text-blue-700 font-semibold" onClick={() => setDetailId(null)}>{text('← Listeye dön', '← Back to results')}</button>}
@@ -273,9 +291,14 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
             <div className="min-w-0"><span className="text-[10px] font-bold uppercase tracking-wide text-[#007EAD]">{place.typeLabel ?? categoryLabel(place.category)}</span><h3 className="mt-1 break-words font-bold text-slate-900"><button className="text-start min-h-11 hover:text-blue-700" onClick={() => openPlace(place.id)}>{place.name || categoryLabel(place.category)}</button></h3></div>
             {(!textQuery||origin==='location')&&<span className="shrink-0 rounded-lg bg-sky-50 px-2 py-1 text-xs font-bold text-[#007EAD]">{formatDistance(place.distanceMeters)}</span>}
           </div>
+          {hotelDetail&&<div className="mt-2 flex flex-wrap gap-2 text-sm font-semibold text-blue-700">
+            <a className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-blue-600 px-3 text-white" href={`https://www.google.com/maps/dir/?api=1&destination=${place.coordinates.lat},${place.coordinates.lng}${place.id.startsWith('google:')?'&destination_place_id='+encodeURIComponent(place.id.slice(7)):''}`} target="_blank" rel="noopener noreferrer"><Navigation size={17} aria-hidden="true"/>{directionsText[locale]??directionsText.en}</a>
+            {place.telephoneUrl&&<a className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-blue-200 px-3" href={place.telephoneUrl}><Phone size={17} aria-hidden="true"/><span className="sr-only">{text('Telefon','Phone')} </span><bdi>{place.phone}</bdi></a>}
+            {place.website&&<a className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-blue-200 px-3" href={place.website} data-event="website" target="_blank" rel="noopener noreferrer"><Globe size={17} aria-hidden="true"/>{text('Web sitesi','Website')}</a>}
+          </div>}
           <dl className="mt-3 space-y-2.5 text-xs leading-relaxed text-slate-600">
             {place.address && <div className="flex gap-2"><dt className="shrink-0"><MapPin className="mt-0.5 h-4 w-4" /><span className="sr-only">{text('Adres', 'Address')}</span></dt><dd className="break-words">{place.address}</dd></div>}
-            {place.telephoneUrl && <div className="flex gap-2"><dt className="shrink-0"><Phone className="mt-0.5 h-4 w-4" /><span className="sr-only">{text('Telefon', 'Phone')}</span></dt><dd><a href={place.telephoneUrl} className="inline-flex min-h-11 items-center font-semibold text-[#007EAD] underline underline-offset-2">{place.phone}</a></dd></div>}
+            {!hotelDetail&&place.telephoneUrl && <div className="flex gap-2"><dt className="shrink-0"><Phone className="mt-0.5 h-4 w-4" /><span className="sr-only">{text('Telefon', 'Phone')}</span></dt><dd><a href={place.telephoneUrl} className="inline-flex min-h-11 items-center font-semibold text-[#007EAD] underline underline-offset-2">{place.phone}</a></dd></div>}
             {place.openingHours && <div className="flex gap-2"><dt className="shrink-0"><Clock3 className="mt-0.5 h-4 w-4" /><span className="sr-only">{text('Çalışma saatleri', 'Opening hours')}</span></dt><dd className="min-w-0 break-words"><details><summary className="min-h-11 cursor-pointer py-2">{text('Çalışma saatleri', 'Opening hours')}</summary>{place.openingHours}</details></dd></div>}
           </dl>
           {typeof place.openNow === 'boolean' && <p className="mt-2 text-xs">{place.openNow ? text('Şu an açık', 'Open now') : text('Şu an kapalı', 'Closed now')}</p>}
@@ -283,9 +306,9 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
           {place.attributions?.map((a, i) => <p key={i} className="text-xs">{a.url ? <a href={a.url} target="_blank" rel="noopener noreferrer">{a.name}</a> : a.name}</p>)}
           {isEditorialPlace(place)&&detailId===place.id&&<section className="mt-3 text-sm text-slate-600"><h4 className="font-semibold">{editorialText[2]}</h4><p className="whitespace-pre-wrap break-words">{place.editorial.description[locale]??place.editorial.fallbackDescription}</p></section>}
           <div className="mt-3 flex flex-wrap gap-4 border-t border-slate-100 pt-3 text-xs font-semibold text-[#007EAD]">
-            <a href={place.sourceUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-1">{text('Harita kaydı ve kaynak', 'Map record & source')}<ExternalLink className="h-3 w-3" /></a>
-            <a href={`https://www.google.com/maps/dir/?api=1&destination=${place.coordinates.lat},${place.coordinates.lng}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-1">{directionsText[locale] ?? directionsText.en}<ExternalLink aria-hidden="true" className="h-3 w-3" /></a>
-            {place.website && <a data-event="website" href={place.website} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-1">{text('Web sitesi', 'Website')}<ExternalLink className="h-3 w-3" /></a>}
+            {(!hotelDetail||place.sourceUrl!==place.website)&&<a href={place.sourceUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-1">{text('Harita kaydı ve kaynak', 'Map record & source')}<ExternalLink className="h-3 w-3" /></a>}
+            {!hotelDetail&&<a href={`https://www.google.com/maps/dir/?api=1&destination=${place.coordinates.lat},${place.coordinates.lng}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-1">{directionsText[locale] ?? directionsText.en}<ExternalLink aria-hidden="true" className="h-3 w-3" /></a>}
+            {!hotelDetail&&place.website && <a data-event="website" href={place.website} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-1">{text('Web sitesi', 'Website')}<ExternalLink className="h-3 w-3" /></a>}
           </div>
           {detailId === place.id && place.category === 'restaurant' && <RestaurantRequest businessKey={businessKey(place.id)} name={place.name ?? ''} city={selectedCity} source={place.sourceUrl} lang={locale} />}
         </article>)}

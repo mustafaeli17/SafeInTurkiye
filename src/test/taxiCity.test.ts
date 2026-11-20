@@ -37,9 +37,10 @@ describe('taxi city safety', () => {
     }
   });
   it('provides a visitor-facing fallback in all supported languages', () => {
-    for (const language of ['tr', 'en', 'de', 'fr', 'ar', 'ru', 'zh']) {
+    for (const language of ['tr', 'en', 'de', 'fr', 'ar', 'ru', 'zh','es']) {
       expect(taxiUnavailableText(language).length).toBeGreaterThan(20);
       expect(taxiUnavailableText(language)).not.toContain('Supabase');
+      if (language !== 'en') expect(taxiUnavailableText(language)).not.toBe(taxiUnavailableText('en'));
     }
     expect(taxiUnavailableText('unknown')).toBe(taxiUnavailableText('en'));
   });
