@@ -1,3 +1,4 @@
+import CityHighlightPhoto from './components/CityHighlightPhoto';
 import './components/CityGuidePage.css';
 import {cityGuideDesignCopy} from './lib/cityGuideDesignCopy';
 import NearMeHero from './components/NearMeHero';
@@ -15,8 +16,6 @@ Building2,
 ArrowRight,
 BusFront,
 Compass,
-Landmark,
-Map,
 CalendarDays,
 ChevronDown,
 Hotel,
@@ -887,7 +886,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
               </div>
               <div className="city-guide-highlights-grid">
                 {currentCityInfo.highlights.map((highlight,index) => (
-                  <article key={highlight.name} className="city-guide-place"><div className="city-guide-place-art" aria-hidden="true">{index===0?<Landmark/>:index===1?<Map/>:<Compass/>}</div><div>
+                  <article key={highlight.name} className="city-guide-place"><CityHighlightPhoto city={destinationSlug(selectedCityName)} index={index} name={highlight.name} lang={lang}/><div>
                     <h3><button onClick={()=>navigateTo(`/activities?city=${destinationSlug(selectedCityName)}&q=${encodeURIComponent(highlight.name)}`)}>{highlight.name}<ArrowRight size={17} aria-hidden="true"/></button></h3>
                     <p className="text-[11px] leading-relaxed text-slate-600 mt-1">{highlight.detail}</p>
                   </div></article>

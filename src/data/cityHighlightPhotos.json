@@ -1,0 +1,394 @@
+{
+  "istanbul": [
+    {
+      "src": "/photos/highlights/istanbul-1.webp",
+      "title": "Hagia_Sophia_(228968325).jpeg",
+      "author": "Adli Wahid",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Hagia_Sophia_(228968325).jpeg",
+      "description": "Hagia Sophia",
+      "verifiedAt": "2026-11-20",
+      "changes": "Resized and converted to WebP; displayed with a cover crop."
+    },
+    {
+      "src": "/photos/highlights/istanbul-2.webp",
+      "title": "Topkapı_-_01.jpg",
+      "author": "Carlos Delgado",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Topkap%C4%B1_-_01.jpg",
+      "description": "Topkapı  Palace, Istanbul, Turkey.",
+      "verifiedAt": "2026-11-20",
+      "changes": "Resized and converted to WebP; displayed with a cover crop."
+    },
+    {
+      "src": "/photos/highlights/istanbul-3.webp",
+      "title": "Emin_Kul.jpg",
+      "author": "Ail Subway",
+      "license": "CC BY 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Emin_Kul.jpg",
+      "description": "Emin Kul goes to Karaköy",
+      "verifiedAt": "2026-11-20",
+      "changes": "Resized and converted to WebP; displayed with a cover crop."
+    }
+  ],
+  "ankara": [
+    {
+      "src": "/photos/highlights/ankara-1.webp",
+      "title": "Ataturk's_Mausoleum_(6225341313).jpg",
+      "author": "William Neuheisel from DC, US",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ataturk%27s_Mausoleum_(6225341313).jpg",
+      "description": "Exterior of the mausoleum building of Anıtkabir complex",
+      "verifiedAt": "2026-11-20",
+      "changes": "Resized and converted to WebP; displayed with a cover crop."
+    },
+    {
+      "src": "/photos/highlights/ankara-2.webp",
+      "title": "Museum of Anatolian Civilizations046.jpg",
+      "author": "Georges Jansoone (JoJan)",
+      "license": "CC BY 2.5",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.5",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Museum_of_Anatolian_Civilizations046.jpg",
+      "description": "Large vase, White-glaze interior, storage-vessel size, but probably an exhibit-, or ceremonial-vase, found at Kültepe;  Period of the Old Hittite Kingdom; 1660 - 1460 BC; Museum of Anatolian Civilizations, Ankara, TurkeyNote some design features: Handles-(ergonomic-style); white-glaze interior, on wide-flanged lip; geometric-sectioned design Exterior, with/ whitish-buff background with black designs; designs interlaced with internal non-intense red lines, between the black lines",
+      "verifiedAt": "2026-11-20",
+      "changes": "Resized and converted to WebP; displayed with a cover crop."
+    },
+    {
+      "src": "/photos/highlights/ankara-3.webp",
+      "title": "Ankara_Castle.jpg",
+      "author": "Bernard Gagnon",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ankara_Castle.jpg",
+      "description": "Ankara Castle seen from Haci Bayram Mosque, Ankara",
+      "verifiedAt": "2026-11-20",
+      "changes": "Resized and converted to WebP; displayed with a cover crop."
+    }
+  ],
+  "cappadocia": [
+    {
+      "src": "/photos/highlights/cappadocia-1.webp",
+      "title": "Göreme Open Air Museum 01.jpg",
+      "author": "Bernard Gagnon",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:G%C3%B6reme_Open_Air_Museum_01.jpg",
+      "description": "View of Göreme Open Air Museum, Turkey",
+      "verifiedAt": "2026-11-20",
+      "changes": "Resized and converted to WebP; displayed with a cover crop."
+    },
+    {
+      "src": "/photos/highlights/cappadocia-2.webp",
+      "title": "Rose Valley, Cappadocia - Kızılçukur Vadisi, Kapadokya 08.jpg",
+      "author": "Zeynel Cebeci",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Rose_Valley,_Cappadocia_-_K%C4%B1z%C4%B1l%C3%A7ukur_Vadisi,_Kapadokya_08.jpg",
+      "description": "A view from Rose Valley, Cappadocia. Nevşehir, Turkey.",
+      "verifiedAt": "2026-11-20",
+      "changes": "Resized and converted to WebP; displayed with a cover crop."
+    },
+    {
+      "src": "/photos/highlights/cappadocia-3.webp",
+      "title": "Uçhisar,_Cappadocia_01.jpg",
+      "author": "Bernard Gagnon",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:U%C3%A7hisar,_Cappadocia_01.jpg",
+      "description": "View of Uçhisar seen from Kaya Hotel, Cappadocia, Turkey",
+      "verifiedAt": "2026-11-20",
+      "changes": "Resized and converted to WebP; displayed with a cover crop."
+    }
+  ],
+  "antalya": [
+    {
+      "src": "/photos/highlights/antalya-1.webp",
+      "title": "Antalya_Müzesi_(Archäologisches_Museum_Antalya).JPG",
+      "author": "Dat doris",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Antalya_M%C3%BCzesi_(Arch%C3%A4ologisches_Museum_Antalya).JPG",
+      "description": "Das Archäologische Museum in Antalya zeigt bedeutende Funde, antike Skulpturen und Bauwerke aus der Region.",
+      "verifiedAt": "2026-11-20",
+      "changes": "Resized and converted to WebP; displayed with a cover crop."
+    },
+    {
+      "src": "/photos/highlights/antalya-2.webp",
+      "title": "P9271452_Hadrians_Gate.jpg",
+      "author": "Joe Wallace",
+      "license": "CC BY-SA 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:P9271452_Hadrians_Gate.jpg",
+      "description": "Built after Hadrian visited Antalya in 130 AD. Last remaining gate in the old walled town and harbour.",
+      "verifiedAt": "2026-11-20",
+      "changes": "Resized and converted to WebP; displayed with a cover crop."
+    },
+    {
+      "src": "/photos/highlights/antalya-3.webp",
+      "title": "Upper_Duden_Falls.jpg",
+      "author": "Saffron Blaze",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Upper_Duden_Falls.jpg",
+      "description": "The upper Düden Waterfall within the City of Antalya, Turkey.",
+      "verifiedAt": "2026-11-20",
+      "changes": "Resized and converted to WebP; displayed with a cover crop."
+    }
+  ],
+  "izmir": [
+    {
+      "src": "/photos/highlights/izmir-1.webp",
+      "title": "Izmir_Agora.JPG",
+      "author": "CenkX (Wikimedia Commons uploader)",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "http://creativecommons.org/licenses/by-sa/3.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Izmir_Agora.JPG",
+      "description": "",
+      "verifiedAt": "2026-11-20",
+      "changes": "Resized and converted to WebP; displayed with a cover crop."
+    },
+    null,
+    {
+      "src": "/photos/highlights/izmir-3.webp",
+      "title": "Kordon - Alsancak.jpg",
+      "author": "Raismi",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Kordon_-_Alsancak.jpg",
+      "description": "Kordon in İzmir.",
+      "verifiedAt": "2026-11-20",
+      "changes": "Resized and converted to WebP; displayed with a cover crop."
+    }
+  ],
+  "gaziantep": [
+    {
+      "src": "/photos/highlights/gaziantep-1.webp",
+      "title": "ZeugmaMuseum1.jpg",
+      "author": "Klaus-Peter Simon",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:ZeugmaMuseum1.jpg",
+      "description": "Zeugma-Mosaik-Museum, Gaziantep, Türkei, Eingang",
+      "verifiedAt": "2026-11-20",
+      "changes": "Resized and converted to WebP; displayed with a cover crop."
+    },
+    {
+      "src": "/photos/highlights/gaziantep-2.webp",
+      "title": "Gaziantep_Archaeological_Museum_0399.jpg",
+      "author": "Dosseman",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Gaziantep_Archaeological_Museum_0399.jpg",
+      "description": "Two priests on a funerary stele, basalt, Roman 2nd century AD.",
+      "verifiedAt": "2026-11-20",
+      "changes": "Resized and converted to WebP; displayed with a cover crop."
+    },
+    {
+      "src": "/photos/highlights/gaziantep-3.webp",
+      "title": "Gaziantep bakircilar carsisi usta.jpg",
+      "author": "Erhanaydin6428",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Gaziantep_bakircilar_carsisi_usta.jpg",
+      "description": "Gaziantep bakırcılar çarşısında el işciliği ile oymacılık yapan Mehmet Usta büyük bir siniyi nakış işler gibi işliyor.",
+      "verifiedAt": "2026-11-20",
+      "changes": "Resized and converted to WebP; displayed with a cover crop."
+    },
+    null
+  ],
+  "mugla": [
+    null,
+    {
+      "src": "/photos/highlights/mugla-2.webp",
+      "title": "Bodrum Museum Ceramics in 2015 3644.jpg",
+      "author": "Dosseman",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bodrum_Museum_Ceramics_in_2015_3644.jpg",
+      "description": "One of pictures about which I have no more information than found in their name.",
+      "verifiedAt": "2026-11-20",
+      "changes": "Resized and converted to WebP; displayed with a cover crop."
+    },
+    {
+      "src": "/photos/highlights/mugla-3.webp",
+      "title": "Bodrum marina 05.jpg",
+      "author": "Justinianus",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bodrum_marina_05.jpg",
+      "description": "Bodrum marina",
+      "verifiedAt": "2026-11-20",
+      "changes": "Resized and converted to WebP; displayed with a cover crop."
+    }
+  ],
+  "aydin": [
+    {
+      "src": "/photos/highlights/aydin-1.webp",
+      "title": "Kusadasi,_Kuşadası-Aydın_Province,_Turkey_-_panoramio_(5).jpg",
+      "author": "Tevfik Teker",
+      "license": "CC BY 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Kusadasi,_Ku%C5%9Fadas%C4%B1-Ayd%C4%B1n_Province,_Turkey_-_panoramio_(5).jpg",
+      "description": "Kusadasi, Kuşadası/Aydın Province, Turkey",
+      "verifiedAt": "2026-11-20",
+      "changes": "Resized and converted to WebP; displayed with a cover crop."
+    },
+    {
+      "src": "/photos/highlights/aydin-2.webp",
+      "title": "Kuşadası_from_Milli_Park.jpg",
+      "author": "ahenobarbus",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Ku%C5%9Fadas%C4%B1_from_Milli_Park.jpg",
+      "description": "View of Kuşadası from Milli Park",
+      "verifiedAt": "2026-11-20",
+      "changes": "Resized and converted to WebP; displayed with a cover crop."
+    },
+    {
+      "src": "/photos/highlights/aydin-3.webp",
+      "title": "Didymaion_front_AvL.JPG",
+      "author": "AlexanderVanLoon",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Didymaion_front_AvL.JPG",
+      "description": "Frontal view of the Didymaion.",
+      "verifiedAt": "2026-11-20",
+      "changes": "Resized and converted to WebP; displayed with a cover crop."
+    },
+    {
+      "src": "/photos/highlights/aydin-4.webp",
+      "title": "Altinkum.JPG",
+      "author": "Steven Lek",
+      "license": "Public domain",
+      "licenseUrl": "",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Altinkum.JPG",
+      "description": "Altinkum is one of Turkey`s popular holiday resort with British tourist.",
+      "verifiedAt": "2026-11-20",
+      "changes": "Resized and converted to WebP; displayed with a cover crop."
+    }
+  ],
+  "denizli": [
+    {
+      "src": "/photos/highlights/denizli-1.webp",
+      "title": "Pamukkale,_Denizli_2026_68.jpg",
+      "author": "Biologg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Pamukkale,_Denizli_2026_68.jpg",
+      "description": "Pamukkale, Denizli 2026",
+      "verifiedAt": "2026-11-20",
+      "changes": "Resized and converted to WebP; displayed with a cover crop."
+    },
+    {
+      "src": "/photos/highlights/denizli-2.webp",
+      "title": "Hierapolis_01.jpg",
+      "author": "Bernard Gagnon",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Hierapolis_01.jpg",
+      "description": "View of the site of Hiérapolis, Turkey",
+      "verifiedAt": "2026-11-20",
+      "changes": "Resized and converted to WebP; displayed with a cover crop."
+    },
+    {
+      "src": "/photos/highlights/denizli-3.webp",
+      "title": "TR_Pamukkale_Laodicea_asv2020-02_img11.jpg",
+      "author": "A.Savin",
+      "license": "FAL",
+      "licenseUrl": "http://artlibre.org/licence/lal/en",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:TR_Pamukkale_Laodicea_asv2020-02_img11.jpg",
+      "description": "Archaeological site of Laodicea on the Lycus between Pamukkale and Denizli, Turkey. The photo shows the Syria Street.",
+      "verifiedAt": "2026-11-20",
+      "changes": "Resized and converted to WebP; displayed with a cover crop."
+    },
+    null
+  ],
+  "trabzon": [
+    {
+      "src": "/photos/highlights/trabzon-1.webp",
+      "title": "Sumela_From_Across_Valley.JPG",
+      "author": "Bjørn Christian Tørrissen",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Sumela_From_Across_Valley.JPG",
+      "description": "The Sümela Monastery as seen from across the narrow Altındere valley that it is located in, south of Trabzon in Eastern Turkey.",
+      "verifiedAt": "2026-11-20",
+      "changes": "Resized and converted to WebP; displayed with a cover crop."
+    },
+    {
+      "src": "/photos/highlights/trabzon-2.webp",
+      "title": "Uzungöl,_Trabzon.jpg",
+      "author": "Ozbakanelwan",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Uzung%C3%B6l,_Trabzon.jpg",
+      "description": "Uzungöl Lake from a close by mountain.",
+      "verifiedAt": "2026-11-20",
+      "changes": "Resized and converted to WebP; displayed with a cover crop."
+    }
+  ],
+  "konya": [
+    {
+      "src": "/photos/highlights/konya-1.webp",
+      "title": "Maulana Jelaledin Muhammad Rumi in konya.jpg",
+      "author": "Emad Nemati",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Maulana_Jelaledin_Muhammad_Rumi_in_konya.jpg",
+      "description": "Mevlana Museum in Konya, Turkey.",
+      "verifiedAt": "2026-11-20",
+      "changes": "Resized and converted to WebP; displayed with a cover crop."
+    },
+    null
+  ],
+  "bursa": [
+    {
+      "src": "/photos/highlights/bursa-1.webp",
+      "title": "Bursa,_Turkey_(4505709750).jpg",
+      "author": "Christine und Hagen Graf from Fitou, France",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bursa,_Turkey_(4505709750).jpg",
+      "description": "Koza Han",
+      "verifiedAt": "2026-11-20",
+      "changes": "Resized and converted to WebP; displayed with a cover crop."
+    },
+    {
+      "src": "/photos/highlights/bursa-2.webp",
+      "title": "71_Bursa_la_Grande_Moschea_(Edited).jpg",
+      "author": "Beñat Irasuegi",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:71_Bursa_la_Grande_Moschea_(Edited).jpg",
+      "description": "Skyline view of the Grand Mosque of Bursa\n(Picture retouched and slightly cropped from original in order to improve clarity in thumbnail form)",
+      "verifiedAt": "2026-11-20",
+      "changes": "Resized and converted to WebP; displayed with a cover crop."
+    },
+    {
+      "src": "/photos/highlights/bursa-3.webp",
+      "title": "Uludağ_-_Olympos_Misios.jpg",
+      "author": "Kartal Arikan",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Uluda%C4%9F_-_Olympos_Misios.jpg",
+      "description": "The olympus of ancient greek mythology, on whose peak zeus was believed to sit on his throne surveying the doings of gods and men, “Uludağ” (Great Mountain) in Westem Anatolia is today Turkey’s most popular winter sports resort.",
+      "verifiedAt": "2026-11-20",
+      "changes": "Resized and converted to WebP; displayed with a cover crop."
+    },
+    {
+      "src": "/photos/highlights/bursa-4.webp",
+      "title": "Uluabat_from_Sky.jpg",
+      "author": "Cetintas555",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Uluabat_from_Sky.jpg",
+      "description": "Golyazi village and Uluabat lake from an aerial view",
+      "verifiedAt": "2026-11-20",
+      "changes": "Resized and converted to WebP; displayed with a cover crop."
+    }
+  ]
+}
