@@ -1,0 +1,1 @@
+export const cityGuideDesignCopy:Record<string,[string,string]>={en:['City guide','Explore places'],tr:['Şehir rehberi','Yerleri keşfet'],de:['Stadtführer','Orte entdecken'],fr:['Guide de la ville','Explorer les lieux'],es:['Guía de la ciudad','Explorar lugares'],ar:['دليل المدينة','اكتشف الأماكن'],ru:['Путеводитель','Открыть места'],zh:['城市指南','探索地点']};

@@ -1,3 +1,5 @@
+import './components/CityGuidePage.css';
+import {cityGuideDesignCopy} from './lib/cityGuideDesignCopy';
 import NearMeHero from './components/NearMeHero';
 import {navigationUi} from './lib/navigationUi';
 import {citiesDetailedData} from './data/originalCityDetails';
@@ -10,6 +12,12 @@ import {authCopy} from './lib/authCopy';
 import {
 Bot,
 Building2,
+ArrowRight,
+BusFront,
+Compass,
+Landmark,
+Map,
+CalendarDays,
 ChevronDown,
 Hotel,
 Loader2,
@@ -530,7 +538,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
   const localizedGaziantep = regionalCity?.slug==='gaziantep' ? gaziantepCopy[lang as keyof typeof gaziantepCopy] : undefined;
   const baseCityInfo = regionalCity ? {
     name:regionalCity.name,tagline:localizedGaziantep?.tagline??regionalCity.focus,
-    
+
     lat:regionalCity.lat,lng:regionalCity.lng,
     localTip:regionalDescription(regionalCity, lang),
     highlights:(localizedGaziantep?.places??regionalCity.places).map(name=>({name,detail:''})),
@@ -832,61 +840,62 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
             PAGE 6: CITIES & WEATHER
         ==================================================================== */}
         {activeTab === 'city' && (
-          <main className="reference-page reference-city max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-24">
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-              {[...['İstanbul', 'Ankara', 'Cappadocia', 'Antalya', 'İzmir'],...cityGuides.map(city=>city.name)].map((cname) => (
+          <main className="reference-page reference-city city-guide-page mx-auto px-4 sm:px-6 pb-12">
+            <div className="city-guide-picker" aria-label={tr('cityWeather')}>
+              {publicCities.map(({name:cname}) => (
                 <button
                   key={cname}
+                  aria-pressed={selectedCityName===cname}
                   onClick={() => navigateTo(cityPath(cname))}
                   className={`shrink-0 whitespace-nowrap px-4 py-1.5 rounded-xl text-[12px] font-bold cursor-pointer transition-all ${
                     selectedCityName === cname ? 'bg-[#087FFF] text-white shadow-sm' : 'bg-white border border-sky-100 text-slate-600 hover:bg-sky-50'
                   }`}
                 >
-                  {cityDisplayName(cname,lang)}
+                  {selectedCityName===cname&&<MapPin size={15} aria-hidden="true"/>}{cityDisplayName(cname,lang)}
                 </button>
               ))}
             </div>
 
-            <div className="city-photo-banner relative rounded-3xl overflow-hidden shadow-md flex items-end p-6 text-white">
+            <div className="city-photo-banner city-guide-hero relative overflow-hidden text-white">
               <CityArtwork city={selectedCityName} lang={lang} hero className="absolute inset-0 w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-transparent" />
-              <div className="relative z-10">
+              <div className="city-guide-shade absolute inset-0" />
+              <div className="city-guide-heading relative z-10"><span className="city-guide-eyebrow">{(cityGuideDesignCopy[lang]??cityGuideDesignCopy.en)[0]}</span>
                 <h1 className="text-3xl font-black">{cityDisplayName(currentCityInfo.name,lang)}</h1>
                 <p className="text-[13px] text-slate-200">{currentCityInfo.tagline}</p>
               </div>
             </div>
 
             <nav className="reference-city-nav" aria-label={currentCityInfo.name}>
- {([{tab:'experiences',label:tr('activities'),icon:'🎟️'},{tab:'stay',label:tr('hotels'),icon:'🛏️'},{tab:'food',label:tr('dining'),icon:'🍽️'},{tab:'tours',label:toursLabel(lang),icon:'🧭'},{tab:'transit',label:tr('transit'),icon:'🚇'},{tab:'safety',label:page('safety'),icon:'🛡️'}] as const).map(item=><button key={item.tab} onClick={()=>setActiveTab(item.tab)}><span aria-hidden="true">{item.icon}</span>{item.label}</button>)}
+ {([{tab:'experiences',label:tr('activities'),icon:CalendarDays},{tab:'stay',label:tr('hotels'),icon:Hotel},{tab:'food',label:tr('dining'),icon:Utensils},{tab:'tours',label:toursLabel(lang),icon:Compass},{tab:'transit',label:tr('transit'),icon:BusFront},{tab:'safety',label:page('safety'),icon:ShieldCheck}] as const).map(item=><button key={item.tab} onClick={()=>setActiveTab(item.tab)}><item.icon size={23} aria-hidden="true"/><span>{item.label}</span></button>)}
  </nav>
 
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="city-guide-info">
               <WeatherCard lat={currentCityInfo.lat} lng={currentCityInfo.lng} cityName={currentCityInfo.name} lang={lang} />
-              <div className="p-5 bg-white rounded-2xl border border-sky-100 shadow-sm space-y-3">
-                <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider block">{page('cityTransport')}</span>
+              <div className="city-guide-transit">
+                <BusFront className="city-guide-transit-icon" aria-hidden="true"/><span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider block">{page('cityTransport')}</span>
                 <p className="text-sm text-slate-700">{cityTransportText(selectedCityName,lang,currentCityInfo.localTip)}</p>
-                <p className="text-xs text-slate-500">{page('noTraffic')}</p>
-                <button onClick={() => setActiveTab('transit')} className="px-4 py-2 bg-sky-50 text-sky-800 rounded-xl text-sm font-bold">{tr('transit')}</button>
+
+                <button onClick={() => setActiveTab('transit')} className="px-4 py-2 bg-sky-50 text-sky-800 rounded-xl text-sm font-bold">{tr('transit')} <ArrowRight size={16} aria-hidden="true"/></button>
               </div>
             </div>
 
-            <section className="bg-white p-5 rounded-2xl border border-sky-100 shadow-sm">
+            <section className="city-guide-highlights">
               <div className="flex items-center gap-2 mb-4">
-                <Building2 className="w-5 h-5 text-[#087FFF]" />
-                <h2 className="font-extrabold text-[16px] text-slate-900">{page('miss')} {cityDisplayName(currentCityInfo.name,lang)}</h2>
+
+                <h2 className="font-extrabold text-[16px] text-slate-900">{page('miss')} {cityDisplayName(currentCityInfo.name,lang)}</h2><button className="city-guide-more" onClick={()=>setActiveTab('experiences')}>{(cityGuideDesignCopy[lang]??cityGuideDesignCopy.en)[1]} <ArrowRight size={16}/></button>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {currentCityInfo.highlights.map((highlight) => (
-                  <article key={highlight.name} className="p-3.5 rounded-xl bg-sky-50/60 border border-sky-100">
-                    <h3 className="text-[13px] font-extrabold text-slate-900">{highlight.name}</h3>
+              <div className="city-guide-highlights-grid">
+                {currentCityInfo.highlights.map((highlight,index) => (
+                  <article key={highlight.name} className="city-guide-place"><div className="city-guide-place-art" aria-hidden="true">{index===0?<Landmark/>:index===1?<Map/>:<Compass/>}</div><div>
+                    <h3><button onClick={()=>navigateTo(`/activities?city=${destinationSlug(selectedCityName)}&q=${encodeURIComponent(highlight.name)}`)}>{highlight.name}<ArrowRight size={17} aria-hidden="true"/></button></h3>
                     <p className="text-[11px] leading-relaxed text-slate-600 mt-1">{highlight.detail}</p>
-                  </article>
+                  </div></article>
                 ))}
               </div>
             </section>
 
-            <Suspense fallback={<PageLoading lang={lang}/>}><TransportCardGuide city={selectedCityName} lang={lang} /><FirstVisitPlan city={selectedCityName} lang={lang}/></Suspense>
+            <div className="city-guide-practical"><Suspense fallback={<PageLoading lang={lang}/>}><TransportCardGuide city={selectedCityName} lang={lang} /><FirstVisitPlan city={selectedCityName} lang={lang}/></Suspense></div>
 
           </main>
         )}
