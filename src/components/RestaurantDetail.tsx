@@ -22,7 +22,7 @@ export default function RestaurantDetail({place,lang,city,businessKey,distance,t
    <h2>{place.name}</h2>
    <div className="restaurant-detail-rating">{place.rating!==undefined&&<span><Star size={20} fill="#ffbd16" stroke="#ffbd16"/><strong>{place.rating}</strong>{place.reviewCount!==undefined&&` (${new Intl.NumberFormat(lang).format(place.reviewCount)})`}</span>}<a href={place.sourceUrl} target="_blank" rel="noopener noreferrer">Google Maps <ExternalLink size={14}/></a>{typeof place.openNow==='boolean'&&<span className={place.openNow?'is-open':'is-closed'}>{place.openNow?text('Şu an açık','Open now'):text('Şu an kapalı','Closed now')}</span>}</div>
    <div className="restaurant-detail-actions"><a className="primary" href={route} target="_blank" rel="noopener noreferrer"><Navigation size={18}/>{directions}</a>{place.website&&<a data-event="website" href={place.website} target="_blank" rel="noopener noreferrer"><Globe size={18}/>{text('Web sitesi','Website')}<ExternalLink size={14}/></a>}{place.telephoneUrl&&<a href={place.telephoneUrl}><Phone size={18}/>{text('Telefon','Phone')}</a>}</div>
-   <nav className="restaurant-detail-tabs" aria-label={place.name??text('Restoran','Restaurant')}>{['overview','reservation','map'].map((value,i)=><button key={value} type="button" aria-pressed={tab===value} onClick={()=>value==='reservation'?showRequest():setTab(value)}>{t[i]}</button>)}</nav>
+   <nav className="restaurant-detail-tabs" aria-label={place.name??text('Restoran','Restaurant')}>{['overview','map'].map((value,i)=><button key={value} type="button" aria-pressed={tab===value} onClick={()=>setTab(value)}>{t[i===0?0:2]}</button>)}</nav>
    <section className={`restaurant-detail-overview ${tab==='overview'?'is-active':''}`}>
     {description&&<p className="restaurant-detail-description">{description}</p>}
     <dl>{place.address&&<div><MapPin size={20}/><div><dt>{text('Adres','Address')}</dt><dd>{place.address}</dd></div></div>}{place.telephoneUrl&&<div><Phone size={20}/><div><dt>{text('Telefon','Phone')}</dt><dd><a href={place.telephoneUrl}>{place.phone}</a></dd></div></div>}{place.openingHours&&<div><Clock3 size={20}/><div><dt>{text('Çalışma saatleri','Opening hours')}</dt><dd><details><summary>{text('Çalışma saatleri','Opening hours')}</summary><p>{place.openingHours}</p></details></dd></div></div>}</dl>
@@ -31,6 +31,6 @@ export default function RestaurantDetail({place,lang,city,businessKey,distance,t
    {place.attributions?.map((a,i)=><p className="restaurant-detail-credit" key={i}>{a.url?<a href={a.url} target="_blank" rel="noopener noreferrer">{a.name}</a>:a.name}</p>)}
   </div>
   <aside id="restaurant-request-panel" className={`restaurant-detail-request ${tab==='reservation'?'is-active':''}`}><RestaurantRequest businessKey={businessKey} name={place.name??''} city={city} source={place.sourceUrl} lang={lang}/></aside>
-  <button type="button" className="restaurant-detail-mobile-cta" onClick={showRequest}><CalendarDays size={20}/>{request}</button>
+  <button type="button" className="restaurant-detail-mobile-cta" aria-controls="restaurant-request-panel" aria-expanded={tab==='reservation'} onClick={showRequest}><CalendarDays size={20}/>{request}</button>
  </article>;
 }
