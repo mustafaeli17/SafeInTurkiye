@@ -47,7 +47,7 @@ export function eligibleTariffs(rows:TaxiTariffRow[],city:string,now=Date.now())
  });
 }
 
-export async function getCurrentTaxiTariffs(city: string): Promise<TaxiTariffRecord[]> {
+export async function getCurrentTaxiTariffs(city: string, signal?:AbortSignal): Promise<TaxiTariffRecord[]> {
   const today = new Date().toISOString().slice(0, 10)
   const { data, error } = await requireSupabase()
     .from('taxi_tariffs')
@@ -57,7 +57,7 @@ export async function getCurrentTaxiTariffs(city: string): Promise<TaxiTariffRec
     .lte('effective_from', today)
     .or(`effective_to.is.null,effective_to.gte.${today}`)
     .order('effective_from', { ascending: false })
-    .abortSignal(AbortSignal.timeout(12000))
+    .abortSignal(signal ? AbortSignal.any([signal,AbortSignal.timeout(12000)]) : AbortSignal.timeout(12000))
   if (error) throw error
   return eligibleTariffs((data??[]) as unknown as TaxiTariffRow[],city).map((row) => ({
     sourceUrl:row.data_sources!.url!,sourceName:row.data_sources!.name,lastVerified:row.last_verified_at!,

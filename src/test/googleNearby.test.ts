@@ -4,6 +4,22 @@ import { parseGooglePlaces, fetchGoogleNearby } from '../services/googleNearby'
 const response = () => ({ status: vi.fn().mockReturnThis(), setHeader: vi.fn(), json: vi.fn() })
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs() })
 describe('Google Places boundary', () => {
+  it('preserves only a Turkish administrative province for restaurant planning even when the search city differs', async () => {
+    vi.stubEnv('GOOGLE_PLACES_API_KEY', 'test-only')
+    const place = {id:'other-city', types:['restaurant'], displayName:{text:'Restaurant'}, location:{latitude:36.9,longitude:30.7}, googleMapsUri:'https://maps.google.com/?cid=1'}
+    const components = (country:string) => [{types:['country'],shortText:country},{types:['administrative_area_level_1'],longText:'Antalya'}]
+    const f = vi.fn().mockResolvedValue({ok:true,json:async()=>({places:[
+      {...place,addressComponents:components('TR')}, {...place,id:'outside',addressComponents:components('DE')}, {...place,id:'unknown'},
+    ]})})
+    vi.stubGlobal('fetch', f)
+    const res = response()
+    await handler({method:'GET',url:'/?lat=41&lng=29&category=restaurant&q=Antalya',headers:{'x-forwarded-for':'plan-province'}},res)
+    expect(f.mock.calls[0][1].headers['X-Goog-FieldMask']).toContain('places.addressComponents')
+    const payload = res.json.mock.calls[0][0]
+    expect(payload.places[0]).not.toHaveProperty('addressComponents')
+    const rows = parseGooglePlaces(payload, {lat:41,lng:29}, 'restaurant', Infinity).places
+    expect(rows.map(row => row.cityName)).toEqual(['Antalya',undefined,undefined])
+  })
   it('recovers a shared Turkish place by ID under the existing request budget',async()=>{
     vi.stubEnv('GOOGLE_PLACES_API_KEY','test-only')
     const place={id:'shared',addressComponents:[{shortText:'TR',types:['country']}]}

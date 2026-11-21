@@ -1,7 +1,7 @@
 import {useState} from 'react';
 import type {EditorialPlace} from '../lib/editorialDiscovery';
 import {editorialDiscoveryCopy} from '../lib/editorialDiscoveryCopy';
-export default function EditorialPlacePhoto({place,expanded,onOpen,lang}:{place:EditorialPlace;expanded:boolean;onOpen?:()=>void;lang:string}){
+export default function EditorialPlacePhoto({place,expanded,onOpen,lang,href}:{place:EditorialPlace;expanded:boolean;onOpen?:()=>void;lang:string;href?:string}){
  const [failed,setFailed]=useState<string[]>([]),t=editorialDiscoveryCopy[lang]??editorialDiscoveryCopy.en;
  const photos=(expanded?place.editorial.gallery:place.editorial.gallery.slice(0,1)).filter(src=>!failed.includes(src));
  if(!photos.length)return null;
@@ -9,7 +9,7 @@ export default function EditorialPlacePhoto({place,expanded,onOpen,lang}:{place:
   const photo=<img src={src} alt={place.name??''} width={640} height={360} loading="lazy" decoding="async" referrerPolicy="no-referrer" className="aspect-video w-full object-cover" onError={()=>setFailed(old=>[...old,src])}/>;
   const frame='block w-full overflow-hidden rounded-xl';
   return <figure key={src} className="min-w-0">
-   {expanded?<a href={src} target="_blank" rel="noopener noreferrer" className={frame}>{photo}</a>:<button type="button" onClick={onOpen} className={frame}>{photo}</button>}
+   {expanded||href?<a href={href??src} target="_blank" rel="noopener noreferrer" className={frame}>{photo}</a>:<button type="button" onClick={onOpen} className={frame}>{photo}</button>}
    <figcaption className="text-[11px] text-slate-500">{place.editorial.imageSource?<a className="underline" href={place.editorial.imageSource} target="_blank" rel="noopener noreferrer">{t[4]}</a>:t[0]}</figcaption>
   </figure>
  })}</div>;

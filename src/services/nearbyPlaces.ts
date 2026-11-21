@@ -4,6 +4,8 @@ export type NearbyCategory = 'barber' | 'hair_salon' | 'bureau_de_change' | 'pha
 export interface NearbyCenter { lat: number; lng: number }
 export interface NearbyPlaceRecord {
   id: string
+  /** Published editorial city or Turkish administrative province of this record. */
+  cityName?: string
   name: string | null
   category: NearbyCategory
   coordinates: NearbyCenter

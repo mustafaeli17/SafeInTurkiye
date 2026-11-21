@@ -1,0 +1,56 @@
+.hotel-arrival {
+  margin-block:1rem;
+  padding:clamp(1rem,2.5vw,1.5rem);
+  border:1px solid #c9dfec;
+  border-radius:1rem;
+  background:#f4f9fc;
+  color:#172e47;
+  overflow-wrap:anywhere;
+}
+.arrival-header,.arrival-dialog header {display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem 1rem}
+.arrival-header h2,.arrival-option h3 {display:flex;align-items:center;gap:.55rem;margin:0;font-weight:750}
+.arrival-header h2 {font-size:clamp(1.1rem,2.5vw,1.55rem)}
+.arrival-header svg,.arrival-option h3 svg {flex:none;color:#175d87}
+.hotel-arrival :is(button,select,summary),.arrival-dialog button {min-height:44px;cursor:pointer}
+.hotel-arrival :is(button,a,select,summary):focus-visible,.arrival-dialog button:focus-visible {outline:3px solid #1264ae;outline-offset:2px}
+.arrival-driver,.arrival-submit,.arrival-dialog button {display:inline-flex;align-items:center;justify-content:center;gap:.5rem;border-radius:.7rem;font-weight:650}
+.arrival-driver,.arrival-dialog button {background:white;border:1px solid #a7c6d9;padding:.4rem .85rem;color:#154d73}
+.arrival-intro,.arrival-option p,.arrival-dialog>p {font-size:.9rem;line-height:1.55;color:#40556b}
+.arrival-intro {margin:.6rem 0 1rem}
+.arrival-controls {display:grid;align-items:end;grid-template-columns:minmax(0,1.6fr) minmax(6rem,.8fr) auto;gap:.75rem}
+.arrival-controls label {display:grid;gap:.25rem;min-width:0;font-size:.87rem;font-weight:650}
+.arrival-controls select {width:100%;min-width:0;border:1px solid #a7c6d9;border-radius:.65rem;padding:.45rem .6rem;background:white;color:#152e47;font-size:1rem}
+.arrival-submit {background:#095bab;color:white;border:1px solid #095bab;padding:.45rem 1rem}
+.arrival-submit:disabled {opacity:.78;cursor:wait}
+.arrival-comparison {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem;margin-top:1rem}
+.arrival-option {min-width:0;padding:1rem;border:1px solid #d2e1eb;border-radius:.85rem;background:white}
+.arrival-option h3 {font-size:1.03rem}
+.arrival-option p {margin-block:.45rem}
+.arrival-option .arrival-timing {color:#172e47;font-weight:650}
+.arrival-prices {margin:.7rem 0;display:grid;gap:.3rem}
+.arrival-prices div {display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:.25rem .6rem}
+.arrival-prices dt {font-size:.9rem}
+.arrival-prices dd {font-weight:750;font-variant-numeric:tabular-nums}
+.arrival-option small,.arrival-dialog small {display:block;color:#4e6172;font-size:.78rem}
+.arrival-option summary {display:list-item;align-content:center;font-size:.87rem;font-weight:650}
+.arrival-option details {font-size:.85rem}
+.arrival-option details time {display:block}
+.arrival-map-link,.arrival-source,.arrival-airport-source {display:inline-flex;align-items:center;gap:.35rem;min-height:44px;color:#125e94;font-size:.85rem;text-decoration:underline;text-underline-offset:.18em}
+.arrival-source {margin-inline-end:.75rem}
+.arrival-airport-source {margin-block-end:-.55rem}
+.arrival-dialog {position:fixed;inset:0;margin:auto;width:min(90vw,37rem);max-height:90dvh;overflow:auto;border:1px solid #c5d8e5;border-radius:1.2rem;padding:clamp(1rem,4vw,1.8rem);background:white;color:#172e47;box-shadow:0 20px 70px rgb(12 31 56 / .25)}
+.arrival-dialog::backdrop {background:rgb(12 31 56 / .65)}
+.arrival-dialog h2 {font-size:1.15rem;font-weight:750}
+.arrival-dialog button {width:44px;padding:0}
+.arrival-driver-address {margin-block:1.1rem;padding-block-start:1rem;border-top:2px solid #d6e5ed;line-height:1.35}
+.arrival-driver-address p {font-size:clamp(1.5rem,5vw,2rem);font-weight:650}
+.arrival-driver-address strong {display:block;margin-block:1rem .4rem;font-size:clamp(1.6rem,5.5vw,2.4rem);line-height:1.2}
+.arrival-driver-address address {font-style:normal;font-size:clamp(1.18rem,4vw,1.5rem)}
+@media (max-width:640px) {
+  .arrival-controls {grid-template-columns:minmax(0,1.75fr) minmax(0,1fr)}
+  .arrival-submit {grid-column:1/-1}
+  .arrival-comparison {grid-template-columns:1fr}
+}
+@media (max-width:390px) {
+  .arrival-controls {grid-template-columns:1fr}
+}

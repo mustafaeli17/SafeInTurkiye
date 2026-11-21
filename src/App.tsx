@@ -42,6 +42,7 @@ function NearbyPlaces(props:ComponentProps<typeof NearbyPlacesComponent>){return
 import PageLoading from './components/PageLoading';
 const SafeRouteMap=lazy(()=>import('./components/TaxiRouteMap'));
 const FirstVisitPlan=lazy(()=>import('./components/FirstVisitPlan'));
+import {dayPlanTitle, isPlanCity} from './components/FirstVisitPlan/titles';
 import PhotoCredits from './components/PhotoCredits';
 import SponsoredBusinesses from './components/SponsoredBusinesses';
 import TravelHome from './components/TravelHome';
@@ -898,7 +899,8 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
               </div>
             </div>
 
-            <nav className="reference-city-nav" aria-label={currentCityInfo.name}>
+            <nav className="reference-city-nav" aria-label={currentCityInfo.name} data-has-plan={isPlanCity(selectedCityName) || undefined}>
+ {isPlanCity(selectedCityName) && <a className="city-nav-plan" href="#day-plan"><CalendarDays size={23} aria-hidden="true"/><span>{dayPlanTitle(lang)}</span></a>}
  {([{tab:'experiences',label:tr('activities'),icon:CalendarDays},{tab:'stay',label:tr('hotels'),icon:Hotel},{tab:'food',label:tr('dining'),icon:Utensils},{tab:'tours',label:toursLabel(lang),icon:Compass},{tab:'transit',label:tr('transit'),icon:BusFront},{tab:'safety',label:page('safety'),icon:ShieldCheck}] as const).map(item=><button key={item.tab} onClick={()=>setActiveTab(item.tab)}><item.icon size={23} aria-hidden="true"/><span>{item.label}</span></button>)}
  </nav>
 

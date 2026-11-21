@@ -35,7 +35,7 @@ export function parseGooglePlaces(payload: unknown, center: NearbyCenter, catego
     const sourceUrl = safeWebsite(p.googleMapsUri)
     if (!sourceUrl) continue
     records.set(p.id, {
-      id: `google:${p.id}`, name: str(p.displayName.text), category: matched, coordinates: point,
+      id: `google:${p.id}`, cityName: str(p.cityName) ?? undefined, name: str(p.displayName.text), category: matched, coordinates: point,
       distanceMeters: distance, address: str(p.formattedAddress), phone: phone?.phone ?? null,
       telephoneUrl: phone?.telephoneUrl ?? null, website: safeWebsite(p.websiteUri), sourceUrl,
       openingHours: Array.isArray(hours?.weekdayDescriptions) ? hours.weekdayDescriptions.map(str).filter(Boolean).join(' · ') || null : null,

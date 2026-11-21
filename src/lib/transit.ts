@@ -59,12 +59,18 @@ export function transitRoutes(value: unknown): TransitRoute[] {
   if (!Array.isArray(value)) return []
   return value.filter(route => route && /^\d+(\.\d+)?s$/.test(route.duration) && Array.isArray(route.legs) && route.legs.every((leg: any) => Array.isArray(leg.steps) && leg.steps.every((step: any) => step && typeof step === 'object'))).slice(0, 4)
 }
-export function transitFare(route: TransitRoute, locale: string): string | null {
+export function transitFareAmount(route: TransitRoute) {
   const fare = route.travelAdvisory?.transitFare
-  if (!fare || !/^[A-Z]{3}$/.test(fare.currencyCode ?? '')) return null
+  if (!fare?.currencyCode || !/^[A-Z]{3}$/.test(fare.currencyCode) || (fare.units == null && fare.nanos == null)) return null
+  if (fare.units != null && !/^\d+$/.test(String(fare.units))) return null
+  if (fare.nanos != null && (!Number.isInteger(fare.nanos) || fare.nanos<0 || fare.nanos>=1e9)) return null
   const amount = Number(fare.units ?? 0) + Number(fare.nanos ?? 0) / 1e9
   if (!Number.isFinite(amount) || amount < 0) return null
-  return new Intl.NumberFormat(locale, { style: 'currency', currency: fare.currencyCode }).format(amount)
+  return {amount,currency:fare.currencyCode}
+}
+export function transitFare(route: TransitRoute, locale: string): string | null {
+  const fare = transitFareAmount(route)
+  return fare ? new Intl.NumberFormat(locale, { style: 'currency', currency: fare.currency }).format(fare.amount) : null
 }
 export function decodeTransitPolyline(encoded: string): { lat: number; lng: number }[] {
   let index = 0, lat = 0, lng = 0

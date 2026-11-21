@@ -14,6 +14,10 @@ const types: Record<string, string[]> = {
 }
 const detailFields = 'id,displayName,formattedAddress,location,types,primaryType,primaryTypeDisplayName,photos,googleMapsUri,businessStatus,rating,userRatingCount,currentOpeningHours,regularOpeningHours,internationalPhoneNumber,websiteUri,attributions'
 const searchFields = detailFields.split(',').map(field => 'places.' + field).join(',')
+type AddressPart = {types?: string[]; shortText?: string; longText?: string}
+function addressPart(value: unknown, type: string): AddressPart | undefined {
+  return Array.isArray(value) ? value.find(part => Array.isArray(part?.types) && part.types.includes(type)) : undefined
+}
 const consumePlacesBudget = createRequestBudget(12)
 export default async function handler(req: Request, res: Response) {
   res.setHeader('Cache-Control', 'private, no-store')
@@ -47,7 +51,7 @@ export default async function handler(req: Request, res: Response) {
     }) : await fetch(`https://places.googleapis.com/v1/places:${exchange || searchText ? 'searchText' : 'searchNearby'}`, {
       method: 'POST', signal: AbortSignal.timeout(8000),
       headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': key,
-        'X-Goog-FieldMask': searchFields },
+        'X-Goog-FieldMask': ['restaurant', 'hotel', 'all'].includes(category) ? searchFields + ',places.addressComponents' : searchFields },
       body: JSON.stringify(exchange || searchText
         ? { textQuery: searchText || 'döviz bürosu currency exchange', locationBias: { circle }, ...(searchText && includedTypes?.length === 1 ? { includedType: includedTypes[0], strictTypeFiltering: true } : {}), pageSize: 20, languageCode: lang === 'zh' ? 'zh-CN' : lang }
         : { includedTypes, locationRestriction: { circle }, maxResultCount: 20, rankPreference: 'POPULARITY', languageCode: lang === 'zh' ? 'zh-CN' : lang }),
@@ -55,10 +59,9 @@ export default async function handler(req: Request, res: Response) {
     if (!upstream.ok) return res.status(upstream.status === 429 ? 429 : 503).json({ error: upstream.status === 429 ? 'BUSY' : 'PROVIDER_UNAVAILABLE' })
     let body = await upstream.json()
     if (placeId) {
-      const withinTurkiye = Array.isArray(body?.addressComponents) && body.addressComponents.some((part: {types?: string[]; shortText?: string}) => part.types?.includes('country') && part.shortText === 'TR')
+      const withinTurkiye = addressPart(body?.addressComponents, 'country')?.shortText === 'TR'
       if (body?.id !== placeId || !withinTurkiye) return res.status(404).json({ error: 'PLACE_UNAVAILABLE' })
-      const { addressComponents, ...place } = body
-      body = { places: [place] }
+      body = { places: [body] }
     }
     if (!body || typeof body !== 'object' || (body.places !== undefined && !Array.isArray(body.places))) return res.status(503).json({ error: 'INVALID_RESPONSE' })
     const places = (body.places ?? []).map((place: Record<string, unknown>) => {
@@ -66,8 +69,9 @@ export default async function handler(req: Request, res: Response) {
       const photo = photos?.[0]
       const expires = Date.now() + 15 * 60000
       const photoUrl = photo?.name ? `/api/place-photo?${new URLSearchParams({ name: photo.name, expires: String(expires), signature: photoSignature(photo.name, expires, key) })}` : null
-      const { photos: omittedPhotos, ...rest } = place
-      return { ...rest, photo: photoUrl ? { url: photoUrl, authors: photo?.authorAttributions ?? [], sourceUrl: photo?.googleMapsUri ?? place.googleMapsUri } : null }
+      const { photos: omittedPhotos, addressComponents, ...rest } = place
+      const province = addressPart(addressComponents, 'country')?.shortText === 'TR' ? addressPart(addressComponents, 'administrative_area_level_1')?.longText : undefined
+      return { ...rest, ...(typeof province === 'string' && province ? {cityName: province} : {}), photo: photoUrl ? { url: photoUrl, authors: photo?.authorAttributions ?? [], sourceUrl: photo?.googleMapsUri ?? place.googleMapsUri } : null }
     })
     return res.status(200).json({ provider: 'Google Maps', places })
   } catch (error) {

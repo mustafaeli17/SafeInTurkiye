@@ -1,10 +1,11 @@
-import {lazy, Suspense, useState, useMemo, useEffect, useRef} from 'react'
+import {lazy, Suspense, useState, useEffect, useRef} from 'react'
 import {Map as MapIcon, List, LayoutGrid, MapPin, Navigation, ExternalLink, Clock3, Star, Globe} from 'lucide-react'
 import GooglePlacePhoto from './GooglePlacePhoto'
 import EditorialPlacePhoto from './EditorialPlacePhoto'
 import {editorialDiscoveryCopy} from '../lib/editorialDiscoveryCopy'
 import {isEditorialPlace} from '../lib/editorialDiscovery'
 import {nearMeDesignCopy} from '../lib/nearMeDesignCopy'
+import {placeDirectionsUrl} from '../lib/placeDirections'
 import type {NearbyPlaceRecord} from '../services/nearbyPlaces'
 import type {DirectoryKind} from '../lib/directoryCopy'
 
@@ -24,6 +25,8 @@ interface Props {
 }
 export default function NearMeResults({places, lang, onOpen, categoryLabel, distance, text, directions, businessKey, onExpired, directory, showDistance=true}: Props) {
   const [view, setView] = useState<'list'|'map'>('list')
+  const [openedMap, setOpenedMap] = useState(false)
+  function showMap() { setOpenedMap(true); setView('map') }
   const copy = nearMeDesignCopy[lang] ?? nearMeDesignCopy.en
   const [chosenId, setActiveId] = useState<string|null>(null)
   const activeId = places.some(place=>place.id===chosenId) ? chosenId : places[0]?.id ?? null
@@ -46,22 +49,17 @@ export default function NearMeResults({places, lang, onOpen, categoryLabel, dist
     media.addEventListener('change',sync)
     return ()=>media.removeEventListener('change',sync)
   },[])
-  // Keep the map instance across unrelated list controls and photo loading.
-  const mapSignature=JSON.stringify(places)
-  const mapPlaces=useMemo(()=>JSON.parse(mapSignature),[mapSignature])
   const ViewIcon=hotelOrNearby ? List : LayoutGrid
   return <>
     <div className="nearby-view-toggle" role="group" aria-label={text('Kayıtlar','places')}>
       <button type="button" aria-pressed={view==='list'} onClick={()=>setView('list')}><ViewIcon size={18} aria-hidden="true"/>{copy.list}</button>
-      <button type="button" aria-pressed={view==='map'} onClick={()=>setView('map')}><MapIcon size={18} aria-hidden="true"/>{copy.map}</button>
+      <button type="button" aria-pressed={view==='map'} onClick={showMap}><MapIcon size={18} aria-hidden="true"/>{copy.map}</button>
     </div>
     <div ref={resultsRef} className={`nearby-results-layout nearby-view-${view}`}>
       <div className="nearby-result-list">{places.map(place=>{
         const editorial = isEditorialPlace(place) ? place.editorial : null
         const websiteIsSource = Boolean(editorial && place.website===place.sourceUrl)
         const source = websiteIsSource ? text('Web sitesi','Website') : place.id.startsWith('google:') || editorial ? 'Google Maps' : 'OpenStreetMap'
-        const route = new URLSearchParams({api:'1',destination:`${place.coordinates.lat},${place.coordinates.lng}`})
-        if(place.id.startsWith('google:')) route.set('destination_place_id',place.id.slice(7))
         return <article key={place.id} data-place-id={place.id} data-selected={activeId===place.id || undefined} data-business-key={businessKey(place.id)} className="nearby-place-card">
           <div className="nearby-card-photo">
             {isEditorialPlace(place)
@@ -80,16 +78,16 @@ export default function NearMeResults({places, lang, onOpen, categoryLabel, dist
             {typeof place.openNow==='boolean'&&<p className="nearby-card-hours"><Clock3 size={15} aria-hidden="true"/>{place.openNow?text('Şu an açık','Open now'):text('Şu an kapalı','Closed now')}</p>}
             {place.attributions?.map((a,i)=><p className="text-xs" key={i}>{a.url?<a href={a.url} target="_blank" rel="noopener noreferrer">{a.name}</a>:a.name}</p>)}
             <div className="nearby-card-actions">
-              <a href={'https://www.google.com/maps/dir/?'+route} target="_blank" rel="noopener noreferrer"><Navigation size={15} aria-hidden="true"/>{directions}</a>
+              <a href={placeDirectionsUrl(place)} target="_blank" rel="noopener noreferrer"><Navigation size={15} aria-hidden="true"/>{directions}</a>
               {directory&&place.website&&<a href={place.website} data-event="website" target="_blank" rel="noopener noreferrer"><Globe size={15} aria-hidden="true"/>{text('Web sitesi','Website')}</a>}
               {(!directory||(!websiteIsSource&&place.rating===undefined))&&<a href={place.sourceUrl} data-event={websiteIsSource?'website':undefined} target="_blank" rel="noopener noreferrer"><span translate="no">{source}</span><ExternalLink size={14} aria-hidden="true"/></a>}
-              <button type="button" aria-pressed={activeId===place.id&&(split||view==='map')} onClick={()=>{setActiveId(place.id);setView('map')}}><MapIcon size={15} aria-hidden="true"/>{copy.map}</button>
+              <button type="button" aria-pressed={activeId===place.id&&(split||view==='map')} onClick={()=>{setActiveId(place.id);showMap()}}><MapIcon size={15} aria-hidden="true"/>{copy.map}</button>
             </div>
           </div>
         </article>
       })}</div>
       <aside className="nearby-map-panel" tabIndex={-1}><Suspense fallback={<div className="nearby-results-map" aria-busy="true"/>}>
-        {(split||view==='map')&&<ResultsMap activeId={activeId} onPick={setActiveId} places={mapPlaces} lang={lang} onExpired={onExpired} onOpen={onOpen} title={copy.map} errorText={copy.mapError}/>}
+        {(split||openedMap)&&<ResultsMap visible={split||view==='map'} activeId={activeId} onPick={setActiveId} places={places} lang={lang} onExpired={onExpired} onOpen={onOpen} categoryLabel={categoryLabel} title={copy.map} errorText={copy.mapError}/>}
       </Suspense></aside>
     </div>
   </>

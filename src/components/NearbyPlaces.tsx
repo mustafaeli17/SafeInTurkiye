@@ -1,4 +1,5 @@
 import RestaurantDetail from './RestaurantDetail'
+import HotelArrival from './HotelArrival'
 import NearMeResults from './NearMeResults'
 import DirectoryFilters from './DirectoryFilters'
 import DirectoryHeader from './DirectoryHeader'
@@ -10,7 +11,7 @@ import {nearMeDesignCopy} from '../lib/nearMeDesignCopy'
 import {LayoutGrid,Utensils,Coffee,Camera,Landmark,Cross,Wallet,ShoppingBag,SlidersHorizontal,ChevronDown} from 'lucide-react'
 import {taxiMapKey} from '../lib/mapEnvironment'
 import { groomingCategoryLabel } from '../lib/groomingCopy'
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {locationErrorText} from '../lib/locationError'
 import { nearbyNotice } from '../lib/nearbyNotice'
 import { ArrowRight, Clock3, ExternalLink, Globe, LocateFixed, MapPin, Navigation, Phone, Search } from 'lucide-react'
@@ -59,11 +60,22 @@ const categoryLabels: Record<NearbyCategory, [string, string]> = {
   activity: ['Gezilecek yerler ve etkinlikler', 'Things to do'], park: ['Park', 'Park'], historical: ['Tarihi yer', 'Historical place'], entertainment: ['Eğlence', 'Entertainment'], cinema: ['Sinema', 'Cinema'],
 }
 
+function useDiscoveryResults(result: NearbyResult|null, editorial: EditorialPlace[], category: 'all'|NearbyCategory,
+  preserveSearchOrder: boolean, query: string, limit: number) {
+  // A named city search uses the provider's ranking. Distance is only a search bias.
+  const allPlaces = useMemo(()=>preserveSearchOrder ? result?.places??[] : combineDiscovery(result?.places??[],editorial,category),
+    [result,editorial,category,preserveSearchOrder])
+  const filteredPlaces = useMemo(()=>filterDiscovery(allPlaces,new URLSearchParams(query)),[allPlaces,query])
+  const visiblePlaces = useMemo(()=>filteredPlaces.slice(0,limit),[filteredPlaces,limit])
+  return {allPlaces,filteredPlaces,visiblePlaces}
+}
+
 export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter, cityName: initialCityName, fixedCategory, initialCategory, discoveryLayout=false, showAreaMap=false }: NearbyPlacesProps) {
   const [moreCategories,setMoreCategories]=useState(false)
   const designCopy=nearMeDesignCopy[lang.toLowerCase()]??nearMeDesignCopy.en
   const categoryIcons={all:LayoutGrid,restaurant:Utensils,cafe:Coffee,attraction:Camera,museum:Landmark,pharmacy:Cross,atm:Wallet,shopping:ShoppingBag}
   const eventRoot=useRef<HTMLElement>(null)
+  const cityControl=useRef<HTMLSelectElement>(null)
   const seenEvents=useRef(new Set<string>())
   const eventContext=kind==='exchange'?'exchange':fixedCategory==='restaurant'?'restaurants':fixedCategory==='hotel'?'hotels':fixedCategory==='activity'?'activities':'nearby'
   const businessKey=(id:string)=>id.startsWith('google:')?`google/${id.slice(7)}`:validEditorialDetailId(id)?id.slice(4).replace(':','/'):undefined
@@ -102,11 +114,11 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
   const [error, setError] = useState<string | null>(null)
   const [mapSearchPoint,setMapSearchPoint]=useState<NearbyCenter|null>(null)
   const [origin, setOrigin] = useState<'location' | 'city'>('city')
-  const requestedCategory=new URLSearchParams(query).get('category')
+  const requestedCategory=params.get('category')
   const filter:'all'|NearbyCategory=requestedCategory&&(requestedCategory==='all'||Object.hasOwn(categoryLabels,requestedCategory))&&(!fixedCategory||requestedCategory===fixedCategory||fixedCategory==='activity'&&activityTypes.some(type=>type===requestedCategory))?requestedCategory as 'all'|NearbyCategory:initialCategory??fixedCategory??'all'
   const [limit, setLimit] = useState(6)
   const nextPageFocus = useRef<string | null>(null)
-  const requestedPlace=new URLSearchParams(query).get('place')
+  const requestedPlace=params.get('place')
   const detailId=requestedPlace&&(/^google:[A-Za-z0-9_-]{1,250}$/.test(requestedPlace)||validEditorialDetailId(requestedPlace))?requestedPlace:null
   const setDetailId=(id:string|null)=>{
     if(id){const url=new URL(window.location.href);url.searchParams.delete('place');updateLocationQuery({place:id},{state:{placeList:url.pathname+url.search}})}
@@ -230,12 +242,9 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
   const mapArea=origin==='location'?mapSearchPoint:addressPlace
   const mapQuery=mapArea?`currency exchange near ${mapArea.lat},${mapArea.lng}`:`currency exchange ${selectedCity}, Türkiye`
   const busy = state === 'locating' || state === 'loading'
-  // Text Search ranks the requested name. Distance from a city centre is only
-  // a search bias and must not move unrelated places ahead of the named one.
-  const allPlaces = textQuery && origin==='city' && !addressPlace
-    ? result?.places??[]
-    : combineDiscovery(result?.places??[],editorial,kind==='exchange'?'bureau_de_change':filter)
   const detailCategory=kind==='exchange'?'bureau_de_change':filter
+  const preserveSearchOrder=Boolean(textQuery && origin==='city' && !addressPlace)
+  const {allPlaces,filteredPlaces,visiblePlaces}=useDiscoveryResults(result,editorial,detailCategory,preserveSearchOrder,query,limit)
   const candidate=selectedPlace(detailId,allPlaces)
   const existingDetail=candidate&&matchesDiscoveryCategory(candidate,detailCategory)?candidate:null
   const detail=useDiscoveryDetail(detailId,existingDetail,center,detailCategory,locale,eventContext)
@@ -256,7 +265,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
     const term=detailPlace?.name||textQuery||(city&&destinationRegion(city)!==city?selectedCity:'')
     relatedToursHref=discoverySwitchHref('tours',locale,city,city?term:'')
   }
-  const places=detailId?(detailPlace?[detailPlace]:[]):filterDiscovery(allPlaces,new URLSearchParams(query))
+  const places=detailId?(detailPlace?[detailPlace]:[]):filteredPlaces
   const showMore = () => {
     nextPageFocus.current = places[limit]?.id ?? null
     setLimit(previous => previous + 12)
@@ -291,7 +300,12 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
   const canSearch=!(requiresLocation&&!addressPlace) && (!address.trim() || address === addressPlace?.label)
   const scopeNote=text('Şehir ve çevresinden öne çıkan sonuçlar (30 km); tüm işletmelerin listesi değildir. Konum araması 2,5 km içindedir.', 'Selected results across the city area (30 km), not an exhaustive directory. Location searches cover 2.5 km.')
   const privacy=text('Konumunuzu seçerseniz arama için yaklaşık koordinatlarınız harita veri sağlayıcısına gönderilir; bu sitede kalıcı olarak saklanmaz.', 'If you use your location, approximate coordinates are sent to the map data service to run the search; this site does not permanently store them.')
-  const citySelect=<select aria-label={text('Aranacak şehir', 'Search city')} value={requiresLocation&&!addressPlace?'':selectedCity} onChange={event => {setAddress('');setAddressPlace(null);setSelectedCity(event.target.value)}} className="min-h-11 rounded-xl border border-sky-200 bg-white px-3 py-2 text-xs">{requiresLocation&&!addressPlace&&<option value="" disabled>{text('Aranacak şehir', 'Search city')}</option>}{Object.keys(cities).map(city => <option key={city} value={city}>{cityDisplayName(city,locale)}</option>)}</select>
+  const citySelect=<select ref={cityControl} aria-label={text('Aranacak şehir', 'Search city')} value={requiresLocation&&!addressPlace?'':selectedCity} onChange={event => {setAddress('');setAddressPlace(null);setSelectedCity(event.target.value)}} className="min-h-11 rounded-xl border border-sky-200 bg-white px-3 py-2 text-xs">{requiresLocation&&!addressPlace&&<option value="" disabled>{text('Aranacak şehir', 'Search city')}</option>}{Object.keys(cities).map(city => <option key={city} value={city}>{cityDisplayName(city,locale)}</option>)}</select>
+  const changeArea=<button type="button" className="discovery-change-area" onClick={()=>{
+    const control=directory?cityControl.current:eventRoot.current?.querySelector<HTMLInputElement>('.nearby-address-row input')
+    control?.focus({preventScroll:true})
+    control?.scrollIntoView({block:'center'})
+  }}>{directory?text('Aranacak şehir','Search city'):addressText[0]}</button>
   const areaInput=<TransitAddressInput label={addressText[0]} placeholder={addressText[1]} value={address} selected={!!addressPlace && address === addressPlace.label} locale={locale} onChange={value=>{setAddress(value);setAddressPlace(null);saveDiscoveryArea(null);generation.current+=1;controller.current?.abort();lastSearch.current=null;setResult(null);setEditorial([]);setState('idle')}} onSelect={place=>{setAddress(place.label);setAddressPlace(place);saveDiscoveryArea(place);updateLocationQuery({q:null,lookup:null,near:null})}} />
   const searchDirectory=(term:string)=>{
     if(term!==textQuery)updateLocationQuery({q:term||null,lookup:term?'1':null,place:null})
@@ -352,15 +366,15 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
       </div>}
 
       {directory&&!detailId&&<DirectoryFilters lang={locale} params={params}/>}
-      {!directory&&!detailId&&state==='ready'&&allPlaces.length>0&&<details className={discoveryLayout?"nearby-filter-panel":"rounded-xl border border-sky-100 bg-white p-3 text-sm"}><summary className="min-h-11 cursor-pointer py-2">{discoveryLayout&&<SlidersHorizontal size={18} aria-hidden="true"/>}{filtersCopy[0]}{discoveryLayout&&<ChevronDown size={18} aria-hidden="true"/>}</summary><div className="flex flex-wrap items-end gap-3"><label>{filtersCopy[1]}<select className="block min-h-11 rounded-xl border p-2" value={new URLSearchParams(query).get('order')??'recommended'} onChange={e=>updateLocationQuery({order:e.target.value})}>{['recommended','distance','rating'].map((value,i)=><option key={value} value={value}>{filtersCopy[2+i]}</option>)}</select></label><label>{filtersCopy[6]}<select className="block min-h-11 rounded-xl border p-2" value={new URLSearchParams(query).get('minRating')??'0'} onChange={e=>updateLocationQuery({minRating:e.target.value})}><option value="0">{filtersCopy[7]}</option><option value="3">3+</option><option value="4">4+</option><option value="4.5">4.5+</option></select></label><label className="flex min-h-11 items-center gap-2"><input type="checkbox" checked={new URLSearchParams(query).get('open')==='true'} onChange={e=>updateLocationQuery({open:e.target.checked?'true':null})}/>{filtersCopy[5]}</label><button className="min-h-11 px-3 text-blue-700" onClick={()=>updateLocationQuery({open:null,minRating:null,order:null})}>{filtersCopy[8]}</button></div></details>}
+      {!directory&&!detailId&&state==='ready'&&allPlaces.length>0&&<details className={discoveryLayout?"nearby-filter-panel":"rounded-xl border border-sky-100 bg-white p-3 text-sm"}><summary className="min-h-11 cursor-pointer py-2">{discoveryLayout&&<SlidersHorizontal size={18} aria-hidden="true"/>}{filtersCopy[0]}{discoveryLayout&&<ChevronDown size={18} aria-hidden="true"/>}</summary><div className="flex flex-wrap items-end gap-3"><label>{filtersCopy[1]}<select className="block min-h-11 rounded-xl border p-2" value={params.get('order')??'recommended'} onChange={e=>updateLocationQuery({order:e.target.value})}>{['recommended','distance','rating'].map((value,i)=><option key={value} value={value}>{filtersCopy[2+i]}</option>)}</select></label><label>{filtersCopy[6]}<select className="block min-h-11 rounded-xl border p-2" value={params.get('minRating')??'0'} onChange={e=>updateLocationQuery({minRating:e.target.value})}><option value="0">{filtersCopy[7]}</option><option value="3">3+</option><option value="4">4+</option><option value="4.5">4.5+</option></select></label><label className="flex min-h-11 items-center gap-2"><input type="checkbox" checked={params.get('open')==='true'} onChange={e=>updateLocationQuery({open:e.target.checked?'true':null})}/>{filtersCopy[5]}</label><button className="min-h-11 px-3 text-blue-700" onClick={()=>updateLocationQuery({open:null,minRating:null,order:null})}>{filtersCopy[8]}</button></div></details>}
       {!detailId&&<div aria-live="polite" role="status" tabIndex={-1} className="directory-status text-xs text-slate-600">
         {state === 'locating' && text('Konum izniniz bekleniyor…', 'Waiting for your location…')}
         {state === 'loading' && text('Yakındaki yerler aranıyor…', 'Searching nearby places…')}
-        {error && <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-amber-900">{error}</p>}
+        {error && <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-amber-900"><p>{error}</p>{state==='error'&&changeArea}</div>}
         {editorialFailed&&<p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-amber-900">{editorialText[3]}</p>}
         {state === 'idle' && (!directory||requiresLocation||address.trim()) && <p className="rounded-2xl border border-sky-100 bg-white p-5">{text('Konumunuzu kullanın veya şehir merkezinde arama yapın.', 'Use your location or search around the city centre.')}</p>}
         {state === 'ready' && directory && <h2>{places.length.toLocaleString(locale)} {text('kayıt','places')} · <bdi>{searchArea}</bdi></h2>}
-        {state === 'ready' && !directory && <p>{origin === 'location' ? text('Konumunuzun çevresi', 'Around your location') : textQuery ? textQuery : addressPlace ? addressPlace.label : `${cityName} ${fixedCategory ? text('ve çevresi', 'area') : text('merkezinin çevresi', 'city centre')}`} · {places.length} {text('kayıt', 'places')}{result && ` · ${text('Alındı', 'Retrieved')} ${new Date(result.fetchedAt).toLocaleTimeString(tr ? 'tr-TR' : 'en-GB', { hour: '2-digit', minute: '2-digit' })}`}</p>}
+        {state === 'ready' && !directory && <p>{origin === 'location' ? text('Konumunuzun çevresi', 'Around your location') : textQuery ? textQuery : addressPlace ? addressPlace.label : `${cityName} ${fixedCategory ? text('ve çevresi', 'area') : text('merkezinin çevresi', 'city centre')}`} · {places.length.toLocaleString(locale)} {text('kayıt', 'places')}{result && ` · ${text('Alındı', 'Retrieved')} ${new Date(result.fetchedAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}`}</p>}
       </div>}
 
       {!detailId && textQuery && (state==='error'||(state==='ready'&&!allPlaces.length)) &&
@@ -373,10 +387,10 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
             updateLocationQuery({open:null,minRating:null})
             eventRoot.current?.querySelector<HTMLElement>('.directory-status')?.focus()
           }}>{filtersCopy[8]}</button>
-        </> : text('Bu alanda ve kategoride kayıt bulunamadı. Bu, yakınlarda işletme olmadığı anlamına gelmez; harita kayıtları eksik olabilir.', 'No records were found in this area and category. This does not mean there are no places nearby; map coverage may be incomplete.')}
+        </> : <><p>{text('Bu alanda ve kategoride kayıt bulunamadı. Bu, yakınlarda işletme olmadığı anlamına gelmez; harita kayıtları eksik olabilir.', 'No records were found in this area and category. This does not mean there are no places nearby; map coverage may be incomplete.')}</p>{changeArea}</>}
       </div>}
       {detailId && <button type="button" className="min-h-11 text-blue-700 font-semibold" onClick={() => setDetailId(null)}>{text('← Listeye dön', '← Back to results')}</button>}
-      {(discoveryLayout||directory)&&!detailId&&places.length>0?<NearMeResults directory={directory} showDistance={showDistance} places={places.slice(0,limit)} lang={locale} onOpen={openPlace} categoryLabel={categoryLabel} distance={formatDistance} text={text} directions={directionsText[locale]??directionsText.en} businessKey={businessKey} onExpired={refreshExpiredPhotos}/>:      <div className={detailId && places.some(place=>place.id===detailId) ? 'space-y-4' : 'grid grid-cols-1 gap-3 sm:grid-cols-2'}>
+      {(discoveryLayout||directory)&&!detailId&&places.length>0?<NearMeResults directory={directory} showDistance={showDistance} places={visiblePlaces} lang={locale} onOpen={openPlace} categoryLabel={categoryLabel} distance={formatDistance} text={text} directions={directionsText[locale]??directionsText.en} businessKey={businessKey} onExpired={refreshExpiredPhotos}/>:      <div className={detailId && places.some(place=>place.id===detailId) ? 'space-y-4' : 'grid grid-cols-1 gap-3 sm:grid-cols-2'}>
         {(detailId && places.some(place=>place.id===detailId)?places.filter(place=>place.id===detailId):places.slice(0, limit)).map(place => detailId===place.id&&place.category==='restaurant'?<RestaurantDetail key={place.id} place={place} lang={locale} city={selectedCity} businessKey={businessKey(place.id)} distance={showDistance?formatDistance(place.distanceMeters):undefined} text={text} directions={directionsText[locale]??directionsText.en} onExpired={refreshExpiredPhotos}/>:<article data-place-id={place.id} data-business-key={businessKey(place.id)} key={place.id} className={`min-w-0 rounded-2xl border border-sky-100 bg-white p-4 shadow-sm ${detailId?'directory-place-detail':''}`}>
 
           <div className="flex items-start justify-between gap-3">
@@ -388,6 +402,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
             {place.telephoneUrl&&<a className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-blue-200 px-3" href={place.telephoneUrl}><Phone size={17} aria-hidden="true"/><span className="sr-only">{text('Telefon','Phone')} </span><bdi>{place.phone}</bdi></a>}
             {place.website&&<a className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-blue-200 px-3" href={place.website} data-event="website" target="_blank" rel="noopener noreferrer"><Globe size={17} aria-hidden="true"/>{text('Web sitesi','Website')}</a>}
           </div>}
+          {hotelDetail && detailId===place.id && <HotelArrival hotel={place} lang={locale}/>}
           <div className="directory-detail-photo">{isEditorialPlace(place)?<><span className="mb-2 block text-xs font-semibold text-slate-500">{place.editorial.sponsored?editorialText[1]:editorialText[0]}</span><EditorialPlacePhoto place={place} expanded={detailId===place.id} onOpen={()=>openPlace(place.id)} lang={locale}/></>:<GooglePlacePhoto key={place.photo?.url ?? place.id} place={place} onOpen={detailId===place.id?undefined:()=>openPlace(place.id)} onExpired={refreshExpiredPhotos} />}</div>
           <dl className="mt-3 space-y-2.5 text-xs leading-relaxed text-slate-600">
             {place.address && <div className="flex gap-2"><dt className="shrink-0"><MapPin className="mt-0.5 h-4 w-4" /><span className="sr-only">{text('Adres', 'Address')}</span></dt><dd className="break-words">{place.address}</dd></div>}

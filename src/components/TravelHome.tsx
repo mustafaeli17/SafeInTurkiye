@@ -3,7 +3,7 @@ import CityArtwork from './CityArtwork';
 import {sectionPath} from '../lib/sectionNavigation';
 import {cityDisplayName} from '../lib/cityLocale';
 import { Hotel, Utensils, Ticket, Compass, BookOpen, ArrowRight, Search } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import hero from '../data/heroPhoto.json'
 import {cityPath} from '../lib/publicRoutes'
 import {toursLabel} from '../lib/viatorCopy'
@@ -22,6 +22,12 @@ const translations = {
   ru: ['Турция,', 'путешествовать проще.', 'Практические местные сведения для безопасного и приятного путешествия.', 'Куда вы едете или что ищете?', 'Поиск', 'Нужно сейчас?', 'Откройте Турцию', 'Планируйте поездку', 'Перед поездкой', 'Смотреть всё', 'Стоимость такси', 'Курсы валют', 'Транспорт', 'Рядом со мной', 'Безопасность', 'Экстренная помощь', 'Отели', 'Рестораны', 'Развлечения', 'Путеводитель', 'Города, побережья и незабываемые впечатления.', 'Всё для поездки в одном месте.', 'Транспортные карты, деньги и полезные ответы.', 'Музеи и культура', 'Кино', 'Развлечения', 'Лето', 'Зима'],
   zh: ['土耳其，', '旅行更轻松。', '实用的当地信息，让旅程更安全、更从容、更愉快。', '想去哪里，或需要什么帮助？', '搜索', '现在需要？', '探索土耳其', '规划旅程', '出发前须知', '查看全部', '出租车费用', '汇率', '公共交通', '附近地点', '安全', '紧急帮助', '酒店', '餐厅', '活动', '旅行指南', '城市、海岸与难忘的体验。', '旅行所需，尽在一处。', '交通卡、换汇和实用旅行问答。', '博物馆与文化', '影院', '娱乐', '夏季', '冬季'],
 }
+const allCityLabels = {
+  tr: 'Tüm {n} şehri gör', en: 'View all {n} cities', de: 'Alle {n} Städte ansehen',
+  es: 'Ver las {n} ciudades', fr: 'Voir les {n} villes', ar: 'عرض كل المدن ({n})',
+  ru: 'Все города ({n})', zh: '查看全部 {n} 个城市',
+}
+
 export default function TravelHome({ lang, cities, onNavigate, onCity, onSearch, onCategory,initialQuery='',chooseSearch=false }: {
   lang: string
   initialQuery?:string
@@ -34,7 +40,27 @@ export default function TravelHome({ lang, cities, onNavigate, onCity, onSearch,
 }) {
   const t = translations[lang as keyof typeof translations] ?? translations.en
   const [query, setQuery] = useState(initialQuery)
-  const [allCities, setAllCities] = useState(false)
+  const [allCities, setAllCities] = useState(() => typeof window !== 'undefined' && window.history.state?.homeGridExpanded === true)
+  const cityHeading = useRef<HTMLHeadingElement>(null)
+  const cityCards = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const city = window.history.state?.homeGridCity
+    if (typeof city !== 'string') return
+    const frame = requestAnimationFrame(() => {
+      const card = Array.from(cityCards.current?.querySelectorAll('a') ?? []).find(link => link.dataset.city === city)
+      if (!card || !card.getClientRects().length) return
+      card.focus({preventScroll: true})
+      card.scrollIntoView({block: 'center'})
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [])
+  const allCityLabel = (allCityLabels[lang as keyof typeof allCityLabels] ?? allCityLabels.en)
+    .replace('{n}', new Intl.NumberFormat(lang).format(cities.length))
+  function showCityGrid() {
+    setAllCities(true)
+    cityHeading.current?.focus({preventScroll: true})
+    cityHeading.current?.scrollIntoView({block: 'start'})
+  }
   const fewerCities: Record<string,string> = {en:'Show fewer',tr:'Daha az göster',de:'Weniger anzeigen',es:'Ver menos',fr:'Voir moins',ar:'عرض أقل',ru:'Свернуть',zh:'收起'}
   useEffect(()=>setQuery(initialQuery),[initialQuery])
   const quick = [{ label: t[10], emoji: '🚕', page: 'taxi' }, { label: t[11], emoji: '💵', page: 'currency' }, { label: t[12], emoji: '🚌', page: 'transit' }, { label: t[13], emoji: '📍', page: 'nearme' }, { label: t[14], emoji: '🛡️', page: 'safety' }] as const
@@ -47,18 +73,26 @@ export default function TravelHome({ lang, cities, onNavigate, onCity, onSearch,
         <h1>{t[0]}<br />{' '}<span>{t[1]}</span></h1>
         <p>{t[2]}</p>
         <form onSubmit={event => { event.preventDefault(); onSearch(query) }} className="travel-search"><Search size={19} aria-hidden="true" /><input aria-label={t[3]} placeholder={t[3]} maxLength={160} value={query} onChange={event => setQuery(event.target.value)} /><button type="submit">{t[4]}</button></form>
-        <div className="travel-city-chips">{cities.map(city => <a key={city.key} href={localizePath(cityPath(city.key),lang)} onClick={event=>{if(!event.ctrlKey&&!event.metaKey&&!event.shiftKey){event.preventDefault();onCity(city.key);}}}>{cityDisplayName(city.name,lang)}</a>)}</div>
+        <div className="travel-city-chips">
+          {cities.map(city => <a key={city.key} href={localizePath(cityPath(city.key),lang)} onClick={event=>{if(!event.ctrlKey&&!event.metaKey&&!event.shiftKey&&!event.altKey){event.preventDefault();onCity(city.key);}}}>{cityDisplayName(city.name,lang)}</a>)}
+          {cities.length>3&&<button type="button" className="travel-city-jump" aria-controls="home-city-cards" onClick={showCityGrid}>{allCityLabel}<ArrowRight size={15} aria-hidden="true"/></button>}
+        </div>
       </div>
     </section>
     {chooseSearch&&<section className="travel-section" role="status"><p className="mb-3">{searchHelp[lang]??searchHelp.en}</p><SearchAlternatives lang={lang} query={initialQuery}/></section>}
     <section className="travel-section"><h2>{t[5]}</h2><div className="travel-quick-grid">{quick.map(({ label, emoji, page }) => <a key={page} href={localizePath(sectionPath(page),lang)} onClick={event=>{if(!event.ctrlKey&&!event.metaKey&&!event.shiftKey){event.preventDefault();onNavigate(page);}}} className="travel-tool"><span className="travel-tool-emoji" aria-hidden="true">{emoji}</span><span>{label}</span><ArrowRight size={14} aria-hidden="true" /></a>)}<a href="tel:112" className="travel-tool travel-emergency"><span className="travel-tool-emoji" aria-hidden="true">🚨</span><span>{t[15]}</span><strong>112</strong></a></div></section>
     <section className="travel-section"><div className="travel-section-heading"><div><h2>{t[7]}</h2><p>{t[21]}</p></div></div><div className="travel-plan-grid">{plan.map(({ label, icon: Icon, page }) => <a key={page} href={localizePath(sectionPath(page),lang)} onClick={event=>{if(!event.ctrlKey&&!event.metaKey&&!event.shiftKey){event.preventDefault();onNavigate(page);}}} className="travel-tool"><Icon aria-hidden="true" /><span>{label}</span><ArrowRight size={14} aria-hidden="true" /></a>)}</div></section>
     <section className="travel-section">
-      <div className="travel-section-heading"><div><h2>{t[6]}</h2><p>{t[20]}</p></div>
+      <div className="travel-section-heading"><div><h2 ref={cityHeading} tabIndex={-1} className="travel-city-heading">{t[6]}</h2><p>{t[20]}</p></div>
         {cities.length>4&&<button type="button" className="travel-city-toggle" aria-expanded={allCities} aria-controls="home-city-cards" onClick={()=>setAllCities(!allCities)}>{allCities?fewerCities[lang]:t[9]} <span aria-hidden="true">{allCities?'−':'+'}</span></button>}
       </div>
-      <div id="home-city-cards" className="travel-cities" data-expanded={allCities}>
-        {cities.map(city => <a key={city.key} href={localizePath(cityPath(city.key),lang)} onClick={event=>{if(!event.ctrlKey&&!event.metaKey&&!event.shiftKey&&!event.altKey){event.preventDefault();onCity(city.key);}}}><CityArtwork city={city.key} lang={lang} /><span>{cityDisplayName(city.name,lang)}<ArrowRight size={16} /></span></a>)}
+      <div id="home-city-cards" ref={cityCards} className="travel-cities" data-expanded={allCities}>
+        {cities.map(city => <a key={city.key} data-city={city.key} href={localizePath(cityPath(city.key),lang)} onClick={event=>{
+          if(event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return
+          event.preventDefault()
+          window.history.replaceState({...window.history.state,homeGridCity:city.key,homeGridExpanded:allCities},'')
+          onCity(city.key)
+        }}><CityArtwork city={city.key} lang={lang} /><span>{cityDisplayName(city.name,lang)}<ArrowRight size={16} /></span></a>)}
       </div>
     </section>
     <section className="travel-section"><div className="travel-section-heading"><h2>{t[18]}</h2><button onClick={() => onNavigate('experiences')}>{t[9]} <ArrowRight size={14} /></button></div><div className="travel-category-grid">{['Museum & Culture', 'Cinema', 'Entertainment'].map((category, index) => <button key={category} onClick={() => onCategory(category)}><span>{['🏛️', '🎬', '🎟️'][index]}</span>{t[23 + index]}<ArrowRight size={14} /></button>)}</div></section>
