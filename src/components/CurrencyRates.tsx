@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { exchangeCopy } from '../lib/exchangeCopy';
 import './ExchangePage.css';
 import {exchangeArtwork} from '../lib/exchangeArtwork';
@@ -14,7 +14,7 @@ export function CurrencyResult({ amount, from, to, converted, lang, label }: { a
   return <output className="block min-w-0 rounded-2xl border border-sky-200 bg-gradient-to-br from-sky-50 to-blue-50 p-5 sm:p-6" aria-live="polite" aria-atomic="true">
     <span className="block text-sm font-semibold text-slate-600" dir="ltr">{amount.toLocaleString(lang, { maximumFractionDigits: 8 })} {from} ≈</span>
     <strong className="mt-1 flex flex-wrap items-baseline gap-x-2 text-3xl sm:text-4xl font-extrabold tracking-tight text-[#087FFF]" dir="ltr">
-      <span className="min-w-0 break-all tabular-nums">{converted.toLocaleString(lang, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      <span className="max-w-full overflow-x-auto whitespace-nowrap tabular-nums">{converted.toLocaleString(lang, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
       <span className="text-xl font-bold">{to === 'TRY' ? 'TL' : to}</span>
     </strong>
     <span className="mt-2 block text-xs font-medium text-slate-500">{label}</span>
@@ -72,6 +72,7 @@ export default function CurrencyRates({ lang = 'en', nearby, guide, city = 'İst
   const names = new Intl.DisplayNames([lang], {type:'currency'});
   const unit = rates ? convertReferenceAmount(1, from, to, rates) : null;
   const status = <div className="exchange-status" role="status">{!error && <Loader2 className="animate-spin" aria-hidden="true"/>}{error ? t.unavailable : t.loading}{error && <button type="button" onClick={()=>setRetry(v=>v+1)}><RefreshCw size={16} aria-hidden="true"/>{t.tryAgain}</button>}</div>;
+  const convertedText=converted===null?'—':converted.toLocaleString(lang,{minimumFractionDigits:2,maximumFractionDigits:2});
   return <div className="exchange-experience" dir={lang==='ar'?'rtl':'ltr'}>
     <header className="exchange-hero">
       {artwork&&<img className="exchange-hero-image" src={artwork.src} width={artwork.width} height={artwork.height} alt={`${artwork.name} — ${cityArtworkNotice[lang]??cityArtworkNotice.en}`} title={cityArtworkNotice[lang]??cityArtworkNotice.en} decoding="async"/>}
@@ -92,9 +93,15 @@ export default function CurrencyRates({ lang = 'en', nearby, guide, city = 'İst
     ].map(tab=><button key={tab.id} id={`${tab.id}-tab`} type="button" role="tab" aria-selected={section===tab.id} aria-controls={tab.id} tabIndex={section===tab.id?0:-1} className={section===tab.id?'exchange-nav-primary':undefined} onClick={()=>setSection(tab.id)}>{tab.icon}{tab.label}</button>)}</div>
     <section id="exchange-converter" role="tabpanel" aria-labelledby="exchange-converter-tab" hidden={section!=='exchange-converter'} tabIndex={0} className="exchange-card exchange-converter">
       <div className="exchange-converter-grid">
-        <div><label className="exchange-field-label" htmlFor="exchange-amount">{copy[7]}</label><div className="exchange-value-box"><input id="exchange-amount" aria-label={fields[0]} aria-invalid={invalidCurrencyAmount(amount)} aria-describedby={invalidCurrencyAmount(amount)?'currency-input-error':undefined} type="number" min="0" step="any" value={amount} onChange={e=>setAmount(e.target.value)}/><CurrencyFlag code={from}/><select aria-label={fields[1]} value={from} onChange={e=>setFrom(e.target.value as CurrencyCode)}>{currencies.map(c=><option key={c}>{c}</option>)}</select></div></div>
+        <div>
+          <label className="exchange-field-label" htmlFor="exchange-amount">{copy[7]}</label>
+          <div className="exchange-value-box exchange-input">
+            <input id="exchange-amount" aria-label={fields[0]} aria-invalid={invalidCurrencyAmount(amount)} aria-describedby={invalidCurrencyAmount(amount)?'currency-input-error':undefined} style={{flexBasis:`${amount.length+1}ch`,'--amount-characters':Math.max(1,amount.length+1)} as CSSProperties} type="number" min="0" step="any" value={amount} onChange={e=>setAmount(e.target.value)}/>
+            <div className="exchange-currency-choice"><CurrencyFlag code={from}/><select aria-label={fields[1]} value={from} onChange={e=>setFrom(e.target.value as CurrencyCode)}>{currencies.map(c=><option key={c}>{c}</option>)}</select></div>
+          </div>
+        </div>
         <button className="exchange-swap" data-reversed={reverseIcon} type="button" title={copy[9]} onClick={()=>{setFrom(to);setTo(from);setReverseIcon(value=>!value)}}><ArrowLeftRight aria-hidden="true"/><span className="sr-only">{copy[9]}</span></button>
-        <div><span className="exchange-field-label">{copy[8]}</span><div className="exchange-value-box exchange-output"><output aria-live="polite" aria-atomic="true"><span className="sr-only">{copy[8]} </span>{converted===null?'—':converted.toLocaleString(lang,{minimumFractionDigits:2,maximumFractionDigits:2})}<span className="sr-only"> {to}</span></output><CurrencyFlag code={to}/><select aria-label={fields[2]} value={to} onChange={e=>setTo(e.target.value as CurrencyCode)}>{currencies.map(c=><option key={c}>{c}</option>)}</select></div></div>
+        <div><span className="exchange-field-label">{copy[8]}</span><div className="exchange-value-box exchange-output"><output aria-live="polite" aria-atomic="true" style={{'--amount-characters':convertedText.length} as CSSProperties}><span className="sr-only">{copy[8]} </span>{convertedText}<span className="sr-only"> {to}</span></output><div className="exchange-currency-choice"><CurrencyFlag code={to}/><select aria-label={fields[2]} value={to} onChange={e=>setTo(e.target.value as CurrencyCode)}>{currencies.map(c=><option key={c}>{c}</option>)}</select></div></div></div>
       </div>
       {invalidCurrencyAmount(amount)&&<p id="currency-input-error" role="status" className="text-sm text-red-700">{currencyInputCopy[lang]??currencyInputCopy.en}</p>}
       <div className="exchange-converter-meta">{unit!==null&&<strong dir="ltr">1 {from} ≈ {unit.toLocaleString(lang,{maximumFractionDigits:4})} {to}</strong>}<p><Info size={18} aria-hidden="true"/>{t.disclaimer}</p></div>

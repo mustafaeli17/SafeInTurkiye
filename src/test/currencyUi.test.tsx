@@ -10,7 +10,7 @@ describe('currency converter accessibility and languages', () => {
     expect(html).toContain('TL');
     expect(html).toContain('100 EUR ≈');
     expect(html).toContain('Referans');
-    expect(html).toContain('break-all');
+    expect(html).toContain('whitespace-nowrap');
   });
   it.each(['en', 'tr', 'es', 'de', 'fr', 'ar', 'ru', 'zh'])('labels every input in %s', lang => {
     const html = renderToStaticMarkup(<CurrencyRates lang={lang} />);

@@ -18,6 +18,11 @@
 .taxi-result-panel{background:white;border:1px solid #e2edfc;border-radius:24px;padding:24px;align-self:start;min-width:0;box-shadow:0 5px 20px #2859910c}
 .taxi-result-panel:empty{display:none}
 .taxi-workspace:not(:has(.taxi-result-panel>*)) .taxi-map-panel{grid-column:1/-1}
+@media(min-width:701px){
+ .taxi-result-panel{grid-column:2;grid-row:2}
+ .taxi-map-panel{grid-column:1;grid-row:2}
+}
+.taxi-form-panel input[aria-invalid=true]{border-color:#b91c1c}
 .taxi-result-panel>div.pt-3{padding-top:0;border-top:0}.taxi-result-panel>div.pt-3>div{padding:0;background:transparent;border:0}
 .taxi-result-panel .reference-estimate-title{font-size:20px;color:#102653}.taxi-result-panel .reference-estimate-title>span:last-child{font-size:26px}
 .taxi-result-panel span.text-3xl{display:block;font-size:clamp(27px,3vw,36px);color:#087fff;line-height:1.25;padding:10px 0;overflow-wrap:anywhere}

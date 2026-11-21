@@ -1,11 +1,18 @@
-import {SearchGuide} from './SearchGuide';
 import { useCallback, useEffect, useRef, useState } from 'react'
-import {tourSearchCopy} from '../services/tourSearch'
+import type { FormEvent } from 'react'
+import { flushSync } from 'react-dom'
+import { ArrowRight, CalendarDays, Castle, Check, ChevronDown, ChevronLeft, ChevronRight, Clock3, Coins, Compass, ExternalLink, Grid2X2, Landmark, MapPin, Mountain, Sailboat, Search, SlidersHorizontal, Star, Trees, Utensils, Building2, Ticket } from 'lucide-react'
+import { SearchGuide } from './SearchGuide'
+import CityHighlightPhoto from './CityHighlightPhoto'
+import DirectoryMotion from './DirectoryMotion'
+import { tourSearchCopy } from '../services/tourSearch'
 import { publicCities } from '../lib/publicRoutes'
-import {trackProduct} from '../lib/productMetrics'
-import {ArrowRight} from 'lucide-react'
-import {discoverySwitchHref} from '../lib/discoveryNavigation'
+import { cityDisplayName } from '../lib/cityLocale'
+import { trackProduct } from '../lib/productMetrics'
+import { discoverySwitchHref } from '../lib/discoveryNavigation'
 import { toursLabel, tourFilterCopy, tourFilterActions } from '../lib/viatorCopy'
+import { formatTourDuration, tourCategoryTerm, tourDirectoryCopy } from '../lib/tourDirectory'
+import './ViatorTours.css'
 const copy: Record<string, string[]> = {
   en: ['Tours & experiences · Viator','Destination','Find tours','Searching…','No tours found for this destination.','Tours are temporarily unavailable. Please try again later.','From','View on Viator','We may earn a commission from qualifying bookings. Final price and availability are confirmed on Viator.','Sandbox preview — test results, not live availability.','Next','Previous','Product information is provided in English for this language.'],
   tr: ['Turlar ve deneyimler · Viator','Destinasyon','Turları bul','Aranıyor…','Bu destinasyonda tur bulunamadı.','Turlara şu an ulaşılamıyor. Lütfen daha sonra tekrar deneyin.','Başlangıç fiyatı','Viator’da incele','Uygun rezervasyonlardan komisyon kazanabiliriz. Son fiyat ve müsaitlik Viator’da doğrulanır.','Test önizlemesi — sonuçlar canlı müsaitlik bilgisi değildir.','Sonraki','Önceki','Bu dil için ürün bilgileri İngilizce sunulmaktadır.'],
@@ -16,102 +23,246 @@ const copy: Record<string, string[]> = {
   ru: ['Экскурсии и впечатления · Viator','Направление','Найти экскурсии','Поиск…','Экскурсий для этого направления не найдено.','Экскурсии временно недоступны. Попробуйте позже.','От','Посмотреть на Viator','Мы можем получить комиссию за подходящие бронирования. Итоговая цена и наличие подтверждаются на Viator.','Тестовый просмотр — не фактическое наличие.','Далее','Назад','Информация о продуктах для этого языка предоставляется на английском.'],
   zh: ['旅游与体验 · Viator','目的地','搜索行程','搜索中…','未找到该目的地的行程。','行程暂时无法加载，请稍后重试。','起价','在 Viator 查看','符合条件的预订可能为我们带来佣金。最终价格和可订情况以 Viator 为准。','测试预览——不代表实际可订情况。','下一页','上一页','此语言的产品信息以英语提供。'],
 }
-type Result = { products: { code:string; title:string; description?:string; productUrl:string; photo?:string; fromPrice?:number; currency?:string;rating?:number;reviewCount?:number;durationMinutes?:{from:number;to:number};freeCancellation?:boolean }[]; totalCount:number; sandbox:boolean; language:string }
-const emptyFilters = { minPrice:'',maxPrice:'',duration:'any',rating:'any',date:'',sort:'recommended',currency:'EUR',private:false,freeCancellation:false,skipLine:false }
-type TourSearch = { city:string; term:string; filters:typeof emptyFilters }
+type TourProduct = {
+  code: string
+  title: string
+  description?: string
+  productUrl: string
+  photo?: string
+  fromPrice?: number
+  currency?: string
+  rating?: number
+  reviewCount?: number
+  durationMinutes?: { from: number; to: number }
+  freeCancellation?: boolean
+}
+type Result = { products: TourProduct[]; totalCount: number; sandbox: boolean; language: string; destination?: string }
+const emptyFilters = { minPrice: '', maxPrice: '', duration: 'any', rating: 'any', date: '', sort: 'recommended', currency: 'EUR', private: false, freeCancellation: false, skipLine: false }
+type TourSearch = { city: string; term: string; query: string; filters: typeof emptyFilters }
+type Props = { lang: string; placesLabel: string; initialCity?: string; initialQuery?: string; hasCity?: boolean }
 
-export default function ViatorTours({ lang, placesLabel, initialCity='istanbul', initialQuery='', hasCity=false }: { lang:string; placesLabel:string; initialCity?:string; initialQuery?:string; hasCity?:boolean }) {
-  const t=copy[lang] ?? copy.en
-  const f=tourFilterCopy(lang)
-  const actions=tourFilterActions[lang]??tourFilterActions.en
-  const s=tourSearchCopy[lang]??tourSearchCopy.en
-  const [term,setTerm]=useState(initialQuery)
-  const [city,setCity]=useState(initialCity), [result,setResult]=useState<Result|null>(null), [state,setState]=useState('idle'), [start,setStart]=useState(1)
-  const [filters,setFilters]=useState(emptyFilters)
-  const [applied,setApplied]=useState<TourSearch|null>(null)
-  const controller=useRef<AbortController|null>(null)
-  const filtersPanel=useRef<HTMLDetailsElement>(null)
-  const changedCount=Object.entries(filters).filter(([key,value])=>value!==emptyFilters[key as keyof typeof emptyFilters]).length
-  const hasPendingEdits=applied!==null && (applied.city!==city || applied.term!==term.trim() || Object.keys(filters).some(key=>filters[key as keyof typeof filters]!==applied.filters[key as keyof typeof filters]))
-  const inputClass='min-h-11 w-full min-w-0 rounded-xl border border-blue-200 bg-white p-3'
-  const today=new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Istanbul'})
-  const update=(key:keyof typeof emptyFilters,value:string|boolean)=>setFilters(previous=>({...previous,[key]:value}))
-  const search=useCallback(async(criteria:TourSearch,offset=1) => {
-    controller.current?.abort(); const current=new AbortController();controller.current=current
-    if(offset===1)trackProduct('tours_search',lang)
+const categoryIcons = [Grid2X2, Building2, Sailboat, Landmark, Castle, Trees, Mountain, Utensils, Ticket]
+const featured = [{ city: 'istanbul', image: 0 }, { city: 'antalya', image: 2 }, { city: 'cappadocia', image: 1 }]
+function cityName(slug: string, lang: string) {
+  return cityDisplayName(publicCities.find(place => place.slug === slug)?.name ?? slug, lang)
+}
+const localDestinations: Record<string, string> = { mugla: 'Bodrum', aydin: 'Kuşadası', denizli: 'Pamukkale' }
+
+export default function ViatorTours({ lang, placesLabel, initialCity = 'istanbul', initialQuery = '', hasCity = false }: Props) {
+  const t = copy[lang] ?? copy.en
+  const f = tourFilterCopy(lang)
+  const actions = tourFilterActions[lang] ?? tourFilterActions.en
+  const s = tourSearchCopy[lang] ?? tourSearchCopy.en
+  const labels = tourDirectoryCopy(lang)
+  const number = new Intl.NumberFormat(lang)
+  const [term, setTerm] = useState(initialQuery)
+  const [category, setCategory] = useState<number | null>(null)
+  const [city, setCity] = useState(initialCity)
+  const [result, setResult] = useState<Result | null>(null)
+  const [state, setState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle')
+  const [start, setStart] = useState(1)
+  const [filters, setFilters] = useState(emptyFilters)
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [applied, setApplied] = useState<TourSearch | null>(null)
+  const controller = useRef<AbortController | null>(null)
+  const filterPanel = useRef<HTMLElement>(null)
+  const filterToggle = useRef<HTMLButtonElement>(null)
+  const resultsHeading = useRef<HTMLHeadingElement>(null)
+  const pending = applied && (applied.city !== city || applied.term !== term.trim() || Object.keys(filters).some(key => filters[key as keyof typeof filters] !== applied.filters[key as keyof typeof filters]))
+  const activeFilters = Object.entries(filters).filter(([key, value]) => value !== emptyFilters[key as keyof typeof emptyFilters]).length
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Istanbul' })
+  const dateLimit = new Date(`${today}T12:00:00Z`)
+  dateLimit.setUTCFullYear(dateLimit.getUTCFullYear() + 1)
+  const update = <K extends keyof typeof emptyFilters>(key: K, value: typeof emptyFilters[K]) => setFilters(previous => ({ ...previous, [key]: value }))
+
+  const search = useCallback(async (criteria: TourSearch, offset = 1, focusResults = false) => {
+    controller.current?.abort()
+    const current = new AbortController()
+    controller.current = current
+    if (offset === 1) trackProduct('tours_search', lang)
     setState('loading')
     try {
-      const query=new URLSearchParams({city:criteria.city,lang,start:String(offset)})
-      if(criteria.term)query.set('q',criteria.term)
-      Object.entries(criteria.filters).forEach(([key,value])=>{if(value!==''&&value!==false)query.set(key,String(value))})
-      const r=await fetch(`/api/viator?${query}`,{signal:AbortSignal.any([current.signal,AbortSignal.timeout(20000)]),cache:'no-store'})
-      if(!r.ok) {
-        const failure=await r.json().catch(()=>null)
-        const known=['NOT_CONFIGURED','ACCESS_PENDING','BUSY','PROVIDER_UNAVAILABLE','TIMEOUT','INVALID_INPUT']
-        // Log only our allowlisted diagnostic code, never the upstream response or key.
-        console.warn(`Viator request unavailable: HTTP ${r.status}; ${known.includes(failure?.error)?failure.error:'UNKNOWN'}`)
+      const query = new URLSearchParams({ city: criteria.city, lang, start: String(offset) })
+      if (criteria.query) query.set('q', criteria.query)
+      Object.entries(criteria.filters).forEach(([key, value]) => { if (value !== '' && value !== false) query.set(key, String(value)) })
+      const response = await fetch(`/api/viator?${query}`, { signal: AbortSignal.any([current.signal, AbortSignal.timeout(20000)]), cache: 'no-store' })
+      if (!response.ok) {
+        const failure = await response.json().catch(() => null)
+        const known = ['NOT_CONFIGURED', 'ACCESS_PENDING', 'BUSY', 'PROVIDER_UNAVAILABLE', 'TIMEOUT', 'INVALID_INPUT']
+        console.warn(`Viator request unavailable: HTTP ${response.status}; ${known.includes(failure?.error) ? failure.error : 'UNKNOWN'}`)
         throw new Error('unavailable')
       }
-      const data=await r.json() as Result
-      if(!Array.isArray(data.products)) throw new Error('invalid')
-      if(current.signal.aborted) return
-      if(offset===1)trackProduct(data.products.length?'tours_results':'tours_empty',lang)
-      setResult(data);setApplied(criteria);setStart(offset);setState('ready')
+      const data = await response.json() as Result
+      if (!Array.isArray(data.products)) throw new Error('invalid')
+      if (current.signal.aborted) return
+      if (offset === 1) trackProduct(data.products.length ? 'tours_results' : 'tours_empty', lang)
+      setResult(data)
+      setApplied(criteria)
+      setStart(offset)
+      setState('ready')
+      if (focusResults) requestAnimationFrame(() => {
+        if (current.signal.aborted) return
+        resultsHeading.current?.focus({ preventScroll: true })
+        resultsHeading.current?.scrollIntoView({ block: 'start' })
+      })
     } catch {
-      if(current.signal.aborted)return
-      if(offset===1)trackProduct('tours_error',lang)
+      if (current.signal.aborted) return
+      if (offset === 1) trackProduct('tours_error', lang)
       setState('error')
     }
-  },[lang])
-  useEffect(()=>{
-    const timer=(hasCity||initialQuery.trim())?setTimeout(()=>{void search({city:initialCity,term:initialQuery.trim(),filters:emptyFilters})},0):undefined
-    return()=>{clearTimeout(timer);controller.current?.abort()}
-  },[initialCity,initialQuery,hasCity,search])
-  return <section aria-labelledby="viator-heading" className="my-6 rounded-2xl border border-blue-100 bg-white p-4 sm:p-6">
-    <h1 id="viator-heading" className="mb-4 text-3xl font-extrabold text-slate-900">{toursLabel(lang)}</h1>
-    <form onSubmit={e=>{
-      e.preventDefault()
-      const panel=filtersPanel.current
-      if(panel?.open){
-        if(panel.contains(document.activeElement))panel.querySelector('summary')?.focus()
-        panel.open=false
-      }
-      void search({city,term:term.trim(),filters})
-    }} className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_2fr_auto]">
-      <label className="grid gap-1 text-sm">{t[1]}<select value={city} onChange={e=>setCity(e.target.value)} className={inputClass}>
-        {publicCities.map(c=><option key={c.slug} value={c.slug}>{c.name}{c.slug==='mugla'?' · Bodrum':c.slug==='aydin'?' · Kuşadası':c.slug==='denizli'?' · Pamukkale':''}</option>)}
-      </select></label>
-      <label className="grid gap-1 text-sm">{s[0]}<input type="search" maxLength={160} value={term} onChange={e=>setTerm(e.target.value)} placeholder={s[1]} className={inputClass}/></label>
-      <button disabled={state==='loading'} className="min-h-11 self-end rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white disabled:opacity-60">{state==='loading'?t[3]:result&&hasPendingEdits?actions[1]:t[2]}</button>
-      <details ref={filtersPanel} onInvalidCapture={()=>{if(filtersPanel.current)filtersPanel.current.open=true}} className="rounded-xl border border-blue-100 px-3 sm:col-span-2 lg:col-span-3">
-      <summary className="min-h-11 cursor-pointer py-3 text-sm font-semibold text-blue-700">{actions[0]}{changedCount>0 && ` · ${changedCount}`}</summary>
-      <div className="grid gap-3 pb-3 sm:grid-cols-2 lg:grid-cols-3">
-      <label className="grid gap-1 text-sm">{f[0]}<select value={filters.sort} onChange={e=>update('sort',e.target.value)} className={inputClass}>{['recommended','priceAsc','priceDesc','rating'].map((v,i)=><option key={v} value={v}>{f[1+i]}</option>)}</select></label>
-      <label className="grid gap-1 text-sm">{f[17]}<select value={filters.currency} onChange={e=>update('currency',e.target.value)} className={inputClass}>{['EUR','USD','GBP','TRY','AED','CNY'].map(v=><option key={v}>{v}</option>)}</select></label>
-      <label className="grid gap-1 text-sm">{f[5]} ({filters.currency})<input type="number" min="0" max={filters.maxPrice||100000} step="0.01" value={filters.minPrice} onChange={e=>update('minPrice',e.target.value)} className={inputClass}/></label>
-      <label className="grid gap-1 text-sm">{f[6]} ({filters.currency})<input type="number" min={Number(filters.minPrice)||0.01} max="100000" step="0.01" value={filters.maxPrice} onChange={e=>update('maxPrice',e.target.value)} className={inputClass}/></label>
-      <label className="grid gap-1 text-sm">{f[7]}<select value={filters.duration} onChange={e=>update('duration',e.target.value)} className={inputClass}>{['any','short','day','multi'].map((v,i)=><option key={v} value={v}>{f[8+i]}</option>)}</select></label>
-      <label className="grid gap-1 text-sm">{f[12]}<select value={filters.rating} onChange={e=>update('rating',e.target.value)} className={inputClass}><option value="any">{f[8]}</option><option value="3">3+ / 5</option><option value="4">4+ / 5</option></select></label>
-      <label className="grid gap-1 text-sm">{f[13]}<input type="date" min={today} value={filters.date} onChange={e=>update('date',e.target.value)} className={inputClass}/></label>
-      <div className="flex flex-wrap gap-3 sm:col-span-2 lg:col-span-3">{(['private','freeCancellation','skipLine'] as const).map((key,i)=><label key={key} className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" checked={filters[key]} onChange={e=>update(key,e.target.checked)} className="h-5 w-5"/>{f[14+i]}</label>)}</div>
-      <button disabled={state==='loading'} className="min-h-11 rounded-xl bg-blue-600 px-4 py-2 font-semibold text-white disabled:opacity-60">{actions[1]}</button>
-      <button type="button" onClick={()=>setFilters(emptyFilters)} className="min-h-11 rounded-xl border border-blue-200 px-4 py-2 text-blue-700">{f[18]}</button>
-      </div></details>
-    </form>
-    <a href={discoverySwitchHref('activities',lang,applied?.city??initialCity,applied?.term??initialQuery)} className="inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-blue-700 underline underline-offset-4">{placesLabel}<ArrowRight size={15} aria-hidden="true" className="rtl:rotate-180"/></a>
-    <SearchGuide path="/tours" lang={lang}/>
-    <div role="status" className="my-3 text-sm text-slate-600">{state==='error'?t[5]:state==='loading'?t[3]:result?.products.length===0?t[4]:''}</div>
-    {result?.sandbox&&<p className="mb-3 text-sm text-amber-800">{t[9]}</p>}
-    {result?.language==='en'&&lang!=='en'&&<p className="mb-3 text-sm text-slate-600">{t[12]}</p>}
-    {result&&result.products.length>0&&applied&&<p className="my-3 text-sm text-slate-600">{publicCities.find(c=>c.slug===applied.city)?.name}{applied.term && ` · ${applied.term}`} · {f[19]}: {new Intl.NumberFormat(lang).format(result.totalCount)} · {start}–{start+result.products.length-1}</p>}
-    {result?.products.map(p=><article key={p.code} className="travel-catalog-row">
-      <div className="travel-catalog-photo">{p.photo&&<img src={p.photo} alt={p.title} width={720} height={480} loading="lazy" referrerPolicy="no-referrer" onError={e=>{e.currentTarget.style.visibility='hidden'}}/>}</div>
-      <div className="travel-catalog-info"><h2 className="font-semibold">{p.title}</h2><span className="text-sm text-slate-600">Viator</span><div className="mt-2 flex flex-wrap gap-3 text-sm text-slate-600">{p.rating!==undefined&&<span>★ {new Intl.NumberFormat(lang,{maximumFractionDigits:1}).format(p.rating)} / 5{p.reviewCount!==undefined?` (${new Intl.NumberFormat(lang).format(p.reviewCount)})`:''}</span>}{p.durationMinutes&&<span>{f[7]}: {new Intl.NumberFormat(lang).format(p.durationMinutes.from)}{p.durationMinutes.to!==p.durationMinutes.from?`–${new Intl.NumberFormat(lang).format(p.durationMinutes.to)}`:''} min</span>}{p.freeCancellation&&<span>{f[15]}</span>}</div>{p.description&&<details className="mt-2 text-sm text-slate-600"><summary className="min-h-11 cursor-pointer py-2 text-blue-700">{f[21]}</summary><p>{p.description}</p></details>}</div>
-      <div className="travel-catalog-action">{p.fromPrice!==undefined&&p.currency&&<span>{t[6]} {new Intl.NumberFormat(lang,{style:'currency',currency:p.currency}).format(p.fromPrice)}</span>}
-        <a href={p.productUrl} onClick={()=>trackProduct('viator_open',lang)} target="_blank" rel="sponsored noopener noreferrer" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#087FFF] px-5 py-3 text-center text-sm font-bold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">{t[7]} <span aria-hidden="true">↗</span></a>
+  }, [lang])
+
+  useEffect(() => {
+    if (hasCity || initialQuery.trim()) {
+      const term = initialQuery.trim()
+      const timer = setTimeout(() => void search({ city: initialCity, term, query: term, filters: emptyFilters }), 0)
+      return () => { clearTimeout(timer); controller.current?.abort() }
+    }
+    return () => controller.current?.abort()
+  }, [initialCity, initialQuery, hasCity, search])
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const button = (event.nativeEvent as SubmitEvent).submitter
+    const selectedCategory = button instanceof HTMLButtonElement && button.name === 'category' ? Number(button.value) : category
+    const destination = button instanceof HTMLButtonElement && button.name === 'destination' ? button.value : city
+    const nextTerm = selectedCategory === null ? term.trim() : selectedCategory === 0 ? '' : labels.categories[selectedCategory]
+    const query = selectedCategory === null ? nextTerm : tourCategoryTerm(selectedCategory, lang)
+    setCategory(selectedCategory)
+    setTerm(nextTerm)
+    setCity(destination)
+    if (filtersOpen) {
+      if (filterPanel.current?.contains(document.activeElement)) filterToggle.current?.focus()
+      setFiltersOpen(false)
+    }
+    void search({ city: destination, term: nextTerm, query, filters })
+  }
+
+  const loading = state === 'loading'
+  const showDestinations = !result && state === 'idle'
+  const resultCity = applied && (localDestinations[applied.city] ?? cityName(applied.city, lang))
+  const searchStatus = state === 'error' ? t[5] : loading ? t[3] : result?.products.length === 0 ? t[4] : ''
+  const sortControl = <label className="vt-sort">{f[0]}<select value={filters.sort} onChange={e => update('sort', e.target.value)}>{['recommended', 'priceAsc', 'priceDesc', 'rating'].map((v, i) => <option key={v} value={v}>{f[i + 1]}</option>)}</select></label>
+  return <section className="viator-directory" aria-labelledby="viator-heading" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+    <header className="vt-hero">
+      <picture className="vt-hero-media">
+        <source media="(max-width: 640px)" srcSet="/photos/directory/tours-768.webp" width="768" height="520"/>
+        <img className="vt-hero-image" src="/photos/directory/tours.webp" width="1600" height="640" alt="" fetchPriority="high"/>
+      </picture>
+      <div className="vt-hero-copy">
+        <span className="vt-hero-label"><Compass size={17} aria-hidden="true"/>{toursLabel(lang)}</span>
+        <h1 id="viator-heading">{labels.title}</h1>
+        <p>{labels.intro}</p>
       </div>
-    </article>)}
-    {result&&applied&&<div className="mt-3 flex gap-3">{start>1&&<button disabled={state==='loading'||hasPendingEdits} className="rounded-xl border p-3 disabled:opacity-50" onClick={()=>void search(applied,start-12)}>{t[11]}</button>}{result.products.length>0&&start+12<=result.totalCount&&start<9997&&<button disabled={state==='loading'||hasPendingEdits} className="rounded-xl border p-3 disabled:opacity-50" onClick={()=>void search(applied,start+12)}>{t[10]}</button>}</div>}
-    {result&&result.products.length>0&&<p className="mt-8 border-t border-slate-200 pt-4 text-xs leading-relaxed text-slate-600" data-testid="tour-disclosure">{t[8]}</p>}
+      <span className="vt-location" dir="auto"><MapPin size={14} aria-hidden="true"/>Düden · {cityName('antalya', lang)}</span>
+      <DirectoryMotion kind="tours"/>
+    </header>
+    <form className="vt-content" onSubmit={submit} onInvalidCapture={event => {
+      const input = event.target as HTMLElement
+      if (filterPanel.current?.contains(input)) {
+        const section = input.closest('details')
+        if (section) section.open = true
+        flushSync(() => setFiltersOpen(true))
+      }
+    }}>
+      <div className="vt-searchbar">
+        <label className="vt-field vt-destination"><MapPin aria-hidden="true"/><span>{t[1]}</span>
+          <select value={city} onChange={e => setCity(e.target.value)}>
+            {publicCities.map(c => <option key={c.slug} value={c.slug}>{cityDisplayName(c.name, lang)}{localDestinations[c.slug] && ` · ${localDestinations[c.slug]}`}</option>)}
+          </select>
+        </label>
+        <label className="vt-field vt-term"><Search aria-hidden="true"/><span>{s[0]}</span>
+          <input type="search" maxLength={160} value={term} onChange={e => { setTerm(e.target.value); setCategory(null) }} placeholder={s[1]}/>
+        </label>
+        <label className="vt-field vt-date"><CalendarDays aria-hidden="true"/><span>{f[13]}</span>
+          <input type="date" min={today} max={dateLimit.toISOString().slice(0, 10)} value={filters.date} onChange={e => update('date', e.target.value)}/>
+        </label>
+        <button type="submit" disabled={loading} className="vt-primary vt-search-button"><Search size={19} aria-hidden="true"/>{loading ? t[3] : pending ? actions[1] : t[2]}</button>
+      </div>
+
+      <div className="vt-categories" role="group" aria-label={labels.categoryLabel}>
+        {labels.categories.map((label, index) => {
+          const Icon = categoryIcons[index]
+          return <button key={label} type="submit" name="category" value={index} disabled={loading} aria-pressed={index === (category ?? (term.trim() ? -1 : 0))}><Icon aria-hidden="true"/><span>{label}</span></button>
+        })}
+      </div>
+
+      <div className="vt-layout">
+        <aside className="vt-filters" ref={filterPanel} data-open={filtersOpen} aria-label={actions[0]}>
+          <h2 className="vt-sidebar-heading"><SlidersHorizontal size={20} aria-hidden="true"/>{actions[0]}</h2>
+          <button className="vt-filter-toggle" ref={filterToggle} type="button" aria-expanded={filtersOpen} aria-controls="vt-filters-panel" onClick={() => setFiltersOpen(!filtersOpen)}>
+            <SlidersHorizontal size={19} aria-hidden="true"/>{actions[0]}{activeFilters > 0 && <span>({number.format(activeFilters)})</span>}<ChevronDown size={17} aria-hidden="true"/>
+          </button>
+          <div className="vt-filter-body" id="vt-filters-panel">
+            <details open className="vt-filter-group">
+              <summary><Coins size={17} aria-hidden="true"/>{labels.price}<ChevronDown size={16} aria-hidden="true"/></summary>
+              <div className="vt-price-inputs">
+                <label>{f[5]}<input type="number" min="0" max={filters.maxPrice || 100000} step="0.01" value={filters.minPrice} onChange={e => update('minPrice', e.target.value)}/></label>
+                <label>{f[6]}<input type="number" min={Number(filters.minPrice) || 0.01} max="100000" step="0.01" value={filters.maxPrice} onChange={e => update('maxPrice', e.target.value)}/></label>
+              </div>
+              <label className="vt-currency">{f[17]}<select value={filters.currency} onChange={e => update('currency', e.target.value)}>{['EUR', 'USD', 'GBP', 'TRY', 'AED', 'CNY'].map(code => <option key={code}>{code}</option>)}</select></label>
+            </details>
+            <details className="vt-filter-group"><summary><Clock3 size={17} aria-hidden="true"/>{f[7]}<ChevronDown size={16} aria-hidden="true"/></summary>
+              <select aria-label={f[7]} value={filters.duration} onChange={e => update('duration', e.target.value)}>{['any', 'short', 'day', 'multi'].map((v, i) => <option key={v} value={v}>{f[8 + i]}</option>)}</select>
+            </details>
+            <details className="vt-filter-group"><summary><Star size={17} aria-hidden="true"/>{f[12]}<ChevronDown size={16} aria-hidden="true"/></summary>
+              <select aria-label={f[12]} value={filters.rating} onChange={e => update('rating', e.target.value)}><option value="any">{f[8]}</option><option value="3">{number.format(3)}+ / {number.format(5)}</option><option value="4">{number.format(4)}+ / {number.format(5)}</option></select>
+            </details>
+            <div className="vt-switches">{(['private', 'freeCancellation', 'skipLine'] as const).map((key, i) =>
+              <label key={key}><span>{f[14 + i]}</span><input type="checkbox" checked={filters[key]} onChange={e => update(key, e.target.checked)}/></label>
+            )}</div>
+            {!result && sortControl}
+            <button type="submit" disabled={loading} className="vt-primary vt-apply">{actions[1]}</button>
+            <button type="button" onClick={() => setFilters(emptyFilters)} className="vt-reset">{f[18]}</button>
+          </div>
+        </aside>
+
+        <div className="vt-results">
+          <div className="vt-results-header">
+            <div>
+              <h2 ref={resultsHeading} tabIndex={-1}>{showDestinations ? labels.byDestination : toursLabel(lang)}</h2>
+              {result && applied && <p className="vt-result-summary">{resultCity}{applied.term && ` · ${applied.term}`}{result.products.length > 0 && ` · ${f[19]} ${number.format(start)}–${number.format(start + result.products.length - 1)} / ${number.format(result.totalCount)}`}</p>}
+            </div>
+            {result && <div className="vt-results-sort">{sortControl}{applied && filters.sort !== applied.filters.sort && <button type="submit" className="vt-sort-apply" disabled={loading}>{actions[1]}</button>}</div>}
+          </div>
+          <div role="status" className="vt-result-status">{searchStatus || (result && result.products.length > 0 ? <span className="sr-only">{f[19]} {number.format(result.totalCount)}</span> : null)}</div>
+          {result?.sandbox && <p className="vt-sandbox">{t[9]}</p>}
+          {result?.language === 'en' && lang !== 'en' && <p className="vt-language">{t[12]}</p>}
+          {showDestinations && <div className="vt-grid">{featured.map(({ city: destination, image }, i) => <article className="vt-card vt-city-card" key={destination}>
+            <CityHighlightPhoto city={destination} index={image} name={labels.landmarks[i]} lang={lang}/>
+            <button type="submit" name="destination" value={destination}>
+              <span><strong>{cityName(destination, lang)}</strong><small>{labels.landmarks[i]}</small></span><ArrowRight size={20} aria-hidden="true"/>
+            </button>
+          </article>)}</div>}
+          {!!result?.products.length && <div className="vt-grid">{result.products.map(p => <article key={p.code} className="vt-card">
+            {p.photo && <div className="vt-photo" key={p.photo}><img src={p.photo} alt="" width={720} height={480} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={e => { e.currentTarget.parentElement!.hidden = true }}/>
+              {result.destination && <span><MapPin size={14} aria-hidden="true"/>{resultCity ?? result.destination}</span>}
+            </div>}
+            <div className="vt-card-body">
+              <h3 dir="auto" lang={result.language}>{p.title}</h3>
+              <div className="vt-card-meta">
+                {p.rating !== undefined && <span aria-label={`${f[4]} ${number.format(p.rating)} / ${number.format(5)}${p.reviewCount !== undefined ? ` (${number.format(p.reviewCount)})` : ''}`}><Star className="vt-rating-star" size={16} aria-hidden="true"/><strong>{number.format(p.rating)}</strong>{p.reviewCount !== undefined && ` (${number.format(p.reviewCount)})`}</span>}
+                {p.durationMinutes && <span><Clock3 size={16} aria-hidden="true"/>{formatTourDuration(p.durationMinutes, lang)}</span>}
+                {p.freeCancellation && <span><Check className="vt-check" size={17} aria-hidden="true"/>{f[15]}</span>}
+              </div>
+              {p.description && <details className="vt-description"><summary>{f[21]}<ChevronDown size={14} aria-hidden="true"/></summary><p lang={result.language} dir="auto">{p.description}</p></details>}
+              <div className="vt-card-action">
+                {p.fromPrice !== undefined && p.currency && <span>{t[6]} <strong>{new Intl.NumberFormat(lang, { style: 'currency', currency: p.currency }).format(p.fromPrice)}</strong></span>}
+                <a href={p.productUrl} onClick={() => trackProduct('viator_open', lang)} target="_blank" rel="sponsored noopener noreferrer" className="vt-primary">{t[7]}<ExternalLink size={15} aria-hidden="true"/></a>
+              </div>
+            </div>
+          </article>)}</div>}
+          {result && applied && <div className="vt-paging">
+            {start > 1 && <button type="button" disabled={loading || !!pending} onClick={() => void search(applied, start - 12, true)}><ChevronLeft size={16} aria-hidden="true"/>{t[11]}</button>}
+            {result.products.length > 0 && start + 12 <= result.totalCount && start < 9997 && <button type="button" disabled={loading || !!pending} onClick={() => void search(applied, start + 12, true)}>{t[10]}<ChevronRight size={16} aria-hidden="true"/></button>}
+          </div>}
+          {!!result?.products.length && <p className="vt-disclosure" data-testid="tour-disclosure">{t[8]}</p>}
+        </div>
+      </div>
+    </form>
+    <div className="vt-more">
+      <a href={discoverySwitchHref('activities', lang, applied?.city ?? city, applied?.term ?? term.trim())}>{placesLabel}<ArrowRight size={16} aria-hidden="true"/></a>
+      <SearchGuide path="/tours" lang={lang}/>
+    </div>
   </section>
 }

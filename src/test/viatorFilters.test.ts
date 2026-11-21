@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { viatorFilters } from '../services/viatorFilters'
 import { tourFilterCopy, toursLabel } from '../lib/viatorCopy'
-import {discoverySwitchHref} from '../lib/discoveryNavigation'
+import {destinationRegion, discoverySwitchHref} from '../lib/discoveryNavigation'
 import { readFileSync } from 'node:fs'
 
 const parse=(s:string)=>viatorFilters(new URLSearchParams(s),'2026-10-10')
@@ -39,7 +39,9 @@ describe('Viator full-catalog filters',()=>{
   expect(home).toContain("label: toursLabel(lang), icon: Compass, page: 'tours'")
   expect(app).toContain("tab:'tours',label:toursLabel(lang),icon:Compass")
   expect(app).toContain('initialQuery={searchQuery}')
-  expect(app).toContain("c.slug===new URLSearchParams(browserQuery).get('city')")
+  expect(app).toContain('initialCity={queryCity?.slug}')
+  expect(destinationRegion('antalya')).toBe('antalya')
+  expect(destinationRegion('bodrum')).toBe('mugla')
   expect(app).not.toContain('{toursLabel(lang)} →')
   expect(app).toContain('<option value="es">Español (ES)</option>')
  })

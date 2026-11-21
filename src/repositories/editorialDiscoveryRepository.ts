@@ -1,13 +1,16 @@
 import {requireSupabase,supabaseConfigured} from '../lib/supabase';
 import {foundationEnabled} from '../lib/foundationConfig';
-import {editorialPlace,editorialTablesFor} from '../lib/editorialDiscovery';
+import {editorialPlace,editorialTablesFor,validEditorialDetailId} from '../lib/editorialDiscovery';
 import type {EditorialPlace,EditorialRow,EditorialTable} from '../lib/editorialDiscovery';
 import type {NearbyCategory,NearbyCenter} from '../services/nearbyPlaces';
-export async function loadEditorialDiscovery(point:NearbyCenter,category:'all'|NearbyCategory,radius:number,signal:AbortSignal,context:string):Promise<{places:EditorialPlace[];failed:boolean}>{
+export async function loadEditorialDiscovery(point:NearbyCenter,category:'all'|NearbyCategory,radius:number,signal:AbortSignal,context:string,detailId?:string):Promise<{places:EditorialPlace[];failed:boolean}>{
  if(!supabaseConfigured)return {places:[],failed:false};
- const client=requireSupabase(),tables=editorialTablesFor(category);
+ if(detailId&&!validEditorialDetailId(detailId))return {places:[],failed:false};
+ const [,detailTable,rowId]=detailId?.split(':')??[];
+ const client=requireSupabase(),tables=editorialTablesFor(category).filter(table=>!detailTable||detailTable===table);
  const results=await Promise.all(tables.map(async table=>{
-  const result=await client.from(table).select('*,city:cities(name,slug,active,status)').eq('active',true).eq('status','PUBLISHED').order('id').limit(500).abortSignal(signal);
+  const query=client.from(table).select('*,city:cities(name,slug,active,status)').eq('active',true).eq('status','PUBLISHED');
+  const result=await (rowId?query.eq('id',rowId).limit(1):query.order('id').limit(500)).abortSignal(signal);
   if(result.error)throw Error('EDITORIAL_UNAVAILABLE');
   return {table,rows:(result.data??[]) as EditorialRow[]};
  }).map(p=>p.then(value=>({value,error:false}),()=>({value:null,error:true}))));

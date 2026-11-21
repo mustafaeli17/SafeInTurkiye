@@ -7,6 +7,8 @@ it.each(['en','tr','de','fr','ar','ru','zh','es'])('renders the complete transit
   expect(html).toContain('<form')
   expect(html).toContain('GAZİULAŞ')
   expect(html).toContain('Gaziantep Kart')
+  expect(html).toContain('placeholder="Gaziantep Kalesi, Gaziantep"')
+  expect(html).toContain('placeholder="Zeugma Mozaik Müzesi, Gaziantep"')
   if (lang === 'es') {
     expect(html).toContain('Ahora')
     expect(html).toContain('Buscar rutas')

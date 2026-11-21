@@ -13,6 +13,21 @@ import { Bus, Clock3, ExternalLink, Info, MapPinned, Ship, TrainFront, TramFront
 type Lang = 'en' | 'tr' | 'de' | 'fr' | 'ar' | 'ru' | 'zh' | 'es'
 type City = 'İstanbul' | 'Ankara' | 'İzmir' | 'Antalya' | keyof typeof additionalTransitCities
 
+const addressExamples:Record<City,[string,string]>={
+ İstanbul:['Taksim, İstanbul','Sultanahmet, İstanbul'],
+ Ankara:['Kızılay, Ankara','Anıtkabir, Ankara'],
+ İzmir:['Konak, İzmir','Alsancak, İzmir'],
+ Antalya:['Kaleiçi, Antalya','Konyaaltı, Antalya'],
+ Gaziantep:['Gaziantep Kalesi, Gaziantep','Zeugma Mozaik Müzesi, Gaziantep'],
+ Muğla:['Menteşe Otogarı, Muğla','Saburhane Meydanı, Muğla'],
+ Aydın:['Aydın Garı, Aydın','Atatürk Kent Meydanı, Aydın'],
+ Denizli:['Denizli Otogarı, Denizli','Çınar Meydanı, Denizli'],
+ Trabzon:['Trabzon Otogarı, Trabzon','Meydan Parkı, Trabzon'],
+ Konya:['Konya Garı, Konya','Mevlana Müzesi, Konya'],
+ Bursa:['Kent Meydanı, Bursa','Ulu Cami, Bursa'],
+ Cappadocia:['Göreme Otogarı, Nevşehir','Ürgüp Otogarı, Nevşehir'],
+}
+
 const copy: Record<Lang, Record<string, string>> = {
   es:{title:'Transporte urbano en Türkiye',sub:'Información de metro, tranvía, autobús, tren y ferri de los operadores oficiales.',select:'Elige una ciudad',typical:'Horario habitual',frequency:'Frecuencia habitual',source:'Operador oficial',notice:'Los horarios e intervalos son orientativos, no salidas en directo. Consulta al operador antes de viajar, especialmente de noche, en festivos o durante obras.',card:'Tarjeta de transporte',cardText:'La tarjeta de la ciudad suele servir para el transporte municipal. Los servicios al aeropuerto y algunos operadores privados pueden tener tarifas diferentes.',stops:'Paradas y horarios',live:'Ver horarios oficiales',modes:'Transportes en esta ciudad'},
   en: { title: 'Getting around Türkiye', sub: 'Metro, tram, bus, rail and ferry information from official city operators.', select: 'Choose a city', typical: 'Typical service', frequency: 'Typical frequency', source: 'Official operator', notice: 'Times and intervals are a practical guide, not live departures. Check the official operator before travelling, especially at night, on public holidays or during maintenance.', card: 'Transport card', cardText: 'One city card can usually be used across municipal transport. Airport services and some private operators may charge separately.', stops: 'Stops & timetables', live: 'Open official timetable', modes: 'Services in this city' },
@@ -80,10 +95,13 @@ const modeNames:Record<Exclude<Lang,'en'>,Record<Mode['icon'],string>>={
  ru:{metro:'Метро',tram:'Трамвай',bus:'Автобус',rail:'Пригородный поезд',ferry:'Паром'},
  zh:{metro:'地铁',tram:'有轨电车',bus:'公交车',rail:'市郊铁路',ferry:'轮渡'},
 }
-export default function TransitPlanner({ lang, initialCity = 'İstanbul' }: { lang: string; initialCity?: string }) {
+export default function TransitPlanner({ lang, initialCity = 'İstanbul', onCityChange }: { lang: string; initialCity?: string; onCityChange?:(city:string)=>void }) {
   const locale = (lang.toLowerCase() in copy ? lang.toLowerCase() : 'en') as Lang
   const t = copy[locale]
-  const [city, setCity] = useState<City>(initialCity in data ? initialCity as City : 'İstanbul')
+  const initial = Object.hasOwn(data,initialCity) ? initialCity as City : 'İstanbul'
+  const [localCity, setLocalCity] = useState<City>(initial)
+  const city=onCityChange ? initial : localCity
+  const setCity=onCityChange ?? setLocalCity
   const selected = data[city]
   const [panel,setPanel]=useState(0)
   const navigation=transitDesignCopy[locale]
@@ -100,7 +118,7 @@ export default function TransitPlanner({ lang, initialCity = 'İstanbul' }: { la
     <div className="transit-tabs" role="tablist" aria-label={t.title} onKeyDown={event=>{const tabs=Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('[role=tab]'));const i=tabs.indexOf(event.target as HTMLButtonElement);const step=event.key==='ArrowRight'?(locale==='ar'?-1:1):event.key==='ArrowLeft'?(locale==='ar'?1:-1):0;const next=event.key==='Home'?0:event.key==='End'?3:step?(i+step+4)%4:-1;if(next>=0){event.preventDefault();setPanel(next);tabs[next].focus()}}}>
       {navigation.map((label,i)=>{const Icon=tabIcons[i];return <button type="button" key={i} id={`transit-tab-${i}`} role="tab" aria-selected={panel===i} aria-controls={`transit-panel-${i}`} tabIndex={panel===i?0:-1} onClick={()=>setPanel(i)}><Icon aria-hidden="true"/>{label}</button>})}
     </div>
-    <section id="transit-panel-0" role="tabpanel" aria-labelledby="transit-tab-0" hidden={panel!==0} tabIndex={0}><TransitJourney lang={locale} linesLabel={navigation[1]} onShowLines={()=>{setPanel(1);document.getElementById("transit-tab-1")?.focus()}}/></section>
+    <section id="transit-panel-0" role="tabpanel" aria-labelledby="transit-tab-0" hidden={panel!==0} tabIndex={0}><TransitJourney key={city} city={city} examples={addressExamples[city]} lang={locale} linesLabel={navigation[1]} onShowLines={()=>{setPanel(1);document.getElementById("transit-tab-1")?.focus()}}/></section>
     <section id="transit-panel-2" role="tabpanel" aria-labelledby="transit-tab-2" hidden={panel!==2} tabIndex={0} className="transit-guide-panel"><LocalTransportTips locale={locale}/><RailTravelGuide locale={locale}/></section>
     <section id="transit-panel-1" role="tabpanel" aria-labelledby="transit-tab-1" hidden={panel!==1} tabIndex={0}>
     <section className="reference-transit-content"><div className="space-y-3"><h2 className="text-lg font-extrabold text-slate-900">{t.modes}</h2>{city === 'İstanbul' && <MetrobusGuide lang={locale} inline stopsLabel={t.stops} />}{selected.modes.map(item => { const Icon = icons[item.icon]; return <details key={locale==='en'?item.name:modeNames[locale][item.icon]+' · '+item.operator} className="reference-transit-row"><summary><Icon aria-hidden="true" className="h-5 w-5" /><strong>{locale==='en'?item.name:modeNames[locale][item.icon]+' · '+item.operator}</strong><span>{t.stops}</span></summary><div className="flex items-start gap-4 p-4"><div className="rounded-xl bg-sky-50 p-3 text-[#087FFF]"><Icon className="h-5 w-5" /></div><div className="min-w-0 flex-1"><div className="flex flex-wrap items-start justify-between gap-2"><h3 className="font-extrabold text-slate-900">{locale==='en'?item.name:modeNames[locale][item.icon]+' · '+item.operator}</h3><a href={item.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs font-bold text-[#007EAD] hover:underline">{t.live}<ExternalLink className="h-3.5 w-3.5" /></a></div><p className="mt-1.5 text-xs leading-relaxed text-slate-600">{locale === 'en' && item.detail ? item.detail : modeSummary[locale][item.icon]}</p><dl className="mt-3 grid gap-2 text-xs sm:grid-cols-3"><div><dt className="font-bold text-slate-400">{t.typical}</dt><dd className="mt-0.5 text-slate-700">{scheduleText(item.hours)}</dd></div><div><dt className="font-bold text-slate-400">{t.frequency}</dt><dd className="mt-0.5 text-slate-700">{scheduleText(item.frequency)}</dd></div><div><dt className="font-bold text-slate-400">{t.source}</dt><dd className="mt-0.5 text-slate-700">{item.operator}</dd></div></dl></div></div></details>})}</div>

@@ -12,9 +12,9 @@ import {receiptCopy,reservationIntro,requestRetryCopy} from '../lib/reservationR
 import ReservationReceipt from './ReservationReceipt';
 import {trackBusinessEvent} from '../lib/businessEvents';
 
-type Props={name:string;source:string;lang:string;businessKey?:string;city?:string};
+type Props={name:string;source:string;lang:string;businessKey?:string;city?:string;onAvailability?:(available:boolean)=>void};
 export default function RestaurantRequest(props:Props){return <RequestForm key={props.businessKey??props.source+props.name} {...props}/>;}
-function RequestForm({name,source,lang,businessKey,city}:Props){
+function RequestForm({name,source,lang,businessKey,city,onAvailability}:Props){
  const t=restaurantRequestCopy[lang]??restaurantRequestCopy.en;
  const copy=receiptCopy[lang]??receiptCopy.en,key=businessKey??source+name;
  const experience=reservationExperienceCopy[lang]??reservationExperienceCopy.en;
@@ -25,6 +25,7 @@ function RequestForm({name,source,lang,businessKey,city}:Props){
  const [ready,setReady]=useState(false),[checking,setChecking]=useState(restaurantRequestsEnabled);
  const [busy,setBusy]=useState(false),[message,setMessage]=useState<number|null>(null);
  const submitting=useRef(false),credentials=useRef<ReturnType<typeof newReceipt>|null>(null),started=useRef(false);
+ useEffect(()=>{onAvailability?.(restaurantRequestsEnabled&&ready&&!receipt);},[ready,receipt,onAvailability]);
  useEffect(()=>{
   if(!restaurantRequestsEnabled||receipt){setChecking(false);return;}
   const controller=new AbortController();

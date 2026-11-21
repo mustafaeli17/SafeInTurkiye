@@ -52,11 +52,11 @@ import citiesZh from './data/citiesZh.json';
 import cityGuides from './data/cityGuides.json';
 import gaziantepCopy from './data/gaziantepCopy.json';
 import { useSupabaseAuth } from './hooks/useSupabaseAuth';
-import { navigateTo,useBrowserLocation } from './lib/browserNavigation';
+import { navigateTo,updateLocationQuery,useBrowserLocation } from './lib/browserNavigation';
 import { cityDisplayName,cityLocale } from './lib/cityLocale';
 import { findCityGuide,openCityGuide } from './lib/cityNavigation';
 import { cityTransportText } from './lib/cityTransportCopy';
-import { destinationSlug,discoveryCity } from './lib/discoveryNavigation';
+import { destinationRegion,destinationSlug,discoveryCity } from './lib/discoveryNavigation';
 import { saveLanguagePreference } from './lib/languagePreference';
 import { cityPath,publicCities } from './lib/publicRoutes';
 import { regionalDescription } from './lib/regionalDescription';
@@ -82,6 +82,7 @@ import { toursLabel } from './lib/viatorCopy';
 import { directoryText } from './lib/visitorDirectory';
 const CurrencyRates = lazy(()=>import('./components/CurrencyRates'));
 const SafetyTips = lazy(()=>import('./components/SafetyTips'));
+const EmergencyCardLink = lazy(()=>import('./components/SafetyTips').then(module=>({default:module.EmergencyCardLink})));
 const TransitPlanner = lazy(()=>import('./components/TransitPlanner'));
 const ViatorTours = lazy(()=>import('./components/ViatorTours'));
 const TravelFaq = lazy(()=>import('./components/TravelFaq'));
@@ -303,7 +304,8 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
   const {path:browserPath,lang:urlLanguage}=parseLocalePath(rawBrowserPath);
   const [adminOpen,setAdminOpen]=useState(false);
   const activeTab:'home'|'city'|Section|'admin'=adminOpen?'admin':browserPath.startsWith('/cities/')?'city':sectionFromPath(browserPath)??'home';
-  const queryCity=publicCities.find(c=>c.slug===new URLSearchParams(browserQuery).get('city'));
+  const regionSlug=destinationRegion(new URLSearchParams(browserQuery).get('city')??'');
+  const queryCity=publicCities.find(c=>c.slug===regionSlug);
   const selectedCityName=publicCities.find(c=>cityPath(c.name)===browserPath)?.name??queryCity?.name??'İstanbul';
   const setActiveTab = (tab:typeof activeTab) => {
     setAdminOpen(tab==='admin');
@@ -383,6 +385,12 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
     void pending.then(finish,finish);
   }
   const [taxiRouteError, setTaxiRouteError] = useState<TaxiErrorKey | 'unavailable' | null>(null);
+  const taxiErrorField = taxiRouteError==='missingPlaces' ? (!taxiOriginCoords?'origin':'destination')
+    : taxiRouteError==='unsupported' || taxiRouteError==='locationFailed' ? 'origin' : null;
+  function reportTaxiFieldError(error:'missingPlaces'|'unsupported'|'locationFailed',field:'origin'|'destination') {
+    setTaxiRouteError(error);
+    requestAnimationFrame(()=>document.getElementById('taxi-'+field)?.focus());
+  }
   const [taxiTariffs, setTaxiTariffs] = useState<Record<string, TaxiTariff>>({});
   const referenceTaxiCity = taxiReferenceCity(detectedTaxiCity);
 
@@ -419,8 +427,8 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
   const taxiOriginLookupId = useRef(0);
   const handleTaxiCurrentLocation = () => {
     const lookupId = ++taxiOriginLookupId.current;
-    if (!('geolocation' in navigator)) {
-      setTaxiRouteError('unsupported');
+    if (!navigator.geolocation) {
+      reportTaxiFieldError('unsupported','origin');
       return;
     }
     setIsTaxiLocating(true);
@@ -429,11 +437,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         if (lookupId !== taxiOriginLookupId.current) return;
-        setIsTaxiLocating(false);
         const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        setTaxiOriginCoords(null);
-        setTaxiOriginText(taxiErrorText(lang, 'locating'));
-        setDetectedTaxiCity('');
 
         try {
           const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords.lat}&lon=${coords.lng}&zoom=16&accept-language=tr`, {signal: AbortSignal.timeout(8000)});
@@ -447,17 +451,21 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
           } else {
             setTaxiOriginText(`${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}`);
             setTaxiOriginCoords(coords);
+            setDetectedTaxiCity('');
           }
         } catch {
           if (lookupId !== taxiOriginLookupId.current) return;
           setTaxiOriginText(`${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}`);
           setTaxiOriginCoords(coords);
+          setDetectedTaxiCity('');
+        } finally {
+          if (lookupId === taxiOriginLookupId.current) setIsTaxiLocating(false);
         }
       },
       () => {
         if (lookupId !== taxiOriginLookupId.current) return;
         setIsTaxiLocating(false);
-        setTaxiRouteError('locationFailed');
+        reportTaxiFieldError('locationFailed','origin');
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
@@ -470,7 +478,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
     setFareCalculation(null);
 
     if (!taxiOriginCoords || !taxiDestCoords) {
-      setTaxiRouteError('missingPlaces');
+      reportTaxiFieldError('missingPlaces',!taxiOriginCoords?'origin':'destination');
       return;
     }
 
@@ -584,7 +592,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
             </a>
 
             {/* Menü Butonları */}
-            <nav className="hidden lg:flex items-center gap-1.5 text-[13px] font-bold text-slate-600">
+            <nav className="hidden xl:flex items-center gap-1.5 text-[13px] font-bold text-slate-600">
               <button
                 onClick={() => setActiveTab('home')}
                 className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
@@ -631,7 +639,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
               </button>
 
               <button
-                onClick={() => navigateTo(cityPath('İstanbul'))}
+                onClick={() => setActiveTab('city')}
                 className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
                   activeTab === 'city' ? 'text-[#087FFF] bg-sky-50 font-extrabold' : 'hover:text-[#087FFF] hover:bg-slate-50'
                 }`}
@@ -684,7 +692,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
 
             {/* Dil ve SOS (112 Acil Arama Aktif) */}
             <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-              <button type="button" aria-label={navigationUi[lang][mobileMenuOpen?1:0]} aria-expanded={mobileMenuOpen} aria-controls="mobile-navigation" onClick={() => setMobileMenuOpen(value => !value)} className="lg:hidden w-11 h-11 rounded-xl bg-sky-50 text-[#087FFF] flex items-center justify-center">
+              <button type="button" aria-label={navigationUi[lang][mobileMenuOpen?1:0]} aria-expanded={mobileMenuOpen} aria-controls="mobile-navigation" onClick={() => setMobileMenuOpen(value => !value)} className="xl:hidden w-11 h-11 rounded-xl bg-sky-50 text-[#087FFF] flex items-center justify-center">
                 {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
               <select
@@ -705,15 +713,16 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
 
               <a
                 href="tel:112"
-                aria-label={`${tr('emergency')} 112`}
-                className="flex items-center justify-center gap-1.5 w-11 sm:w-auto sm:px-3.5 h-11 rounded-xl bg-red-600 hover:bg-red-700 text-white text-[12px] font-extrabold shadow-md shadow-red-600/20 active:scale-95 transition-all cursor-pointer"
+                aria-label={tr('emergency')}
+                className="flex items-center justify-center gap-1.5 min-w-11 px-2 sm:px-3.5 h-11 rounded-xl bg-red-600 hover:bg-red-700 text-white text-[12px] font-extrabold shadow-md shadow-red-600/20 active:scale-95 transition-all cursor-pointer"
               >
                 <PhoneCall className="w-3.5 h-3.5" />
+                <span className="sm:hidden">112</span>
                 <span className="hidden sm:inline">{tr('emergency')}</span>
               </a>
             </div>
           </div>
-          {mobileMenuOpen && <nav id="mobile-navigation" aria-label={navigationUi[lang][0]} className="lg:hidden max-h-[calc(100dvh-80px)] overflow-y-auto border-t border-sky-100 bg-white px-4 py-3 grid grid-cols-2 gap-2 text-[12px] font-bold">
+          {mobileMenuOpen && <nav id="mobile-navigation" aria-label={navigationUi[lang][0]} className="xl:hidden max-h-[calc(100dvh-80px)] overflow-y-auto border-t border-sky-100 bg-white px-4 py-3 grid grid-cols-2 gap-2 text-[12px] font-bold">
             {([
               ['assistant', tr('assistant')], ['taxi', tr('taxi')], ['transit', tr('transit')], ['currency', tr('currency')], ['city', tr('cityWeather')], ['nearme', tr('nearMe')], ['stay', tr('hotels')], ['food', tr('dining')], ['experiences', tr('activities')], ['tours',toursLabel(lang)], ['safety', page('safety')],
             ] as const).map(([tab, label]) => <button key={tab} type="button" onClick={() => { setActiveTab(tab); setMobileMenuOpen(false); }} className={`min-h-11 rounded-xl px-3 py-2 text-start ${activeTab === tab ? 'bg-sky-50 text-[#087FFF]' : 'bg-slate-50 text-slate-700'}`}>{label}</button>)}
@@ -722,7 +731,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
         </header>
         <div id="page-content" tabIndex={-1}>
         {activeTab!=='home' && activeTab!=='taxi' && <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-3"><HomeButton lang={lang} currentPage={({assistant:tr('assistant'),transit:tr('transit'),currency:tr('currency'),city:cityDisplayName(selectedCityName,lang),nearme:tr('nearMe'),stay:page('hotelsTitle'),food:page('diningTitle'),experiences:page('activitiesTitle'),tours:toursLabel(lang),safety:page('safety'),admin:'CMS Studio'} as Record<string,string>)[activeTab]} onClick={()=>{setActiveTab('home');setMobileMenuOpen(false);window.scrollTo(0,0);}}/></div>}
-        {activeTab!=='home'&&activeTab!=='tours'&&searchQuery&&<SearchContext query={searchQuery} city={new URLSearchParams(browserQuery).get('city')??undefined} transfer={new URLSearchParams(browserQuery).get('intent')==='transfer'} resultsSearch={new URLSearchParams(browserQuery).get('lookup')==='1'} lang={lang}/>}
+        {activeTab!=='home'&&activeTab!=='tours'&&searchQuery&&!(new URLSearchParams(browserQuery).has('place')&&['stay','food','experiences','nearme','currency'].includes(activeTab))&&<SearchContext query={searchQuery} city={new URLSearchParams(browserQuery).get('city')??undefined} transfer={new URLSearchParams(browserQuery).get('intent')==='transfer'} resultsSearch={new URLSearchParams(browserQuery).get('lookup')==='1'} lang={lang}/>}
 
         {/* ====================================================================
             PAGE 1: EXPLORE
@@ -769,19 +778,21 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
                     </button>
                   </div>
                   <TransitAddressInput id="taxi-origin" label={page('origin')} value={taxiOriginText} selected={!!taxiOriginCoords} locale={lang} placeholder={page('origin')}
+                    error={taxiErrorField==='origin' && taxiRouteError && taxiRouteError!=='unavailable' ? taxiErrorText(lang,taxiRouteError) : undefined}
                     onSelectionPending={pending=>trackTaxiSelection('origin',pending)}
-                    onChange={value=>{trackTaxiSelection('origin');taxiOriginLookupId.current++;setIsTaxiLocating(false);setTaxiOriginText(value);setTaxiOriginCoords(null);setDetectedTaxiCity('')}}
+                    onChange={value=>{setTaxiRouteError(null);trackTaxiSelection('origin');taxiOriginLookupId.current++;setIsTaxiLocating(false);setTaxiOriginText(value);setTaxiOriginCoords(null);setDetectedTaxiCity('')}}
                     onSelect={place=>{taxiOriginLookupId.current++;setIsTaxiLocating(false);setTaxiOriginText(place.label);setTaxiOriginCoords(place);setDetectedTaxiCity(place.city)}} />
                 </div>
                 <TransitAddressInput id="taxi-destination" label={page('destination')} value={taxiDestText} selected={!!taxiDestCoords} locale={lang} placeholder={page('destination')}
+                  error={taxiErrorField==='destination' ? taxiErrorText(lang,'missingPlaces') : undefined}
                   onSelectionPending={pending=>trackTaxiSelection('destination',pending)}
-                  onChange={value=>{trackTaxiSelection('destination');setTaxiDestText(value);setTaxiDestCoords(null)}} onSelect={place=>{setTaxiDestText(place.label);setTaxiDestCoords(place)}} />
+                  onChange={value=>{setTaxiRouteError(null);trackTaxiSelection('destination');setTaxiDestText(value);setTaxiDestCoords(null)}} onSelect={place=>{setTaxiDestText(place.label);setTaxiDestCoords(place)}} />
 
                 <button
                   type="button"
                   onClick={handleCalculateTaxiRoute}
-                  disabled={isTaxiRouting || resolvingTaxiAddress}
-                  aria-busy={isTaxiRouting || resolvingTaxiAddress}
+                  disabled={isTaxiLocating || isTaxiRouting || resolvingTaxiAddress}
+                  aria-busy={isTaxiLocating || isTaxiRouting || resolvingTaxiAddress}
                   className="w-full h-11 bg-[#087FFF] hover:bg-[#0284C7] text-white font-bold rounded-xl text-[13px] shadow-sm cursor-pointer disabled:cursor-wait disabled:opacity-80 transition-all active:scale-98 flex items-center justify-center gap-2"
                 >
                   {(isTaxiRouting || resolvingTaxiAddress) && <Loader2 aria-hidden="true" className="w-4 h-4 animate-spin" />}
@@ -791,19 +802,8 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
 
               </div>
 
-              <div className="taxi-map-panel">
-                <Suspense fallback={<PageLoading lang={lang}/>}>
-                <SafeRouteMap
-                  title={dict[lang].taxi}
-                  originCoords={taxiOriginCoords}
-                  destCoords={taxiDestCoords}
-                  geometry={taxiRouteResult ? taxiRouteResult.geometry : null}
-                  color="#087FFF"
-                />
-                </Suspense>
-              </div>
               <section className="taxi-result-panel" aria-live="polite">
-                {taxiRouteError && <p role={taxiRouteError === 'unavailable' ? 'status' : 'alert'} className="text-sm text-slate-700 bg-sky-50 rounded-xl p-3">{taxiRouteError === 'unavailable' ? taxiUnavailableText(lang) : taxiErrorText(lang, taxiRouteError)}</p>}
+                {taxiRouteError && !taxiErrorField && <p role={taxiRouteError === 'unavailable' ? 'status' : 'alert'} className="text-sm text-slate-700 bg-sky-50 rounded-xl p-3">{taxiRouteError === 'unavailable' ? taxiUnavailableText(lang) : taxiErrorText(lang, taxiRouteError)}</p>}
                 {taxiRouteResult && !fareCalculation && <div className="grid grid-cols-2 gap-2 rounded-xl bg-sky-50 p-3 text-sm" aria-live="polite"><p>{page('distance')}<br /><strong>{taxiRouteResult.distanceKm.toLocaleString(lang,{maximumFractionDigits:1})} km</strong></p><p>{page('duration')}<br /><strong>~{taxiRouteResult.durationMinutes} min</strong></p></div>}
                 {taxiRouteResult && fareCalculation && (
                   <div className="pt-3 border-t border-slate-100 space-y-3">
@@ -837,6 +837,17 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
                   <p>{taxiMapKey(window.location.hostname,import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY,import.meta.env.VITE_GOOGLE_MAPS_PREVIEW_BROWSER_KEY)?taxiRouteNotice[lang]:taxiCalculationMapNotice[lang]}</p>
                 </details>}
               </section>
+              <div className="taxi-map-panel">
+                <Suspense fallback={<PageLoading lang={lang}/>}>
+                <SafeRouteMap
+                  title={dict[lang].taxi}
+                  originCoords={taxiOriginCoords}
+                  destCoords={taxiDestCoords}
+                  geometry={taxiRouteResult ? taxiRouteResult.geometry : null}
+                  color="#087FFF"
+                />
+                </Suspense>
+              </div>
             </div>
             <aside className="catalog-editorial-note"><a className="inline-flex min-h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-[#087FFF] px-6 py-3 font-bold text-white shadow-sm hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-700" href="https://www.bitaksi.com/home" target="_blank" rel="noopener noreferrer">🚕 {directoryText(lang, 3)} ↗</a><p className="mt-2">{directoryText(lang, 4)}</p></aside>
 
@@ -847,7 +858,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
         {/* ====================================================================
             PAGE 4: TOPLU TAŞIMA (TRANSIT - DÜZELTİLDİ VE AKTİF)
         ==================================================================== */}
-        {activeTab === 'transit' && <Suspense fallback={<PageLoading lang={lang}/>}><TransitPlanner lang={lang} initialCity={selectedCityName} /></Suspense>}
+        {activeTab === 'transit' && <Suspense fallback={<PageLoading lang={lang}/>}><TransitPlanner lang={lang} initialCity={selectedCityName} onCityChange={city=>updateLocationQuery({city:destinationSlug(city)})}/></Suspense>}
 
         {/* ====================================================================
             PAGE 5: EXCHANGE (CANLI KURLAR + YAKINLARDAKİ DÖVİZCİLER - DÜZELTİLDİ)
@@ -930,11 +941,9 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
             PAGE 7: OTELLER (HOTELS)
         ==================================================================== */}
         {activeTab === 'stay' && (
-          <main className="travel-catalog">
-            <h1 className="text-3xl font-extrabold text-slate-900">{page('hotelsTitle')}</h1>
-            <SearchGuide path={browserPath} lang={lang}/>
-
+          <main className="place-directory directory-hotels">
             <NearbyPlaces key={`hotels-discovery:${searchQuery}`} kind="essential" fixedCategory="hotel" lang={lang} center={{lat:currentCityInfo.lat,lng:currentCityInfo.lng}} cityName={currentCityInfo.name} />
+            {!new URLSearchParams(browserQuery).has('place')&&<SearchGuide path={browserPath} lang={lang}/>}
           </main>
         )}
 
@@ -942,10 +951,9 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
             PAGE 8: YEME & İÇME (DINING)
         ==================================================================== */}
         {activeTab === 'food' && (
-          <main className="travel-catalog">
-            <h1 className="text-3xl font-extrabold text-slate-900">{page('diningTitle')}</h1>
-            <SearchGuide path={browserPath} lang={lang}/>
+          <main className="place-directory directory-restaurants">
             <NearbyPlaces key={`restaurants-discovery:${searchQuery}`} kind="essential" fixedCategory="restaurant" lang={lang} center={{lat:currentCityInfo.lat,lng:currentCityInfo.lng}} cityName={currentCityInfo.name} />
+            {!new URLSearchParams(browserQuery).has('place')&&<SearchGuide path={browserPath} lang={lang}/>}
           </main>
         )}
 
@@ -953,24 +961,22 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
             PAGE 9: AKTİVİTELER (ACTIVITIES)
         ==================================================================== */}
         {activeTab === 'experiences' && (
-          <main className="travel-catalog">
-            <div><h1 className="text-3xl font-extrabold text-slate-900">{page('activitiesTitle')}</h1><p className="mt-1 text-sm text-slate-600">{page('activitiesSub')}</p></div>
-            <SearchGuide path={browserPath} lang={lang}/>
-
+          <main className="place-directory directory-activities">
             <NearbyPlaces key={`activities-discovery:${searchQuery}`} kind="essential" fixedCategory="activity" initialCategory={activityCategory === 'Cinema' ? 'cinema' : activityCategory === 'Museum & Culture' ? 'museum' : activityCategory === 'Entertainment' ? 'entertainment' : 'activity'} lang={lang} center={{lat:currentCityInfo.lat,lng:currentCityInfo.lng}} cityName={currentCityInfo.name} />
+            {!new URLSearchParams(browserQuery).has('place')&&<SearchGuide path={browserPath} lang={lang}/>}
           </main>
         )}
 
-        {activeTab === 'tours' && <main className="travel-catalog"><Suspense fallback={<PageLoading lang={lang}/>}><ViatorTours key={`${lang}:${browserQuery}`} lang={lang} placesLabel={page('activitiesTitle')} initialQuery={searchQuery} hasCity={Boolean(queryCity)} initialCity={queryCity?.slug}/></Suspense></main>}
+        {activeTab === 'tours' && <main className="tours-page"><Suspense fallback={<PageLoading lang={lang}/>}><ViatorTours key={`${lang}:${browserQuery}`} lang={lang} placesLabel={page('activitiesTitle')} initialQuery={searchQuery} hasCity={Boolean(queryCity)} initialCity={queryCity?.slug}/></Suspense></main>}
 
         {/* ====================================================================
             PAGE 10: NEAR ME
         ==================================================================== */}
         {activeTab === 'nearme' && (
           <main className="nearby-page mx-auto px-4 sm:px-6 pb-12">
-            <NearMeHero lang={lang}/>
+            {!new URLSearchParams(browserQuery).has('place')&&<NearMeHero lang={lang}/>}
             <NearbyPlaces discoveryLayout key={`nearby:${searchQuery}`} kind="essential" lang={lang} center={{ lat: currentCityInfo.lat, lng: currentCityInfo.lng }} cityName={currentCityInfo.name} />
-            <div className="mt-6"><SearchGuide path={browserPath} lang={lang}/></div>
+            {!new URLSearchParams(browserQuery).has('place')&&<div className="mt-6"><SearchGuide path={browserPath} lang={lang}/></div>}
           </main>
         )}
 
@@ -993,11 +999,14 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
                   <span className="reference-emoji" aria-hidden="true">{item.icon}</span>
                   <h2 className="font-extrabold text-slate-900">{item.title}</h2>
                   <p className="text-[12px] leading-relaxed text-slate-600">{item.detail}</p>
-                  {item.href ? <a href={item.href} className="inline-flex px-3 py-2 rounded-xl bg-red-600 text-white text-[12px] font-bold">{item.action}</a> : <button onClick={() => setActiveTab(item.tab as 'taxi' | 'nearme')} className="px-3 py-2 rounded-xl bg-[#087FFF] text-white text-[12px] font-bold cursor-pointer">{item.action}</button>}
+                  {item.href ? <div className="flex flex-wrap items-center gap-2">
+                    <a href={item.href} className="inline-flex min-h-11 items-center px-4 rounded-xl bg-red-600 text-white text-sm font-bold">{item.action}</a>
+                    <Suspense fallback={null}><EmergencyCardLink lang={lang}/></Suspense>
+                  </div> : <button onClick={() => setActiveTab(item.tab as 'taxi' | 'nearme')} className="px-3 py-2 rounded-xl bg-[#087FFF] text-white text-[12px] font-bold cursor-pointer">{item.action}</button>}
                 </article>
               ))}
             </div>
-            <SafetyTips lang={lang} />
+            <Suspense fallback={<PageLoading lang={lang}/>}><SafetyTips lang={lang}/></Suspense>
          </main>
         )}
 
@@ -1066,7 +1075,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
               </button>
             </div>
             <img src={siteLogo} alt="SafeInTürkiye" className="w-48 h-auto object-contain mx-auto sm:mx-0 my-3" />
-            <p>{footerCopy[lang].source}</p><PhotoCredits lang={lang} />
+            <p>{footerCopy[lang].source}</p><PhotoCredits lang={lang} section={sectionPath(activeTab).slice(1)} />
           </div>
           <div className="flex flex-wrap items-center gap-4 text-sm font-bold text-[#0064b7]">
             <a href={localizePath('/privacy',lang)} className="underline">{footerCopy[lang].privacy}</a>

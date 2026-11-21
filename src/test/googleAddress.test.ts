@@ -19,6 +19,19 @@ it('resolves selected places to coordinates, administrative province and exact G
  const r=await call({action:'resolve',placeId:'abc',language:'tr',sessionToken:token})
  expect(r.body.place).toMatchObject({lat:40.9,lng:29.3,city:'İstanbul',mapQuery:'place_id:abc',provider:'google'})
 })
+it('biases transit suggestions near the chosen city while permitting matches elsewhere in Türkiye',async()=>{
+ const fetcher=vi.fn().mockResolvedValue({ok:true,json:async()=>({suggestions:[]})});vi.stubGlobal('fetch',fetcher)
+ const suggest={action:'suggest',query:'Kızılay',language:'tr',sessionToken:token}
+ await call({...suggest,city:'Ankara'})
+ const scoped=JSON.parse(fetcher.mock.calls[0][1].body)
+ expect(scoped.locationBias.circle.center).toEqual({latitude:39.9334,longitude:32.8597})
+ expect(scoped.locationRestriction).toBeUndefined()
+ expect(scoped.input).toBe('Kızılay')
+ for(const city of [undefined,'unknown','__proto__']) {
+  await call({...suggest,city})
+  expect(JSON.parse(fetcher.mock.lastCall![1].body)).not.toHaveProperty('locationBias')
+ }
+})
 it.each([{}, {action:'suggest',query:'ab',language:'tr',sessionToken:token},{action:'resolve',placeId:'../keys',language:'en',sessionToken:token}])('rejects invalid input before billing',async body=>{
  const fetcher=vi.fn();vi.stubGlobal('fetch',fetcher);expect((await call(body)).code).toBe(400);expect(fetcher).not.toHaveBeenCalled()
 })

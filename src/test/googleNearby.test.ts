@@ -4,6 +4,37 @@ import { parseGooglePlaces, fetchGoogleNearby } from '../services/googleNearby'
 const response = () => ({ status: vi.fn().mockReturnThis(), setHeader: vi.fn(), json: vi.fn() })
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs() })
 describe('Google Places boundary', () => {
+  it('recovers a shared Turkish place by ID under the existing request budget',async()=>{
+    vi.stubEnv('GOOGLE_PLACES_API_KEY','test-only')
+    const place={id:'shared',addressComponents:[{shortText:'TR',types:['country']}]}
+    const f=vi.fn().mockResolvedValue({ok:true,json:async()=>place});vi.stubGlobal('fetch',f)
+    const res=response()
+    await handler({method:'GET',url:'/?id=shared&lat=41&lng=29&lang=de',headers:{'x-forwarded-for':'detail-id'}},res)
+    expect(f).toHaveBeenCalledTimes(1)
+    expect(f.mock.calls[0][0]).toBe('https://places.googleapis.com/v1/places/shared?languageCode=de')
+    expect(res.json).toHaveBeenCalledWith({provider:'Google Maps',places:[{id:'shared',photo:null}]})
+  })
+  it('rejects a malformed ID before fetching, and suppresses an out-of-country record',async()=>{
+    vi.stubEnv('GOOGLE_PLACES_API_KEY','test-only')
+    const f=vi.fn().mockResolvedValue({ok:true,json:async()=>({id:'shared',addressComponents:[{shortText:'DE',types:['country']}]})});vi.stubGlobal('fetch',f)
+    const bad=response(), outside=response()
+    await handler({method:'GET',url:'/?id=bad%2Fvalue&lat=41&lng=29',headers:{}},bad)
+    expect(bad.status).toHaveBeenCalledWith(400);expect(f).not.toHaveBeenCalled()
+    await handler({method:'GET',url:'/?id=shared&lat=41&lng=29',headers:{'x-forwarded-for':'detail-outside'}},outside)
+    expect(outside.status).toHaveBeenCalledWith(404)
+  })
+  it('uses an allowed cuisine in both nearby and named restaurant searches',async()=>{
+    vi.stubEnv('GOOGLE_PLACES_API_KEY','test-only')
+    const f=vi.fn().mockResolvedValue({ok:true,json:async()=>({places:[]})});vi.stubGlobal('fetch',f)
+    for(const suffix of ['', '&q=restaurant']){
+      await handler({method:'GET',url:'/?lat=41&lng=29&category=restaurant&cuisine=seafood_restaurant'+suffix,headers:{'x-forwarded-for':'cuisine'}},response())
+    }
+    expect(JSON.parse(f.mock.calls[0][1].body).includedTypes).toEqual(['seafood_restaurant'])
+    expect(JSON.parse(f.mock.calls[1][1].body)).toMatchObject({includedType:'seafood_restaurant',strictTypeFiltering:true})
+    const bad=response()
+    await handler({method:'GET',url:'/?lat=41&lng=29&category=hotel&cuisine=seafood_restaurant',headers:{}},bad)
+    expect(bad.status).toHaveBeenCalledWith(400);expect(f).toHaveBeenCalledTimes(2)
+  })
   it('does not relabel an event venue as cinema; keeps a real secondary cinema type',()=>{
     const place={id:'venue',displayName:{text:'Event venue'},location:{latitude:41,longitude:29},types:['event_venue'],googleMapsUri:'https://maps.google.com/?cid=1'};
     expect(parseGooglePlaces({places:[place]},{lat:41,lng:29},'cinema').places).toHaveLength(0);

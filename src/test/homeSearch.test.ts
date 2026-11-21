@@ -5,6 +5,24 @@ import {searchLanguages} from '../lib/searchLocales'
 import {fetchGoogleNearby} from '../services/googleNearby'
 import handler from '../../api/places'
 afterEach(()=>{vi.unstubAllGlobals();vi.unstubAllEnvs()})
+it.each([
+ 'I need an ambulance', 'Ambulans çağırın', 'Ich brauche einen Krankenwagen',
+ 'Appelez une ambulance', 'Necesito una ambulancia', 'أحتاج إلى سيارة إسعاف',
+ 'Вызовите скорую помощь', '我需要救护车', '112',
+])('takes an ambulance request to the emergency actions: %s', query=>{
+ expect(homeSearchDestination(query)).toEqual({section:'safety'})
+})
+it.each([
+ 'Taxi from the airport to my hotel', 'Havalimanından otelime taksi',
+ 'Taxi vom Flughafen zum Hotel', 'Taxi de l’aéroport à mon hôtel',
+ 'Taxi del aeropuerto a mi hotel', 'تاكسي من المطار إلى فندقي',
+ 'Такси из аэропорта в отель', '从机场坐出租车到酒店',
+])('prioritizes the taxi journey over its destination: %s', query=>{
+ expect(homeSearchDestination(query)).toEqual({section:'taxi'})
+})
+it.each(['Airport hotel', 'Taxim Hotel', 'Taksim otelleri'])('keeps a hotel discovery request: %s',query=>{
+ expect(homeSearchDestination(query)).toEqual({section:'stay',category:'hotel'})
+})
 it.each(['Is Istanbul safe for tourists?', 'İstanbul turistler için güvenli mi?', 'Wie sicher ist Istanbul?', 'Est-ce sûr pour les touristes à Istanbul ?', '¿Es seguro viajar a Estambul?', 'هل إسطنبول آمنة للسياح؟', 'Безопасно ли в Стамбуле?', '伊斯坦布尔对游客安全吗？'])('routes a safety question to the guide: %s',q=>{
  expect(homeSearchDestination(q)).toEqual({section:'safety'})
 })

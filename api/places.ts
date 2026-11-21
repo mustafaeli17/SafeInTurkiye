@@ -1,3 +1,4 @@
+import { directoryCuisine } from '../src/lib/directoryCuisines.js'
 import { photoSignature } from '../src/server/placePhotoToken.js'
 import { createRequestBudget } from '../src/server/requestBudget.js'
 // Places API (New). Deliberately no persistent cache or CDN caching of Google data.
@@ -11,6 +12,8 @@ const types: Record<string, string[]> = {
   activity: ['tourist_attraction', 'museum', 'historical_landmark', 'park', 'amusement_park', 'movie_theater', 'bowling_alley'],
   park: ['park'], historical: ['historical_landmark'], entertainment: ['amusement_park', 'bowling_alley'], cinema: ['movie_theater'],
 }
+const detailFields = 'id,displayName,formattedAddress,location,types,primaryType,primaryTypeDisplayName,photos,googleMapsUri,businessStatus,rating,userRatingCount,currentOpeningHours,regularOpeningHours,internationalPhoneNumber,websiteUri,attributions'
+const searchFields = detailFields.split(',').map(field => 'places.' + field).join(',')
 const consumePlacesBudget = createRequestBudget(12)
 export default async function handler(req: Request, res: Response) {
   res.setHeader('Cache-Control', 'private, no-store')
@@ -19,6 +22,9 @@ export default async function handler(req: Request, res: Response) {
   const lat = Number(url.searchParams.get('lat')), lng = Number(url.searchParams.get('lng'))
   const category = url.searchParams.get('category') ?? 'all'
   const lang = url.searchParams.get('lang') ?? 'en'
+  const placeId = url.searchParams.get('id')
+  const cuisine = directoryCuisine(url.searchParams.get('cuisine'))
+  if ((placeId !== null && !/^[A-Za-z0-9_-]{1,250}$/.test(placeId)) || (url.searchParams.has('cuisine') && (category !== 'restaurant' || !cuisine))) return res.status(400).json({ error: 'INVALID_INPUT' })
   const searchText = (url.searchParams.get('q') ?? '').trim()
   if (searchText.length > 200 || [...searchText].some(char=>char.charCodeAt(0)<32)) return res.status(400).json({ error: 'INVALID_INPUT' })
   if (!url.searchParams.get('lat')?.trim() || !url.searchParams.get('lng')?.trim() || !Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180 || !(Object.hasOwn(types, category) || category === 'bureau_de_change') || !['en','tr','de','fr','ar','ru','zh','es'].includes(lang)) return res.status(400).json({ error: 'INVALID_INPUT' })
@@ -33,16 +39,27 @@ export default async function handler(req: Request, res: Response) {
   const circle = { center: { latitude: lat, longitude: lng }, radius }
   const exchange = category === 'bureau_de_change'
   try {
-    const upstream = await fetch(`https://places.googleapis.com/v1/places:${exchange || searchText ? 'searchText' : 'searchNearby'}`, {
+    const languageCode = lang === 'zh' ? 'zh-CN' : lang
+    const includedTypes = cuisine ? [cuisine] : types[category]
+    const upstream = placeId ? await fetch(`https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?languageCode=${languageCode}`, {
+      signal: AbortSignal.timeout(8000),
+      headers: { 'X-Goog-Api-Key': key, 'X-Goog-FieldMask': detailFields + ',addressComponents' },
+    }) : await fetch(`https://places.googleapis.com/v1/places:${exchange || searchText ? 'searchText' : 'searchNearby'}`, {
       method: 'POST', signal: AbortSignal.timeout(8000),
       headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': key,
-        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.location,places.types,places.primaryType,places.primaryTypeDisplayName,places.photos,places.googleMapsUri,places.businessStatus,places.rating,places.userRatingCount,places.currentOpeningHours,places.regularOpeningHours,places.internationalPhoneNumber,places.websiteUri,places.attributions' },
+        'X-Goog-FieldMask': searchFields },
       body: JSON.stringify(exchange || searchText
-        ? { textQuery: searchText || 'döviz bürosu currency exchange', locationBias: { circle }, ...(searchText && types[category]?.length === 1 ? { includedType: types[category][0], strictTypeFiltering: true } : {}), pageSize: 20, languageCode: lang === 'zh' ? 'zh-CN' : lang }
-        : { includedTypes: types[category], locationRestriction: { circle }, maxResultCount: 20, rankPreference: 'POPULARITY', languageCode: lang === 'zh' ? 'zh-CN' : lang }),
+        ? { textQuery: searchText || 'döviz bürosu currency exchange', locationBias: { circle }, ...(searchText && includedTypes?.length === 1 ? { includedType: includedTypes[0], strictTypeFiltering: true } : {}), pageSize: 20, languageCode: lang === 'zh' ? 'zh-CN' : lang }
+        : { includedTypes, locationRestriction: { circle }, maxResultCount: 20, rankPreference: 'POPULARITY', languageCode: lang === 'zh' ? 'zh-CN' : lang }),
     })
     if (!upstream.ok) return res.status(upstream.status === 429 ? 429 : 503).json({ error: upstream.status === 429 ? 'BUSY' : 'PROVIDER_UNAVAILABLE' })
-    const body = await upstream.json()
+    let body = await upstream.json()
+    if (placeId) {
+      const withinTurkiye = Array.isArray(body?.addressComponents) && body.addressComponents.some((part: {types?: string[]; shortText?: string}) => part.types?.includes('country') && part.shortText === 'TR')
+      if (body?.id !== placeId || !withinTurkiye) return res.status(404).json({ error: 'PLACE_UNAVAILABLE' })
+      const { addressComponents, ...place } = body
+      body = { places: [place] }
+    }
     if (!body || typeof body !== 'object' || (body.places !== undefined && !Array.isArray(body.places))) return res.status(503).json({ error: 'INVALID_RESPONSE' })
     const places = (body.places ?? []).map((place: Record<string, unknown>) => {
       const photos = place.photos as { name?: string; authorAttributions?: unknown[]; googleMapsUri?: string }[] | undefined

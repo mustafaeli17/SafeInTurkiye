@@ -1,5 +1,6 @@
 import {createRequestBudget} from '../src/server/requestBudget.js'
 import {taxiCityFromAddress} from '../src/lib/taxiCity.js'
+import {searchDestinations} from '../src/lib/searchDestinations.js'
 type Request={method?:string;body?:unknown;headers:Record<string,string|string[]|undefined>}
 type Response={status:(code:number)=>Response;setHeader:(name:string,value:string)=>void;json:(body:unknown)=>void}
 const consume=createRequestBudget(40)
@@ -19,6 +20,8 @@ export default async function handler(req:Request,res:Response){
  if(!key)return res.status(503).json({error:'NOT_CONFIGURED'})
  const retry=consume(req.headers);if(retry){res.setHeader('Retry-After',String(retry));return res.status(429).json({error:'BUSY'})}
  const languageCode=language==='zh'?'zh-CN':language
+ const center=typeof input.city==='string'&&Object.hasOwn(searchDestinations,input.city)
+  ? searchDestinations[input.city as keyof typeof searchDestinations] : undefined
  try{
   // The traveller sees the suggestion in their chosen language. Resolve administrative
   // names in Turkish so the taximeter jurisdiction is stable across all eight locales.
@@ -26,7 +29,9 @@ export default async function handler(req:Request,res:Response){
   const upstream=await fetch(action==='suggest'?'https://places.googleapis.com/v1/places:autocomplete':`https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?${detailParams}`,{
    method:action==='suggest'?'POST':'GET',signal:AbortSignal.timeout(8000),
    headers:{'Content-Type':'application/json','X-Goog-Api-Key':key,'X-Goog-FieldMask':action==='suggest'?'suggestions.placePrediction.placeId,suggestions.placePrediction.text.text':'id,location,formattedAddress,addressComponents,attributions'},
-   ...(action==='suggest'?{body:JSON.stringify({input:query.trim(),includedRegionCodes:['tr'],languageCode,regionCode:'TR',sessionToken})}:{})
+   ...(action==='suggest'?{body:JSON.stringify({input:query.trim(),includedRegionCodes:['tr'],languageCode,regionCode:'TR',sessionToken,
+    ...(center?{locationBias:{circle:{center:{latitude:center.lat,longitude:center.lng},radius:30000}}}:{})
+   })}:{})
   })
   if(!upstream.ok)return res.status(upstream.status===429?429:502).json({error:upstream.status===429?'BUSY':'UNAVAILABLE'})
   const data=await upstream.json()

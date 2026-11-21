@@ -1,6 +1,6 @@
 import {afterEach, expect,it,vi} from 'vitest';
 import {renderToStaticMarkup} from 'react-dom/server';
-import SafetyTips from '../components/SafetyTips';
+import {EmergencyCardLink} from '../components/SafetyTips';
 import {practicalFaq} from '../data/practicalFaq';
 import {loadAdminReservations} from '../repositories/adminBookingRepository';
 import {requireSupabase} from '../lib/supabase';
@@ -32,7 +32,7 @@ it('can consume and clear the transit handoff without writing to browser storage
 });
 
 it.each(Object.keys(practicalFaq))('provides a self-contained local emergency card in %s',lang=>{
- const html=renderToStaticMarkup(<SafetyTips lang={lang}/>);
+ const html=renderToStaticMarkup(<EmergencyCardLink lang={lang}/>);
  const href=html.match(/href="data:text\/plain;charset=utf-8,([^"]+)"/)?.[1];
  expect(href).toBeTruthy();
  const text=decodeURIComponent(href!);
