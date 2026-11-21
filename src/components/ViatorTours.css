@@ -43,7 +43,7 @@
 }
 .tour-melody-control .directory-motion--tours { position:relative; display:block; inset:auto; }
 .tour-melody-badge {
-  position:absolute; inset-block-start:0; inset-inline-end:0; display:grid; place-items:center;
+  position:absolute; z-index:3; inset-block-start:0; inset-inline-end:0; display:grid; place-items:center;
   width:23px; height:23px; border-radius:50%; background:#183753; color:#fff; border:1px solid #f4faff;
 }
 .tour-melody-control:focus-visible { outline:3px solid white; outline-offset:2px; box-shadow:0 0 0 6px #145ca3 }
