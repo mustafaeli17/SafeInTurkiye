@@ -10,7 +10,7 @@ import {nearMeDesignCopy} from '../lib/nearMeDesignCopy'
 import {LayoutGrid,Utensils,Coffee,Camera,Landmark,Cross,Wallet,ShoppingBag,SlidersHorizontal,ChevronDown} from 'lucide-react'
 import {taxiMapKey} from '../lib/mapEnvironment'
 import { groomingCategoryLabel } from '../lib/groomingCopy'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import {locationErrorText} from '../lib/locationError'
 import { nearbyNotice } from '../lib/nearbyNotice'
 import { ArrowRight, Clock3, ExternalLink, Globe, LocateFixed, MapPin, Navigation, Phone, Search } from 'lucide-react'
@@ -27,7 +27,7 @@ import {destinationSlug,destinationRegion,discoveryCity,discoverySwitchHref} fro
 import {mentionedSearchCity} from '../services/searchCities'
 import {toursLabel} from '../lib/viatorCopy'
 import {cityDisplayName} from '../lib/cityLocale'
-import {discoveryFilterCopy,filterDiscovery} from '../lib/discoveryFilters'
+import {discoveryEmptyFiltersCopy,discoveryFilterCopy,discoveryResultProgress,filterDiscovery} from '../lib/discoveryFilters'
 import {readDiscoveryArea,saveDiscoveryArea} from '../lib/discoveryState'
 import {createPhotoRefreshGuard} from '../lib/photoRefresh'
 import {rememberSelectedPlace,selectedPlace} from '../lib/selectedDiscovery'
@@ -105,6 +105,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
   const requestedCategory=new URLSearchParams(query).get('category')
   const filter:'all'|NearbyCategory=requestedCategory&&(requestedCategory==='all'||Object.hasOwn(categoryLabels,requestedCategory))&&(!fixedCategory||requestedCategory===fixedCategory||fixedCategory==='activity'&&activityTypes.some(type=>type===requestedCategory))?requestedCategory as 'all'|NearbyCategory:initialCategory??fixedCategory??'all'
   const [limit, setLimit] = useState(6)
+  const nextPageFocus = useRef<string | null>(null)
   const requestedPlace=new URLSearchParams(query).get('place')
   const detailId=requestedPlace&&(/^google:[A-Za-z0-9_-]{1,250}$/.test(requestedPlace)||validEditorialDetailId(requestedPlace))?requestedPlace:null
   const setDetailId=(id:string|null)=>{
@@ -118,7 +119,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
   const searchKey=[center.lat,center.lng,cityName,filter,locale,textQuery,requiresLocation,cuisine].join('|')
   const photoRefresh=useRef(createPhotoRefreshGuard())
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     generation.current += 1
     controller.current?.abort()
     setResult(null)
@@ -164,6 +165,8 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
       if (requestId !== generation.current || request.signal.aborted) return
       setError(errorMessage(reason))
       setState('error')
+    } finally {
+      if (controller.current === request) controller.current = null
     }
   }
 
@@ -176,8 +179,15 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
     if (!fixedCategory && !textQuery && !addressPlace && !lastSearch.current) return
     if (address.trim() && address !== addressPlace?.label) return
     const previous=lastSearch.current
-    if(previous?.key===searchKey&&(result||editorial.length))return
-    const timer = setTimeout(()=>previous?void search(previous.point,previous.source,++generation.current):searchCity(), 350)
+    const requestInFlight = controller.current !== null && !controller.current.signal.aborted
+    if (previous?.key === searchKey && (result || editorial.length || requestInFlight)) return
+    const scheduledGeneration = generation.current
+    const timer = setTimeout(()=>{
+      // A manual submit or geolocation request takes precedence over this scheduled search.
+      if (generation.current !== scheduledGeneration) return
+      if (previous) void search(previous.point,previous.source,++generation.current)
+      else searchCity()
+    }, 350)
     return () => clearTimeout(timer)
     // searchCity is deliberately captured only for the inputs that change a request.
   }, [fixedCategory, center.lat, center.lng, cityName, filter, locale, addressPlace, address, textQuery, requiresLocation, cuisine, detailId])
@@ -247,6 +257,18 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
     relatedToursHref=discoverySwitchHref('tours',locale,city,city?term:'')
   }
   const places=detailId?(detailPlace?[detailPlace]:[]):filterDiscovery(allPlaces,new URLSearchParams(query))
+  const showMore = () => {
+    nextPageFocus.current = places[limit]?.id ?? null
+    setLimit(previous => previous + 12)
+  }
+  useEffect(()=>{
+    const id = nextPageFocus.current
+    if (!id) return
+    nextPageFocus.current = null
+    const firstNew = eventRoot.current?.querySelector<HTMLElement>(`[data-place-id="${CSS.escape(id)}"] h3 button`)
+    const target = firstNew?.getClientRects().length ? firstNew : eventRoot.current?.querySelector<HTMLElement>('.nearby-map-panel')
+    target?.focus()
+  }, [limit])
   const filtersCopy=discoveryFilterCopy[locale]??discoveryFilterCopy.en
   useEffect(()=>{
     if(!foundationEnabled||!eventRoot.current||!('IntersectionObserver' in window))return
@@ -322,7 +344,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
         setResult(null);setEditorial([]);setError(null);setState('loading')
         updateLocationQuery({cuisine:value??null,place:null})
       }}/>}
-      {fixedCategory==='activity'&&!detailId&&<ActivityCategories selected={filter} label={text('Aktivite kategorisi','Activity category')} categoryLabel={categoryLabel} choose={selectCategory}/>}
+      {fixedCategory==='activity'&&!detailId&&<ActivityCategories lang={locale} selected={filter} label={text('Aktivite kategorisi','Activity category')} categoryLabel={categoryLabel} choose={selectCategory}/>}
       {fixedCategory==='activity'&&!detailId&&<a href={relatedToursHref} className="directory-tours-link">{toursLabel(locale)}<ArrowRight size={15} aria-hidden="true" className="rtl:rotate-180"/></a>}
       {!detailId&&filter==='pharmacy'&&<p role="note" className="rounded-xl border border-amber-100 bg-amber-50 p-3 text-sm text-amber-900">{nearbyNotice(locale,true)}</p>}
       {!detailId && kind === 'essential' && !fixedCategory && <div className="nearby-categories flex flex-wrap gap-2" aria-label={text('Yer türü', 'Place category')}>
@@ -331,7 +353,7 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
 
       {directory&&!detailId&&<DirectoryFilters lang={locale} params={params}/>}
       {!directory&&!detailId&&state==='ready'&&allPlaces.length>0&&<details className={discoveryLayout?"nearby-filter-panel":"rounded-xl border border-sky-100 bg-white p-3 text-sm"}><summary className="min-h-11 cursor-pointer py-2">{discoveryLayout&&<SlidersHorizontal size={18} aria-hidden="true"/>}{filtersCopy[0]}{discoveryLayout&&<ChevronDown size={18} aria-hidden="true"/>}</summary><div className="flex flex-wrap items-end gap-3"><label>{filtersCopy[1]}<select className="block min-h-11 rounded-xl border p-2" value={new URLSearchParams(query).get('order')??'recommended'} onChange={e=>updateLocationQuery({order:e.target.value})}>{['recommended','distance','rating'].map((value,i)=><option key={value} value={value}>{filtersCopy[2+i]}</option>)}</select></label><label>{filtersCopy[6]}<select className="block min-h-11 rounded-xl border p-2" value={new URLSearchParams(query).get('minRating')??'0'} onChange={e=>updateLocationQuery({minRating:e.target.value})}><option value="0">{filtersCopy[7]}</option><option value="3">3+</option><option value="4">4+</option><option value="4.5">4.5+</option></select></label><label className="flex min-h-11 items-center gap-2"><input type="checkbox" checked={new URLSearchParams(query).get('open')==='true'} onChange={e=>updateLocationQuery({open:e.target.checked?'true':null})}/>{filtersCopy[5]}</label><button className="min-h-11 px-3 text-blue-700" onClick={()=>updateLocationQuery({open:null,minRating:null,order:null})}>{filtersCopy[8]}</button></div></details>}
-      {!detailId&&<div aria-live="polite" role="status" className="directory-status text-xs text-slate-600">
+      {!detailId&&<div aria-live="polite" role="status" tabIndex={-1} className="directory-status text-xs text-slate-600">
         {state === 'locating' && text('Konum izniniz bekleniyor…', 'Waiting for your location…')}
         {state === 'loading' && text('Yakındaki yerler aranıyor…', 'Searching nearby places…')}
         {error && <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-amber-900">{error}</p>}
@@ -341,13 +363,21 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
         {state === 'ready' && !directory && <p>{origin === 'location' ? text('Konumunuzun çevresi', 'Around your location') : textQuery ? textQuery : addressPlace ? addressPlace.label : `${cityName} ${fixedCategory ? text('ve çevresi', 'area') : text('merkezinin çevresi', 'city centre')}`} · {places.length} {text('kayıt', 'places')}{result && ` · ${text('Alındı', 'Retrieved')} ${new Date(result.fetchedAt).toLocaleTimeString(tr ? 'tr-TR' : 'en-GB', { hour: '2-digit', minute: '2-digit' })}`}</p>}
       </div>}
 
-      {!detailId && textQuery && (state==='error'||(state==='ready'&&!places.length)) &&
+      {!detailId && textQuery && (state==='error'||(state==='ready'&&!allPlaces.length)) &&
         <a className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-blue-700 underline" href={`https://www.google.com/maps/search/?${new URLSearchParams({api:'1',query:textQuery})}`} target="_blank" rel="noopener noreferrer">Google Maps · {textQuery}<ExternalLink size={15} aria-hidden="true"/></a>}
       {detailId&&!detailPlace&&<div role="status" className="rounded-2xl border border-sky-100 bg-white p-5 text-sm text-slate-600">{detail.pending?text('Yakındaki yerler aranıyor…','Searching nearby places…'):text('Yer bilgileri şu anda alınamadı. Lütfen yeniden deneyin.','Place details could not be loaded. Please try again.')}{!detail.pending&&<button onClick={detail.retry} className="block min-h-11 font-bold text-blue-700">{addressText[2]}</button>}</div>}
-      {!detailId&&state === 'ready' && places.length === 0 && <div className="rounded-2xl border border-sky-100 bg-white p-5 text-sm text-slate-600">{text('Bu alanda ve kategoride kayıt bulunamadı. Bu, yakınlarda işletme olmadığı anlamına gelmez; harita kayıtları eksik olabilir.', 'No records were found in this area and category. This does not mean there are no places nearby; map coverage may be incomplete.')}</div>}
+      {!detailId&&state === 'ready' && places.length === 0 && <div className="rounded-2xl border border-sky-100 bg-white p-5 text-sm text-slate-600">
+        {allPlaces.length > 0 ? <>
+          <p>{discoveryEmptyFiltersCopy[locale] ?? discoveryEmptyFiltersCopy.en}</p>
+          <button type="button" className="mt-1 min-h-11 font-semibold text-blue-700 underline" onClick={()=>{
+            updateLocationQuery({open:null,minRating:null})
+            eventRoot.current?.querySelector<HTMLElement>('.directory-status')?.focus()
+          }}>{filtersCopy[8]}</button>
+        </> : text('Bu alanda ve kategoride kayıt bulunamadı. Bu, yakınlarda işletme olmadığı anlamına gelmez; harita kayıtları eksik olabilir.', 'No records were found in this area and category. This does not mean there are no places nearby; map coverage may be incomplete.')}
+      </div>}
       {detailId && <button type="button" className="min-h-11 text-blue-700 font-semibold" onClick={() => setDetailId(null)}>{text('← Listeye dön', '← Back to results')}</button>}
       {(discoveryLayout||directory)&&!detailId&&places.length>0?<NearMeResults directory={directory} showDistance={showDistance} places={places.slice(0,limit)} lang={locale} onOpen={openPlace} categoryLabel={categoryLabel} distance={formatDistance} text={text} directions={directionsText[locale]??directionsText.en} businessKey={businessKey} onExpired={refreshExpiredPhotos}/>:      <div className={detailId && places.some(place=>place.id===detailId) ? 'space-y-4' : 'grid grid-cols-1 gap-3 sm:grid-cols-2'}>
-        {(detailId && places.some(place=>place.id===detailId)?places.filter(place=>place.id===detailId):places.slice(0, limit)).map(place => detailId===place.id&&place.category==='restaurant'?<RestaurantDetail key={place.id} place={place} lang={locale} city={selectedCity} businessKey={businessKey(place.id)} distance={showDistance?formatDistance(place.distanceMeters):undefined} text={text} directions={directionsText[locale]??directionsText.en} onExpired={refreshExpiredPhotos}/>:<article data-business-key={businessKey(place.id)} key={place.id} className={`min-w-0 rounded-2xl border border-sky-100 bg-white p-4 shadow-sm ${detailId?'directory-place-detail':''}`}>
+        {(detailId && places.some(place=>place.id===detailId)?places.filter(place=>place.id===detailId):places.slice(0, limit)).map(place => detailId===place.id&&place.category==='restaurant'?<RestaurantDetail key={place.id} place={place} lang={locale} city={selectedCity} businessKey={businessKey(place.id)} distance={showDistance?formatDistance(place.distanceMeters):undefined} text={text} directions={directionsText[locale]??directionsText.en} onExpired={refreshExpiredPhotos}/>:<article data-place-id={place.id} data-business-key={businessKey(place.id)} key={place.id} className={`min-w-0 rounded-2xl border border-sky-100 bg-white p-4 shadow-sm ${detailId?'directory-place-detail':''}`}>
 
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0"><span className="text-[10px] font-bold uppercase tracking-wide text-[#007EAD]">{place.typeLabel ?? categoryLabel(place.category)}</span>{detailId?<h1 data-detail-heading tabIndex={-1}>{place.name || categoryLabel(place.category)}</h1>:<h3 className="mt-1 break-words font-bold text-slate-900"><button className="text-start min-h-11 hover:text-blue-700" onClick={() => openPlace(place.id)}>{place.name || categoryLabel(place.category)}</button></h3>}</div>
@@ -379,7 +409,10 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
       }
       {fixedCategory==='activity'&&detailPlace&&<a href={relatedToursHref} className="directory-tours-link">{toursLabel(locale)}<ArrowRight size={15} aria-hidden="true"/></a>}
       {state==='ready' && kind==='exchange' && <p className="text-xs text-slate-500">{text('Büro alış/satış kurları mevcut değil; işlemden önce net kur ve komisyonu işletmeden teyit edin.', 'Bureau buy/sell rates are not available; confirm the net rate and commission with the business before exchanging.')}</p>}
-      {!detailId&&places.length > limit && <button type="button" onClick={() => setLimit(value => value + 12)} className="rounded-xl border border-sky-200 bg-white px-4 py-2 text-xs font-bold text-[#007EAD]">{text('Daha fazla göster', 'Show more')}</button>}
+      {!detailId&&places.length > limit && <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <button type="button" onClick={showMore} className="min-h-11 rounded-xl border border-sky-200 bg-white px-4 py-2 text-sm font-bold text-blue-700">{text('Daha fazla göster', 'Show more')}</button>
+        <span className="text-sm text-slate-600">{discoveryResultProgress(locale,limit,places.length)}</span>
+      </div>}
       {(result||detailPlace?.id.startsWith('google:')) && <div className="directory-attribution text-xs text-slate-600"><p className="text-sm font-medium" translate="no">Google Maps</p><p>{nearbyNotice(lang, filter === 'pharmacy' || filter === 'all' && !fixedCategory && kind !== 'exchange')}</p><a className="underline" href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google Privacy Policy</a> · <a className="underline" href="https://maps.google.com/help/terms_maps/" target="_blank" rel="noopener noreferrer">Google Maps Terms</a></div>}
     </section>
   )

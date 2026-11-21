@@ -1,4 +1,32 @@
 import type {NearbyPlaceRecord} from '../services/nearbyPlaces';
+
+export const discoveryEmptyFiltersCopy: Record<string,string> = {
+ en: 'No places match your current filters.',
+ tr: 'Seçtiğiniz filtrelere uyan yer bulunamadı.',
+ de: 'Keine Orte entsprechen deinen aktuellen Filtern.',
+ fr: 'Aucun lieu ne correspond aux filtres sélectionnés.',
+ es: 'Ningún lugar coincide con los filtros seleccionados.',
+ ar: 'لا توجد أماكن تطابق عوامل التصفية المحددة.',
+ ru: 'Ни одно место не соответствует выбранным фильтрам.',
+ zh: '没有符合当前筛选条件的地点。',
+};
+
+const resultProgress: Record<string,string> = {
+ en: 'Showing {shown} of {total} results.',
+ tr: '{total} sonucun {shown} tanesi gösteriliyor.',
+ de: '{shown} von {total} Ergebnissen werden angezeigt.',
+ fr: '{shown} résultats affichés sur {total}.',
+ es: 'Se muestran {shown} de {total} resultados.',
+ ar: 'يتم عرض {shown} من أصل {total} نتيجة.',
+ ru: 'Показано {shown} из {total}.',
+ zh: '已显示 {shown} 条，共 {total} 条。',
+};
+export function discoveryResultProgress(locale:string,shown:number,total:number){
+ const format = new Intl.NumberFormat(locale);
+ return (resultProgress[locale] ?? resultProgress.en)
+  .replace('{shown}', format.format(shown))
+  .replace('{total}', format.format(total));
+}
 export function filterDiscovery<T extends NearbyPlaceRecord>(places:T[],params:URLSearchParams):T[]{
  const min=Number(params.get('minRating')??0),open=params.get('open')==='true',sort=params.get('order');
  const filtered=places.filter(p=>(!open||p.openNow===true)&&(!Number.isFinite(min)||min<=0||p.rating!==undefined&&p.rating>=min));

@@ -37,7 +37,7 @@ export default function DirectoryHeader(props: Props) {
         <Icon className="directory-hero-icon" size={27} aria-hidden="true" />
         <h1>{copy[0]}</h1><p>{copy[1]}</p>
       </div>
-      <DirectoryMotion kind={kind}/>
+      {kind === 'activities' && <DirectoryMotion kind="activities"/>}
     </header>
     <div className="directory-search">
       <form className="directory-search-row" onSubmit={event => {event.preventDefault(); if(props.canSearch && !busy) props.onSearch(term.trim())}}>

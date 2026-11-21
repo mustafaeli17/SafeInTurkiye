@@ -1,4 +1,4 @@
-/* Small physical objects sit within the editorial photo. They never capture input. */
+/* Editorial illustrations are decorative; their parent owns any interaction. */
 .directory-motion {
   position: absolute;
   z-index: 2;
@@ -18,31 +18,6 @@
   filter: drop-shadow(0 4px 4px rgb(7 27 45 / .32));
 }
 .directory-motion i { display: block; position: absolute; box-sizing: border-box; }
-.room-ring {
-  width: 24px; height: 24px; top: 2px; left: 41px;
-  border: 3px solid #e6ca84; border-bottom-color: #806441; border-radius: 50%;
-  box-shadow: inset 0 0 0 1px #fff2bf, 0 1px 1px #594c35;
-  transform: translateZ(4px);
-}
-.room-fob {
-  left: 13px; top: 19px; width: 38px; height: 53px;
-  border: 2px solid #e0cc99; border-radius: 46% 46% 42% 42%;
-  background: linear-gradient(125deg, #365d68, #183d4a 49%, #112b39);
-  box-shadow: inset 0 0 0 3px #284b58, inset 0 0 0 4px #ad9f79, 2px 2px 0 #715c39;
-  transform: rotate(24deg) translateZ(5px);
-}
-.room-fob::after {
-  content: ''; position: absolute; inset: 20px 11px; border: 1px solid #e7d39c;
-  transform: rotate(45deg); box-shadow: 2px 2px 0 #426371;
-}
-.room-key {
-  left: 51px; top: 20px; width: 7px; height: 46px; border-radius: 4px 4px 1px 1px;
-  background: linear-gradient(90deg,#876c3d,#f7e0a3 42%,#c19e5c 80%); transform: rotate(-9deg);
-}
-.room-key::after {
-  content: ''; position: absolute; bottom: 2px; left: 5px; width: 8px; height: 12px;
-  background: linear-gradient(#e6d093 48%,transparent 48% 68%,#cda966 68%);
-}
 .cloche-tray {
   width: 80px; height: 15px; left: 1px; bottom: 12px; border-radius: 50%;
   background: linear-gradient(#9eabb4,#fcf8ea 38%,#929ea5 55%,#425565 80%);
@@ -57,23 +32,59 @@
   content: ''; position: absolute; top: -6px; left: 30px; width: 9px; height: 7px;
   background: linear-gradient(110deg,#e4d4aa,#8b7858); border-radius: 5px 5px 3px 3px;
 }
-.compass-case {
-  left: 10px; top: 8px; width: 60px; height: 60px; padding: 5px; border-radius: 50%;
-  background: linear-gradient(135deg,#fff0bc,#aa8352 47%,#f1d59a 69%,#806749);
-  box-shadow: 1px 3px 0 #795d3b, inset 0 1px 0 #fff1c4;
+.vt-hero {
+  --tour-object-width: 96px;
+  --tour-object-height: 75px;
+  --tour-object-end: clamp(18px, 4vw, 62px);
+  --tour-object-bottom: 48px;
 }
-.compass-case::before {
-  content: ''; position: absolute; width: 12px; height: 10px; top: -8px; left: 24px;
-  border: 2px solid #cab584; border-radius: 50%; box-sizing: border-box;
+.directory-motion--tours {
+  width: var(--tour-object-width); height: var(--tour-object-height);
+  inset-inline-end: var(--tour-object-end); bottom: var(--tour-object-bottom);
 }
-.compass-dial {
-  inset: 5px; border: 3px solid #244d5a; border-radius: 50%;
-  background: repeating-conic-gradient(#b4bdaf 0deg 2deg,transparent 2deg 30deg),#153e50;
+.directory-motion--tours .directory-motion-object { transform: rotateX(5deg) rotateY(-10deg) rotateZ(-4deg); }
+.tour-route {
+  bottom: 12px; left: 1px; width: 91px; height: 11px;
+  border-bottom: 2px dashed #fff5cf; border-radius: 0 0 70% 30%;
+  filter: drop-shadow(0 1px 2px #253c4a);
 }
-.compass-dial::before { content: ''; position:absolute; inset:4px; border-radius:50%; background:radial-gradient(at 30% 25%,#2f5d69,#14394b); }
-.compass-needle {
-  inset: 3px 15px; background:linear-gradient(#f6e8c7 0 50%,#d37d5b 50%);
-  clip-path: polygon(50% 0, 94% 49%, 50% 100%, 6% 51%); transform:rotate(27deg) translateZ(2px);
+.tour-coach { width: 82px; height: 42px; left: 7px; bottom: 14px; }
+.coach-shell {
+  inset: 2px 1px 5px; overflow: hidden; border: 1px solid #48636b; border-radius: 8px 15px 5px 5px;
+  background: linear-gradient(#f8eac6 0 14%,#dbe5d6 15% 55%,#218591 57%,#167483 73%,#0c5263 100%);
+  box-shadow: inset 0 2px 0 #fff9e3, inset -4px -2px 1px #185763, 1px 2px 0 #1b4858;
+}
+.coach-shell::before {
+  content:''; position:absolute; right:1px; bottom:6px; width:6px; height:3px;
+  border-radius:3px 1px 1px 3px; background:#ffdf97; box-shadow: -70px 0 0 -1px #e88768;
+}
+.coach-shell::after {
+  content:''; position:absolute; left:3px; right:5px; bottom:9px; height:1px;
+  background:linear-gradient(90deg,#e6bf68, #f4d595 68%,transparent);
+}
+.coach-windows {
+  top:5px; left:4px; width:52px; height:12px; border-radius:4px 2px 2px 2px;
+  background:repeating-linear-gradient(90deg,transparent 0 11px,#e4d7bb 11px 13px),linear-gradient(135deg,#9cc3c4,#486c7a 49%,#254859);
+}
+.coach-cab {
+  top:5px; right:3px; width:16px; height:16px; border-radius:2px 9px 1px 2px;
+  background:linear-gradient(122deg,#bad0c7,#567c8a 48%,#274655 52%,#4e7084);
+}
+.coach-wheel {
+  width:11px; height:11px; bottom:1px; border:3px solid #253744; border-radius:50%;
+  background:conic-gradient(#bed1cf,#6e8790,#c2d4cc,#789099,#bed1cf);
+  box-shadow:0 1px 1px #253744;
+}
+.coach-rear { left:11px; }
+.coach-front { right:9px; }
+.receipt-status-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.receipt-status-heading > p { min-width:0; }
+.directory-motion--meal {
+  position:relative; inset:auto; display:block; flex:0 0 52px; width:52px; height:42px;
+}
+.directory-motion--meal .directory-motion-object {
+  width:83px; height:67px; scale:.61; transform-origin:top left;
+  filter:drop-shadow(0 2px 2px rgb(16 51 69 / .18));
 }
 .outing-ticket {
   left: 1px; top: 17px; width: 80px; height: 45px;
@@ -86,32 +97,32 @@
 .ticket-stub::after { content:''; position:absolute; inset:8px 6px; background:repeating-linear-gradient(0deg,#445a61 0 1px,transparent 1px 3px); }
 @media (prefers-reduced-motion: no-preference) {
   .directory-motion-object { animation: directory-object-arrival 1.1s cubic-bezier(.2,.75,.25,1) both; }
-  .directory-motion--hotels .directory-motion-object { transform-origin: 63% 14%; animation-name: directory-key-arrival; }
-  .directory-motion--restaurants .cloche-lid { animation: directory-lid-lift 1.5s ease-in-out .15s both; }
-  .directory-motion--tours .compass-needle { animation: directory-bearing 1.5s ease-out both; }
+  .directory-motion--meal .cloche-lid { animation: directory-lid-lift 1.5s ease-in-out .15s both; }
+  .directory-motion--tours .directory-motion-object { animation:none; }
+  .tour-coach { animation: tour-coach-arrival 1.45s cubic-bezier(.17,.75,.29,1) both; }
+  .coach-wheel { animation: tour-wheel-roll 1.45s ease-out both; }
   .directory-motion--activities .directory-motion-object { animation-name: directory-ticket-arrival; }
 }
 @keyframes directory-object-arrival {
   from { opacity: 0; transform: translateY(8px) rotateX(35deg) rotateY(-24deg) rotateZ(-12deg); }
   to { opacity: 1; transform: rotateX(10deg) rotateY(-14deg) rotateZ(-8deg); }
 }
-@keyframes directory-key-arrival {
-  0% { opacity: 0; transform: rotateX(24deg) rotateY(-38deg) rotateZ(-32deg); }
-  55% { opacity: 1; transform: rotateX(8deg) rotateY(-8deg) rotateZ(5deg); }
-  100% { transform: rotateX(10deg) rotateY(-14deg) rotateZ(-8deg); }
-}
 @keyframes directory-lid-lift {
   0%,100% { transform: translateY(0) rotateZ(0); }
   45% { transform: translateY(-7px) rotateZ(6deg); }
 }
-@keyframes directory-bearing {
-  0% { transform: rotate(-78deg); } 60% { transform: rotate(38deg); } 100% { transform: rotate(27deg); }
+@keyframes tour-coach-arrival {
+  from { opacity:0; transform:translate3d(-29px,4px,-12px) rotate(-3deg); }
+  65% { opacity:1; transform:translate3d(-2px,-1px,0) rotate(1deg); }
+  to { opacity:1; transform:translate3d(0,0,0); }
 }
+@keyframes tour-wheel-roll { from { transform:rotate(-270deg); } to { transform:rotate(0); } }
 @keyframes directory-ticket-arrival {
   from { opacity: 0; transform: translate(8px,6px) rotateY(-67deg) rotateX(18deg) rotateZ(-12deg); }
   to { opacity: 1; transform: rotateX(10deg) rotateY(-14deg) rotateZ(-8deg); }
 }
 @media(max-width:700px) {
-  .directory-motion { inset-inline-end: 14px; bottom: 29px; width: 61px; height: 56px; }
-  .directory-motion-object { scale: .73; transform-origin: top left; }
+  .vt-hero { --tour-object-width:71px; --tour-object-height:56px; --tour-object-end:14px; --tour-object-bottom:29px; }
+  .directory-motion--activities { inset-inline-end: 14px; bottom: 29px; width: 61px; height: 56px; }
+  .directory-motion--activities .directory-motion-object, .directory-motion--tours .directory-motion-object { scale: .73; transform-origin: top left; }
 }

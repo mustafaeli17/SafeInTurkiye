@@ -4,7 +4,8 @@ import { flushSync } from 'react-dom'
 import { ArrowRight, CalendarDays, Castle, Check, ChevronDown, ChevronLeft, ChevronRight, Clock3, Coins, Compass, ExternalLink, Grid2X2, Landmark, MapPin, Mountain, Sailboat, Search, SlidersHorizontal, Star, Trees, Utensils, Building2, Ticket } from 'lucide-react'
 import { SearchGuide } from './SearchGuide'
 import CityHighlightPhoto from './CityHighlightPhoto'
-import DirectoryMotion from './DirectoryMotion'
+import TourJourneyMotion from './TourJourneyMotion'
+import CategoryRail from './CategoryRail'
 import { tourSearchCopy } from '../services/tourSearch'
 import { publicCities } from '../lib/publicRoutes'
 import { cityDisplayName } from '../lib/cityLocale'
@@ -124,10 +125,12 @@ export default function ViatorTours({ lang, placesLabel, initialCity = 'istanbul
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const button = (event.nativeEvent as SubmitEvent).submitter
-    const selectedCategory = button instanceof HTMLButtonElement && button.name === 'category' ? Number(button.value) : category
+    const categoryClick = button instanceof HTMLButtonElement && button.name === 'category'
+    const selectedCategory = categoryClick ? Number(button.value) : category
     const destination = button instanceof HTMLButtonElement && button.name === 'destination' ? button.value : city
     const nextTerm = selectedCategory === null ? term.trim() : selectedCategory === 0 ? '' : labels.categories[selectedCategory]
     const query = selectedCategory === null ? nextTerm : tourCategoryTerm(selectedCategory, lang)
+    if (categoryClick && state === 'ready' && start === 1 && !pending && applied?.query === query && applied.term === nextTerm) return
     setCategory(selectedCategory)
     setTerm(nextTerm)
     setCity(destination)
@@ -155,7 +158,7 @@ export default function ViatorTours({ lang, placesLabel, initialCity = 'istanbul
         <p>{labels.intro}</p>
       </div>
       <span className="vt-location" dir="auto"><MapPin size={14} aria-hidden="true"/>Düden · {cityName('antalya', lang)}</span>
-      <DirectoryMotion kind="tours"/>
+      <TourJourneyMotion lang={lang}/>
     </header>
     <form className="vt-content" onSubmit={submit} onInvalidCapture={event => {
       const input = event.target as HTMLElement
@@ -180,12 +183,12 @@ export default function ViatorTours({ lang, placesLabel, initialCity = 'istanbul
         <button type="submit" disabled={loading} className="vt-primary vt-search-button"><Search size={19} aria-hidden="true"/>{loading ? t[3] : pending ? actions[1] : t[2]}</button>
       </div>
 
-      <div className="vt-categories" role="group" aria-label={labels.categoryLabel}>
+      <CategoryRail className="vt-categories" lang={lang} label={labels.categoryLabel}>
         {labels.categories.map((label, index) => {
           const Icon = categoryIcons[index]
           return <button key={label} type="submit" name="category" value={index} disabled={loading} aria-pressed={index === (category ?? (term.trim() ? -1 : 0))}><Icon aria-hidden="true"/><span>{label}</span></button>
         })}
-      </div>
+      </CategoryRail>
 
       <div className="vt-layout">
         <aside className="vt-filters" ref={filterPanel} data-open={filtersOpen} aria-label={actions[0]}>

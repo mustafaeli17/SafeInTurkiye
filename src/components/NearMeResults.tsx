@@ -52,7 +52,7 @@ export default function NearMeResults({places, lang, onOpen, categoryLabel, dist
   const ViewIcon=hotelOrNearby ? List : LayoutGrid
   return <>
     <div className="nearby-view-toggle" role="group" aria-label={text('Kayıtlar','places')}>
-      <button type="button" aria-pressed={view==='list'} onClick={()=>setView('list')}><ViewIcon size={18} aria-hidden="true"/>{copy.list} ({places.length.toLocaleString(lang)})</button>
+      <button type="button" aria-pressed={view==='list'} onClick={()=>setView('list')}><ViewIcon size={18} aria-hidden="true"/>{copy.list}</button>
       <button type="button" aria-pressed={view==='map'} onClick={()=>setView('map')}><MapIcon size={18} aria-hidden="true"/>{copy.map}</button>
     </div>
     <div ref={resultsRef} className={`nearby-results-layout nearby-view-${view}`}>

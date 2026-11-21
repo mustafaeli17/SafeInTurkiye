@@ -71,7 +71,8 @@
 .directory-area-controls { display:flex;gap:12px;align-items:end }
 .directory-area-controls>div { min-width:0 }
 .directory-area-panel p { margin-top:8px;font-size:12px;line-height:1.5;color:#566a80 }
-.directory-categories { display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:10px;margin-block:20px }
+.directory-categories-rail { margin-block:16px }
+.directory-categories { display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:10px;padding:6px 4px }
 .directory-categories button { display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;min-height:72px;padding:8px 9px;border:1px solid var(--dir-line);border-radius:15px;box-shadow:var(--dir-shadow);background:#fff;color:var(--dir-ink);font-size:14px;font-weight:650;line-height:1.2;text-align:center;cursor:pointer }
 .directory-categories button[aria-pressed=true],.directory-filters button[aria-pressed=true] { background:var(--dir-blue);color:white;border-color:var(--dir-blue) }
 .directory-filters { display:flex;flex-wrap:wrap;align-items:center;gap:8px }
@@ -129,7 +130,7 @@
   .directory-search-row { grid-template-columns:minmax(128px,.9fr) minmax(160px,1.65fr) auto auto }
   .directory-search-row label,.directory-search-row button { padding-inline:9px;font-size:13px }
   .directory-restaurants .nearby-result-list,.directory-activities .nearby-result-list { grid-template-columns:repeat(2,minmax(0,1fr)) }
-  .directory-categories { grid-auto-columns:minmax(100px,1fr);overflow-x:auto;scrollbar-width:thin;padding:2px 3px 8px;margin-inline:-3px }
+  .directory-categories { grid-auto-columns:minmax(100px,1fr) }
 }
 @media(max-width:700px) {
   .place-directory { margin-top:7px }
@@ -147,11 +148,12 @@
   .directory-search-row label,.directory-search-row button { border-radius:10px;min-height:44px }
   .directory-search-row select,.directory-search-row input { min-height:42px }
   .directory-area-controls { flex-direction:column;align-items:stretch }
-  .directory-filters { flex-wrap:nowrap;overflow-x:auto;gap:6px;padding:2px 3px 5px;margin-inline:-3px;scrollbar-width:thin }
-  .directory-filters>* { flex-shrink:0 }
-  .directory-filters label,.directory-filters button { font-size:12px;padding:4px 8px }
+  .directory-filters { gap:6px;row-gap:4px }
+  .directory-filters label,.directory-filters button { max-inline-size:100%;min-inline-size:0;font-size:12px;padding:3px 8px }
+  .directory-filters select { min-height:36px }
   .directory-filters label:first-child>span { display:none }
-  .directory-categories { gap:7px;margin-block:14px 9px;grid-auto-columns:minmax(87px,auto) }
+  .directory-categories-rail { margin-block:10px 5px }
+  .directory-categories { gap:7px;grid-auto-columns:minmax(87px,auto) }
   .directory-categories button { min-height:64px;border-radius:12px;font-size:12px }
   .directory-content .nearby-view-toggle { width:100% }
   .directory-content .nearby-view-toggle button { flex:1 }
