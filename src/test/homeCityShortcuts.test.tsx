@@ -1,6 +1,7 @@
 import {renderToStaticMarkup} from 'react-dom/server'
 import {expect, it} from 'vitest'
 import TravelHome from '../components/TravelHome'
+import { toursLabel } from '../lib/viatorCopy'
 
 const destinations = ['İstanbul', 'Antalya', 'İzmir', 'Bursa'].map(name => ({key: name, name}))
 const handlers = {onCategory: () => {}, onSearch: () => {}, onNavigate: () => {}, onCity: () => {}}
@@ -13,7 +14,9 @@ it.each([
   const html = renderToStaticMarkup(<TravelHome lang={lang} cities={destinations} {...handlers}/>)
   expect(html).toContain(label)
   expect(html).toContain('aria-controls="home-city-cards"')
-  expect(html).toContain('href="' + (lang === 'en' ? '' : '/' + lang) + '/cities/bursa"')
+  const prefix = lang === 'en' ? '' : '/' + lang
+  expect(html).toContain('href="' + prefix + '/cities/bursa"')
+  expect(html).toContain('href="' + prefix + '/tours" aria-label="' + toursLabel(lang).replace(/&/g,'&amp;') + '"')
 })
 
 it('has no expand shortcut when every city fits the quick list', () => {

@@ -1,8 +1,13 @@
 {
-  "src": "/photos/istanbul-hero-1280.webp",
-  "srcSet": "/photos/istanbul-hero-768.webp 768w, /photos/istanbul-hero-1280.webp 1280w, /photos/istanbul-hero-1942.webp 1942w",
+  "src": "/photos/home-bosphorus-1280.webp",
+  "srcSet": "/photos/home-bosphorus-768.webp 768w, /photos/home-bosphorus-1280.webp 1280w, /photos/home-bosphorus-1942.webp 1942w",
   "width": 1942,
   "height": 809,
   "origin": "AI-generated decorative Istanbul panorama",
-  "createdAt": "2026-09-30"
+  "createdAt": "2026-09-30",
+  "layeredAt": "2026-11-22",
+  "layers": {
+    "ferry": "/photos/home-ferry.webp",
+    "description": "Original foreground ferry isolated from the site-owned panorama. The background restores the shoreline behind the vessel; mobile sky uses a crop of the same panorama."
+  }
 }

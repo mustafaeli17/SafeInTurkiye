@@ -34,9 +34,8 @@ describe('Viator full-catalog filters',()=>{
   expect(tourFilterCopy(lang).every(Boolean)).toBe(true)
   expect(toursLabel(lang)).toBeTruthy()
  })
- it('provides home and city entry points, removes the activities promotion',()=>{
-  const app=readFileSync('src/App.tsx','utf8'),home=readFileSync('src/components/TravelHome.tsx','utf8')
-  expect(home).toContain("label: toursLabel(lang), icon: Compass, page: 'tours'")
+ it('provides a city entry point and removes the activities promotion',()=>{
+  const app=readFileSync('src/App.tsx','utf8')
   expect(app).toContain("tab:'tours',label:toursLabel(lang),icon:Compass")
   expect(app).toContain('initialQuery={searchQuery}')
   expect(app).toContain('initialCity={queryCity?.slug}')

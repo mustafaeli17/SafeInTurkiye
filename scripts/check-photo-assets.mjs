@@ -5,7 +5,8 @@ const artwork=JSON.parse(await readFile('src/data/cityArtwork.json','utf8'));
 const hero=JSON.parse(await readFile('src/data/heroPhoto.json','utf8'));
 const directory=JSON.parse(await readFile('src/data/directoryPhotos.json','utf8'));
 let checked=0;
-for(const src of [...artwork.flatMap(photo=>[photo.src,photo.thumbnail]),hero.src]){
+const homeImages=[...hero.srcSet.split(',').map(candidate=>candidate.trim().split(/\s+/)[0]),hero.layers.ferry,'/photos/home-bosphorus-sky.webp'];
+for(const src of [...artwork.flatMap(photo=>[photo.src,photo.thumbnail]),...homeImages]){
  if(!src.startsWith('/photos/')||src.includes('..'))throw Error('Unsafe photo path');
  await access('public'+src);await access('dist'+src);
  const metadata=await sharp('public'+src).metadata();await sharp('public'+src).raw().toBuffer();

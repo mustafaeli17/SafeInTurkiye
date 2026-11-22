@@ -1,0 +1,149 @@
+.home-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(.65rem, 1.35vw, 1rem);
+}
+.home-city-photos[data-expanded="false"] > a:nth-child(n + 5) { display: none; }
+.travel-home .travel-section-heading .travel-city-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  min-height: 44px;
+  color: #0758ac;
+  font-size: .8rem;
+}
+.travel-city-toggle[aria-expanded="true"] svg { rotate: -90deg; }
+.home-city-photos > a { aspect-ratio: 1.78; }
+.home-plan-photos > a { aspect-ratio: 2.38; }
+.home-photo-card {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 88px;
+  isolation: isolate;
+  border-radius: 14px;
+  background: #274f67;
+  color: #fff;
+  text-align: start;
+}
+.home-photo-window, .home-photo-caption {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+.home-photo-window { overflow: hidden; }
+.home-photo-window img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.home-photo-window .home-istanbul-art { object-position: 82% center; }
+.home-photo-caption {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: .4rem;
+  padding: .8rem clamp(.65rem, 1.25vw, 1rem);
+  background: linear-gradient(0deg, rgb(4 23 41 / 88%), rgb(4 23 41 / 45%) 23%, transparent 58%);
+  font-size: clamp(.94rem, 1.35vw, 1.16rem);
+  line-height: 1.2;
+  font-weight: 750;
+  letter-spacing: -.022em;
+  pointer-events: none;
+}
+.home-photo-caption span { min-width: 0; overflow-wrap: anywhere; }
+.home-photo-caption svg { flex-shrink: 0; }
+[dir="rtl"] .home-photo-caption svg, [dir="rtl"] .travel-city-toggle[aria-expanded="false"] svg { scale: -1 1; }
+
+/* Both layers use the same destination art. This crop excludes the large
+   foreground balloon before the silhouette is positioned over the rim. */
+.home-balloon-card .home-photo-window img {
+  position: absolute;
+  inset-block-start: -6%;
+  right: -21%;
+  width: 172%;
+  max-width: none;
+  height: 132%;
+  object-position: right center;
+  transform-origin: right center;
+}
+.home-balloon {
+  position: absolute;
+  inset-block-start: -13%;
+  right: 18%;
+  width: clamp(28px, 14.8%, 50px);
+  aspect-ratio: 90 / 114;
+  pointer-events: none;
+  /* Silhouette and crop of the foreground balloon at x=100,y=17 in the 640px destination artwork. */
+  background: url('/photos/cities-2026/cappadocia-640.webp') 18.182% 5.43% / 711.111% 374.56% no-repeat;
+  filter: saturate(.83) contrast(.96);
+  clip-path: polygon(28% 3%, 41% 1%, 57% 1%, 69% 3%, 80% 7%, 88% 14%, 94% 23%, 97% 33%, 96% 43%, 93% 50%, 88% 57%, 80% 65%, 71% 73%, 61% 81%, 53% 88%, 51% 92%, 55% 93%, 55% 97%, 43% 97%, 43% 93%, 47% 92%, 45% 88%, 36% 81%, 25% 71%, 16% 62%, 8% 50%, 3% 40%, 1% 31%, 2% 23%, 7% 16%, 14% 10%);
+}
+.home-activity-links {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  column-gap: .9rem;
+  margin: .35rem .1rem 0;
+}
+.home-activity-links button {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  min-height: 44px;
+  color: #344f69;
+  font-size: .79rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.home-activity-links svg { color: #2171b8; }
+.home-activity-links button:hover { color: #0758ac; text-decoration: underline; }
+.home-guide-link {
+  display: flex;
+  align-items: center;
+  gap: clamp(.6rem, 1.7vw, 1.25rem);
+  min-height: 58px;
+  margin-top: .65rem;
+  padding: .7rem clamp(.8rem, 2vw, 1.5rem);
+  border: 1px solid #cfe6f7;
+  border-radius: 14px;
+  background: #e7f4ff;
+  color: #103052;
+}
+.home-guide-link > svg { flex-shrink: 0; color: #0871d5; }
+.home-guide-link h2 { font-size: 1.03rem; font-weight: 800; letter-spacing: -.025em; }
+.home-guide-link p { margin: .12rem 0 0; color: #385774; font-size: .8rem; }
+.home-guide-link > span { margin-inline-start: auto; color: #0758ac; font-weight: 700; font-size: .8rem; }
+[dir="rtl"] .home-guide-link > svg:last-child { scale: -1 1; }
+@media (min-width: 800px) {
+  .home-guide-link > div { display: flex; align-items: center; gap: 1.3rem; }
+  .home-guide-link p { border-inline-start: 1px solid #a9cde7; padding-inline-start: 1.3rem; margin: 0; }
+}
+@media (max-width: 700px) {
+  .home-photo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
+  .home-photo-card { border-radius: 11px; }
+  .home-plan-photos > a { aspect-ratio: 1.92; }
+  .home-photo-caption { padding: .55rem .65rem; }
+  .home-photo-caption svg { width: 16px; height: 16px; }
+  .home-guide-link > span { display: none; }
+  .home-guide-link > svg:last-child { margin-inline-start: auto; }
+  .home-activity-links { column-gap: .7rem; }
+}
+@keyframes home-balloon-drift {
+  from { transform: translateY(0); }
+  to { transform: translateY(-4px); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .home-balloon { animation: home-balloon-drift 5s ease-in-out infinite alternate; }
+  .home-photo-window img, .home-photo-caption svg { transition: transform 240ms ease-out; }
+  [data-motion-paused="true"] .home-balloon { animation-play-state: paused; }
+}
+@media (prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine) {
+  .travel-home:not([data-motion-paused="true"]) .home-photo-card:hover .home-photo-window img { transform: scale(1.035); }
+  .travel-home:not([data-motion-paused="true"]) .home-photo-card:hover .home-photo-caption svg { transform: translateX(3px); }
+}
+@media (prefers-reduced-motion: no-preference) and (pointer: coarse) {
+  .travel-home:not([data-motion-paused="true"]) .home-photo-card:active { transform: scale(.985); }
+}

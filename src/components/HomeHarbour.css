@@ -1,0 +1,230 @@
+.home-harbour {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  min-height: clamp(345px, 32vw, 415px);
+  overflow: hidden;
+  border-radius: 22px;
+  background: #e8f3fa;
+}
+.home-harbour__viewport {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  overflow: hidden;
+  pointer-events: none;
+  container-type: size;
+}
+/* All three layers share one camera, so the ferry stays on the water as the viewport crops. */
+.home-harbour__stage {
+  position: absolute;
+  width: max(100cqw, 240.05cqh);
+  aspect-ratio: 1942 / 809;
+  right: 0;
+  top: 28%;
+  translate: 0 -28%;
+}
+.home-harbour__panorama, .home-harbour__water {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.home-harbour__water {
+  opacity: .38;
+  mask-image: linear-gradient(transparent 72%, #000 89%);
+}
+.home-harbour__vessel {
+  position: absolute;
+  left: 67.97116%;
+  top: 39.55501%;
+  width: 32.02884%;
+  height: 54.38813%;
+  transform: translate(var(--harbour-x, 0px), var(--harbour-y, 0px));
+  transition: transform 620ms ease-out;
+}
+.home-harbour__ferry {
+  width: 100%;
+  height: 100%;
+  transform-origin: 54% 70%;
+}
+.home-harbour::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(90deg, #f4f9fff7 0%, #f4f9ffeb 23%, #f4f9ffbf 37%, #f4f9ff3b 51%, transparent 59%);
+}
+.home-harbour__copy {
+  min-width: 0;
+  margin-right: auto;
+  margin-left: 0;
+  padding: clamp(20px, 3vw, 40px);
+  width: min(56%, 595px);
+}
+.home-harbour h1 {
+  color: #0e294e;
+  font-size: clamp(43px, 4.4vw, 63px);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -.055em;
+  overflow-wrap: break-word;
+  text-wrap: balance;
+}
+.home-harbour h1 span { color: #005cc3; }
+.home-harbour__copy > p {
+  max-width: 34ch;
+  color: #17344f;
+  font-size: clamp(15px, 1.22vw, 17px);
+  line-height: 1.48;
+  margin-block: 12px 20px;
+}
+.travel-search {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  max-width: 480px;
+  padding: 4px;
+  padding-inline-start: 15px;
+  border: 1px solid #c1d9eb;
+  border-radius: 50px;
+  color: #0068d9;
+  background: #fff;
+  box-shadow: 0 4px 15px #163c6121;
+}
+.travel-search > svg { flex: none; }
+.travel-search input { flex: 1; width: 0; min-width: 0; outline: none; font-size: 16px; color: #16324c; }
+.travel-search input::placeholder { color: #566a80; opacity: 1; text-overflow: ellipsis; }
+.travel-search button {
+  flex-shrink: 0;
+  min-height: 44px;
+  border-radius: 26px;
+  padding: 8px 19px;
+  color: #fff;
+  background: #0064d4;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.travel-search button:hover { background: #0059bc; }
+.travel-city-chips { display: flex; flex-wrap: wrap; align-items: center; margin-top: 5px; column-gap: 3px; }
+.travel-city-chips a, .travel-city-jump {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  padding: 3px 6px;
+  color: #143656;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.travel-city-jump { color: #004c9b; }
+.travel-city-chips a:hover, .travel-city-jump:hover { text-decoration: underline; text-underline-offset: 3px; }
+.home-harbour__motion {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: #fff;
+  cursor: pointer;
+}
+.home-harbour__motion::before { content: ''; position: absolute; inset: 6px; border-radius: inherit; background: #153f65d9; }
+.home-harbour__motion svg { position: relative; }
+.home-shortcuts {
+  display: grid;
+  grid-template-columns: repeat(6,minmax(0,1fr));
+  margin-top: 10px;
+  background: #fff;
+  border: 1px solid #d6e6f3;
+  border-radius: 16px;
+  padding: 5px;
+}
+.home-shortcuts a {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 6px clamp(6px, .85vw, 13px);
+  border-radius: 10px;
+  color: #005fc8;
+}
+.home-shortcuts a:not(:first-child)::before { content: ''; position: absolute; inset-inline-start: -1px; inset-block: 22%; width: 1px; background: #dceaf4; }
+.home-shortcuts a > svg { flex: none; }
+.home-shortcuts a > span { font-size: 13px; line-height: 1.3; font-weight: 650; color: #15324d; overflow-wrap: anywhere; }
+.home-shortcuts a > :last-child { margin-inline-start: auto; }
+.home-shortcuts small { font-size: 11px; font-weight: 750; color: #a31c32; }
+@media (hover: hover) { .home-shortcuts a:hover { background: #edf6ff; } }
+[dir=rtl] .home-shortcuts a > svg:last-child, [dir=rtl] .travel-city-jump svg { transform: scaleX(-1); }
+@media (prefers-reduced-motion: no-preference) {
+  .home-harbour__ferry { animation: harbour-bob 7.6s ease-in-out infinite; }
+  .home-harbour__water { animation: harbour-ripple 8.9s ease-in-out infinite; }
+  .travel-home[data-motion-paused="true"] :is(.home-harbour__ferry, .home-harbour__water) { animation-play-state: paused; }
+}
+@keyframes harbour-bob {
+  0%, 100% { transform: translateY(0) rotate(-.22deg); }
+  50% { transform: translateY(-2.4px) rotate(.24deg); }
+}
+@keyframes harbour-ripple { 0%, 100% { transform: scaleX(1.012) translateX(-1px); } 50% { transform: scaleX(1.022) translateX(1px); } }
+@media (max-width: 940px) {
+  .home-shortcuts { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 3px; }
+  .home-shortcuts a:nth-child(4)::before { display: none; }
+  .home-harbour__copy { width: 59%; }
+}
+@media (max-width: 660px) {
+  .home-harbour { min-height: 0; border-radius: 16px; }
+  .home-harbour__viewport {
+    background: #b9d9ec url('/photos/home-bosphorus-sky.webp') center top / cover no-repeat;
+  }
+  .home-harbour__stage {
+    width: max(153cqw, 570px);
+    top: auto;
+    bottom: 0;
+    right: -1%;
+    translate: none;
+    mask-image: linear-gradient(transparent, #000 23%);
+  }
+  .home-harbour::before {
+    background: linear-gradient(to bottom, #eff7ffab 0%, #eff7ff9c 28%, #edf6ff91 48%, transparent 73%);
+  }
+  .home-harbour__copy {
+    width: 100%;
+    padding: 20px 15px clamp(118px, 24vw, 158px);
+  }
+  .home-harbour h1 { font-size: clamp(34px, 7.9vw, 47px); padding-right: 34px; }
+  .home-harbour:lang(ru) h1 { font-size: clamp(28px, 7.9vw, 45px); }
+  .home-harbour__copy > p { max-width: 35ch; margin-block: 8px 12px; font-size: 14px; }
+  .travel-search { max-width: 440px; }
+  .travel-search button { padding-inline: 15px; }
+  .travel-city-chips { column-gap: 0; }
+  .travel-city-chips a, .travel-city-jump {
+    position: relative;
+    isolation: isolate;
+    padding-inline: 7px;
+    font-size: 11.5px;
+  }
+  .travel-city-chips a::before, .travel-city-jump::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    inset: 9px 1px;
+    border-radius: 14px;
+    background: #f7fbfff0;
+  }
+  .home-shortcuts { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px; border: 0; background: none; padding: 0; }
+  .home-shortcuts a { padding: 6px 10px; border: 1px solid #d6e6f3; background: white; }
+  .home-shortcuts a::before { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-harbour__motion, .home-harbour__water { display: none; }
+  .home-harbour__vessel { transition: none; transform: none; }
+}
