@@ -136,7 +136,10 @@ export default function TravelHome({ lang, cities, onNavigate, onCity, onSearch,
       </div>
       <div className="home-activity-links" role="group" aria-label={t[18]}>
         {[{name: 'Museum & Culture', icon: Landmark}, {name: 'Cinema', icon: Clapperboard}, {name: 'Entertainment', icon: Ticket}].map(({name, icon: Icon}, index) =>
-          <button type="button" key={name} onClick={() => onCategory(name)}><Icon size={15} aria-hidden="true" />{t[23 + index]}</button>)}
+          <button type="button" key={name} onClick={() => onCategory(name)}>
+            <span className="home-activity-icon"><Icon size={21} strokeWidth={1.8} aria-hidden="true" /></span>
+            <span>{t[23 + index]}</span><ArrowRight className="home-activity-arrow" size={16} aria-hidden="true" />
+          </button>)}
       </div>
     </section>
     <a className="home-guide-link" href={localizePath(sectionPath('assistant'),lang)} onClick={event=>{

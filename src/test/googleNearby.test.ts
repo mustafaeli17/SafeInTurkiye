@@ -20,6 +20,17 @@ describe('Google Places boundary', () => {
     const rows = parseGooglePlaces(payload, {lat:41,lng:29}, 'restaurant', Infinity).places
     expect(rows.map(row => row.cityName)).toEqual(['Antalya',undefined,undefined])
   })
+  it('retrieves the province in the original place search for itinerary categories', async () => {
+    vi.stubEnv('GOOGLE_PLACES_API_KEY', 'test-only')
+    const upstream = vi.fn().mockResolvedValue({ok:true, json:async () => ({places:[]})})
+    vi.stubGlobal('fetch', upstream)
+    const categories = ['all','cafe','hotel','activity','attraction','museum','historical','park','cinema','entertainment','atm']
+    for (const [index, category] of categories.entries()) {
+      await handler({method:'GET', url:'/?lat=41&lng=29&category='+category, headers:{'x-forwarded-for':'plan-mask-'+category}}, response())
+      expect(upstream).toHaveBeenCalledTimes(index + 1)
+      expect(upstream.mock.calls[index][1].headers['X-Goog-FieldMask'].includes('places.addressComponents')).toBe(category !== 'atm')
+    }
+  })
   it('recovers a shared Turkish place by ID under the existing request budget',async()=>{
     vi.stubEnv('GOOGLE_PLACES_API_KEY','test-only')
     const place={id:'shared',addressComponents:[{shortText:'TR',types:['country']}]}

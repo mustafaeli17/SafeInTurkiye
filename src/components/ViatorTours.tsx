@@ -6,6 +6,7 @@ import { SearchGuide } from './SearchGuide'
 import CityHighlightPhoto from './CityHighlightPhoto'
 import TourJourneyMotion from './TourJourneyMotion'
 import CategoryRail from './CategoryRail'
+import {TourDayPlan} from './FirstVisitPlan/SaveToDayPlan'
 import { tourSearchCopy } from '../services/tourSearch'
 import { publicCities } from '../lib/publicRoutes'
 import { cityDisplayName } from '../lib/cityLocale'
@@ -144,6 +145,7 @@ export default function ViatorTours({ lang, placesLabel, initialCity = 'istanbul
   const loading = state === 'loading'
   const showDestinations = !result && state === 'idle'
   const resultCity = applied && (localDestinations[applied.city] ?? cityName(applied.city, lang))
+  const plannerCity = publicCities.find(destination => destination.slug === applied?.city)?.name
   const searchStatus = state === 'error' ? t[5] : loading ? t[3] : result?.products.length === 0 ? t[4] : ''
   const sortControl = <label className="vt-sort">{f[0]}<select value={filters.sort} onChange={e => update('sort', e.target.value)}>{['recommended', 'priceAsc', 'priceDesc', 'rating'].map((v, i) => <option key={v} value={v}>{f[i + 1]}</option>)}</select></label>
   return <section className="viator-directory" aria-labelledby="viator-heading" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
@@ -253,6 +255,7 @@ export default function ViatorTours({ lang, placesLabel, initialCity = 'istanbul
                 {p.fromPrice !== undefined && p.currency && <span>{t[6]} <strong>{new Intl.NumberFormat(lang, { style: 'currency', currency: p.currency }).format(p.fromPrice)}</strong></span>}
                 <a href={p.productUrl} onClick={() => trackProduct('viator_open', lang)} target="_blank" rel="sponsored noopener noreferrer" className="vt-primary">{t[7]}<ExternalLink size={15} aria-hidden="true"/></a>
               </div>
+              {plannerCity && <TourDayPlan city={plannerCity} lang={lang} code={p.code} url={p.productUrl} name={p.title}/>}
             </div>
           </article>)}</div>}
           {result && applied && <div className="vt-paging">

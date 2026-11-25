@@ -1,0 +1,22 @@
+.save-day-stop { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; }
+.save-day-trigger, .save-day-view { display: inline-flex; align-items: center; justify-content: center; gap: .45rem; min-height: 44px; padding: .5rem .85rem; border-radius: 999px; color: #125da8; font-size: .84rem; font-weight: 700; line-height: 1.25; }
+.save-day-trigger { background: #eff7ff; border: 1px solid #c7def3; }
+.save-day-trigger:hover { background: #e4f1fd; border-color: #93bde4; }
+.save-day-view { text-decoration: underline; text-underline-offset: .2em; }
+.vt-card-body > .save-day-stop, .directory-place-detail > .save-day-stop { margin-block-start: .65rem; }
+.save-day-dialog { position: fixed; inset: 0; width: min(26rem, calc(100% - 2rem)); max-height: calc(100dvh - 2rem); margin: auto; padding: clamp(1rem, 4vw, 1.5rem); border: 1px solid #c9dfef; border-radius: 1.3rem; background: #fff; color: #15334b; box-shadow: 0 18px 70px #0d293f3d; overflow: auto; }
+.save-day-dialog::backdrop { background: #15334b6b; }
+.save-day-dialog form { display: grid; gap: 1rem; }
+.save-day-heading { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.save-day-heading h2 { font-size: 1.25rem; font-weight: 800; }
+.save-day-heading button { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; background: #f0f6fb; }
+.save-day-context { margin-top: -.6rem; color: #506779; overflow-wrap: anywhere; }
+.save-day-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
+.save-day-dialog label { display: grid; align-content: start; gap: .3rem; min-width: 0; font-size: .875rem; font-weight: 650; }
+.save-day-dialog input, .save-day-dialog select { width: 100%; min-width: 0; min-height: 46px; border: 1px solid #acc6da; border-radius: .65rem; padding: .5rem .6rem; background: #fff; font-size: 1rem; color: #15334b; }
+.save-day-dialog p[role] { font-size: .875rem; }
+.save-day-dialog a { color: #135fa7; text-decoration: underline; }
+.save-day-submit { min-height: 46px; border-radius: .75rem; background: #075fb6; color: #fff; font-weight: 700; }
+.save-day-submit:disabled { color: #53687a; background: #e8f0f6; }
+.save-day-dialog :focus-visible, .save-day-stop :focus-visible { outline: 3px solid #075fb6; outline-offset: 2px; }
+@media (max-width: 380px) { .save-day-fields { grid-template-columns: 1fr; } }

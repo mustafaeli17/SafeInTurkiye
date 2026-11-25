@@ -42,7 +42,9 @@ function NearbyPlaces(props:ComponentProps<typeof NearbyPlacesComponent>){return
 import PageLoading from './components/PageLoading';
 const SafeRouteMap=lazy(()=>import('./components/TaxiRouteMap'));
 const FirstVisitPlan=lazy(()=>import('./components/FirstVisitPlan'));
-import {dayPlanTitle, isPlanCity} from './components/FirstVisitPlan/titles';
+import {dayPlanTitle} from './components/FirstVisitPlan/titles';
+import {plannerHref} from './components/FirstVisitPlan/plannerCopy';
+const DayPlanner=lazy(()=>import('./components/FirstVisitPlan/DayPlanner'));
 import PhotoCredits from './components/PhotoCredits';
 import SponsoredBusinesses from './components/SponsoredBusinesses';
 import TravelHome from './components/TravelHome';
@@ -307,7 +309,9 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
   const activeTab:'home'|'city'|Section|'admin'=adminOpen?'admin':browserPath.startsWith('/cities/')?'city':sectionFromPath(browserPath)??'home';
   const regionSlug=destinationRegion(new URLSearchParams(browserQuery).get('city')??'');
   const queryCity=publicCities.find(c=>c.slug===regionSlug);
-  const selectedCityName=publicCities.find(c=>cityPath(c.name)===browserPath)?.name??queryCity?.name??'İstanbul';
+  const cityRoute=browserPath.replace(/\/$/,'');
+  const selectedCityName=publicCities.find(c=>cityPath(c.name)===cityRoute)?.name??queryCity?.name??'İstanbul';
+  const dayPlannerOpen=activeTab==='city' && new URLSearchParams(browserQuery).get('view')==='plan';
   const setActiveTab = (tab:typeof activeTab) => {
     setAdminOpen(tab==='admin');
     if(tab==='admin'){if(window.location.hash!=='#admin')window.location.assign('#admin');return;}
@@ -322,6 +326,42 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
   const searchQuery=new URLSearchParams(browserQuery).get('q')??'';
   const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const mobileMenuButton = useRef<HTMLButtonElement>(null);
+  const mobileMenuPanel = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const trigger = mobileMenuButton.current;
+    const panel = mobileMenuPanel.current;
+    const desktop = window.matchMedia('(min-width: 80rem)');
+    const close = () => setMobileMenuOpen(false);
+    const outside = (event: Event) => {
+      const path = event.composedPath();
+      if (!trigger || !panel || path.includes(trigger) || path.includes(panel)) return;
+      close();
+      if (event.target instanceof Element && event.target.hasAttribute('data-mobile-menu-backdrop')) {
+        trigger.focus({preventScroll: true});
+      }
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || event.defaultPrevented || document.querySelector('dialog[open]')) return;
+      event.preventDefault();
+      close();
+      trigger?.focus({preventScroll: true});
+    };
+    panel?.querySelector('button')?.focus({preventScroll: true});
+    document.addEventListener('click', outside);
+    document.addEventListener('focusin', outside);
+    document.addEventListener('keydown', escape);
+    desktop.addEventListener('change', close);
+    window.addEventListener('popstate', close);
+    return () => {
+      document.removeEventListener('click', outside);
+      document.removeEventListener('focusin', outside);
+      document.removeEventListener('keydown', escape);
+      desktop.removeEventListener('change', close);
+      window.removeEventListener('popstate', close);
+    };
+  }, [mobileMenuOpen]);
 
   // Dil Metinleri Helper Fonksiyonu
   const tr = useCallback((k: string) => k === 'assistant' ? ({ es:'Preguntas frecuentes',en: 'Travel FAQ', tr: 'Sık Sorulan Sorular', de: 'Reisefragen', fr: 'Questions fréquentes', ar: 'الأسئلة الشائعة', zh: '常见问题', ru: 'Частые вопросы' }[lang]) : dict[lang]?.[k] || dict.en[k] || k, [lang]);
@@ -335,7 +375,8 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
     const path=activeTab==='city'?cityPath(selectedCityName):sectionPath(activeTab);
     const meta=searchPage(path,lang);
     updateSearchHead(path,lang,meta.title,meta.description,searchPageSchema(path,lang));
-  }, [lang,activeTab,selectedCityName]);
+    if(dayPlannerOpen)document.title=dayPlanTitle(lang)+' · '+cityDisplayName(selectedCityName,lang)+' | SafeInTürkiye';
+  }, [lang,activeTab,selectedCityName,dayPlannerOpen]);
 
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authEmail, setAuthEmail] = useState('');
@@ -552,6 +593,15 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
   };
 
   const [activityCategory, setActivityCategory] = useState('All');
+  const planNavigationLink = () => <a href={plannerHref(selectedCityName,lang)}
+    className="flex min-h-11 xl:min-h-0 items-center gap-2 rounded-xl bg-slate-50 xl:bg-white px-3 py-2 text-start font-bold text-slate-700 hover:bg-sky-50"
+    onClick={event => {
+      if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      setMobileMenuOpen(false);
+      setMoreDropdownOpen(false);
+      navigateTo(event.currentTarget.href);
+    }}><CalendarDays className="w-4 h-4 text-[#087FFF]" aria-hidden="true"/>{dayPlanTitle(lang)}</a>;
 
   const regionalCity=cityGuides.find(city=>city.name===selectedCityName);
   const localizedGaziantep = regionalCity?.slug==='gaziantep' ? gaziantepCopy[lang as keyof typeof gaziantepCopy] : undefined;
@@ -584,7 +634,8 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
       ==================================================================== */}
       <div>
         <a className="site-skip-link" href="#page-content" onClick={event=>{event.preventDefault();document.getElementById('page-content')?.focus();}}>{headerLabels[lang][1]}</a>
-        <header className="sticky top-0 z-40 bg-white border-b border-sky-100 shadow-sm">
+        {mobileMenuOpen && <div aria-hidden="true" data-mobile-menu-backdrop="" className="xl:hidden fixed inset-0 z-[59] bg-slate-950/20" />}
+        <header className={`sticky top-0 ${mobileMenuOpen ? 'z-[60]' : 'z-40'} bg-white border-b border-sky-100 shadow-sm`}>
           <div className="max-w-7xl mx-auto px-3 sm:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4">
 
             {/* Logo */}
@@ -662,6 +713,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
 
                 {moreDropdownOpen && (
                   <div className="absolute top-full right-0 mt-1 w-44 bg-white border border-slate-200 rounded-2xl shadow-xl p-1.5 z-50 flex flex-col space-y-0.5 text-[12px]">
+                    {planNavigationLink()}
                     <button onClick={() => { setActiveTab('stay'); setMoreDropdownOpen(false); }} className="w-full text-left px-3 py-2 rounded-xl hover:bg-sky-50 text-slate-700 font-bold flex items-center gap-2">
                       <Hotel className="w-4 h-4 text-[#087FFF]" /> {tr('hotels')}
                     </button>
@@ -693,7 +745,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
 
             {/* Dil ve SOS (112 Acil Arama Aktif) */}
             <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-              <button type="button" aria-label={navigationUi[lang][mobileMenuOpen?1:0]} aria-expanded={mobileMenuOpen} aria-controls="mobile-navigation" onClick={() => setMobileMenuOpen(value => !value)} className="xl:hidden w-11 h-11 rounded-xl bg-sky-50 text-[#087FFF] flex items-center justify-center">
+              <button ref={mobileMenuButton} type="button" aria-label={navigationUi[lang][mobileMenuOpen?1:0]} aria-expanded={mobileMenuOpen} aria-controls={mobileMenuOpen ? 'mobile-navigation' : undefined} onClick={() => setMobileMenuOpen(value => !value)} className="xl:hidden w-11 h-11 rounded-xl bg-sky-50 text-[#087FFF] flex items-center justify-center">
                 {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
               <select
@@ -723,21 +775,22 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
               </a>
             </div>
           </div>
-          {mobileMenuOpen && <nav id="mobile-navigation" aria-label={navigationUi[lang][0]} className="xl:hidden max-h-[calc(100dvh-80px)] overflow-y-auto border-t border-sky-100 bg-white px-4 py-3 grid grid-cols-2 gap-2 text-[12px] font-bold">
+          {mobileMenuOpen && <nav ref={mobileMenuPanel} id="mobile-navigation" aria-label={navigationUi[lang][0]} className="xl:hidden absolute inset-x-0 top-full max-h-[calc(100dvh-65px)] overflow-y-auto overscroll-contain border-t border-sky-100 bg-white px-4 py-3 shadow-md grid grid-cols-2 gap-2 text-[12px] font-bold">
             {([
               ['assistant', tr('assistant')], ['taxi', tr('taxi')], ['transit', tr('transit')], ['currency', tr('currency')], ['city', tr('cityWeather')], ['nearme', tr('nearMe')], ['stay', tr('hotels')], ['food', tr('dining')], ['experiences', tr('activities')], ['tours',toursLabel(lang)], ['safety', page('safety')],
             ] as const).map(([tab, label]) => <button key={tab} type="button" onClick={() => { setActiveTab(tab); setMobileMenuOpen(false); }} className={`min-h-11 rounded-xl px-3 py-2 text-start ${activeTab === tab ? 'bg-sky-50 text-[#087FFF]' : 'bg-slate-50 text-slate-700'}`}>{label}</button>)}
+            {planNavigationLink()}
             {isStaff && <button type="button" onClick={() => { setActiveTab('admin'); setMobileMenuOpen(false); }} className="min-h-11 rounded-xl px-3 py-2 text-start bg-slate-900 text-white">CMS Studio</button>}
           </nav>}
         </header>
         <div id="page-content" tabIndex={-1}>
-        {activeTab!=='home' && activeTab!=='taxi' && <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-3"><HomeButton lang={lang} currentPage={({assistant:tr('assistant'),transit:tr('transit'),currency:tr('currency'),city:cityDisplayName(selectedCityName,lang),nearme:tr('nearMe'),stay:page('hotelsTitle'),food:page('diningTitle'),experiences:page('activitiesTitle'),tours:toursLabel(lang),safety:page('safety'),admin:'CMS Studio'} as Record<string,string>)[activeTab]} onClick={()=>{setActiveTab('home');setMobileMenuOpen(false);window.scrollTo(0,0);}}/></div>}
+        {activeTab!=='home' && activeTab!=='taxi' && <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-3"><HomeButton lang={lang} currentPage={({assistant:tr('assistant'),transit:tr('transit'),currency:tr('currency'),city:dayPlannerOpen?dayPlanTitle(lang):cityDisplayName(selectedCityName,lang),nearme:tr('nearMe'),stay:page('hotelsTitle'),food:page('diningTitle'),experiences:page('activitiesTitle'),tours:toursLabel(lang),safety:page('safety'),admin:'CMS Studio'} as Record<string,string>)[activeTab]} onClick={()=>{setActiveTab('home');setMobileMenuOpen(false);window.scrollTo(0,0);}}/></div>}
         {activeTab!=='home'&&activeTab!=='tours'&&searchQuery&&!(new URLSearchParams(browserQuery).has('place')&&['stay','food','experiences','nearme','currency'].includes(activeTab))&&<SearchContext query={searchQuery} city={new URLSearchParams(browserQuery).get('city')??undefined} transfer={new URLSearchParams(browserQuery).get('intent')==='transfer'} resultsSearch={new URLSearchParams(browserQuery).get('lookup')==='1'} lang={lang}/>}
 
         {/* ====================================================================
             PAGE 1: EXPLORE
         ==================================================================== */}
-        {activeTab==='city'&&<SponsoredBusinesses context="city" city={selectedCityName} lang={lang}/>}
+        {activeTab==='city'&&!dayPlannerOpen&&<SponsoredBusinesses context="city" city={selectedCityName} lang={lang}/>}
         {activeTab === 'home' && <TravelHome
           lang={lang}
           initialQuery={searchQuery}
@@ -873,7 +926,8 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
         {/* ====================================================================
             PAGE 6: CITIES & WEATHER
         ==================================================================== */}
-        {activeTab === 'city' && (
+        {dayPlannerOpen && <Suspense fallback={<PageLoading lang={lang}/>}><DayPlanner key={selectedCityName} city={selectedCityName} lang={lang} query={browserQuery}/></Suspense>}
+        {activeTab === 'city' && !dayPlannerOpen && (
           <main className="reference-page reference-city city-guide-page mx-auto px-4 sm:px-6 pb-12">
             <div className="city-guide-picker" aria-label={tr('cityWeather')}>
               {publicCities.map(({name:cname}) => (
@@ -899,8 +953,8 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
               </div>
             </div>
 
-            <nav className="reference-city-nav" aria-label={currentCityInfo.name} data-has-plan={isPlanCity(selectedCityName) || undefined}>
- {isPlanCity(selectedCityName) && <a className="city-nav-plan" href="#day-plan"><CalendarDays size={23} aria-hidden="true"/><span>{dayPlanTitle(lang)}</span></a>}
+            <nav className="reference-city-nav" aria-label={currentCityInfo.name} data-has-plan>
+              <a className="city-nav-plan" href={plannerHref(selectedCityName,lang)}><CalendarDays size={23} aria-hidden="true"/><span>{dayPlanTitle(lang)}</span></a>
  {([{tab:'experiences',label:tr('activities'),icon:CalendarDays},{tab:'stay',label:tr('hotels'),icon:Hotel},{tab:'food',label:tr('dining'),icon:Utensils},{tab:'tours',label:toursLabel(lang),icon:Compass},{tab:'transit',label:tr('transit'),icon:BusFront},{tab:'safety',label:page('safety'),icon:ShieldCheck}] as const).map(item=><button key={item.tab} onClick={()=>setActiveTab(item.tab)}><item.icon size={23} aria-hidden="true"/><span>{item.label}</span></button>)}
  </nav>
 

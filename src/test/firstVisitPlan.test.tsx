@@ -7,6 +7,7 @@ import {editDayPlan} from '../components/FirstVisitPlan/useDayPlan';
 import type {NearbyPlaceRecord} from '../services/nearbyPlaces';
 import {editorialPlace} from '../lib/editorialDiscovery';
 import RestaurantDetail from '../components/RestaurantDetail';
+import {PlaceDayPlan, TourDayPlan} from '../components/FirstVisitPlan/SaveToDayPlan';
 
 it('makes the day planner and city restaurant directory reachable in each supported language', () => {
   for (const lang of searchLanguages) {
@@ -37,8 +38,21 @@ it('adds a restaurant to its verified city even if reached through a different c
   expect(render('Antalya')).toContain('Add to day plan');
   expect(render('Antalya')).toContain('Antalya');
   expect(render('安塔利亚省')).toContain('Antalya');
-  expect(render()).not.toContain('Add to day plan');
-  expect(render('Ankara')).not.toContain('Add to day plan');
+  const unverified = renderToStaticMarkup(<PlaceDayPlan lang="en" place={{...google, address:'İstanbul Street'}}/>);
+  expect(unverified).toContain('Add to day plan');
+  expect(unverified).not.toContain('İstanbul');
+  expect(render('Ankara')).toContain('Add to day plan');
+  expect(render('Ankara')).toContain('Ankara');
+});
+
+it('offers the planner for supported venue categories and tracked tour cards', () => {
+  for (const category of ['hotel', 'museum', 'cinema', 'entertainment', 'restaurant', 'cafe'] as const) {
+    expect(renderToStaticMarkup(<PlaceDayPlan place={{...google, category, cityName: 'İzmir'}} lang="tr"/>)).toContain('aria-haspopup="dialog"');
+  }
+  expect(renderToStaticMarkup(<PlaceDayPlan place={{...google, category: 'atm', cityName: 'İzmir'}} lang="tr"/>)).toBe('');
+  const tour = (url: string) => renderToStaticMarkup(<TourDayPlan city="İzmir" lang="en" code="A123" url={url} name="Example product"/>);
+  expect(tour('https://www.viator.com/tours/Izmir/day-tour/d1-123?pid=partner')).toContain('Add to day plan');
+  expect(tour('https://unrelated.example/tours/Izmir/day-tour?pid=partner')).toBe('');
 });
 
 it('persists Google identity and a visitor nickname without retaining provider content or leaking the nickname into directions', () => {

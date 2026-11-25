@@ -82,24 +82,48 @@
   clip-path: polygon(28% 3%, 41% 1%, 57% 1%, 69% 3%, 80% 7%, 88% 14%, 94% 23%, 97% 33%, 96% 43%, 93% 50%, 88% 57%, 80% 65%, 71% 73%, 61% 81%, 53% 88%, 51% 92%, 55% 93%, 55% 97%, 43% 97%, 43% 93%, 47% 92%, 45% 88%, 36% 81%, 25% 71%, 16% 62%, 8% 50%, 3% 40%, 1% 31%, 2% 23%, 7% 16%, 14% 10%);
 }
 .home-activity-links {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  column-gap: .9rem;
-  margin: .35rem .1rem 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(.5rem, 1.35vw, 1rem);
+  margin-block: .8rem;
 }
 .home-activity-links button {
-  display: inline-flex;
+  --activity-ink: #185696;
+  --activity-tint: #e7f1fc;
+  display: flex;
   align-items: center;
-  gap: .4rem;
-  min-height: 44px;
-  color: #344f69;
-  font-size: .79rem;
-  font-weight: 600;
+  gap: .65rem;
+  min-width: 0;
+  min-height: 60px;
+  padding: .56rem .85rem;
+  border: 1px solid #d5e3ee;
+  border-radius: 12px;
+  background: #fff;
+  color: #16324d;
+  font-size: .94rem;
+  font-weight: 650;
+  line-height: 1.25;
+  text-align: start;
+  overflow-wrap: anywhere;
   cursor: pointer;
 }
-.home-activity-links svg { color: #2171b8; }
-.home-activity-links button:hover { color: #0758ac; text-decoration: underline; }
+.home-activity-links button:nth-child(2) { --activity-ink: #5a4580; --activity-tint: #f0ecf9; }
+.home-activity-links button:nth-child(3) { --activity-ink: #17615d; --activity-tint: #e3f3ee; }
+.home-activity-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  background: var(--activity-tint);
+  color: var(--activity-ink);
+  border-radius: 11px;
+}
+.home-activity-arrow { flex: none; margin-inline-start: auto; color: #497397; }
+[dir="rtl"] .home-activity-arrow { scale: -1 1; }
+@media (hover: hover) {
+  .home-activity-links button:hover { border-color: var(--activity-ink); background: #f8fbff; }
+}
 .home-guide-link {
   display: flex;
   align-items: center;
@@ -129,7 +153,17 @@
   .home-photo-caption svg { width: 16px; height: 16px; }
   .home-guide-link > span { display: none; }
   .home-guide-link > svg:last-child { margin-inline-start: auto; }
-  .home-activity-links { column-gap: .7rem; }
+}
+@media (max-width: 560px) {
+  .home-activity-links button {
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: .38rem;
+    padding: .65rem .25rem;
+    font-size: .86rem;
+    text-align: center;
+  }
+  .home-activity-arrow { display: none; }
 }
 @keyframes home-balloon-drift {
   from { transform: translateY(0); }

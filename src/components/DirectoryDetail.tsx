@@ -4,6 +4,8 @@ import { ExternalLink, MapPin, Phone } from 'lucide-react';
 import HomeButton from './HomeButton';
 import {translatedDescription,photoEditingCopy} from '../lib/contentTranslation';
 import type { DirectoryEntry } from '../lib/directory';
+import {ScheduleStop} from './FirstVisitPlan/SaveToDayPlan';
+import {directoryStop, planCityForName} from './FirstVisitPlan/plan';
 import { entryPath } from '../lib/directory';
 import {localizedDetailPath} from '../lib/publicRoutes';
 import { entryPhotos,contextLabel,illustrativeLabel } from '../lib/directoryPhotos';
@@ -29,6 +31,7 @@ const copy:Record<string,string[]> = {
 
 export default function DirectoryDetail({entry,lang,onBack}:{entry:DirectoryEntry;lang:string;onBack:()=>void}) {
   const t = copy[lang] ?? copy.en;
+  const stop = directoryStop(entry);
   useEffect(()=>{trackBusinessEvent(`${entry.kind}/${entry.id}`,'detail_open')},[entry.kind,entry.id]);
   const description = translatedDescription(entry,lang);
   const gallery = entryPhotos(entry);
@@ -53,6 +56,7 @@ export default function DirectoryDetail({entry,lang,onBack}:{entry:DirectoryEntr
     <HomeButton lang={lang} currentPage={entry.name} onClick={onBack}/>
     {entry.description.tr&&<nav aria-label={lang==='tr'?'Dil':'Language'} className="flex gap-3 text-sm text-blue-700"><a href={entryPath(entry)} hrefLang="en" onClick={()=>saveLanguagePreference('en')} aria-current={lang==='en'?'page':undefined}>English</a><a href={`/tr${entryPath(entry)}`} hrefLang="tr" onClick={()=>saveLanguagePreference('tr')} aria-current={lang==='tr'?'page':undefined}>Türkçe</a></nav>}
     <header><p className="text-sm font-bold text-blue-600">{entry.city}</p><h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900">{entry.name}</h1></header>
+    {stop && <ScheduleStop key={stop.id} city={planCityForName(entry.city)} lang={lang} stop={stop} name={entry.name}/>}
     {gallery.length>0&&<section aria-label={entry.name} className="rounded-2xl overflow-hidden border border-sky-100 bg-white">
       {current && !failed.includes(current.src) ? <div className="relative"><img src={current.src} srcSet={current.variants?.map(v=>`${v.src} ${v.width}w`).join(', ')} sizes="(max-width: 1024px) 100vw, 1024px" width={current.width} height={current.height} style={{objectPosition:`${current.focalX??50}% ${current.focalY??50}%`}} alt={lang==='en'?(current.alt??entry.name):entry.name} decoding="async" onError={()=>setFailed(previous=>[...previous,current.src])} className="w-full h-64 sm:h-96 object-cover" />{current.cityContext&&<p className="absolute bottom-0 inset-x-0 bg-slate-950/85 text-white text-xs px-4 py-2">{contextLabel(lang,current.cityContext)}</p>}</div> : <p className="p-8 text-sm text-slate-500">{t[8]}</p>}
       {current?.illustrative&&<p className="px-3 py-2 text-xs text-slate-600">{illustrativeLabel(lang)}</p>}

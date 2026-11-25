@@ -1,8 +1,8 @@
 import {useMemo, useState, useSyncExternalStore} from 'react';
-import {readPlan, type DayStop, type PlanCity} from './plan';
+import {readPlan, type DayStop} from './plan';
 
 const changeEvent = 'safeinturkiye:day-plan';
-const storageKey = (city: PlanCity) => 'sit:day-plan:v1:' + city;
+const storageKey = (city: string) => 'sit:day-plan:v1:' + city;
 function subscribe(notify: () => void) {
   window.addEventListener(changeEvent, notify);
   window.addEventListener('storage', notify);
@@ -16,11 +16,11 @@ function readRaw(key: string) {
 }
 export type PlanEdit = (current: DayStop[]) => DayStop[];
 
-export async function editDayPlan(city: PlanCity, edit: PlanEdit) {
+export async function editDayPlan(city: string, edit: PlanEdit) {
   const key = storageKey(city);
   function write() {
     const current = readPlan(window.localStorage.getItem(key), city);
-    const next = edit(current);
+    const next = readPlan(JSON.stringify(edit(current)), city);
     if (next.length) window.localStorage.setItem(key, JSON.stringify(next));
     else window.localStorage.removeItem(key);
     window.dispatchEvent(new Event(changeEvent));
@@ -30,7 +30,7 @@ export async function editDayPlan(city: PlanCity, edit: PlanEdit) {
   else write();
 }
 
-export function useDayPlan(city: PlanCity) {
+export function useDayPlan(city: string) {
   const raw = useSyncExternalStore(subscribe, () => readRaw(storageKey(city)), () => null);
   const stops = useMemo(() => readPlan(raw, city), [raw, city]);
   const [saveFailed, setSaveFailed] = useState(false);

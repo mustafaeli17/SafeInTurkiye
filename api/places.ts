@@ -14,6 +14,7 @@ const types: Record<string, string[]> = {
 }
 const detailFields = 'id,displayName,formattedAddress,location,types,primaryType,primaryTypeDisplayName,photos,googleMapsUri,businessStatus,rating,userRatingCount,currentOpeningHours,regularOpeningHours,internationalPhoneNumber,websiteUri,attributions'
 const searchFields = detailFields.split(',').map(field => 'places.' + field).join(',')
+const itineraryCategories = new Set(['all', 'restaurant', 'cafe', 'hotel', 'activity', 'attraction', 'museum', 'historical', 'park', 'cinema', 'entertainment'])
 type AddressPart = {types?: string[]; shortText?: string; longText?: string}
 function addressPart(value: unknown, type: string): AddressPart | undefined {
   return Array.isArray(value) ? value.find(part => Array.isArray(part?.types) && part.types.includes(type)) : undefined
@@ -51,7 +52,7 @@ export default async function handler(req: Request, res: Response) {
     }) : await fetch(`https://places.googleapis.com/v1/places:${exchange || searchText ? 'searchText' : 'searchNearby'}`, {
       method: 'POST', signal: AbortSignal.timeout(8000),
       headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': key,
-        'X-Goog-FieldMask': ['restaurant', 'hotel', 'all'].includes(category) ? searchFields + ',places.addressComponents' : searchFields },
+        'X-Goog-FieldMask': itineraryCategories.has(category) ? searchFields + ',places.addressComponents' : searchFields },
       body: JSON.stringify(exchange || searchText
         ? { textQuery: searchText || 'döviz bürosu currency exchange', locationBias: { circle }, ...(searchText && includedTypes?.length === 1 ? { includedType: includedTypes[0], strictTypeFiltering: true } : {}), pageSize: 20, languageCode: lang === 'zh' ? 'zh-CN' : lang }
         : { includedTypes, locationRestriction: { circle }, maxResultCount: 20, rankPreference: 'POPULARITY', languageCode: lang === 'zh' ? 'zh-CN' : lang }),
