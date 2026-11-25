@@ -1,4 +1,4 @@
-export type ReservationRow={id:string;reference_code:string;listing_name:string;guest_name:string;guest_email:string;guest_phone?:string|null;visit_time?:string|null;visit_date:string;guest_count:number;notes:string|null;status:string;contact_stage?:string;created_at?:string;updated_at?:string};
+export type ReservationRow={id:string;reference_code:string;listing_name:string;guest_name:string;guest_email:string;guest_phone?:string|null;visit_time?:string|null;visit_date:string;guest_count:number;notes:string|null;status:string;contact_stage?:string;created_at?:string;updated_at?:string;callback_id?:string|null;callback_at?:string|null;callback_deferred?:boolean};
 export const adminStatus:Record<string,string>={PENDING:'Yeni talep',CONFIRMED:'Onaylandı',REJECTED:'Reddedildi',CANCELLED:'İptal edildi'};
 export const isTestReservation=(row:Pick<ReservationRow,'guest_name'>&Partial<Pick<ReservationRow,'listing_name'>>)=>/^TEST ONLY\b/i.test(row.guest_name)||/^TEST ONLY\b/i.test(row.listing_name??'');
 export function reservationUpdated(value?:string){return value&&Number.isFinite(Date.parse(value))?new Intl.DateTimeFormat('tr',{dateStyle:'short',timeStyle:'short',timeZone:'Europe/Istanbul'}).format(new Date(value)):'Bilgi yok';}
@@ -7,9 +7,16 @@ export function reservationWaiting(row:ReservationRow,now=Date.now()){
  const minutes=Math.max(0,Math.floor((now-Date.parse(row.created_at))/60000));return minutes<60?`${minutes} dk`:`${Math.floor(minutes/60)} sa ${minutes%60} dk`;
 }
 export function reservationDetails(row:ReservationRow){
- let old:Record<string,unknown>={};try{const parsed=JSON.parse(row.notes??'');if(parsed&&typeof parsed==='object'&&!Array.isArray(parsed))old=parsed;}catch{/* Old notes can be plain text. */}
+ let old:Record<string,unknown>={},note=row.notes??'';try{const parsed=JSON.parse(note);if(parsed&&typeof parsed==='object'&&!Array.isArray(parsed)){old=parsed;note=typeof old.notes==='string'?old.notes:'';}}catch{/* Old notes can be plain text. */}
  const text=(value:unknown)=>typeof value==='string'?value:'';
- return {phone:row.guest_phone||text(old.phone),time:row.visit_time?.slice(0,5)||text(old.time),note:typeof old.notes==='string'?old.notes:row.notes??'',source:text(old.source),businessKey:text(old.businessKey)};
+ return {phone:row.guest_phone||text(old.phone),time:row.visit_time?.slice(0,5)||text(old.time),note,source:text(old.source),businessKey:text(old.businessKey)};
+}
+const callbackFormat=new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Istanbul',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
+export function callbackLocalInput(timestamp:number){return callbackFormat.format(timestamp).replace(' ','T');}
+export function callbackInstant(input:string,now=Date.now()){
+ if(!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(input))return null;
+ const value=Date.parse(input+':00+03:00');
+ return Number.isFinite(value)&&value>now&&callbackLocalInput(value)===input?new Date(value).toISOString():null;
 }
 export function reservationMatches(row:ReservationRow,search:string,status:string){
  return (!status||row.status===status)&&[row.reference_code,row.listing_name,row.guest_name,row.guest_email,reservationDetails(row).phone].join(' ').toLocaleLowerCase('tr').includes(search.trim().toLocaleLowerCase('tr'));

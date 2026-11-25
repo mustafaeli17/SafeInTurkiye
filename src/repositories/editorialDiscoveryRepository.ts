@@ -1,23 +1,33 @@
-import {requireSupabase,supabaseConfigured} from '../lib/supabase';
-import {foundationEnabled} from '../lib/foundationConfig';
-import {editorialPlace,editorialTablesFor,validEditorialDetailId} from '../lib/editorialDiscovery';
-import type {EditorialPlace,EditorialRow,EditorialTable} from '../lib/editorialDiscovery';
-import type {NearbyCategory,NearbyCenter} from '../services/nearbyPlaces';
+import {requireSupabase,supabaseConfigured} from '../lib/supabase'
+import {foundationEnabled} from '../lib/foundationConfig'
+import {editorialPlace,editorialTablesFor,validEditorialDetailId} from '../lib/editorialDiscovery'
+import type {EditorialPlace,EditorialRow} from '../lib/editorialDiscovery'
+import type {NearbyCategory,NearbyCenter} from '../services/nearbyPlaces'
+import {rankedSponsorBusinesses} from './sponsorRepository'
+
 export async function loadEditorialDiscovery(point:NearbyCenter,category:'all'|NearbyCategory,radius:number,signal:AbortSignal,context:string,detailId?:string):Promise<{places:EditorialPlace[];failed:boolean}>{
- if(!supabaseConfigured)return {places:[],failed:false};
- if(detailId&&!validEditorialDetailId(detailId))return {places:[],failed:false};
- const [,detailTable,rowId]=detailId?.split(':')??[];
- const client=requireSupabase(),tables=editorialTablesFor(category).filter(table=>!detailTable||detailTable===table);
- const results=await Promise.all(tables.map(async table=>{
-  const query=client.from(table).select('*,city:cities(name,slug,active,status)').eq('active',true).eq('status','PUBLISHED');
-  const result=await (rowId?query.eq('id',rowId).limit(1):query.order('id').limit(500)).abortSignal(signal);
-  if(result.error)throw Error('EDITORIAL_UNAVAILABLE');
-  return {table,rows:(result.data??[]) as EditorialRow[]};
- }).map(p=>p.then(value=>({value,error:false}),()=>({value:null,error:true}))));
- const sponsors=new Set<string>();let failed=results.some(r=>r.error);
+ if(!supabaseConfigured||detailId&&!validEditorialDetailId(detailId))return {places:[],failed:false}
+ const [,detailTable,rowId]=detailId?.split(':')??[]
+ const client=requireSupabase(),tables=editorialTablesFor(category).filter(table=>!detailTable||detailTable===table)
+ const results=await Promise.allSettled(tables.map(async table=>{
+  const query=client.from(table).select('*,city:cities(name,slug,active,status)').eq('active',true).eq('status','PUBLISHED')
+  const result=await (rowId?query.eq('id',rowId).limit(1):query.order('id').limit(500)).abortSignal(signal)
+  if(result.error)throw Error('EDITORIAL_UNAVAILABLE')
+  return ((result.data??[]) as EditorialRow[]).flatMap(row=>{
+   const place=editorialPlace(row,table,point,radius)
+   return place?[{place,id:row.id,kind:table}]:[]
+  })
+ }))
+ let failed=results.some(r=>r.status==='rejected')
+ const entries=results.flatMap(result=>result.status==='fulfilled'?result.value:[])
  if(foundationEnabled&&['hotels','restaurants','activities'].includes(context)){
-  try{const now=new Date().toISOString();const result=await client.from('sponsored_placements').select('business_id,business_kind').eq('context',context).eq('active',true).lte('starts_at',now).gt('ends_at',now).limit(100).abortSignal(signal);if(result.error)throw Error();for(const row of result.data??[])sponsors.add(`${row.business_kind}/${row.business_id}`);}catch{failed=true;}
+  try{
+   const sponsors=await rankedSponsorBusinesses(client,context,entries.filter(e=>e.kind===context),signal)
+   for(const entry of entries){
+    const sponsor=sponsors.get(entry.kind+'/'+entry.id)
+    if(sponsor){entry.place.editorial.sponsored=true;entry.place.editorial.sponsorPriority=sponsor.priority}
+   }
+  }catch{failed=true}
  }
- const places=results.flatMap(result=>result.value?.rows.map(row=>editorialPlace(row,result.value!.table as EditorialTable,point,radius,sponsors.has(`${result.value!.table}/${row.id}`))).filter((p):p is EditorialPlace=>p!==null)??[]);
- return {places,failed};
+ return {places:entries.map(entry=>entry.place),failed}
 }

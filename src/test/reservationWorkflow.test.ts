@@ -20,9 +20,58 @@ beforeAll(async()=>{
   await db.exec(await readFile('supabase/migrations/0009_reservation_operations.sql','utf8'));
   await db.exec(await readFile('supabase/migrations/20261026181727_reservation_delivery_tracking.sql','utf8'));
   await db.exec(await readFile('supabase/migrations/20261026181727_reservation_delivery_tracking.sql','utf8'));
+  for(const file of (await readdir('supabase/migrations')).filter(f=>f.endsWith('_reservation_callbacks.sql'))) {
+    const sql=await readFile('supabase/migrations/'+file,'utf8');
+    await db.exec(sql);
+    await db.exec(sql);
+  }
   await db.exec('grant usage on schema public,auth to anon,authenticated,service_role;grant select on public.bookings to anon,authenticated;grant insert,update on public.bookings to authenticated;');
 },60000);
 afterAll(async()=>{if(db)await db.close();},60000);
+it('keeps callbacks private, records rescheduling and blocks a stale or closed request',async()=>{
+ const staff='00000000-0000-0000-0000-000000000991', guest='00000000-0000-0000-0000-000000000992';
+ await db.exec('reset role;begin;');
+ try {
+  await db.query("insert into auth.users(id,email,raw_user_meta_data) values ($1,'staff@example.test','{}'),($2,'guest@example.test','{}')",[staff,guest]);
+  await db.query("update profiles set role='admin' where id=$1",[staff]);
+  const {rows:[{id}]}=await db.query<{id:string}>("insert into bookings(user_id,listing_type,listing_name,guest_name,guest_email,visit_date,guest_count) values($1,'restaurant','Fixture','Fixture','guest@example.test',current_date+1,2) returning id",[guest]);
+  const schedule=(expected:string|null,minutes=20)=>db.query<{id:string}>("select (schedule_reservation_callback($1,now()+$2*interval '1 minute',$3)).id",[id,minutes,expected]);
+  const asUser=async(user:string)=>{await db.exec('set local role authenticated');await db.query("select set_config('request.jwt.claim.sub',$1,true)",[user]);};
+  // Savepoints isolate deliberately rejected statements within this fixture.
+  const rejected=async(work:()=>Promise<unknown>)=>{await db.exec('savepoint blocked');await expect(work()).rejects.toThrow();await db.exec('rollback to blocked');};
+  await asUser(staff);
+  const {rows:[first]}=await schedule(null);
+  expect((await db.query('select callback_id,callback_deferred,status from admin_restaurant_call_queue where id=$1',[id])).rows).toEqual([{callback_id:first.id,callback_deferred:true,status:'PENDING'}]);
+  await rejected(()=>schedule(null));await rejected(()=>schedule(first.id,-10));
+  const {rows:[second]}=await schedule(first.id,40);
+  expect((await db.query('select actor_id from reservation_callbacks where booking_id=$1',[id])).rows).toEqual([{actor_id:staff},{actor_id:staff}]);
+  await db.exec('set local role anon');
+  await rejected(()=>db.query('select * from reservation_callbacks'));
+  await rejected(()=>db.query('select * from admin_restaurant_call_queue'));
+  await rejected(()=>schedule(second.id));
+  await asUser(guest);
+  expect((await db.query('select status from bookings where id=$1',[id])).rows).toEqual([{status:'PENDING'}]);
+  expect((await db.query('select * from reservation_callbacks')).rows).toEqual([]);
+  expect((await db.query('select * from admin_restaurant_call_queue')).rows).toEqual([]);
+  await rejected(()=>schedule(second.id));
+  await asUser(staff);
+  await rejected(()=>db.query('delete from reservation_callbacks where booking_id=$1',[id]));
+  await db.exec('reset role');
+  const peers=await db.query<{id:string}>("insert into bookings(user_id,listing_type,listing_name,guest_name,guest_email,visit_date,visit_time,guest_count) select $1,'restaurant','Fixture','Fixture','guest@example.test',current_date+1,t,2 from (values(time '09:00'),(time '20:00')) as requested(t) returning id",[guest]);
+  const ids=[id,...peers.rows.map(r=>r.id)];
+  const queue=()=>db.query<{id:string}>('select id from admin_restaurant_call_queue where id=any($1) order by callback_deferred,call_priority_at,created_at,id',[ids]);
+  await asUser(staff);
+  expect((await queue()).rows.map(r=>r.id)).toEqual([ids[1],ids[2],id]);
+  await db.exec('reset role');
+  await db.query("update reservation_callbacks set callback_at=now()-interval '1 minute' where id=$1",[second.id]);
+  await asUser(staff);
+  expect((await db.query('select callback_deferred from admin_restaurant_call_queue where id=$1',[id])).rows).toEqual([{callback_deferred:false}]);
+  expect((await queue()).rows.map(r=>r.id)).toEqual([id,ids[1],ids[2]]);
+  await db.query("update bookings set status='CONFIRMED' where id=$1",[id]);
+  expect((await db.query('select callback_at from admin_restaurant_call_queue where id=$1',[id])).rows).toEqual([{callback_at:null}]);
+  await rejected(()=>schedule(second.id));
+ } finally {await db.exec('rollback;reset role');}
+});
 it('delivery tracking is service-only, idempotent and resists out-of-order events',async()=>{
  await db.exec('reset role;set role service_role;');
  const mail='00000000-0000-0000-0000-000000000789';

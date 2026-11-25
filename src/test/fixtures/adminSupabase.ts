@@ -5,6 +5,14 @@ class Query{
  constructor(table:string){this.table=table;}
  select(fields='*',options?:unknown){this.fields=fields;this.options=options;return this;}
  eq(field:string,value:unknown){this.filters.push([field,value]);return this;}
+ ilike(field:string,value:string){this.filters.push([field,value,'ilike']);return this;}
+ regexIMatch(field:string,value:string){this.filters.push([field,value,'imatch']);return this;}
+ in(field:string,value:unknown[]){this.filters.push([field,value,'in']);return this;}
+ gte(field:string,value:string){this.filters.push([field,value,'gte']);return this;}
+ gt(field:string,value:string){this.filters.push([field,value,'gt']);return this;}
+ lte(field:string,value:string){this.filters.push([field,value,'lte']);return this;}
+ lt(field:string,value:string){this.filters.push([field,value,'lt']);return this;}
+ or(value:string){this.filters.push(['',value,'or']);return this;}
  not(field:string,operator:string,value:unknown){this.filters.push([field,value,'not.'+operator]);return this;}
  order(field:string,options?:unknown){this.sort.push([field,options]);return this;}
  range(from:number,to:number){this.offset=from;this.take=to-from+1;return this;}
@@ -17,4 +25,4 @@ class Query{
  then(resolve:(value:any)=>unknown,reject?:(error:unknown)=>unknown){return fetch('/__qa/query',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(this)}).then(r=>r.json()).then(resolve,reject);}
 }
 // Match Supabase's limit method without colliding with the stored numeric limit.
-export function requireSupabase(){return {from:(table:string)=>new Query(table),auth:{getSession:async()=>({data:{session:{access_token:'LOCAL_TEST_ONLY_ADMIN'}}})}};}
+export function requireSupabase(){return {from:(table:string)=>new Query(table),rpc:(name:string,args:Record<string,unknown>)=>{const q=new Query(name);q.action='rpc';q.payload=args;return q;},auth:{getSession:async()=>({data:{session:{access_token:'LOCAL_TEST_ONLY_ADMIN'}}})}};}

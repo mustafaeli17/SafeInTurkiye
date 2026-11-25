@@ -10,20 +10,51 @@ process.env.RESERVATION_ALLOWED_ORIGINS=`http://127.0.0.1:${qaPort}`;
 process.env.GOOGLE_PLACES_API_KEY='LOCAL_TEST_ONLY';
 const db=new PGlite();let emails=0;
 await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create schema storage;create table auth.users(id uuid primary key,email text,raw_user_meta_data jsonb);create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;create table storage.buckets(id text primary key,name text,public boolean);create table storage.objects(id uuid primary key default gen_random_uuid(),bucket_id text);`);
-for(const file of (await readdir('supabase/migrations')).filter(f=>/^000[1-4]_/.test(f)).sort())await db.exec((await readFile('supabase/migrations/'+file,'utf8')).replace('create extension if not exists pgcrypto;',''));
+for(const file of (await readdir('supabase/migrations')).filter(f=>/^000[1-5]_/.test(f)).sort())await db.exec((await readFile('supabase/migrations/'+file,'utf8')).replace('create extension if not exists pgcrypto;',''));
 await db.exec(await readFile('supabase/migrations/0006_restaurant_request_workflow.sql','utf8'));
 await db.exec(await readFile('supabase/migrations/0007_editorial_discovery_fields.sql','utf8'));
 await db.exec(await readFile('supabase/migrations/0008_reservation_retention.sql','utf8'));
 await db.exec(await readFile('supabase/migrations/0009_reservation_operations.sql','utf8'));
+await db.exec(await readFile('supabase/migrations/20261026181727_reservation_delivery_tracking.sql','utf8'));
 const admin='00000000-0000-0000-0000-000000000001';
 await db.exec('grant select on public.profiles to service_role;');
 await db.exec(`insert into auth.users(id,email,raw_user_meta_data) values('${admin}','admin@example.test','{}');update profiles set role='admin' where id='${admin}';grant usage on schema public,auth to authenticated,service_role;grant select,insert,update on all tables in schema public to authenticated;insert into cities(name,slug,status) values('TEST ONLY İstanbul','test-istanbul','PUBLISHED');insert into hotels(name,description,status) values('TEST ONLY Draft','Local QA','DRAFT');`);
+await db.exec(await readFile('supabase/migrations/20261125191851_reservation_callbacks.sql','utf8'));
+if(process.env.QA_OPERATIONS==='1'){
+ const booking=await db.query("insert into bookings (user_id,listing_type,listing_name,guest_name,guest_email,visit_date,visit_time,guest_count,notes) values ($1,'restaurant','QA Uçtan Uca Lokanta','QA Misafir','guest@example.test',current_date+1,'19:30',2,$2) returning id",[admin,JSON.stringify({businessKey:'google/ChIJtest123'})]);
+ await db.query("update reservation_notifications set state='FAILED' where booking_id=$1",[booking.rows[0].id]);
+ await db.exec(`insert into cities(name,slug,status) values('Antalya','antalya','PUBLISHED');
+ insert into hotels(name,city_id,description,address,editorial_metadata,status) select 'QA Kıyı Oteli',id,'Yerel test açıklaması','QA adres','{"latitude":36.89,"longitude":30.70}'::jsonb,'PUBLISHED' from cities where slug='antalya';`);
+}
 const columns=value=>{if(!/^(\*|[a-z_,]+)$/.test(value))throw Error('QA fields');return value;};
-const tables=new Set(['hotels','restaurants','activities','museums','attractions','exchange_offices','cities','profiles','bookings','reservation_notifications','reservation_status_audit']);
+const tables=new Set(['hotels','restaurants','activities','museums','attractions','exchange_offices','cities','profiles','bookings','reservation_notifications','reservation_status_audit','admin_restaurant_call_queue','business_events','business_metrics','published_editorial_businesses','sponsored_placements']);
 async function tableQuery(tx,input){
- if(!tables.has(input.table))throw Error('QA table');const args=[],where=[];
- for(const [field,value,operator]of input.filters??[]){columns(field);args.push(value);where.push(`${field}${operator==='not.ilike'?' not ilike ':'='}$${args.length}`);}
- const condition=where.length?' where '+where.join(' and '):'';const joined=input.fields==='*,city:cities(name,slug,active,status)';const fields=columns(joined?'*':input.fields??'*');
+ if(input.action==='rpc'&&input.table==='schedule_reservation_callback'){
+  const p=input.payload;
+  return {data:(await tx.query('select id,callback_at from public.schedule_reservation_callback($1,$2,$3)',[p.p_booking_id,p.p_callback_at,p.p_expected_callback_id])).rows};
+ }
+ if(!tables.has(input.table))throw Error('QA table');
+ const args=[],where=[];
+ const delivery=input.table==='reservation_notifications'&&input.fields==='id,bookings!inner(reference_code,listing_name)';
+ const source=delivery?'reservation_notifications n join bookings b on b.id=n.booking_id':input.table;
+ const column=(field)=>{
+  if(field==='editorial_metadata->>googlePlaceId')return "(editorial_metadata->>'googlePlaceId')";
+  if(delivery&&['bookings.guest_name','bookings.listing_name'].includes(field))return 'b.'+field.slice(9);
+  if(!/^[a-z_]+$/.test(field))throw Error('QA field');
+  return (delivery?'n.':'')+field;
+ };
+ const operations={eq:'=',gte:'>=',gt:'>',lte:'<=',lt:'<',ilike:' ilike ',imatch:' ~* ','not.ilike':' not ilike '};
+ for(const [field,value,operator='eq'] of input.filters??[]){
+  if(operator==='or'&&delivery&&value==='state.eq.FAILED,delivery_state.in.(FAILED,BOUNCED,COMPLAINED)'){
+   where.push("(n.state='FAILED' or n.delivery_state in ('FAILED','BOUNCED','COMPLAINED'))");continue;
+  }
+  if(operator!=='in'&&!Object.hasOwn(operations,operator))throw Error('QA filter');
+  args.push(value);
+  where.push(column(field)+(operator==='in'?'=any($'+args.length+')':operations[operator]+'$'+args.length));
+ }
+ const condition=where.length?' where '+where.join(' and '):'';
+ const joined=input.fields==='*,city:cities(name,slug,active,status)';
+ const fields=delivery?"n.id,json_build_object('reference_code',b.reference_code,'listing_name',b.listing_name) as bookings":columns(joined?'*':input.fields??'*');
  if(input.action==='update'){
   const set=Object.entries(input.payload).map(([field,value])=>{columns(field);args.push(value);return `${field}=$${args.length}`;}).join(',');
   return {data:(await tx.query(`update ${input.table} set ${set}${condition} returning ${fields}`,args)).rows};
@@ -32,9 +63,9 @@ async function tableQuery(tx,input){
   const entries=Object.entries(input.payload);entries.forEach(([key])=>columns(key));
   return {data:(await tx.query(`insert into ${input.table}(${entries.map(([key])=>key).join(',')}) values(${entries.map(([,value],i)=>{args.push(value);return '$'+(i+1);}).join(',')}) returning ${fields}`,args)).rows};
  }
- const count=(await tx.query(`select count(*)::int total from ${input.table}${condition}`,args)).rows[0].total;
- const orders=(input.sort??[]).map(([field,options])=>columns(field)+(options?.ascending===false?' desc':' asc')).join(',');
- const data=input.options?.head?[]:(await tx.query(`select ${fields} from ${input.table}${condition}${orders?' order by '+orders:''} limit ${Math.min(input.take??input.limit??50,1000)} offset ${input.offset??0}`,args)).rows;
+ const count=(await tx.query(`select count(*)::int total from ${source}${condition}`,args)).rows[0].total;
+ const orders=(input.sort??[]).map(([field,options])=>column(field)+(options?.ascending===false?' desc':' asc')).join(',');
+ const data=input.options?.head?[]:(await tx.query(`select ${fields} from ${source}${condition}${orders?' order by '+orders:''} limit ${Math.min(input.take??input.limit??50,1000)} offset ${input.offset??0}`,args)).rows;
  if(joined)for(const row of data)row.city=(await tx.query('select name,slug,active,status from cities where id=$1',[row.city_id])).rows[0]??null;
  return {data,count};
 }
@@ -53,7 +84,7 @@ globalThis.fetch=async(url,options={})=>{
  }));}catch(error){return Response.json({message:error.message},{status:400});}
 };
 function adapt(res){return {setHeader:(key,value)=>res.setHeader(key,value),status(code){res.statusCode=code;return this;},json(data){res.setHeader('Content-Type','application/json');res.end(JSON.stringify(data));}};}
-const server=await createServer({mode:'qa-admin',define:{'import.meta.env.VITE_RESTAURANT_REQUESTS':'"true"','import.meta.env.VITE_PLATFORM_FOUNDATION':'"false"'},resolve:{alias:[{find:/^\.{1,2}\/lib\/supabase$/,replacement:fileURLToPath(new URL('../src/test/fixtures/adminSupabase.ts',import.meta.url))}]},server:{host:'127.0.0.1',port:qaPort,strictPort:true},plugins:[{name:'local-admin-workflow',configureServer(vite){vite.middlewares.use(async(req,res,next)=>{
+const server=await createServer({mode:'qa-admin',define:{'import.meta.env.VITE_RESTAURANT_REQUESTS':'"true"','import.meta.env.VITE_PLATFORM_FOUNDATION':JSON.stringify(process.env.QA_OPERATIONS==='1'?'true':'false')},resolve:{alias:[{find:/^\.{1,2}\/lib\/supabase$/,replacement:fileURLToPath(new URL('../src/test/fixtures/adminSupabase.ts',import.meta.url))}]},server:{host:'127.0.0.1',port:qaPort,strictPort:true},plugins:[{name:'local-admin-workflow',configureServer(vite){vite.middlewares.use(async(req,res,next)=>{
  const path=new URL(req.url,'http://localhost').pathname;
  if(path==='/qa/responsive'){
   const params=new URL(req.url,'http://localhost').searchParams,width=Number(params.get('width')),target=params.get('target')==='admin'?'admin':'restaurant';

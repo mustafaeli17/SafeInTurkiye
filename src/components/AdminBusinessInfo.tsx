@@ -1,15 +1,52 @@
-import {useRef,useState} from 'react';
+import {useEffect,useState} from 'react';
+import {ExternalLink,Phone} from 'lucide-react';
 import {requireSupabase} from '../lib/supabase';
 import {safeWebsite,safeTelephone} from '../services/nearbyPlaces';
+
 type Info={name:string;city?:string;address?:string;phone?:string;website?:string;map?:string;provider:string;attributions?:{provider?:string;providerUri?:string}[]};
-export default function AdminBusinessInfo({businessKey,source}:{businessKey?:string;source?:string}){
- const [info,setInfo]=useState<Info|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState('');const lock=useRef(false);
- async function load(){if(lock.current)return;lock.current=true;setBusy(true);setError('');
-  try{const {data}=await requireSupabase().auth.getSession();if(!data.session)throw Error();
-   const response=await fetch('/api/admin-business',{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json',Authorization:'Bearer '+data.session.access_token},body:JSON.stringify({key:businessKey,source}),signal:AbortSignal.timeout(12000)});
-   if(!response.ok)throw Error();const result=await response.json();if(typeof result.name!=='string')throw Error();setInfo(result);
-  }catch{setError('İşletme bilgisi alınamadı. Eski kayıtta yer kimliği bulunmayabilir; kaynak bağlantısını kullanın.');}finally{lock.current=false;setBusy(false);}
- }
+type Lookup={version:number;kind:'ready';info:Info}|{version:number;kind:'missing'|'error'};
+
+export default function AdminBusinessInfo({businessKey,source,name,autoLoad=false}:{businessKey?:string;source?:string;name?:string;autoLoad?:boolean}){
+ const link=safeWebsite(source);
+ const canLookUp=Boolean(businessKey||link);
+ const [version,setVersion]=useState(autoLoad&&canLookUp?1:0);
+ const [result,setResult]=useState<Lookup|null>(null);
+ const busy=version>0&&result?.version!==version;
+ useEffect(()=>{
+  if(!version||!canLookUp)return;
+  const abort=new AbortController();
+  async function load(){
+   try{
+    const {data}=await requireSupabase().auth.getSession();
+    if(abort.signal.aborted)return;
+    if(!data.session)throw Error('NO_SESSION');
+    const response=await fetch('/api/admin-business',{method:'POST',cache:'no-store',
+     headers:{'Content-Type':'application/json',Authorization:'Bearer '+data.session.access_token},
+     body:JSON.stringify({key:businessKey,source}),signal:AbortSignal.any([abort.signal,AbortSignal.timeout(12000)])});
+    if(response.status===404){if(!abort.signal.aborted)setResult({version,kind:'missing'});return;}
+    if(!response.ok)throw Error('UNAVAILABLE');
+    const info:Info=await response.json();
+    if(typeof info.name!=='string')throw Error('INVALID_CONTACT');
+    if(!abort.signal.aborted)setResult({version,kind:'ready',info});
+   }catch{if(!abort.signal.aborted)setResult({version,kind:'error'});}
+  }
+  void load();
+  return ()=>abort.abort();
+ },[version,businessKey,source,canLookUp]);
+ const info=result?.kind==='ready'&&result.version===version?result.info:null;
  const phone=safeTelephone(info?.phone),website=safeWebsite(info?.website),map=safeWebsite(info?.map);
- return <div className="my-2 text-sm space-y-2"><button className="admin-button min-h-11" disabled={busy} onClick={()=>void load()}>{busy?'Yükleniyor…':info?'İşletme bilgisini yenile':'İşletme adı ve iletişim bilgilerini getir'}</button>{error&&<p role="status">{error}</p>}{info&&<div className="rounded-xl border p-3 space-y-2"><strong>{info.name}{info.city?' · '+info.city:''}</strong>{info.address&&<p>{info.address}</p>}<div className="flex flex-wrap gap-3">{phone&&<a className="min-h-11 inline-flex items-center underline" href={phone.telephoneUrl}>İşletme telefonu: {phone.phone}</a>}{website&&<a className="min-h-11 inline-flex items-center underline" href={website} target="_blank" rel="noopener noreferrer">İşletme web sitesi ↗</a>}{map&&<a className="min-h-11 inline-flex items-center underline" href={map} target="_blank" rel="noopener noreferrer">Google Maps ↗</a>}</div><p className="text-xs">{info.provider} · Açık ekranda güncel olarak alındı.</p>{info.attributions?.map((a,i)=><p key={i}>{safeWebsite(a.providerUri)?<a href={safeWebsite(a.providerUri)!} target="_blank" rel="noopener noreferrer">{a.provider}</a>:a.provider}</p>)}</div>}</div>;
+ const mapName=info?.name||name;
+ const mapSearch=mapName?'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent([mapName,info?.city,'Türkiye'].filter(Boolean).join(', ')):null;
+ const subject=name?'Restoran':'İşletme';
+ return <div className="booking-contact">
+  {canLookUp&&!info&&<button className="admin-button admin-primary" disabled={busy} onClick={()=>setVersion(v=>v+1)}><Phone size={17}/>{busy?subject+' telefonu alınıyor…':version?'Telefonu tekrar sorgula':subject+' telefonunu getir'}</button>}
+  {phone&&<a className="admin-button admin-primary" href={phone.telephoneUrl}><Phone size={17}/>{name?'Restoranı ara':'İşletmeyi ara'} <bdi>{phone.phone}</bdi></a>}
+  {!busy&&(info||!canLookUp||result)&&!phone&&<p role="status">{result?.kind==='error'?'İletişim bilgileri şu anda alınamadı.':'Bu kayıt için '+subject.toLocaleLowerCase('tr')+' telefonu bulunamadı.'}</p>}
+  {!busy&&(info||!canLookUp||result)&&<div className="booking-contact-links">
+   {website&&<a href={website} target="_blank" rel="noopener noreferrer">{subject} sitesi <ExternalLink size={13}/></a>}
+   {link&&link!==website&&link!==map&&<a href={link} target="_blank" rel="noopener noreferrer">Kaynağı aç <ExternalLink size={13}/></a>}
+   {(map||(!phone&&mapSearch))&&<a href={map??mapSearch!} target="_blank" rel="noopener noreferrer">{map?'Haritada aç':name?'Haritada restoranı ara':'Haritada işletmeyi ara'} <ExternalLink size={13}/></a>}
+  </div>}
+  {info&&<div className="booking-provider"><span>{info.provider} · {info.name}{info.city?' · '+info.city:''}{info.address?' · '+info.address:''}</span>{info.attributions?.map((a,i)=><span key={i}>{safeWebsite(a.providerUri)?<a href={safeWebsite(a.providerUri)!} target="_blank" rel="noopener noreferrer">{a.provider}</a>:a.provider}</span>)}{!name&&<button className="admin-button" onClick={()=>setVersion(v=>v+1)}>İletişim bilgilerini yenile</button>}</div>}
+ </div>;
 }

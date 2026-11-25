@@ -10,14 +10,17 @@ import {setTransitHandoff,peekTransitHandoff,clearTransitHandoff} from '../lib/t
 vi.mock('../lib/supabase',()=>({requireSupabase:vi.fn()}));
 afterEach(()=>{vi.clearAllMocks();clearTransitHandoff()});
 
-it('looks up a reservation by exact reference before ordering and pagination',async()=>{
+it.each([true,false])('looks up a reservation by exact reference before pagination with callback schema %s',async(hasQueue)=>{
  const records=Array.from({length:61},(_,i)=>({reference_code:'SIT-2026-'+String(i+1).padStart(7,'0')}));
- let matches=records;
- const query={select:vi.fn(()=>query), eq:vi.fn((key:string,value:string)=>{if(key==='reference_code') matches=matches.filter(r=>r.reference_code===value); return query}),order:vi.fn(()=>query),range:vi.fn((from:number,to:number)=>{matches=matches.slice(from,to+1);return query}),abortSignal:vi.fn(async()=>({data:matches,count:matches.length,error:null}))};
- vi.mocked(requireSupabase).mockReturnValue({from:()=>query} as unknown as ReturnType<typeof requireSupabase>);
+ let matches=records,table='';
+ const query={select:vi.fn(()=>query), eq:vi.fn((key:string,value:string)=>{if(key==='reference_code') matches=matches.filter(r=>r.reference_code===value); return query}),order:vi.fn(()=>query),range:vi.fn((from:number,to:number)=>{matches=matches.slice(from,to+1);return query}),abortSignal:vi.fn(async()=>{
+  if(table==='admin_restaurant_call_queue'&&!hasQueue)return {data:null,count:null,error:{code:'PGRST205'}};
+  return {data:matches,count:matches.length,error:null};
+ })};
+ vi.mocked(requireSupabase).mockReturnValue({from:(source:string)=>{table=source;matches=records;return query}} as unknown as ReturnType<typeof requireSupabase>);
  const {rows,total}=await loadAdminReservations('',0,undefined,50,records[60].reference_code);
  expect(total).toBe(1);expect(rows[0].reference_code).toBe(records[60].reference_code);
- expect(query.eq).toHaveBeenCalledWith('listing_type','restaurant');
+ if(!hasQueue)expect(query.eq).toHaveBeenCalledWith('listing_type','restaurant');
 });
 
 it('exposes only clean taxi and tours paths for optional analytics',()=>{

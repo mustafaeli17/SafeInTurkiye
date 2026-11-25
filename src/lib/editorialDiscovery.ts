@@ -6,7 +6,7 @@ export const editorialTables=['hotels','restaurants','activities','museums','att
 export type EditorialTable=typeof editorialTables[number];
 export type EditorialMetadata={slug?:string;coordinates?:NearbyCenter;googlePlaceId?:string;phone?:string;openingHours?:string;category?:NearbyCategory;description?:Record<string,string>;imageRights?:string;imageSource?:string;gallery?:string[]};
 export type EditorialRow={id:string;name:string;description?:string|null;address?:string|null;website?:string|null;image_url?:string|null;editorial_metadata?:EditorialMetadata|null;public_slug?:string|null;active:boolean;status:string;city_id?:string|null;city?:{name?:string;slug?:string;active?:boolean;status?:string}|null;updated_at?:string};
-export type EditorialPlace=NearbyPlaceRecord&{editorial:{table:EditorialTable;description:Record<string,string>;fallbackDescription:string;image:string|null;gallery:string[];imageRights:string;imageSource:string|null;googlePlaceId:string|null;sponsored:boolean}};
+export type EditorialPlace=NearbyPlaceRecord&{editorial:{table:EditorialTable;description:Record<string,string>;fallbackDescription:string;image:string|null;gallery:string[];imageRights:string;imageSource:string|null;googlePlaceId:string|null;sponsored:boolean;sponsorPriority?:number}};
 const categories:Record<EditorialTable,NearbyCategory>={hotels:'hotel',restaurants:'restaurant',activities:'activity',museums:'museum',attractions:'attraction',exchange_offices:'bureau_de_change'};
 export const editorialId=(table:EditorialTable,id:string)=>`cms:${table}:${id}`;
 export function validEditorialDetailId(id:string){return /^cms:(hotels|restaurants|activities|museums|attractions|exchange_offices):[a-f0-9-]{36}$/.test(id);}
@@ -33,5 +33,7 @@ export function matchesDiscoveryCategory(place:NearbyPlaceRecord,filter:'all'|Ne
 export function combineDiscovery(google:NearbyPlaceRecord[],editorial:EditorialPlace[],filter:'all'|NearbyCategory){
  const identities=new Set<string>(),ids=new Set<string>();
  const own=editorial.filter(p=>{if(!matchesDiscoveryCategory(p,filter)||ids.has(p.id)||p.editorial.googlePlaceId&&identities.has(p.editorial.googlePlaceId))return false;ids.add(p.id);if(p.editorial.googlePlaceId)identities.add(p.editorial.googlePlaceId);return true;});
- return [...own,...google.filter(p=>matchesDiscoveryCategory(p,filter)&&!(p.id.startsWith('google:')&&identities.has(p.id.slice(7))))].sort((a,b)=>Number(isEditorialPlace(b)&&b.editorial.sponsored)-Number(isEditorialPlace(a)&&a.editorial.sponsored)||a.distanceMeters-b.distanceMeters||a.id.localeCompare(b.id));
+ const priority=(place:NearbyPlaceRecord)=>isEditorialPlace(place)&&place.editorial.sponsored?(place.editorial.sponsorPriority??0):-1;
+ return [...own,...google.filter(p=>matchesDiscoveryCategory(p,filter)&&!(p.id.startsWith('google:')&&identities.has(p.id.slice(7))))]
+  .sort((a,b)=>priority(b)-priority(a)||a.distanceMeters-b.distanceMeters||a.id.localeCompare(b.id));
 }

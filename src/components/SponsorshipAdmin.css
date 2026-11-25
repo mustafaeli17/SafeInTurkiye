@@ -1,0 +1,9 @@
+.sponsor-actions,.sponsor-links,.sponsor-counts,.sponsor-record-heading{display:flex;align-items:center;gap:.65rem;flex-wrap:wrap}
+.sponsor-filters,.sponsor-form fieldset{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:1rem}
+.sponsor-form{padding:1rem;background:#f5f9fd;border-radius:12px;margin:1rem 0}.sponsor-admin label,.business-metrics-admin label{display:grid;align-content:start;gap:.35rem;font-size:.83rem;font-weight:650;color:#354f65;min-width:0}
+.sponsor-admin input:not([type=checkbox]),.sponsor-admin select,.business-metrics-admin input{background:#fff;border:1px solid #bacfdd;border-radius:8px;min-height:44px;min-width:0;width:100%;padding:.4rem .65rem;color:#15364c}
+.sponsor-admin .sponsor-toggle{display:flex;align-items:center;gap:.55rem;min-height:44px;align-self:end}.sponsor-toggle input{width:18px;height:18px}
+.sponsor-form h3{margin:0 0 .85rem}.sponsor-record,.business-metric-record{border-top:1px solid #d6e3ed;margin-top:1.15rem;padding-top:1.15rem;overflow-wrap:anywhere}.sponsor-record h3,.business-metric-record h3{margin:0}
+.sponsor-record p,.business-metrics-admin p{margin:.3rem 0 .7rem}.sponsor-record-heading{justify-content:space-between}.sponsor-status{font-size:.74rem;font-weight:700;border-radius:20px;padding:.3rem .65rem;background:#eaf0f5;color:#375169}.sponsor-live{background:#def3e9;color:#196044}.sponsor-scheduled{background:#e3efff;color:#215b9b}.sponsor-unavailable{background:#fae9e8;color:#882d34}
+.sponsor-links a,.business-metrics-admin .sponsor-links a{display:inline-flex;align-items:center;min-height:44px;font-size:.82rem;color:#165c9a;text-decoration:underline;text-underline-offset:3px}
+.sponsor-metrics{margin-top:.7rem}.sponsor-counts{margin:.5rem 0 1rem;gap:.5rem}.sponsor-counts>div{background:#f2f7fa;padding:.5rem .8rem;border-radius:8px}.sponsor-counts dt{font-size:.75rem}.sponsor-counts dd{font-weight:700}.sponsor-filters{margin:1rem 0}
