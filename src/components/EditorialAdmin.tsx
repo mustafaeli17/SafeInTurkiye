@@ -9,7 +9,7 @@ import {sectionPath} from '../lib/sectionNavigation';
 import {isRetiredDirectoryEntry} from '../lib/retiredDirectory';
 import {loadAdminCities} from '../repositories/adminCityReferences';
 import type {AdminCity} from '../repositories/adminCityReferences';
-import {catalogPageSize, hasPublishedGoogleId, loadCatalogPage} from '../repositories/adminEditorialCatalog';
+import {catalogPageSize, hasPublishedGoogleId, loadCatalogPage, saveCatalogEntry} from '../repositories/adminEditorialCatalog';
 import type {CatalogFilters} from '../repositories/adminEditorialCatalog';
 
 const sections = {
@@ -50,6 +50,8 @@ function CatalogEditor({role,onDirtyChange}: EditorialAdminProps) {
   const richReady = setup.status === 'ready' && setup.richReady;
   const [form, setForm] = useState<Entry>(empty);
   const formHeading = useRef<HTMLHeadingElement>(null);
+  const newRecordId = useRef<string|null>(null);
+  const [conflictingRow,setConflictingRow] = useState<Entry|null>(null);
   const [baseForm,setBaseForm]=useState<Entry>(empty);
   const dirty=JSON.stringify(form)!==JSON.stringify(baseForm);
   useEffect(()=>{onDirtyChange?.(dirty);const leave=(e:BeforeUnloadEvent)=>{if(dirty){e.preventDefault();e.returnValue='';}};window.addEventListener('beforeunload',leave);return()=>{window.removeEventListener('beforeunload',leave);onDirtyChange?.(false);};},[dirty,onDirtyChange]);
@@ -67,6 +69,8 @@ function CatalogEditor({role,onDirtyChange}: EditorialAdminProps) {
       setTable(next);
       setFilters(old => ({...old, page: 0}));
       setSetup({status: 'loading'});
+      newRecordId.current=null;
+      setConflictingRow(null);
       setForm(empty());
       setBaseForm(empty());
       setError('');
@@ -80,6 +84,8 @@ function CatalogEditor({role,onDirtyChange}: EditorialAdminProps) {
 
   function openEntry(entry: Entry) {
     discard.protect(() => {
+      newRecordId.current=null;
+      setConflictingRow(null);
       setForm(entry);
       setBaseForm(entry);
       setMessage('');
@@ -146,21 +152,27 @@ function CatalogEditor({role,onDirtyChange}: EditorialAdminProps) {
     const gallery=form.galleryText.split('\n').map(value=>value.trim()).filter(Boolean);
     if(gallery.length>12||[form.image_url,...gallery,metadata.imageSource].filter(Boolean).some(value=>!secureEditorialImage(value))){setError('Görseller ve kaynak için geçerli HTTPS adresleri kullanın; galeri en fazla 12 görseldir.');return;}
     if((form.image_url||gallery.length)&&(!metadata.imageRights?.trim()||!metadata.imageSource?.trim())){setError('Görseller için kullanım izni/lisans bilgisini ve kaynak adresini kaydedin.');return;}
-    if(form.status==='PUBLISHED'&&missing.length){setError('Yayımlamak için tamamlayın: '+missing.join(', ')+'. Eksik kaydı taslak olarak saklayabilirsiniz.');return;}
+    const publishing = form.active && form.status === 'PUBLISHED';
+    if(publishing&&missing.length){setError('Yayımlamak için tamamlayın: '+missing.join(', ')+'. Eksik kaydı taslak olarak saklayabilirsiniz.');return;}
+    if(form.id&&!form.updated_at){setError('Kaydın sürümü alınamadı. Listeyi yenileyip kaydı yeniden açın.');return;}
     setSaving(true);
     const payload = { name: form.name.trim(), description: form.description || null, address: form.address || null, website: form.website || null, city_id: form.city_id, active: form.active, status: form.status,...(richReady?{image_url:form.image_url||null,editorial_metadata:{...metadata,coordinates:validCoordinates?coordinates:undefined,gallery}}:{}) };
     try {
-      const client = requireSupabase();
-      if(richReady && metadata.googlePlaceId && await hasPublishedGoogleId(table, metadata.googlePlaceId, form.id)) {
+      const id = form.id ?? (newRecordId.current ??= crypto.randomUUID());
+      if(publishing && richReady && metadata.googlePlaceId && await hasPublishedGoogleId(table, metadata.googlePlaceId, id)) {
         setError('Bu Google Place ID ile zaten yayında bir kayıt var. Önce mevcut kaydı düzenleyin.');
         return;
       }
-      let query = form.id ? client.from(table).update(payload).eq('id', form.id) : client.from(table).insert(payload);
-      if(form.id&&form.updated_at)query=query.eq('updated_at',form.updated_at);
-      const result = await query.select('*').abortSignal(AbortSignal.timeout(12000)).single();
-      if (result.error) throw result.error;
-      if(!result.data)throw Error();const saved = normalize(result.data as Entry);
+      const result = await saveCatalogEntry(table,id,form.updated_at??null,payload);
+      const saved = normalize(result.row as Entry);
       setRefresh(value => value + 1);
+      if(result.kind==='conflict'){
+        setConflictingRow(saved);
+        setError('Kayıt siz düzenlerken değişti. Formunuz korundu. Son kayıtlı sürümü açmadan önce saklamak istediğiniz değişiklikleri kopyalayın.');
+        return;
+      }
+      newRecordId.current=null;
+      setConflictingRow(null);
       setForm(saved);setBaseForm(saved);
       setMessage(saved.active&&saved.status==='PUBLISHED'&&!retired?'Kaydedildi. Uygun konum ve kategori aramalarında gösterilebilir.':'Kaydedildi. Bu kayıt ziyaretçi aramalarında gösterilmez.');
     } catch { setError('Kaydedilemedi. Yetki veya bağlantı sorunu olabilir; formunuz korunuyor. Kayıt başarılı sayılmadı.'); }
@@ -189,8 +201,6 @@ function CatalogEditor({role,onDirtyChange}: EditorialAdminProps) {
     {dirty && <p className="admin-caption">Formda kaydedilmemiş değişiklik var.</p>}
     {!list && <p role="status">Kayıtlar yükleniyor…</p>}
     {list?.status === 'error' && <div className="admin-error"><p role="alert">İşletme kayıtları alınamadı. Aramanızı ve formu koruduk.</p><button className="admin-button" onClick={() => setRefresh(value => value + 1)}>Aramayı yeniden dene</button></div>}
-    {error && <p role="alert" className="p-3 rounded-xl bg-red-50 text-red-800">{error}</p>}
-    {message && <p role="status" className="p-3 rounded-xl bg-green-50 text-green-800">{message}</p>}
     <div className="grid md:grid-cols-[minmax(220px,1fr)_2fr] gap-5">
       <aside className="space-y-2">
         <button disabled={saving || !writable} onClick={() => openEntry(empty())} className="w-full p-3 border border-sky-200 bg-white rounded-xl text-sky-800 font-bold">+ Yeni kayıt</button>
@@ -226,6 +236,9 @@ function CatalogEditor({role,onDirtyChange}: EditorialAdminProps) {
           {setup.status === 'ready' ? <><p>{missing.length ? 'Tamamlanacak alanlar: ' + missing.join(', ') + '.' : 'Zorunlu yayın alanları tamam.'}</p>
             <p>{retired ? 'Bu eski kayıt ziyaretçi listesinden kaldırılmıştır.' : 'Ziyaretçi aramalarına katılmak için kaydın aktif ve durumunun “Yayında” olması gerekir.'}</p></> : <p>Yayın bilgileri doğrulanmayı bekliyor.</p>}
         </div>
+        {error && <p role="alert" className="p-3 rounded-xl bg-red-50 text-red-800">{error}</p>}
+        {message && <p role="status" className="p-3 rounded-xl bg-green-50 text-green-800">{message}</p>}
+        {conflictingRow && <button className="admin-button" type="button" onClick={()=>openEntry(conflictingRow)}>Son kayıtlı sürümü aç</button>}
         <button className="bg-sky-600 text-white px-5 py-3 rounded-xl font-bold" type="submit">{saving ? 'Kaydediliyor…' : 'Veritabanına kaydet'}</button>
         {discoveryLink&&form.status==='PUBLISHED'&&form.active&&!dirty&&!retired&&!missing.length&&<a className="admin-button ml-2" target="_blank" rel="noopener noreferrer" href={discoveryLink}>Ziyaretçi listesinde aç ↗</a>}
       </fieldset></form>

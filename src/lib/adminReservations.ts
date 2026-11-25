@@ -13,6 +13,19 @@ export function reservationDetails(row:ReservationRow){
 }
 const callbackFormat=new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Istanbul',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
 export function callbackLocalInput(timestamp:number){return callbackFormat.format(timestamp).replace(' ','T');}
+/** Last selectable callback minute in Türkiye. Older requests may only have a visit date. */
+export function lastCallbackMinute(row:ReservationRow){
+ const day=row.visit_date?.slice(0,10), time=reservationDetails(row).time;
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(day))return null;
+ const clock=/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(time)?time:'';
+ const local=day+'T'+(clock||'23:59');
+ const wallTime=Date.parse(local+':00Z');
+ if(!Number.isFinite(wallTime))return null;
+ const offsetAtVisit=Date.parse(callbackLocalInput(wallTime)+':00Z')-wallTime;
+ const instant=wallTime-offsetAtVisit;
+ if(callbackLocalInput(instant)!==local)return null;
+ return clock?instant-60000:instant;
+}
 export function callbackInstant(input:string,now=Date.now()){
  if(!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(input))return null;
  const value=Date.parse(input+':00+03:00');

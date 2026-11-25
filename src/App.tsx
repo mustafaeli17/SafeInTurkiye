@@ -10,7 +10,7 @@ import {searchPage,searchPageSchema} from './lib/searchPages';
 import {SearchGuide} from './components/SearchGuide';
 import {updateSearchHead} from './lib/seo';
 import AccessibleDialog from './components/AccessibleDialog';
-import {authCopy} from './lib/authCopy';
+import {accessRecoveryCopy,authCopy} from './lib/authCopy';
 import {
 Bot,
 Building2,
@@ -298,12 +298,12 @@ const footerCopy: Record<SupportedLang, { signIn: string; source: string; privac
 // 4. ANA BİLEŞEN
 // ============================================================================
 export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
-  const { session, isStaff, role, signIn,signOut,loading:authLoading } = useSupabaseAuth();
+  const {session,isStaff,role,signIn,signOut,loading:authLoading,accessError,retry:retryAccess} = useSupabaseAuth();
   const mockDataEnabled = import.meta.env.VITE_ENABLE_MOCK_DATA === 'true';
   const browserLocation=useBrowserLocation();
   const [rawBrowserPath,browserQuery='']=browserLocation.split('?');
   const {path:browserPath,lang:urlLanguage}=parseLocalePath(rawBrowserPath);
-  const [adminOpen,setAdminOpen]=useState(false);
+  const [adminOpen,setAdminOpen]=useState(()=>typeof window!=='undefined'&&window.location.hash.split('?')[0]==='#admin');
   const activeTab:'home'|'city'|Section|'admin'=adminOpen?'admin':browserPath.startsWith('/cities/')?'city':sectionFromPath(browserPath)??'home';
   const regionSlug=destinationRegion(new URLSearchParams(browserQuery).get('city')??'');
   const queryCity=publicCities.find(c=>c.slug===regionSlug);
@@ -379,15 +379,37 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
   const [authPassword, setAuthPassword] = useState('');
   const [authError, setAuthError] = useState<string | null>(null);
   const [authBusy, setAuthBusy] = useState(false);
+  function closeSignIn(){
+    if(authBusy)return;
+    setAuthModalOpen(false);setAuthPassword('');setAuthError(null);
+  }
+  async function submitSignIn(){
+    if(authBusy)return;
+    setAuthBusy(true);setAuthError(null);
+    try{
+      const {error}=await signIn(authEmail.trim(),authPassword);
+      if(error){setAuthError(authCopy[lang][error.code==='invalid_credentials'?7:6]);return;}
+      setAuthPassword('');setAuthModalOpen(false);
+      if(window.location.hash.split('?')[0]!=='#admin')setActiveTab('admin');
+    }catch{setAuthError(authCopy[lang][6]);}
+    finally{setAuthBusy(false);}
+  }
+  async function leaveAccount(){
+    if(authBusy)return;
+    setAuthBusy(true);setAuthError(null);
+    try{const {error}=await signOut();if(error)throw error;}
+    catch{setAuthError(accessRecoveryCopy[lang].signOutError);}
+    finally{setAuthBusy(false);}
+  }
   useEffect(() => {
     const openAdmin = () => {
       const open=window.location.hash.split('?')[0]==='#admin';setAdminOpen(open);
-      if(open&&!session&&!authLoading)setAuthModalOpen(true);
+      if(open&&!session&&!authLoading&&!accessError)setAuthModalOpen(true);
     };
     openAdmin();
     window.addEventListener('hashchange', openAdmin);
     return () => window.removeEventListener('hashchange', openAdmin);
-  }, [session,authLoading]);
+  }, [session,authLoading,accessError]);
   const handleGlobalSearch = (input = searchQuery) => {
     const query = input.trim().slice(0,160);
     if (!query) return;
@@ -627,6 +649,11 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
       </main>
     );
   }
+
+  if(activeTab==='admin'&&isStaff)return <div className="min-h-screen bg-[#F0F7FB]" lang="tr" dir="ltr">
+    {authError&&<p role="alert" className="text-center text-red-700">{authError}</p>}
+    <Suspense fallback={<PageLoading lang={lang}/>}><ContentAdmin role={role} onSignOut={leaveAccount} signingOut={authBusy} siteHref={localizePath('/',lang)}/></Suspense>
+  </div>;
 
   return (
     <div className="min-h-screen bg-[#F0F7FB] text-[#0A2540] font-['Inter',sans-serif] flex flex-col justify-between">
@@ -1068,15 +1095,20 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
             PAGE 11: ROLE-PROTECTED ADMIN CMS
         ==================================================================== */}
         {activeTab === 'admin' && authLoading && <PageLoading lang={lang}/>}
-        {activeTab === 'admin' && isStaff && <Suspense fallback={<PageLoading lang={lang}/>}><ContentAdmin role={role} onSignOut={signOut}/></Suspense>}
-        {activeTab === 'admin' && !authLoading && !isStaff && <main className="max-w-xl mx-auto p-6 my-8 rounded-2xl bg-white border border-sky-100 space-y-4"><h1 className="text-xl font-bold">{authCopy[lang][0]}</h1><p>{authCopy[lang][session?8:1]}</p>{!session && <button onClick={() => setAuthModalOpen(true)} className="bg-sky-600 text-white rounded-xl px-5 py-3">{footerCopy[lang].signIn}</button>}</main>}
+        {activeTab === 'admin' && authError && !authModalOpen && <p role="alert" className="text-center text-red-700">{authError}</p>}
+        {activeTab === 'admin' && !authLoading && !isStaff && <main className="max-w-xl mx-auto p-6 my-8 rounded-2xl bg-white border border-sky-100 space-y-4">
+          <h1 className="text-xl font-bold">{authCopy[lang][0]}</h1>
+          <p>{accessError?accessRecoveryCopy[lang].error:authCopy[lang][session?8:1]}</p>
+          {accessError&&<button type="button" onClick={retryAccess} className="bg-sky-700 text-white rounded-xl px-5 py-3">{accessRecoveryCopy[lang].retry}</button>}
+          {session?<button type="button" disabled={authBusy} onClick={()=>void leaveAccount()} className="rounded-xl px-5 py-3">{accessRecoveryCopy[lang].signOut}</button>
+            :!accessError&&<button onClick={()=>setAuthModalOpen(true)} className="bg-sky-600 text-white rounded-xl px-5 py-3">{footerCopy[lang].signIn}</button>}</main>}
 
       </div>
 
       </div>
       {authModalOpen && (
-        <AccessibleDialog label={authCopy[lang][0]} onClose={()=>setAuthModalOpen(false)}>
-          <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-4 text-center">
+        <AccessibleDialog label={authCopy[lang][0]} onClose={closeSignIn}>
+          <form onSubmit={event=>{event.preventDefault();void submitSignIn();}} className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-4 text-center">
             <div className="w-12 h-12 rounded-2xl bg-sky-50 text-[#087FFF] flex items-center justify-center mx-auto">
               <Lock className="w-6 h-6" />
             </div>
@@ -1085,36 +1117,22 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
               <p className="text-[12px] text-slate-500">{authCopy[lang][1]}</p>
             </div>
             <input
-              type="email" aria-label={authCopy[lang][2]} autoComplete="username" autoFocus value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} placeholder={authCopy[lang][2]}
+              type="email" required aria-label={authCopy[lang][2]} autoComplete="username" autoFocus value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} placeholder={authCopy[lang][2]}
               className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] focus:outline-none focus:border-[#087FFF]"
             />
-            <input type="password" aria-label={authCopy[lang][3]} autoComplete="current-password" value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} placeholder={authCopy[lang][3]} className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] focus:outline-none focus:border-[#087FFF]" />
-            {authError && <p className="text-[12px] text-red-600">{authError}</p>}
+            <input type="password" required aria-label={authCopy[lang][3]} autoComplete="current-password" value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} placeholder={authCopy[lang][3]} className="w-full h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] focus:outline-none focus:border-[#087FFF]" />
+            {authError && <p role="alert" className="text-[12px] text-red-600">{authError}</p>}
             <div className="flex gap-2">
-              <button onClick={() => setAuthModalOpen(false)} className="flex-1 h-11 bg-slate-100 text-slate-600 font-bold rounded-xl text-[12px]">{authCopy[lang][4]}</button>
+              <button type="button" disabled={authBusy} onClick={closeSignIn} className="flex-1 h-11 bg-slate-100 text-slate-600 font-bold rounded-xl text-[12px]">{authCopy[lang][4]}</button>
               <button
                 disabled={authBusy}
-                onClick={async () => {
-                  if (authBusy) return;
-                  if (!supabaseConfigured) { setAuthError(authCopy[lang][6]); return; }
-                  setAuthBusy(true); setAuthError(null);
-                  try {
-                  const result = await signIn(authEmail, authPassword);
-                  if (result?.error) {
-                    setAuthError(result.error.code==='invalid_credentials'?authCopy[lang][7]:authCopy[lang][6]);
-                    return;
-                  }
-                  setAuthModalOpen(false); setAuthError(null);
-                  setAuthPassword('');
-                  } catch { setAuthError(authCopy[lang][6]); }
-                  finally { setAuthBusy(false); }
-                }}
+                type="submit"
                 className="flex-1 h-11 bg-[#087FFF] hover:bg-[#0284C7] text-white font-bold rounded-xl text-[12px]"
               >
                 {authBusy ? authCopy[lang][5] : footerCopy[lang].signIn}
               </button>
             </div>
-          </div>
+          </form>
         </AccessibleDialog>
       )}
 

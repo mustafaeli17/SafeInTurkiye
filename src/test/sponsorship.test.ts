@@ -19,6 +19,7 @@ it('uses the half-open publication window and checks whether a live order can be
  expect(placementStatus(row,true,Date.parse(row.starts_at))).toBe('live')
  expect(placementStatus(row,true,Date.parse(row.ends_at))).toBe('expired')
  expect(placementStatus({...row,active:false},true,Date.parse(row.starts_at))).toBe('paused')
+ expect(placementStatus({...row,active:false},true,Date.parse(row.ends_at))).toBe('expired')
  expect(placementStatus(row,false,Date.parse(row.starts_at))).toBe('unavailable')
 })
 it('offers only public surfaces that can display the business and links to the right city',()=>{

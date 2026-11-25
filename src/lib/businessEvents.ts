@@ -1,6 +1,10 @@
 import {foundationEnabled} from './foundationConfig'
 import {trackingOptOut} from './analytics'
 export type BusinessEvent='impression'|'detail_open'|'phone_click'|'website_click'|'directions_click'|'reservation_started'|'reservation_submitted'
+export const impressionThreshold=0.5
+export function isBusinessCardVisible(entry:Pick<IntersectionObserverEntry,'isIntersecting'|'intersectionRatio'>){
+ return entry.isIntersecting&&entry.intersectionRatio>=impressionThreshold
+}
 export function trackBusinessEvent(businessKey:string,eventType:BusinessEvent,context='detail'){
  if(!foundationEnabled||trackingOptOut(navigator))return
  // Best-effort, no retries and no cookies, account ID, location or contact details.

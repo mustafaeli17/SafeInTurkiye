@@ -35,8 +35,8 @@ async function tableQuery(tx,input){
  }
  if(!tables.has(input.table))throw Error('QA table');
  const args=[],where=[];
- const delivery=input.table==='reservation_notifications'&&input.fields==='id,bookings!inner(reference_code,listing_name)';
- const source=delivery?'reservation_notifications n join bookings b on b.id=n.booking_id':input.table;
+ const delivery=input.table==='reservation_notifications'&&/^[a-z_,]+,bookings(?:!inner)?\(reference_code,listing_name\)$/.test(input.fields);
+ const source=delivery?'reservation_notifications n '+(input.fields.includes('bookings!inner')?'join':'left join')+' bookings b on b.id=n.booking_id':input.table;
  const column=(field)=>{
   if(field==='editorial_metadata->>googlePlaceId')return "(editorial_metadata->>'googlePlaceId')";
   if(delivery&&['bookings.guest_name','bookings.listing_name'].includes(field))return 'b.'+field.slice(9);
@@ -54,7 +54,7 @@ async function tableQuery(tx,input){
  }
  const condition=where.length?' where '+where.join(' and '):'';
  const joined=input.fields==='*,city:cities(name,slug,active,status)';
- const fields=delivery?"n.id,json_build_object('reference_code',b.reference_code,'listing_name',b.listing_name) as bookings":columns(joined?'*':input.fields??'*');
+ const fields=delivery?columns(input.fields.split(',bookings')[0]).split(',').map(field=>'n.'+field).join(',')+",case when b.id is null then null else json_build_object('reference_code',b.reference_code,'listing_name',b.listing_name) end as bookings":columns(joined?'*':input.fields??'*');
  if(input.action==='update'){
   const set=Object.entries(input.payload).map(([field,value])=>{columns(field);args.push(value);return `${field}=$${args.length}`;}).join(',');
   return {data:(await tx.query(`update ${input.table} set ${set}${condition} returning ${fields}`,args)).rows};

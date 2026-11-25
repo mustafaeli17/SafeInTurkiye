@@ -22,6 +22,7 @@ export default function BookingAdmin({onChanged,initialStatus='PENDING'}:{onChan
  const [status,setStatus]=useState(incomingReference?'':initialStatus);
  const [search,setSearch]=useState(incomingReference),[reference,setReference]=useState(incomingReference);
  const [showTests,setShowTests]=useState(false),[page,setPage]=useState<BookingPage>(empty);
+ const [callbackSupport,setCallbackSupport]=useState<boolean|null>(null);
  const [message,setMessage]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(true),[saving,setSaving]=useState(false),[newCount,setNewCount]=useState(0);
  const [selected,setSelected]=useState<ReservationRow|null>(null),[saveError,setSaveError]=useState('');
  const current=useRef(page),controller=useRef<AbortController|null>(null),mutating=useRef(false);
@@ -47,7 +48,7 @@ export default function BookingAdmin({onChanged,initialStatus='PENDING'}:{onChan
    if(quiet&&newRequests.length){setNewCount(n=>n+newRequests.length);changed.current?.();}
    result.rows.forEach(row=>seen.current.add(row.id));
    const next=more?{...result,rows:[...previous.rows,...result.rows.filter(row=>!previous.rows.some(item=>item.id===row.id))]}:result;
-   current.current=next;setPage(next);
+   current.current=next;setPage(next);setCallbackSupport(result.callbacksAvailable);
   }catch{if(!abort.signal.aborted)setError('Talepler yüklenemedi. Bağlantıyı kontrol edip listeyi yenileyin.');}
   finally{if(!abort.signal.aborted)setBusy(false);}
  },[activeStatus,reference,showTests]);
@@ -73,10 +74,14 @@ export default function BookingAdmin({onChanged,initialStatus='PENDING'}:{onChan
    }else{
     if(next==='CALLBACK')throw Error('INVALID_CALLBACK_TIME');
     saved={...await changeReservationStatus(row,next),callback_id:null,callback_at:null,callback_deferred:false};
-    setMessage(row.reference_code+' · '+adminStatus[next]+'. Müşteri sonucu talep ekranında görebilir.');
+    setMessage(row.reference_code+' · '+adminStatus[next]+'.');
    }
    const previous=current.current;
-   const rows=previous.rows.map(item=>item.id===row.id?{...item,...saved}:item).filter(item=>!activeStatus||item.status===activeStatus);
+   const rows=previous.rows.map(item=>item.id===row.id?{...item,...saved}:item).filter(item=>{
+    if(activeStatus==='SCHEDULED')return item.status==='PENDING'&&item.callback_deferred;
+    if(activeStatus==='PENDING')return item.status==='PENDING'&&!item.callback_deferred;
+    return !activeStatus||item.status===activeStatus;
+   });
    const updated={...previous,rows,total:previous.total===null?null:previous.total-(previous.rows.length-rows.length)};
    current.current=updated;setPage(updated);setSelected(null);changed.current?.();
    mutating.current=false;void load(true);
@@ -92,22 +97,23 @@ export default function BookingAdmin({onChanged,initialStatus='PENDING'}:{onChan
  }
  const filtered=page.rows.filter(row=>reservationMatches(row,search,''));
  return <section className="admin-bookings">
-  <div className="admin-section-heading"><div><h2>{reference?'Rezervasyon talebi':status==='PENDING'?'Aranacaklar':'Rezervasyonlar'}</h2>
+  <div className="admin-section-heading"><div><h2>{reference?'Rezervasyon talebi':status==='PENDING'?'Aranacaklar':status==='SCHEDULED'?'Planlı aramalar':'Rezervasyonlar'}</h2>
    {status==='PENDING'&&!reference&&<p>Arama zamanı gelen talepler, önce en yakın masa saatiyle.</p>}</div>
    <button className="admin-button booking-refresh" disabled={busy||saving} onClick={()=>{setNewCount(0);void load();}}><RefreshCw size={16}/>{busy?'Yükleniyor…':'Yenile'}</button></div>
   <div className="booking-views" aria-label="Rezervasyon görünümü">
    <button disabled={saving} aria-pressed={activeStatus==='PENDING'} onClick={()=>changeView('PENDING')}>Aranacaklar</button>
-   <button disabled={saving} aria-pressed={activeStatus!=='PENDING'&&!reference} onClick={()=>changeView('')}>Tüm talepler</button>
+   {callbackSupport!==false&&<button disabled={saving} aria-pressed={activeStatus==='SCHEDULED'} onClick={()=>changeView('SCHEDULED')}>Planlı aramalar</button>}
+   <button disabled={saving} aria-pressed={!['PENDING','SCHEDULED'].includes(activeStatus)&&!reference} onClick={()=>changeView('')}>Tüm talepler</button>
   </div>
   <details className="booking-filters"><summary><Search size={15}/> Ara ve filtrele</summary>
    <div className="admin-filter-bar"><label><Search size={16}/><span className="sr-only">Talep ara</span><input placeholder="Referans, restoran, müşteri veya telefon" value={search} disabled={saving} onChange={e=>setSearch(e.target.value)}/></label>
-    <label><span className="sr-only">Talep durumu</span><select value={activeStatus} disabled={saving} onChange={e=>changeView(e.target.value)}><option value="">Tüm durumlar</option>{Object.entries(adminStatus).map(([key,label])=><option key={key} value={key}>{key==='PENDING'?'Beklemede':label}</option>)}</select></label></div>
+    <label><span className="sr-only">Talep durumu</span><select value={activeStatus} disabled={saving} onChange={e=>changeView(e.target.value)}><option value="">Tüm durumlar</option>{Object.entries(adminStatus).map(([key,label])=><option key={key} value={key}>{key==='PENDING'?'Arama zamanı gelen':label}</option>)}{(page.callbacksAvailable||status==='SCHEDULED')&&<option value="SCHEDULED">Planlı aramalar</option>}</select></label></div>
    <label className="booking-test-filter"><input type="checkbox" disabled={saving} checked={showTests} onChange={e=>setShowTests(e.target.checked)}/> Test kayıtlarını göster</label>
    <p className="admin-caption">Tam referans tüm taleplerde aranır. Diğer aramalar yüklenen kayıtları filtreler.</p>
   </details>
   {newCount>0&&<div role="status" className="admin-new-notice"><Bell size={18}/>{newCount} yeni talep.<button onClick={()=>setNewCount(0)}>Gördüm</button></div>}
   {error&&<p role="alert" className="admin-error">{error}</p>}{message&&<p role="status" className="admin-success">{message}</p>}
-  {!error&&!busy&&!filtered.length&&<div className="admin-empty"><Clock size={28}/><h3>{search?'Aramayla eşleşen talep yok':status==='PENDING'?'Aranacak talep yok':'Bu görünümde talep yok'}</h3></div>}
+  {!error&&!busy&&!filtered.length&&<div className="admin-empty"><Clock size={28}/><h3>{search?'Aramayla eşleşen talep yok':status==='PENDING'?'Aranacak talep yok':status==='SCHEDULED'?(page.callbacksAvailable?'Planlı geri arama yok':'Geri arama planlaması bu ortamda etkin değil'):'Bu görünümde talep yok'}</h3></div>}
   {Boolean(filtered.length)&&<p className="admin-caption">{filtered.length} talep gösteriliyor{page.total!==null?' · '+page.total+' kayıt':''}</p>}
   <div className="admin-request-grid">{filtered.map(row=>{
    const detail=reservationDetails(row),guestPhone=safeTelephone(detail.phone),waiting=reservationWaiting(row);

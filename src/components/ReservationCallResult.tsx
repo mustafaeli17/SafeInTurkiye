@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import AccessibleDialog from './AccessibleDialog';
-import {callbackInstant,callbackLocalInput,reservationDate,reservationDetails,type ReservationRow} from '../lib/adminReservations';
+import {callbackInstant,callbackLocalInput,lastCallbackMinute,reservationDate,reservationDetails,type ReservationRow} from '../lib/adminReservations';
 
 export type CallOutcome='CONFIRMED'|'REJECTED'|'CALLBACK'|'CANCELLED';
 const outcomes=[
@@ -14,7 +14,10 @@ export default function ReservationCallResult({row,callbacksAvailable,saving,err
 }){
  const cancelling=row.status==='CONFIRMED';
  const [next,setNext]=useState<CallOutcome|''>(cancelling?'CANCELLED':'');
- const [time,setTime]=useState(()=>callbackLocalInput(Date.now()+30*60000));
+ const [openedAt]=useState(()=>Date.now());
+ const lastMinute=lastCallbackMinute(row);
+ const canSchedule=callbacksAvailable&&(lastMinute===null||lastMinute>openedAt);
+ const [time,setTime]=useState(()=>callbackLocalInput(Math.min(openedAt+30*60000,lastMinute??Infinity)));
  const [timeError,setTimeError]=useState('');
  function submit(event:React.FormEvent){
   event.preventDefault();
@@ -22,6 +25,7 @@ export default function ReservationCallResult({row,callbacksAvailable,saving,err
   if(next==='CALLBACK'){
    const instant=callbackInstant(time);
    if(!instant){setTimeError('İleri bir tarih ve saat seçin.');return;}
+   if(lastMinute!==null&&Date.parse(instant)>lastMinute){setTimeError('Geri arama için rezervasyondan önce bir saat seçin.');return;}
    onSave(next,instant);
   }else onSave(next);
  }
@@ -33,12 +37,12 @@ export default function ReservationCallResult({row,callbacksAvailable,saving,err
    {cancelling?<p>Onaylanmış rezervasyon iptal edilecek. Müşteri talep ekranında “İptal edildi” görecek.</p>:
     <fieldset disabled={saving}><legend>Restoranla görüşmenin sonucu</legend>
      {outcomes.map(([value,title,description])=><label className="booking-choice" key={value}>
-      <input type="radio" name="call-outcome" value={value} checked={next===value} disabled={value==='CALLBACK'&&!callbacksAvailable} onChange={()=>setNext(value)}/>
-      <span><strong>{title}</strong><small>{value==='CALLBACK'&&!callbacksAvailable?'Bu ortamda geri arama planlaması etkin değil.':description}</small></span>
+      <input type="radio" name="call-outcome" value={value} checked={next===value} disabled={value==='CALLBACK'&&!canSchedule} onChange={()=>{setNext(value);setTimeError('');}}/>
+      <span><strong>{title}</strong><small>{value==='CALLBACK'&&!canSchedule?(callbacksAvailable?'Rezervasyondan önce geri arama için süre kalmadı.':'Bu ortamda geri arama planlaması etkin değil.'):description}</small></span>
      </label>)}
     </fieldset>}
    {next==='CALLBACK'&&<label className="booking-schedule">Arama zamanı (Türkiye saati)
-    <input required type="datetime-local" value={time} disabled={saving} onChange={e=>{setTime(e.target.value);setTimeError('');}}/>
+    <input required type="datetime-local" value={time} min={callbackLocalInput(Math.floor(openedAt/60000)*60000+60000)} max={lastMinute===null?undefined:callbackLocalInput(lastMinute)} disabled={saving} onChange={e=>{setTime(e.target.value);setTimeError('');}}/>
    </label>}
    {(error||timeError)&&<p role="alert" className="admin-error">{error||timeError}</p>}
    <div className="booking-result-actions"><button type="button" className="admin-button" disabled={saving} onClick={onClose}>Vazgeç</button>

@@ -1,7 +1,7 @@
 import {useEffect, useState} from 'react';
 import {requireSupabase} from '../lib/supabase';
 import {publicCities} from '../lib/publicRoutes';
-import {loadAdminCities} from '../repositories/adminCityReferences';
+import {loadAdminCities,matchCityReference} from '../repositories/adminCityReferences';
 import type {AdminCity} from '../repositories/adminCityReferences';
 
 type ReferenceState =
@@ -18,6 +18,10 @@ function CityReferences({writable}: {writable: boolean}) {
   const [revision, setRevision] = useState(0);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const [needsReviewOnly,setNeedsReviewOnly] = useState(false);
+  const destinations = state.status === 'verified'
+    ? publicCities.map(destination => ({destination,reference:matchCityReference(destination,state.rows)})) : [];
+  const reviewCount = destinations.filter(item => item.reference.status !== 'ready').length;
 
   function refresh() {
     setState({status: 'loading'});
@@ -37,8 +41,9 @@ function CityReferences({writable}: {writable: boolean}) {
 
   async function save(destination: typeof publicCities[number]) {
     if (!writable || saving || state.status !== 'verified') return;
-    const existing = state.rows.find(city => city.slug === destination.slug || city.name === destination.name);
-    if (existing?.active && existing.status === 'PUBLISHED') return;
+    const match=matchCityReference(destination,state.rows);
+    if (match.status === 'conflict' || match.status === 'ready') return;
+    const existing=match.city;
     setSaving(true);
     setMessage('');
     try {
@@ -67,18 +72,24 @@ function CityReferences({writable}: {writable: boolean}) {
     {message && <p role="status" className="admin-success">{message}</p>}
     {state.status === 'loading' && <p role="status">Şehir kayıtları yükleniyor…</p>}
     {state.status === 'error' && <p role="alert" className="admin-error">{state.message}</p>}
-    {state.status === 'verified' && <div className="grid gap-3 sm:grid-cols-2">
-      {publicCities.map(destination => {
-        const city = state.rows.find(row => row.slug === destination.slug || row.name === destination.name);
-        const ready = city?.active && city.status === 'PUBLISHED';
+    {state.status === 'verified' && <>
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <p role="status">{destinations.length} şehir · {destinations.length-reviewCount} referans hazır</p>
+        <label className="admin-button"><input type="checkbox" checked={needsReviewOnly} onChange={event=>setNeedsReviewOnly(event.target.checked)}/> İncelenecekler ({reviewCount})</label>
+      </div>
+      {needsReviewOnly && !reviewCount && <p>İncelenecek şehir referansı yok.</p>}
+      <div className="grid gap-3 sm:grid-cols-2">
+      {destinations.filter(item=>!needsReviewOnly || item.reference.status!=='ready').map(({destination,reference}) => {
         return <article className="rounded-xl border border-sky-100 p-4" key={destination.slug}>
           <h3>{destination.name}</h3>
-          <p>{ready ? 'İşletme yayını için hazır' : city ? 'Referans yayına hazırlanmalı' : writable ? 'Veritabanı referansı eksik' : 'Bu hesapta görünür referans yok'}</p>
-          {writable && !ready && <button className="admin-button" disabled={saving} onClick={() => void save(destination)}>
-            {city ? 'Referansı yayına hazırla' : 'Şehir referansını oluştur'}
-          </button>}
+          <p>{reference.status==='ready' ? 'İşletme yayını için hazır' : reference.status==='inactive' ? 'Referans yayına hazırlanmalı' : reference.status==='conflict' ? 'Ad ile şehir adresi uyuşmuyor. Kayıt eşleşmesini kontrol edin.' : writable ? 'Veritabanı referansı eksik' : 'Bu hesapta görünür referans yok'}</p>
+          {reference.status==='conflict' && <ul>{reference.candidates.map(row=><li key={row.id}>{row.name} · {row.slug}</li>)}</ul>}
+          <div className="mt-2 flex flex-wrap gap-2"><a className="admin-button" href={'/cities/'+destination.slug} target="_blank" rel="noopener noreferrer">Şehir rehberini aç ↗</a>
+          {writable && (reference.status==='inactive' || reference.status==='missing') && <button className="admin-button" disabled={saving} onClick={() => void save(destination)}>
+            {reference.status==='inactive' ? 'Referansı yayına hazırla' : 'Şehir referansını oluştur'}
+          </button>}</div>
         </article>;
       })}
-    </div>}
+    </div></>}
   </section>;
 }

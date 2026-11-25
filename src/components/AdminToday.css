@@ -1,4 +1,9 @@
 .admin-mobile-nav { display: none; }
+.admin-studio { width:100%; }
+.admin-studio .admin-eyebrow { color:#146bb0; font-size:.9rem; letter-spacing:0; }
+.admin-studio .admin-side-nav { top:1rem; }
+.admin-header-actions .admin-button:focus-visible { outline-offset:2px; }
+.admin-mobile-nav .admin-more-current { background:#e8f3fd; color:#085e9f; font-weight:700; }
 .admin-workspace { scroll-margin-top: 6rem; }
 .admin-today { display:grid; gap:1rem; }
 .admin-today .admin-section-heading { align-items:center; margin:0; }
@@ -25,6 +30,7 @@
   .admin-mobile-nav button[aria-current="page"],.admin-mobile-nav button[aria-expanded="true"] { background:#e8f3fd; color:#085e9f; font-weight:700; }
   .admin-mobile-nav div:not([hidden]) { grid-column:1/-1; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); border-top:1px solid #e1ecf4; margin-top:4px; padding-top:4px; }
   .admin-mobile-nav div button { flex-direction:row; gap:.4rem; min-height:44px; }
+  .admin-mobile-nav button { min-width:0; overflow-wrap:anywhere; line-height:1.25; }
   .admin-studio-header { flex-direction:row; flex-wrap:wrap; margin-bottom:12px; align-items:center; }
   .admin-studio-layout { gap:14px; }
   .admin-today .admin-section-heading { flex-direction:row; }

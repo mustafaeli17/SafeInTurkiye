@@ -3,7 +3,7 @@ import {BarChart3,Bell,BookOpen,ExternalLink,LayoutDashboard,LogOut,Settings,Shi
 import AdminToday from './AdminToday';
 import ReservationNotificationHealth from './ReservationNotificationHealth';
 import {foundationEnabled} from '../lib/foundationConfig';
-import {restaurantRequestsEnabled} from '../lib/reservationAvailability';
+import AdminSystemStatus from './AdminSystemStatus';
 import {useDiscardChanges} from './useDiscardChanges';
 import TaxiBudgetReview from './TaxiBudgetReview';
 import './ContentAdmin.css';
@@ -19,7 +19,7 @@ function readSection() {
   const tab=tabs.find(([id])=>id===params.get('section'))?.[0]??'overview';
   return {tab,request:params.get('request')??'',all:params.get('view')==='all',notifications:params.get('view')==='notifications'};
 }
-export default function ContentAdmin({role,onSignOut}:{role:string;onSignOut?:()=>unknown}){
+export default function ContentAdmin({role,onSignOut,signingOut=false,siteHref='/'}:{role:string;onSignOut?:()=>unknown;signingOut?:boolean;siteHref?:string}){
  const [route,setRoute]=useState(readSection),[dirty,setDirty]=useState(false),[more,setMore]=useState(false);
  const {tab}=route;
  const [pendingCount,setPendingCount]=useState<number|null>(null);
@@ -51,8 +51,6 @@ export default function ContentAdmin({role,onSignOut}:{role:string;onSignOut?:()
    return ()=>{window.removeEventListener('popstate',sync);window.removeEventListener('hashchange',sync);};
  },[]);
  useEffect(()=>{if(linkFocus.current){workspace.current?.focus({preventScroll:true});workspace.current?.scrollIntoView({block:'start'});linkFocus.current=false;}},[route]);
- const [serverState,setServerState]=useState<'checking'|'ready'|'closed'|'error'>('checking');
- useEffect(()=>{if(tab!=='system')return;const controller=new AbortController();setServerState('checking');void fetch('/api/reservations',{cache:'no-store',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(10000)])}).then(async response=>{const data=await response.json();if(!controller.signal.aborted)setServerState(response.ok&&data.enabled===true?'ready':'closed');}).catch(()=>{if(!controller.signal.aborted)setServerState('error');});return()=>controller.abort();},[tab]);
  const onDirty=useCallback((value:boolean)=>setDirty(value),[]);
  const permitted=['admin','editor','moderator'].includes(role);
  function navigate(next:string, param?:{request?:string;view?:string}){
@@ -60,6 +58,7 @@ export default function ContentAdmin({role,onSignOut}:{role:string;onSignOut?:()
    if(param?.request)params.set('request',param.request);
    if(param?.view)params.set('view',param.view);
    const hash='#admin?'+params;
+   if(window.location.hash===hash){setMore(false);return;}
    discard.protect(()=>{
      setDirty(false);setMore(false);
      if(window.location.hash!==hash)window.history.pushState(window.history.state,'',hash);
@@ -71,12 +70,21 @@ export default function ContentAdmin({role,onSignOut}:{role:string;onSignOut?:()
    return <button key={id} type="button" aria-current={tab===id?'page':undefined} aria-pressed={tab===id} onClick={()=>navigate(id)}><Icon size={18}/><span>{label}</span>{!mobile&&id==='reservations'&&pendingCount!==null&&pendingCount>0&&<b>{pendingCount}</b>}</button>;
  }
  if(!permitted)return <p role="alert">Bu panel için yetkiniz yok.</p>;
- return <main className="admin-studio">
-  <header className="admin-studio-header"><div><p className="admin-eyebrow">SAFEINTÜRKİYE · YÖNETİM</p><h1>Yönetim paneli</h1></div><div className="admin-header-actions"><span className="admin-role"><ShieldCheck size={15}/>{role}</span>{onSignOut&&<button className="admin-button" onClick={()=>discard.protect(()=>{void onSignOut();})}><LogOut size={15}/>Çıkış</button>}</div></header>
+ const activeLabel=tabs.find(([id])=>id===tab)![1];
+ const inMore=tabs.slice(3).some(([id])=>id===tab);
+ return <main className="admin-studio" lang="tr" dir="ltr">
+  <header className="admin-studio-header">
+    <div><p className="admin-eyebrow">SafeInTürkiye</p><h1>Yönetim paneli</h1></div>
+    <div className="admin-header-actions">
+      <span className="admin-role"><ShieldCheck size={15}/>{{admin:'Yönetici',editor:'Editör',moderator:'Moderatör'}[role]}</span>
+      <a className="admin-button" href={siteHref} target="_blank" rel="noopener noreferrer">Siteyi aç <ExternalLink size={15}/><span className="sr-only">(yeni sekme)</span></a>
+      {onSignOut&&<button type="button" className="admin-button" disabled={signingOut} onClick={()=>discard.protect(()=>{void onSignOut();})}><LogOut size={15}/>{signingOut?'Çıkış yapılıyor…':'Çıkış'}</button>}
+    </div>
+  </header>
   <div className="admin-studio-layout">
     <nav className="admin-side-nav" aria-label="Yönetim bölümleri">{tabs.map(item=>navButton(item))}</nav>
     <nav className="admin-mobile-nav" aria-label="Mobil yönetim bölümleri" onKeyDown={event=>{if(more&&event.key==='Escape'){setMore(false);moreButton.current?.focus();}}}>{tabs.slice(0,3).map(item=>navButton(item,true))}
-      <button ref={moreButton} type="button" aria-expanded={more} aria-controls="admin-extra-sections" onClick={()=>setMore(!more)}><Menu size={18}/><span>Diğer</span></button>
+      <button ref={moreButton} type="button" aria-label={inMore?'Diğer bölümler · '+activeLabel:'Diğer'} className={inMore?'admin-more-current':undefined} aria-expanded={more} aria-controls="admin-extra-sections" onClick={()=>setMore(!more)}><Menu size={18}/><span>{inMore?activeLabel:'Diğer'}</span></button>
       <div id="admin-extra-sections" hidden={!more}>{tabs.slice(3).map(item=>navButton(item,true))}</div>
     </nav>
     <div className="admin-workspace" ref={workspace} tabIndex={-1}>
@@ -85,11 +93,11 @@ export default function ContentAdmin({role,onSignOut}:{role:string;onSignOut?:()
     {tab==='reservations'&&<BookingAdmin key={route.request+String(route.all)} initialStatus={route.all||route.request?'':'PENDING'} onChanged={()=>setPendingCount(null)}/>}
     {tab==='content'&&<EditorialAdmin role={role} onDirtyChange={onDirty}/>}
     {tab==='cities'&&<CityReferenceAdmin role={role}/>}
-    {tab==='sponsors'&&(foundationEnabled?<SponsorshipAdmin onDirtyChange={onDirty}/>:<section className="admin-panel"><h2>Sponsorlu yerleşimler</h2><p>Foundation şeması bu ortamda etkin değil. Yanlış tabloya veya Google kayıtlarına reklam yazılmayacak.</p></section>)}
+    {tab==='sponsors'&&(foundationEnabled?<SponsorshipAdmin onDirtyChange={onDirty}/>:<section className="admin-panel"><h2>Sponsorlar</h2><p>Bu ortamda sponsor yönetimi etkin değil.</p></section>)}
     {tab==='analytics'&&<><section className="admin-panel"><h2>Ziyaretçi istatistikleri</h2><p>Vercel’de ölçülen ziyaretçi, ülke, cihaz ve yönlendirme verileri. Fiziksel işletme ziyareti anlamına gelmez.</p><a className="admin-button" href="https://vercel.com/eli-1196/safe-in-turkiye/analytics" target="_blank" rel="noopener noreferrer">Vercel Analytics<ExternalLink size={15}/></a></section>{foundationEnabled&&<BusinessMetricsAdmin/>}</>}
    </Suspense>
    {tab==='system'&&<ReservationNotificationHealth key={String(route.notifications)} initiallyOpen={route.notifications}/>}
-   {tab==='system'&&<section className="admin-panel admin-system"><h2>Sistem ve yayın</h2><dl><div><dt>İçerik kaynağı</dt><dd>Google Places keşfi + ayrı editoryal CMS kayıtları</dd></div><div><dt>Foundation</dt><dd>{foundationEnabled?'Etkin':'Etkin değil'}</dd></div><div><dt>Rezervasyon arayüzü</dt><dd>{restaurantRequestsEnabled?'Etkin':'Aktivasyon bekliyor'}</dd></div><div><dt>Rezervasyon sunucusu</dt><dd>{{checking:'Kontrol ediliyor…',ready:'API yapılandırması ve şema kontrolü başarılı',closed:'Talep kabulüne hazır değil',error:'Durum alınamadı'}[serverState]}. E-posta teslimi ayrıca kuyruk/sağlayıcı üzerinden izlenir.</dd></div><div><dt>İçerik güncellemeleri</dt><dd>CMS kayıtları kalıcıdır. SEO/site haritası için onaylı build/yayın gerekir.</dd></div></dl><p>Şehir tasarımları, çeviriler, API anahtarları ve güvenlik ayarları burada değiştirilmez. Gerçekte çalışmayan “tüm siteyi değiştir” düğmeleri gösterilmez.</p><a className="admin-button" href="https://vercel.com/eli-1196/safe-in-turkiye" target="_blank" rel="noopener noreferrer">Yayın ve API ortamı<ExternalLink size={15}/></a></section>}
+   {tab==='system'&&<AdminSystemStatus/>}
    {tab==='system'&&<TaxiBudgetReview/>}
   </div></div>
  {discard.dialog}</main>;

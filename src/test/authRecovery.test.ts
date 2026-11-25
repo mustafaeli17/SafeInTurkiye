@@ -34,9 +34,43 @@ it.each(['rejected','unknown-role','error'])('does not elevate a user on %s prof
   mock.session.mockResolvedValue({data:{session:{user:{id:'test'}}}});
   if(kind==='rejected')mock.profile.mockRejectedValue(new Error('network'));
   else mock.profile.mockResolvedValue({data:{role:kind==='error'?'admin':'owner'},error:kind==='error'?new Error('denied'):null});
-  useSupabaseAuth();mock.effect!();await vi.waitFor(()=>expect(mock.setters[1]).toHaveBeenCalledWith('user'));
+  useSupabaseAuth();const cleanup=mock.effect!();
+  await vi.waitFor(()=>expect(mock.setters[2]).toHaveBeenLastCalledWith(false));
+  expect(mock.setters[1]).toHaveBeenLastCalledWith('user');
+  expect(mock.setters[1]).not.toHaveBeenCalledWith('admin');
+  cleanup();
 });
 it('retains a validated admin role',async()=>{
   mock.session.mockResolvedValue({data:{session:{user:{id:'test'}}}});mock.profile.mockResolvedValue({data:{role:'admin'},error:null});
   useSupabaseAuth();mock.effect!();await vi.waitFor(()=>expect(mock.setters[1]).toHaveBeenCalledWith('admin'));
+});
+
+it('preserves the verified workspace and its draft during a same-user token refresh',async()=>{
+  const session={user:{id:'staff'}};
+  mock.session.mockResolvedValue({data:{session}});
+  mock.profile.mockResolvedValue({data:{role:'admin'},error:null});
+  useSupabaseAuth();const cleanup=mock.effect!();
+  await vi.waitFor(()=>expect(mock.setters[1]).toHaveBeenLastCalledWith('admin'));
+  mock.setters[1].mockClear();mock.setters[2].mockClear();
+  mock.onAuth.mock.calls[0][0]('TOKEN_REFRESHED',session);
+  expect(mock.setters[1]).not.toHaveBeenCalledWith('user');
+  expect(mock.setters[2]).not.toHaveBeenCalledWith(true);
+  await vi.waitFor(()=>expect(mock.setters[1]).toHaveBeenLastCalledWith('admin'));
+  mock.onAuth.mock.calls[0][0]('SIGNED_IN',{user:{id:'another-account'}});
+  expect(mock.setters[1]).toHaveBeenLastCalledWith('user');
+  expect(mock.setters[2]).toHaveBeenLastCalledWith(true);
+  cleanup();
+});
+
+it('fails closed on a profile outage, distinguishes it from a denied role and can retry',async()=>{
+  mock.session.mockResolvedValue({data:{session:{user:{id:'staff'}}}});
+  mock.profile.mockResolvedValueOnce({error:{message:'offline'},data:null})
+    .mockResolvedValueOnce({data:{role:'editor'},error:null});
+  const auth=useSupabaseAuth();const cleanup=mock.effect!();
+  await vi.waitFor(()=>expect(mock.setters[3]).toHaveBeenLastCalledWith(true));
+  expect(mock.setters[1]).toHaveBeenLastCalledWith('user');
+  auth.retry();
+  await vi.waitFor(()=>expect(mock.setters[1]).toHaveBeenLastCalledWith('editor'));
+  expect(mock.setters[3]).toHaveBeenLastCalledWith(false);
+  cleanup();
 });

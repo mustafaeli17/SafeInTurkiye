@@ -1,6 +1,6 @@
 import {beforeEach, expect, it, vi} from 'vitest';
-import {loadAdminCities} from '../repositories/adminCityReferences';
-import {hasPublishedGoogleId, loadCatalogPage} from '../repositories/adminEditorialCatalog';
+import {loadAdminCities,matchCityReference} from '../repositories/adminCityReferences';
+import {hasPublishedGoogleId, loadCatalogPage,saveCatalogEntry} from '../repositories/adminEditorialCatalog';
 
 const requests = vi.hoisted(() => vi.fn<typeof fetch>());
 vi.mock('../lib/supabase', async () => {
@@ -70,4 +70,36 @@ it('checks duplicate Google identities across the category even when editing a f
   expect(params.has('city_id')).toBe(false);
   await expect(hasPublishedGoogleId('hotels', 'ChIJ-test', 'self')).resolves.toBe(false);
   await expect(hasPublishedGoogleId('hotels', 'ChIJ-test', 'self')).rejects.toThrow();
+});
+
+it('reconciles a committed catalog insert after a lost response using the same ID', async()=>{
+  const id='00000000-0000-0000-0000-000000001234';
+  const payload={name:'Fixture hotel',active:true,status:'DRAFT',editorial_metadata:{phone:'+902120000000',gallery:[],coordinates:undefined}};
+  const row={...payload,id,updated_at:'2026-11-25T13:00:00Z',editorial_metadata:{gallery:[],phone:'+902120000000'}};
+  requests.mockResolvedValueOnce(Response.json({message:'timeout'},{status:504})).mockResolvedValueOnce(Response.json([row]));
+  expect(await saveCatalogEntry('hotels',id,null,payload)).toEqual({kind:'saved',row});
+  expect(JSON.parse(String(requests.mock.calls[0][1]?.body)).id).toBe(id);
+  expect(new URL(String(requests.mock.calls[1][0])).searchParams.get('id')).toBe('eq.'+id);
+});
+
+it('returns the newer server version on conflict and never overwrites it on recovery',async()=>{
+  const id='00000000-0000-0000-0000-000000001234';
+  const payload={name:'Unsaved change',active:true,status:'DRAFT'};
+  const row={...payload,id,name:'Newer version',updated_at:'revision-2'};
+  requests.mockResolvedValueOnce(Response.json({code:'PGRST116'},{status:406})).mockResolvedValueOnce(Response.json([row]));
+  expect(await saveCatalogEntry('museums',id,'revision-1',payload)).toEqual({kind:'conflict',row});
+  expect(new URL(String(requests.mock.calls[0][0])).searchParams.get('updated_at')).toBe('eq.revision-1');
+  expect(requests.mock.calls.map(([,options])=>options?.method)).toEqual(['PATCH','GET']);
+  requests.mockResolvedValueOnce(failed()).mockResolvedValueOnce(failed());
+  await expect(saveCatalogEntry('museums',id,'revision-1',payload)).rejects.toThrow();
+});
+
+it('requires the same city reference to match both the public name and slug',()=>{
+  const dest={name:'İzmir',slug:'izmir'};
+  const good={...dest,id:'1',active:true,status:'PUBLISHED',updated_at:'v1'};
+  expect(matchCityReference(dest,[]).status).toBe('missing');
+  expect(matchCityReference(dest,[good]).status).toBe('ready');
+  expect(matchCityReference(dest,[{...good,active:false}]).status).toBe('inactive');
+  expect(matchCityReference(dest,[{...good,slug:'wrong-slug'}]).status).toBe('conflict');
+  expect(matchCityReference(dest,[{...good,slug:'wrong-slug'},{...good,id:'2',name:'Other'}]).status).toBe('conflict');
 });

@@ -1,5 +1,5 @@
 import {requireSupabase} from '../lib/supabase';
-import type {ReservationRow} from '../lib/adminReservations';
+import {lastCallbackMinute,type ReservationRow} from '../lib/adminReservations';
 
 const basic='id,reference_code,listing_name,guest_name,guest_email,visit_date,guest_count,notes,status,created_at,updated_at';
 const structured=basic+',guest_phone,visit_time';
@@ -12,9 +12,10 @@ export async function loadAdminReservations(status='',offset=0,signal?:AbortSign
   if(table==='bookings')query=query.eq('listing_type','restaurant');
   if(reference)query=query.eq('reference_code',reference);
   else if(!includeTests)query=query.not('guest_name','ilike','TEST ONLY%').not('listing_name','ilike','TEST ONLY%');
-  if(status)query=query.eq('status',status);
-  if(status==='PENDING'){
-   if(table==='admin_restaurant_call_queue')query=query.order('callback_deferred').order('call_priority_at');
+  const scheduled=status==='SCHEDULED';
+  if(status)query=query.eq('status',scheduled?'PENDING':status);
+  if(status==='PENDING'||scheduled){
+   if(table==='admin_restaurant_call_queue')query=query.eq('callback_deferred',scheduled).order('call_priority_at');
    else{
     query=query.order('visit_date');
     if(fields===structured)query=query.order('visit_time',{nullsFirst:false});
@@ -27,6 +28,7 @@ export async function loadAdminReservations(status='',offset=0,signal?:AbortSign
  let callbacksAvailable=true;
  if(result.error&&['42P01','PGRST205'].includes(result.error.code)){
   callbacksAvailable=false;
+  if(status==='SCHEDULED')return {rows:[] as ReservationRow[],total:0,callbacksAvailable};
   result=await run('bookings',structured);
   if(result.error&&['42703','PGRST204'].includes(result.error.code))result=await run('bookings',basic);
  }
@@ -35,6 +37,9 @@ export async function loadAdminReservations(status='',offset=0,signal?:AbortSign
 }
 
 export async function scheduleCallback(row:ReservationRow,callbackAt:string){
+ if(row.status!=='PENDING')throw Error('INVALID_TRANSITION');
+ const when=Date.parse(callbackAt),latest=lastCallbackMinute(row);
+ if(!Number.isFinite(when)||when<=Date.now()||(latest!==null&&when>latest))throw Error('INVALID_CALLBACK_TIME');
  const result=await requireSupabase().rpc('schedule_reservation_callback',{
   p_booking_id:row.id,p_callback_at:callbackAt,p_expected_callback_id:row.callback_id??null
  }).select('id,callback_at').abortSignal(AbortSignal.timeout(12000)).single();

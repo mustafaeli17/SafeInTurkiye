@@ -1,7 +1,7 @@
 import {useEffect,useRef,useState} from 'react'
 import {foundationEnabled} from '../lib/foundationConfig'
 import {editorialDiscoveryCopy} from '../lib/editorialDiscoveryCopy'
-import {trackBusinessEvent} from '../lib/businessEvents'
+import {impressionThreshold,isBusinessCardVisible,trackBusinessEvent} from '../lib/businessEvents'
 import type {loadCitySponsors} from '../repositories/sponsorRepository'
 
 type Cards=Awaited<ReturnType<typeof loadCitySponsors>>
@@ -34,12 +34,12 @@ export default function SponsoredBusinesses({context,lang,city}:{context:'city';
   const observer=new IntersectionObserver(entries=>{
    for(const entry of entries){
     const key=(entry.target as HTMLElement).dataset.businessKey
-    if(key&&entry.intersectionRatio>=0.5){
+    if(key&&isBusinessCardVisible(entry)){
      observer.unobserve(entry.target)
      trackBusinessEvent(key,'impression',context)
     }
    }
-  },{threshold:0.5})
+  },{threshold:impressionThreshold})
   container.current.querySelectorAll('a[data-business-key]').forEach(link=>observer.observe(link))
   return()=>observer.disconnect()
  },[result,city,context])

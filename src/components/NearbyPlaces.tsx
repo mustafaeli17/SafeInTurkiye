@@ -22,7 +22,7 @@ import { fetchGoogleNearby } from '../services/googleNearby'
 import GooglePlacePhoto from './GooglePlacePhoto'
 import RestaurantRequest from './RestaurantRequest'
 import TransitAddressInput, { type DiscoveryPlace as TransitPlace } from './DiscoveryAddressInput'
-import {trackBusinessEvent} from '../lib/businessEvents'
+import {impressionThreshold,isBusinessCardVisible,trackBusinessEvent} from '../lib/businessEvents'
 import {foundationEnabled} from '../lib/foundationConfig'
 import { searchDestinations, directionsText } from '../lib/searchDestinations'
 import {useBrowserLocation,updateLocationQuery} from '../lib/browserNavigation'
@@ -283,7 +283,15 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
   const filtersCopy=discoveryFilterCopy[locale]??discoveryFilterCopy.en
   useEffect(()=>{
     if(!foundationEnabled||!eventRoot.current||!('IntersectionObserver' in window))return
-    const observer=new IntersectionObserver(items=>{for(const item of items){const key=(item.target as HTMLElement).dataset.businessKey;if(item.isIntersecting&&key&&!seenEvents.current.has(key)){seenEvents.current.add(key);trackBusinessEvent(key,'impression',eventContext)}}},{threshold:0.5})
+    const observer=new IntersectionObserver(items=>{
+      for(const item of items){
+        const key=(item.target as HTMLElement).dataset.businessKey
+        if(key&&isBusinessCardVisible(item)&&!seenEvents.current.has(key)){
+          seenEvents.current.add(key)
+          trackBusinessEvent(key,'impression',eventContext)
+        }
+      }
+    },{threshold:impressionThreshold})
     eventRoot.current.querySelectorAll('[data-business-key]').forEach(node=>observer.observe(node))
     return()=>observer.disconnect()
   },[result,editorial,limit,detailId,eventContext])

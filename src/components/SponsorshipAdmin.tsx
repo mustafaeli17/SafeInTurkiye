@@ -1,6 +1,7 @@
 import {useEffect,useRef,useState} from 'react'
 import {requireSupabase} from '../lib/supabase'
 import {catalogWebsite} from '../lib/catalogLinks'
+import {normalizeSearch} from '../lib/catalog'
 import {contextNames,metricNames,placementContextPath,placementDateInput,placementDateLabel,placementStatus,placementTimestamp,sponsorContexts,statusNames} from '../lib/sponsorship'
 import type {Placement,SponsorContext} from '../lib/sponsorship'
 import {loadSponsorInventory,readPlacementCounts,saveSponsorPlacement} from '../repositories/sponsorRepository'
@@ -100,7 +101,7 @@ export default function SponsorshipAdmin({onDirtyChange}:{onDirtyChange?:(dirty:
   const business=businesses.get(businessKey(row.business_kind,row.business_id)),city=cities.get(business?.city_id??'')
   const eligibleHere=sponsorContexts(business,city).includes(row.context)
   return {row,business,city,eligibleHere,state:placementStatus(row,eligibleHere,now)}
- }).filter(({row,business,city,state})=>(!status||state===status)&&[business?.name,city?.name,contextNames[row.context],row.business_id].join(' ').toLocaleLowerCase('tr').includes(search.trim().toLocaleLowerCase('tr')))
+ }).filter(({row,business,city,state})=>(!status||state===status)&&normalizeSearch([business?.name,city?.name,contextNames[row.context],row.business_id].join(' ')).includes(normalizeSearch(search)))
   .sort((a,b)=>Date.parse(b.row.starts_at)-Date.parse(a.row.starts_at)||a.row.id.localeCompare(b.row.id))
  const busy=loading||saving
  return <section className="admin-panel sponsor-admin">
@@ -135,8 +136,8 @@ export default function SponsorshipAdmin({onDirtyChange}:{onDirtyChange?:(dirty:
      {!eligibleHere&&<p>Bu işletme ve yayın alanı şu anda ziyaretçiye gösterilemiyor.</p>}
      <div className="sponsor-links">{path&&<a href={path} target="_blank" rel="noopener noreferrer">Yayın alanını aç ↗</a>}{business&&sponsorContexts(business,city).length>0&&<a href={'/'+business.kind+'/'+business.slug} target="_blank" rel="noopener noreferrer">CMS işletme sayfası ↗</a>}
       {source&&<a href={source} target="_blank" rel="noopener noreferrer">İşletme kaynağı ↗</a>}</div>
-     <div className="sponsor-actions"><button type="button" className="admin-button" disabled={busy} onClick={()=>discard.protect(()=>openForm(row))}>Düzenle</button>
-      <button type="button" className="admin-button" disabled={busy||!!draft||!row.active&&!eligibleHere} onClick={()=>void commit(row,{active:!row.active},false)}>{row.active?'Duraklat':'Etkinleştir'}</button></div>
+     <div className="sponsor-actions"><button type="button" className="admin-button" disabled={busy} onClick={()=>discard.protect(()=>openForm(row))}>{state==='expired'?'Tarihleri düzenle':'Düzenle'}</button>
+      {state!=='expired'&&<button type="button" className="admin-button" disabled={busy||!!draft||!row.active&&!eligibleHere} onClick={()=>void commit(row,{active:!row.active},false)}>{row.active?'Duraklat':'Etkinleştir'}</button>}</div>
      <PlacementCounts key={[row.business_id,row.business_kind,row.context,row.starts_at,row.ends_at].join('/')} row={row}/>
     </article>
    })}</>}

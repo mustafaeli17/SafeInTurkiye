@@ -1,5 +1,12 @@
 import {afterEach,beforeEach,expect,it,vi} from 'vitest'
 import handler from '../../api/business-events'
+import {isBusinessCardVisible} from '../lib/businessEvents'
+it('records card visibility only when at least half the card intersects the viewport',()=>{
+ expect(isBusinessCardVisible({isIntersecting:true,intersectionRatio:0.01})).toBe(false)
+ expect(isBusinessCardVisible({isIntersecting:true,intersectionRatio:0.499})).toBe(false)
+ expect(isBusinessCardVisible({isIntersecting:true,intersectionRatio:0.5})).toBe(true)
+ expect(isBusinessCardVisible({isIntersecting:false,intersectionRatio:0})).toBe(false)
+})
 const fetchMock=vi.fn()
 beforeEach(()=>{vi.stubGlobal('fetch',fetchMock);vi.stubEnv('BUSINESS_EVENT_ORIGINS','http://127.0.0.1:5193');vi.stubEnv('SUPABASE_URL','https://test.invalid');vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY','test-only');fetchMock.mockResolvedValue({ok:true})})
 afterEach(()=>{vi.unstubAllGlobals();vi.unstubAllEnvs()})
