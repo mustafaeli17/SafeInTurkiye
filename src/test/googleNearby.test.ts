@@ -20,7 +20,7 @@ describe('Google Places boundary', () => {
     const rows = parseGooglePlaces(payload, {lat:41,lng:29}, 'restaurant', Infinity).places
     expect(rows.map(row => row.cityName)).toEqual(['Antalya',undefined,undefined])
   })
-  it('retrieves the province in the original place search for itinerary categories', async () => {
+  it('retrieves the province in the original place search for discovery categories that use city context', async () => {
     vi.stubEnv('GOOGLE_PLACES_API_KEY', 'test-only')
     const upstream = vi.fn().mockResolvedValue({ok:true, json:async () => ({places:[]})})
     vi.stubGlobal('fetch', upstream)

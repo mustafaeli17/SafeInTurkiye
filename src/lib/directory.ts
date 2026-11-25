@@ -1,8 +1,9 @@
 import { readLanguagePreference } from './languagePreference';
-import { safeWebsite } from '../services/nearbyPlaces';
+import { isValidCenter,safeWebsite,type NearbyCenter } from '../services/nearbyPlaces';
 import {navigateTo} from './browserNavigation';
 export interface DirectoryEntry {
   id:string; kind:string; slug:string; name:string; city:string;
+  coordinates?:NearbyCenter; googlePlaceId?:string;
   description:Record<string,string>; website:string; sourceUrl:string;
   lastVerified:string|null; gallery:string[]; imageUrl?:string; address?:string; phone?:string; openingHours?:string; category?:string;
 }
@@ -15,6 +16,8 @@ export function registerPublishedEntry(row: {id:string;name:string;description?:
   const website=safeWebsite(row.website)??'';
   const metadata=row.editorial_metadata??{};
   const entry:DirectoryEntry={id:row.id,kind,slug:row.public_slug??`${slugName}--${row.id}`,name:row.name,city:row.city?.name??metadata.city??'',description:{...metadata.description,en:row.description??''},website,sourceUrl:safeWebsite(metadata.sourceUrl)??website,lastVerified:metadata.lastVerified??null,gallery:Array.isArray(metadata.gallery)?metadata.gallery.filter(value=>typeof value==='string'):[],address:row.address??undefined,phone:metadata.phone,openingHours:metadata.openingHours,category:metadata.category};
+  if(metadata.coordinates && isValidCenter(metadata.coordinates)) entry.coordinates={lat:metadata.coordinates.lat,lng:metadata.coordinates.lng};
+  if(typeof metadata.googlePlaceId==='string' && /^[A-Za-z0-9_-]{1,250}$/.test(metadata.googlePlaceId)) entry.googlePlaceId=metadata.googlePlaceId;
   if(row.image_url){try{const image=new URL(row.image_url);if(image.protocol==='https:'&&!image.username&&!image.password)entry.imageUrl=image.href;}catch{/* Invalid image URLs are not rendered. */}}
   const existing=directory.findIndex(item=>item.id===row.id);
   if(existing>=0)directory[existing]=entry;else directory.push(entry);

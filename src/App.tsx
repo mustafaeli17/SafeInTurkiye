@@ -41,10 +41,7 @@ const NearbyPlacesComponent=lazy(()=>import('./components/NearbyPlaces'));
 function NearbyPlaces(props:ComponentProps<typeof NearbyPlacesComponent>){return <Suspense fallback={<PageLoading lang={props.lang}/>}><NearbyPlacesComponent {...props}/></Suspense>;}
 import PageLoading from './components/PageLoading';
 const SafeRouteMap=lazy(()=>import('./components/TaxiRouteMap'));
-const FirstVisitPlan=lazy(()=>import('./components/FirstVisitPlan'));
-import {dayPlanTitle} from './components/FirstVisitPlan/titles';
-import {plannerHref} from './components/FirstVisitPlan/plannerCopy';
-const DayPlanner=lazy(()=>import('./components/FirstVisitPlan/DayPlanner'));
+const CityWalkGuide=lazy(()=>import('./components/CityWalkGuide'));
 import PhotoCredits from './components/PhotoCredits';
 import SponsoredBusinesses from './components/SponsoredBusinesses';
 import TravelHome from './components/TravelHome';
@@ -64,6 +61,7 @@ import { saveLanguagePreference } from './lib/languagePreference';
 import { cityPath,publicCities } from './lib/publicRoutes';
 import { regionalDescription } from './lib/regionalDescription';
 import { sectionFromPath,sectionPath,transferIntent,type Section } from './lib/sectionNavigation';
+import {changedTaxiVenue,readVenueDestination} from './lib/venueDestination';
 import {mentionedSearchCity} from './services/searchCities';
 import {homeSearchDestination,wantsNearby} from './services/homeSearch';
 import {cityHighlightHref,highlightDescription} from './lib/cityHighlights';
@@ -311,7 +309,6 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
   const queryCity=publicCities.find(c=>c.slug===regionSlug);
   const cityRoute=browserPath.replace(/\/$/,'');
   const selectedCityName=publicCities.find(c=>cityPath(c.name)===cityRoute)?.name??queryCity?.name??'İstanbul';
-  const dayPlannerOpen=activeTab==='city' && new URLSearchParams(browserQuery).get('view')==='plan';
   const setActiveTab = (tab:typeof activeTab) => {
     setAdminOpen(tab==='admin');
     if(tab==='admin'){if(window.location.hash!=='#admin')window.location.assign('#admin');return;}
@@ -375,8 +372,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
     const path=activeTab==='city'?cityPath(selectedCityName):sectionPath(activeTab);
     const meta=searchPage(path,lang);
     updateSearchHead(path,lang,meta.title,meta.description,searchPageSchema(path,lang));
-    if(dayPlannerOpen)document.title=dayPlanTitle(lang)+' · '+cityDisplayName(selectedCityName,lang)+' | SafeInTürkiye';
-  }, [lang,activeTab,selectedCityName,dayPlannerOpen]);
+  }, [lang,activeTab,selectedCityName]);
 
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authEmail, setAuthEmail] = useState('');
@@ -467,6 +463,21 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
   }, [taxiOriginCoords, taxiDestCoords, taxiClass, detectedTaxiCity]);
 
   const taxiOriginLookupId = useRef(0);
+  const lastTaxiVenue = useRef<string|null>(null);
+  useEffect(()=>{
+    const change=changedTaxiVenue(activeTab,browserQuery,lastTaxiVenue.current);
+    if(!change) return;
+    const {destination,signature}=change;
+    lastTaxiVenue.current=signature;
+    taxiOriginLookupId.current++;
+    setIsTaxiLocating(false);
+    setTaxiSelections({});
+    setTaxiOriginText('');
+    setTaxiOriginCoords(null);
+    setDetectedTaxiCity('');
+    setTaxiDestText(destination?.label??'');
+    setTaxiDestCoords(destination);
+  },[activeTab,browserQuery]);
   const handleTaxiCurrentLocation = () => {
     const lookupId = ++taxiOriginLookupId.current;
     if (!navigator.geolocation) {
@@ -593,15 +604,6 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
   };
 
   const [activityCategory, setActivityCategory] = useState('All');
-  const planNavigationLink = () => <a href={plannerHref(selectedCityName,lang)}
-    className="flex min-h-11 xl:min-h-0 items-center gap-2 rounded-xl bg-slate-50 xl:bg-white px-3 py-2 text-start font-bold text-slate-700 hover:bg-sky-50"
-    onClick={event => {
-      if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
-      event.preventDefault();
-      setMobileMenuOpen(false);
-      setMoreDropdownOpen(false);
-      navigateTo(event.currentTarget.href);
-    }}><CalendarDays className="w-4 h-4 text-[#087FFF]" aria-hidden="true"/>{dayPlanTitle(lang)}</a>;
 
   const regionalCity=cityGuides.find(city=>city.name===selectedCityName);
   const localizedGaziantep = regionalCity?.slug==='gaziantep' ? gaziantepCopy[lang as keyof typeof gaziantepCopy] : undefined;
@@ -713,7 +715,6 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
 
                 {moreDropdownOpen && (
                   <div className="absolute top-full right-0 mt-1 w-44 bg-white border border-slate-200 rounded-2xl shadow-xl p-1.5 z-50 flex flex-col space-y-0.5 text-[12px]">
-                    {planNavigationLink()}
                     <button onClick={() => { setActiveTab('stay'); setMoreDropdownOpen(false); }} className="w-full text-left px-3 py-2 rounded-xl hover:bg-sky-50 text-slate-700 font-bold flex items-center gap-2">
                       <Hotel className="w-4 h-4 text-[#087FFF]" /> {tr('hotels')}
                     </button>
@@ -779,18 +780,17 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
             {([
               ['assistant', tr('assistant')], ['taxi', tr('taxi')], ['transit', tr('transit')], ['currency', tr('currency')], ['city', tr('cityWeather')], ['nearme', tr('nearMe')], ['stay', tr('hotels')], ['food', tr('dining')], ['experiences', tr('activities')], ['tours',toursLabel(lang)], ['safety', page('safety')],
             ] as const).map(([tab, label]) => <button key={tab} type="button" onClick={() => { setActiveTab(tab); setMobileMenuOpen(false); }} className={`min-h-11 rounded-xl px-3 py-2 text-start ${activeTab === tab ? 'bg-sky-50 text-[#087FFF]' : 'bg-slate-50 text-slate-700'}`}>{label}</button>)}
-            {planNavigationLink()}
             {isStaff && <button type="button" onClick={() => { setActiveTab('admin'); setMobileMenuOpen(false); }} className="min-h-11 rounded-xl px-3 py-2 text-start bg-slate-900 text-white">CMS Studio</button>}
           </nav>}
         </header>
         <div id="page-content" tabIndex={-1}>
-        {activeTab!=='home' && activeTab!=='taxi' && <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-3"><HomeButton lang={lang} currentPage={({assistant:tr('assistant'),transit:tr('transit'),currency:tr('currency'),city:dayPlannerOpen?dayPlanTitle(lang):cityDisplayName(selectedCityName,lang),nearme:tr('nearMe'),stay:page('hotelsTitle'),food:page('diningTitle'),experiences:page('activitiesTitle'),tours:toursLabel(lang),safety:page('safety'),admin:'CMS Studio'} as Record<string,string>)[activeTab]} onClick={()=>{setActiveTab('home');setMobileMenuOpen(false);window.scrollTo(0,0);}}/></div>}
+        {activeTab!=='home' && activeTab!=='taxi' && <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-3"><HomeButton lang={lang} currentPage={({assistant:tr('assistant'),transit:tr('transit'),currency:tr('currency'),city:cityDisplayName(selectedCityName,lang),nearme:tr('nearMe'),stay:page('hotelsTitle'),food:page('diningTitle'),experiences:page('activitiesTitle'),tours:toursLabel(lang),safety:page('safety'),admin:'CMS Studio'} as Record<string,string>)[activeTab]} onClick={()=>{setActiveTab('home');setMobileMenuOpen(false);window.scrollTo(0,0);}}/></div>}
         {activeTab!=='home'&&activeTab!=='tours'&&searchQuery&&!(new URLSearchParams(browserQuery).has('place')&&['stay','food','experiences','nearme','currency'].includes(activeTab))&&<SearchContext query={searchQuery} city={new URLSearchParams(browserQuery).get('city')??undefined} transfer={new URLSearchParams(browserQuery).get('intent')==='transfer'} resultsSearch={new URLSearchParams(browserQuery).get('lookup')==='1'} lang={lang}/>}
 
         {/* ====================================================================
             PAGE 1: EXPLORE
         ==================================================================== */}
-        {activeTab==='city'&&!dayPlannerOpen&&<SponsoredBusinesses context="city" city={selectedCityName} lang={lang}/>}
+        {activeTab==='city'&&<SponsoredBusinesses context="city" city={selectedCityName} lang={lang}/>}
         {activeTab === 'home' && <TravelHome
           lang={lang}
           initialQuery={searchQuery}
@@ -912,7 +912,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
         {/* ====================================================================
             PAGE 4: TOPLU TAŞIMA (TRANSIT - DÜZELTİLDİ VE AKTİF)
         ==================================================================== */}
-        {activeTab === 'transit' && <Suspense fallback={<PageLoading lang={lang}/>}><TransitPlanner lang={lang} initialCity={selectedCityName} onCityChange={city=>updateLocationQuery({city:destinationSlug(city)})}/></Suspense>}
+        {activeTab === 'transit' && <Suspense fallback={<PageLoading lang={lang}/>}><TransitPlanner lang={lang} initialCity={selectedCityName} destination={readVenueDestination(browserQuery)} onCityChange={city=>updateLocationQuery({city:destinationSlug(city),to:null,toLat:null,toLng:null,toPlaceId:null})}/></Suspense>}
 
         {/* ====================================================================
             PAGE 5: EXCHANGE (CANLI KURLAR + YAKINLARDAKİ DÖVİZCİLER - DÜZELTİLDİ)
@@ -926,8 +926,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
         {/* ====================================================================
             PAGE 6: CITIES & WEATHER
         ==================================================================== */}
-        {dayPlannerOpen && <Suspense fallback={<PageLoading lang={lang}/>}><DayPlanner key={selectedCityName} city={selectedCityName} lang={lang} query={browserQuery}/></Suspense>}
-        {activeTab === 'city' && !dayPlannerOpen && (
+        {activeTab === 'city' && (
           <main className="reference-page reference-city city-guide-page mx-auto px-4 sm:px-6 pb-12">
             <div className="city-guide-picker" aria-label={tr('cityWeather')}>
               {publicCities.map(({name:cname}) => (
@@ -953,8 +952,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
               </div>
             </div>
 
-            <nav className="reference-city-nav" aria-label={currentCityInfo.name} data-has-plan>
-              <a className="city-nav-plan" href={plannerHref(selectedCityName,lang)}><CalendarDays size={23} aria-hidden="true"/><span>{dayPlanTitle(lang)}</span></a>
+            <nav className="reference-city-nav" aria-label={currentCityInfo.name}>
  {([{tab:'experiences',label:tr('activities'),icon:CalendarDays},{tab:'stay',label:tr('hotels'),icon:Hotel},{tab:'food',label:tr('dining'),icon:Utensils},{tab:'tours',label:toursLabel(lang),icon:Compass},{tab:'transit',label:tr('transit'),icon:BusFront},{tab:'safety',label:page('safety'),icon:ShieldCheck}] as const).map(item=><button key={item.tab} onClick={()=>setActiveTab(item.tab)}><item.icon size={23} aria-hidden="true"/><span>{item.label}</span></button>)}
  </nav>
 
@@ -988,7 +986,7 @@ export default function App({initialLanguage}:{initialLanguage?:string} = {}) {
               </div>
             </section>
 
-            <div className="city-guide-practical"><Suspense fallback={<PageLoading lang={lang}/>}><TransportCardGuide city={selectedCityName} lang={lang} /><FirstVisitPlan city={selectedCityName} lang={lang}/></Suspense></div>
+            <div className="city-guide-practical"><Suspense fallback={<PageLoading lang={lang}/>}><TransportCardGuide city={selectedCityName} lang={lang} /><CityWalkGuide city={selectedCityName} lang={lang}/></Suspense></div>
 
           </main>
         )}

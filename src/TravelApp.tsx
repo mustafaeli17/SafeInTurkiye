@@ -3,6 +3,7 @@ import { useEffect, useState, lazy, Suspense } from 'react';
 import App from './App';
 import {sectionFromPath} from './lib/sectionNavigation';
 import {navigateTo,useBrowserLocation} from './lib/browserNavigation';
+import {retiredPlannerLocation} from './lib/retiredPlannerLocation';
 import {retiredDirectoryDestination} from './lib/retiredDirectory';
 import SiteInformation from './components/SiteInformation';
 import {parseLocalePath} from './lib/searchLocales';
@@ -14,6 +15,10 @@ const DirectoryDetail=lazy(()=>import('./components/DirectoryDetail'));
 export default function TravelApp() {
   const location=useBrowserLocation();
   const {path,lang:language}=parseLocalePath(location.split('?')[0]);
+  useEffect(()=>{
+    const destination=retiredPlannerLocation(location+window.location.hash);
+    if(destination)navigateTo(destination,{replace:true,scroll:false,state:window.history.state});
+  },[location]);
   const [remote,setRemote]=useState<{path:string;entry?:DirectoryEntry;error?:boolean}|null>(null);
   const cmsPattern=/^(?:\/tr)?\/(hotels|restaurants|activities)\/([a-z0-9-]+)\/?$/;
   const legacyPattern=/^\/(hotels|restaurants|activities)\/[a-z0-9-]+--([a-f0-9-]{36})\/?$/;

@@ -5,22 +5,23 @@ import {formatTransitDuration} from '../lib/transitDuration'
 import TransitAddressInput, {type TransitPlace} from './TransitAddressInput'
 import {resolveTransitEndpoint} from '../lib/transitEndpoint'
 import {peekTransitHandoff,clearTransitHandoff} from '../lib/transitHandoff'
+import type {VenueDestination} from '../lib/venueDestination'
 import GoogleDirectionsMap from './GoogleDirectionsMap'
 import { requestTransitLocation, transitDeparture, transitFare, transitRequestTime, transitRoutes,transitSummary,transitStages,transitTime,transferCount,transitDurationCopy, type TransitRoute } from '../lib/transit'
 import {transitComparisonCopy} from '../lib/transitComparisonCopy'
 import { transitCopy, transitVehicle } from '../lib/transitCopy'
 
-export default function TransitJourney({ lang, city, examples, onShowLines, linesLabel }: { lang: string; city:string; examples:[string,string]; onShowLines?:()=>void; linesLabel?:string }) {
+export default function TransitJourney({ lang, city, examples, onShowLines, linesLabel, venue }: { lang: string; city:string; examples:[string,string]; onShowLines?:()=>void; linesLabel?:string; venue?:VenueDestination|null }) {
   const locale = lang.toLowerCase() in transitCopy ? lang.toLowerCase() : 'en'
   const t = transitCopy[locale]
   const compare=transitComparisonCopy[locale]??transitComparisonCopy.en
-  const [handoff] = useState(peekTransitHandoff)
+  const [handoff] = useState(()=>venue ? null : peekTransitHandoff())
   useEffect(() => clearTransitHandoff(), [])
   const originSelection = useRef<Promise<TransitPlace|null>|null>(null)
   const destinationSelection = useRef<Promise<TransitPlace|null>|null>(null)
-  const [origin, setOrigin] = useState(handoff?.origin.label ?? ''), [destination, setDestination] = useState(handoff?.destination.label ?? '')
+  const [origin, setOrigin] = useState(handoff?.origin.label ?? ''), [destination, setDestination] = useState(venue?.label ?? handoff?.destination.label ?? '')
   const [coordinates, setCoordinates] = useState<{lat:number;lng:number} | null>(handoff?.origin ?? null)
-  const [destinationCoordinates,setDestinationCoordinates]=useState<{lat:number;lng:number}|null>(handoff?.destination ?? null)
+  const [destinationCoordinates,setDestinationCoordinates]=useState<{lat:number;lng:number}|null>(venue ?? handoff?.destination ?? null)
   const [scheduled,setScheduled]=useState(false)
   const timing:Record<string,[string,string]>={es:['Ahora','Elegir otra hora'],en:['Now','Choose another time'],tr:['Şimdi','Başka saat seç'],de:['Jetzt','Andere Uhrzeit wählen'],fr:['Maintenant','Choisir une autre heure'],ar:['الآن','اختر وقتًا آخر'],ru:['Сейчас','Выбрать другое время'],zh:['现在','选择其他时间']}
   const [departure, setDeparture] = useState(''), [preference, setPreference] = useState('RECOMMENDED')

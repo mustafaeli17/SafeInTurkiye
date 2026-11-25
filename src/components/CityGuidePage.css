@@ -51,15 +51,3 @@
 .city-guide-place h3 a::after{content:"";position:absolute;inset:0}
 .city-guide-place:has(h3 a:focus-visible){outline:3px solid #087fff;outline-offset:3px}
 .city-guide-place-photo figcaption{position:relative;z-index:1}
-
-.city-guide-page .reference-city-nav[data-has-plan] { grid-template-columns: repeat(7, minmax(0, 1fr)); }
-.city-nav-plan { display: flex; gap: 8px; align-items: center; justify-content: center; min-height: 44px; padding: 5px 10px; text-align: center; font-size: 13px; font-weight: 650; color: #105c9e; border-inline-end: 1px solid #d6e4f8; }
-.city-nav-plan:focus-visible { outline: 3px solid #087fff; outline-offset: 2px; }
-@media (max-width: 800px) { .city-nav-plan { flex-direction: column; font-size: 12px; } }
-@media (max-width: 640px) {
-  .city-guide-page .reference-city-nav[data-has-plan] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .city-nav-plan { grid-column: 1/-1; flex-direction: row; border-inline-end: 0; border-bottom: 1px solid #d6e4f8; }
-  .city-guide-page .reference-city-nav[data-has-plan] button { border-inline-end: 1px solid #d6e4f8; }
-  .city-guide-page .reference-city-nav[data-has-plan] button:nth-child(3n+1) { border-inline-end: 0; }
-  .city-guide-page .reference-city-nav[data-has-plan] button:nth-child(4) { border-bottom: 1px solid #e2ecf8; }
-}

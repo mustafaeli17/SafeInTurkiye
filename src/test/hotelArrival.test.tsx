@@ -56,6 +56,18 @@ describe('Istanbul hotel arrival',()=>{
     const call=vi.mocked(fetch).mock.calls.find(([url])=>url==='/api/transit')!
     expect(JSON.parse(String(call[1]?.body))).toMatchObject({origin:arrivalAirports.IST.point,destination:hotel.coordinates,language:'en'})
   })
+  it('offers a driver card for a hotel outside Istanbul, without running an airport comparison',()=>{
+    const fetcher=providers({}, {})
+    const outside={...hotel,cityName:'Antalya',address:'Test oteli, Antalya',coordinates:{lat:36.88,lng:30.70}}
+    const html=renderToStaticMarkup(<HotelArrival hotel={outside} lang="tr"/>)
+    expect(html).toContain(outside.address)
+    expect(html).toContain('Adresi kopyala')
+    expect(html).not.toContain('SAW')
+    expect(html).toContain('Google Maps')
+    for(const incomplete of [{name:' '},{address:' '},{category:'restaurant' as const}])
+      expect(renderToStaticMarkup(<HotelArrival hotel={{...outside,...incomplete}} lang="tr"/>)).toBe('')
+    expect(fetcher).not.toHaveBeenCalled()
+  })
   it('keeps taxi results when transit fails and identifies the current planning fallback',async()=>{
     vi.useFakeTimers();vi.setSystemTime(new Date('2026-11-22T10:00:00Z'))
     vi.mocked(getCurrentTaxiTariffs).mockRejectedValue(new Error('offline'))

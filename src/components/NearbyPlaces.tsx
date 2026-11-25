@@ -1,5 +1,6 @@
 import RestaurantDetail from './RestaurantDetail'
-import {PlaceDayPlan} from './FirstVisitPlan/SaveToDayPlan'
+import PlaceTravelLinks from './PlaceTravelLinks'
+import {placeGoogleId} from '../lib/placeDirections'
 import HotelArrival from './HotelArrival'
 import NearMeResults from './NearMeResults'
 import DirectoryFilters from './DirectoryFilters'
@@ -403,8 +404,8 @@ export default function NearbyPlaces({ kind, lang = 'en', center: initialCenter,
             {place.telephoneUrl&&<a className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-blue-200 px-3" href={place.telephoneUrl}><Phone size={17} aria-hidden="true"/><span className="sr-only">{text('Telefon','Phone')} </span><bdi>{place.phone}</bdi></a>}
             {place.website&&<a className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-blue-200 px-3" href={place.website} data-event="website" target="_blank" rel="noopener noreferrer"><Globe size={17} aria-hidden="true"/>{text('Web sitesi','Website')}</a>}
           </div>}
-          {detailId===place.id && <PlaceDayPlan place={place} lang={locale}/>}
           {hotelDetail && detailId===place.id && <HotelArrival hotel={place} lang={locale}/>}
+          {detailId===place.id && (place.category==='hotel' || place.category==='cafe' || matchesDiscoveryCategory(place,'activity')) && <PlaceTravelLinks lang={locale} city={place.cityName} fallbackCity={selectedCity} name={place.name} coordinates={place.coordinates} googlePlaceId={placeGoogleId(place)}/>}
           <div className="directory-detail-photo">{isEditorialPlace(place)?<><span className="mb-2 block text-xs font-semibold text-slate-500">{place.editorial.sponsored?editorialText[1]:editorialText[0]}</span><EditorialPlacePhoto place={place} expanded={detailId===place.id} onOpen={()=>openPlace(place.id)} lang={locale}/></>:<GooglePlacePhoto key={place.photo?.url ?? place.id} place={place} onOpen={detailId===place.id?undefined:()=>openPlace(place.id)} onExpired={refreshExpiredPhotos} />}</div>
           <dl className="mt-3 space-y-2.5 text-xs leading-relaxed text-slate-600">
             {place.address && <div className="flex gap-2"><dt className="shrink-0"><MapPin className="mt-0.5 h-4 w-4" /><span className="sr-only">{text('Adres', 'Address')}</span></dt><dd className="break-words">{place.address}</dd></div>}

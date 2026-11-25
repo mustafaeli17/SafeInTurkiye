@@ -1,5 +1,6 @@
 import {useEffect, useId, useRef, useState} from 'react'
-import {CarFront, ExternalLink, Languages, PlaneLanding, TrainFront, X} from 'lucide-react'
+import {CarFront, ExternalLink, PlaneLanding, TrainFront} from 'lucide-react'
+import HotelAddressCard from './HotelAddressCard'
 import type {NearbyPlaceRecord} from '../services/nearbyPlaces'
 import {arrivalAirports, arrivalAirportSource, comparableHotel, loadHotelArrival, type ArrivalAirport, type HotelArrivalResult} from '../lib/hotelArrival'
 import {hotelArrivalCopy} from '../lib/hotelArrivalCopy'
@@ -68,13 +69,12 @@ export function HotelArrivalComparison({hotel,lang,result,airport,travellers}:Co
 }
 
 function ArrivalPanel({hotel,lang}:Props) {
-  const t = hotelArrivalCopy[lang], heading = useId(), dialogTitle = useId()
+  const t = hotelArrivalCopy[lang], heading = useId()
   const [airport,setAirport] = useState<ArrivalAirport>('IST')
   const [travellers,setTravellers] = useState(1)
   const [result,setResult] = useState<HotelArrivalResult|null>(null)
   const [busy,setBusy] = useState(false)
   const active = useRef<AbortController|null>(null)
-  const driverCard = useRef<HTMLDialogElement>(null)
   useEffect(()=>()=>active.current?.abort(),[])
   function changeAirport(next:ArrivalAirport) {
     active.current?.abort()
@@ -101,7 +101,7 @@ function ArrivalPanel({hotel,lang}:Props) {
   return <section className="hotel-arrival" aria-labelledby={heading} dir={lang==='ar'?'rtl':undefined}>
     <header className="arrival-header">
       <h2 id={heading}><PlaneLanding size={24} aria-hidden="true"/>{t.title}</h2>
-      <button type="button" className="arrival-driver" aria-haspopup="dialog" onClick={()=>driverCard.current?.showModal()}><Languages size={17} aria-hidden="true"/>{t.driver}</button>
+      <HotelAddressCard name={hotel.name} address={hotel.address} google={hotel.id.startsWith('google:')} lang={lang}/>
     </header>
     <p className="arrival-intro">{t.disclosure}</p>
     <form onSubmit={compare} className="arrival-controls">
@@ -115,21 +115,12 @@ function ArrivalPanel({hotel,lang}:Props) {
       {result && <HotelArrivalComparison hotel={hotel} lang={lang} airport={airport} result={result} travellers={travellers}/>}
     </div>
     {result && <a className="arrival-airport-source" href={arrivalAirportSource} target="_blank" rel="noopener noreferrer">{t.airport} · Havaist<ExternalLink size={12} aria-hidden="true"/></a>}
-    <dialog ref={driverCard} aria-labelledby={dialogTitle} className="arrival-dialog">
-      <header><h2 id={dialogTitle}>{t.driver}</h2><button type="button" aria-label={t.close} onClick={()=>driverCard.current?.close()}><X size={24} aria-hidden="true"/></button></header>
-      <p>{t.driverHint}</p>
-      <div className="arrival-driver-address" lang="tr" dir="ltr">
-        <p>Lütfen beni bu otele götürür müsünüz?</p>
-        <strong dir="auto">{hotel.name}</strong>
-        <address dir="auto">{hotel.address}</address>
-      </div>
-      {hotel.id.startsWith('google:') && <small dir="ltr" translate="no">Google Maps</small>}
-    </dialog>
   </section>
 }
 
 export default function HotelArrival({hotel,lang}:Props) {
-  if (!comparableHotel(hotel)) return null
+  if (hotel.category!=='hotel') return null
+  if (!comparableHotel(hotel)) return <HotelAddressCard name={hotel.name} address={hotel.address} google={hotel.id.startsWith('google:')} lang={lang}/>
   const locale = Object.hasOwn(hotelArrivalCopy,lang) ? lang : 'en'
   return <ArrivalPanel key={[hotel.id,hotel.coordinates.lat,hotel.coordinates.lng,locale].join('|')} hotel={hotel} lang={locale}/>
 }
