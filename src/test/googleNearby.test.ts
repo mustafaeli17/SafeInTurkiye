@@ -4,7 +4,7 @@ import { parseGooglePlaces, fetchGoogleNearby } from '../services/googleNearby'
 const response = () => ({ status: vi.fn().mockReturnThis(), setHeader: vi.fn(), json: vi.fn() })
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs() })
 describe('Google Places boundary', () => {
-  it('preserves only a Turkish administrative province for restaurant planning even when the search city differs', async () => {
+  it('returns only confirmed Turkish text results, including a named venue outside the biased city', async () => {
     vi.stubEnv('GOOGLE_PLACES_API_KEY', 'test-only')
     const place = {id:'other-city', types:['restaurant'], displayName:{text:'Restaurant'}, location:{latitude:36.9,longitude:30.7}, googleMapsUri:'https://maps.google.com/?cid=1'}
     const components = (country:string) => [{types:['country'],shortText:country},{types:['administrative_area_level_1'],longText:'Antalya'}]
@@ -18,7 +18,7 @@ describe('Google Places boundary', () => {
     const payload = res.json.mock.calls[0][0]
     expect(payload.places[0]).not.toHaveProperty('addressComponents')
     const rows = parseGooglePlaces(payload, {lat:41,lng:29}, 'restaurant', Infinity).places
-    expect(rows.map(row => row.cityName)).toEqual(['Antalya',undefined,undefined])
+    expect(rows.map(row => [row.id,row.cityName])).toEqual([['google:other-city','Antalya']])
   })
   it('retrieves the province in the original place search for discovery categories that use city context', async () => {
     vi.stubEnv('GOOGLE_PLACES_API_KEY', 'test-only')
@@ -96,9 +96,16 @@ describe('Google Places boundary', () => {
     expect(res.json).toHaveBeenCalledWith({provider:'Google Maps',places:[]})
   })
   it('uses Text Search for exchange offices, not an unsupported place type',async()=>{
-    vi.stubEnv('GOOGLE_PLACES_API_KEY','test-only'); const f=vi.fn().mockResolvedValue({ok:true,json:async()=>({})});vi.stubGlobal('fetch',f)
-    await handler({method:'GET',url:'/?lat=37.84&lng=27.84&category=bureau_de_change',headers:{}},response())
+    vi.stubEnv('GOOGLE_PLACES_API_KEY','test-only')
+    const f=vi.fn().mockResolvedValue({ok:true,json:async()=>({places:[
+      {id:'office-tr',addressComponents:[{types:['country'],shortText:'TR'}]},
+      {id:'office-gr',addressComponents:[{types:['country'],shortText:'GR'}]},
+    ]})});vi.stubGlobal('fetch',f)
+    const res=response()
+    await handler({method:'GET',url:'/?lat=37.84&lng=27.84&category=bureau_de_change',headers:{}},res)
     expect(f.mock.calls[0][0]).toContain('searchText')
+    expect(f.mock.calls[0][1].headers['X-Goog-FieldMask']).toContain('places.addressComponents')
+    expect(res.json.mock.calls[0][0].places.map((p:{id:string})=>p.id)).toEqual(['office-tr'])
   })
   it.each(['','91','NaN'])('rejects invalid coordinates %s',async lat=>{
     const f=vi.fn();vi.stubGlobal('fetch',f);const res=response()

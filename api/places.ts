@@ -43,17 +43,18 @@ export default async function handler(req: Request, res: Response) {
   const radius = url.searchParams.get('scope') === 'city' ? 30000 : 2500
   const circle = { center: { latitude: lat, longitude: lng }, radius }
   const exchange = category === 'bureau_de_change'
+  const textSearch = exchange || Boolean(searchText)
   try {
     const languageCode = lang === 'zh' ? 'zh-CN' : lang
     const includedTypes = cuisine ? [cuisine] : types[category]
     const upstream = placeId ? await fetch(`https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?languageCode=${languageCode}`, {
       signal: AbortSignal.timeout(8000),
       headers: { 'X-Goog-Api-Key': key, 'X-Goog-FieldMask': detailFields + ',addressComponents' },
-    }) : await fetch(`https://places.googleapis.com/v1/places:${exchange || searchText ? 'searchText' : 'searchNearby'}`, {
+    }) : await fetch(`https://places.googleapis.com/v1/places:${textSearch ? 'searchText' : 'searchNearby'}`, {
       method: 'POST', signal: AbortSignal.timeout(8000),
       headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': key,
-        'X-Goog-FieldMask': categoriesWithCityContext.has(category) ? searchFields + ',places.addressComponents' : searchFields },
-      body: JSON.stringify(exchange || searchText
+        'X-Goog-FieldMask': textSearch || categoriesWithCityContext.has(category) ? searchFields + ',places.addressComponents' : searchFields },
+      body: JSON.stringify(textSearch
         ? { textQuery: searchText || 'döviz bürosu currency exchange', locationBias: { circle }, ...(searchText && includedTypes?.length === 1 ? { includedType: includedTypes[0], strictTypeFiltering: true } : {}), pageSize: 20, languageCode: lang === 'zh' ? 'zh-CN' : lang }
         : { includedTypes, locationRestriction: { circle }, maxResultCount: 20, rankPreference: 'POPULARITY', languageCode: lang === 'zh' ? 'zh-CN' : lang }),
     })
@@ -64,14 +65,18 @@ export default async function handler(req: Request, res: Response) {
       if (body?.id !== placeId || !withinTurkiye) return res.status(404).json({ error: 'PLACE_UNAVAILABLE' })
       body = { places: [body] }
     }
-    if (!body || typeof body !== 'object' || (body.places !== undefined && !Array.isArray(body.places))) return res.status(503).json({ error: 'INVALID_RESPONSE' })
-    const places = (body.places ?? []).map((place: Record<string, unknown>) => {
+    if (!body || typeof body !== 'object' || Array.isArray(body) || (body.places !== undefined && !Array.isArray(body.places))) return res.status(503).json({ error: 'INVALID_RESPONSE' })
+    const places = (body.places ?? []).flatMap((place: Record<string, unknown>) => {
+      if (!place || typeof place !== 'object') return []
+      const country = addressPart(place.addressComponents, 'country')?.shortText
+      // Text Search only biases location and can return namesakes worldwide.
+      if (country ? country !== 'TR' : textSearch) return []
       const photos = place.photos as { name?: string; authorAttributions?: unknown[]; googleMapsUri?: string }[] | undefined
       const photo = photos?.[0]
       const expires = Date.now() + 15 * 60000
       const photoUrl = photo?.name ? `/api/place-photo?${new URLSearchParams({ name: photo.name, expires: String(expires), signature: photoSignature(photo.name, expires, key) })}` : null
       const { photos: omittedPhotos, addressComponents, ...rest } = place
-      const province = addressPart(addressComponents, 'country')?.shortText === 'TR' ? addressPart(addressComponents, 'administrative_area_level_1')?.longText : undefined
+      const province = country === 'TR' ? addressPart(addressComponents, 'administrative_area_level_1')?.longText : undefined
       return { ...rest, ...(typeof province === 'string' && province ? {cityName: province} : {}), photo: photoUrl ? { url: photoUrl, authors: photo?.authorAttributions ?? [], sourceUrl: photo?.googleMapsUri ?? place.googleMapsUri } : null }
     })
     return res.status(200).json({ provider: 'Google Maps', places })

@@ -6,9 +6,11 @@ export function placeGoogleId(place: NearbyPlaceRecord) {
     : place.id.startsWith('google:') ? place.id.slice(7) : undefined
 }
 export function placeDirectionsUrl(place: NearbyPlaceRecord) {
-  const {lat, lng} = place.coordinates
+  return coordinatesDirectionsUrl(place.coordinates, placeGoogleId(place))
+}
+
+export function coordinatesDirectionsUrl({lat,lng}: NearbyPlaceRecord['coordinates'], placeId?:string|null) {
   const params = new URLSearchParams({api: '1', destination: `${lat},${lng}`})
-  const placeId = placeGoogleId(place)
   if (placeId) params.set('destination_place_id', placeId)
   return 'https://www.google.com/maps/dir/?' + params
 }

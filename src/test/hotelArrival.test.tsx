@@ -41,7 +41,9 @@ describe('Istanbul hotel arrival',()=>{
     const fetcher=providers({}, {})
     const html=renderToStaticMarkup(<HotelArrival hotel={hotel} lang="en"/>)
     for(const text of ['IST','SAW','Show the driver',hotel.name,hotel.address,'lang="tr"'])expect(html).toContain(text)
-    expect(renderToStaticMarkup(<HotelArrival hotel={{...hotel,address:null}} lang="en"/>)).toBe('')
+    const withoutAddress=renderToStaticMarkup(<HotelArrival hotel={{...hotel,address:null}} lang="en"/>)
+    expect(withoutAddress).not.toContain('Show the driver')
+    expect(withoutAddress).toContain('/transport?')
     expect(fetcher).not.toHaveBeenCalled()
     expect(getCurrentTaxiTariffs).not.toHaveBeenCalled()
   })
@@ -56,17 +58,26 @@ describe('Istanbul hotel arrival',()=>{
     const call=vi.mocked(fetch).mock.calls.find(([url])=>url==='/api/transit')!
     expect(JSON.parse(String(call[1]?.body))).toMatchObject({origin:arrivalAirports.IST.point,destination:hotel.coordinates,language:'en'})
   })
-  it('offers a driver card for a hotel outside Istanbul, without running an airport comparison',()=>{
+  it('shows the local airport and driver card for an Antalya hotel without fetching routes on open',()=>{
     const fetcher=providers({}, {})
     const outside={...hotel,cityName:'Antalya',address:'Test oteli, Antalya',coordinates:{lat:36.88,lng:30.70}}
     const html=renderToStaticMarkup(<HotelArrival hotel={outside} lang="tr"/>)
     expect(html).toContain(outside.address)
     expect(html).toContain('Adresi kopyala')
     expect(html).not.toContain('SAW')
+    expect(html).toContain('AYT')
+    expect(html).toContain('Başka bir yerden mi geliyorsunuz?')
     expect(html).toContain('Google Maps')
-    for(const incomplete of [{name:' '},{address:' '},{category:'restaurant' as const}])
+    for(const incomplete of [{name:' '},{category:'restaurant' as const}])
       expect(renderToStaticMarkup(<HotelArrival hotel={{...outside,...incomplete}} lang="tr"/>)).toBe('')
     expect(fetcher).not.toHaveBeenCalled()
+  })
+  it('separates no public transit at departure from a temporarily unreachable provider',()=>{
+    const props={hotel,airport:'IST' as const,travellers:1,lang:'tr'}
+    const empty={taxi:null,transit:null}
+    const html=(result:Parameters<typeof HotelArrivalComparison>[0]['result'])=>renderToStaticMarkup(<HotelArrivalComparison {...props} result={result}/>)
+    expect(html(empty)).toContain(hotelArrivalCopy.tr.transitError)
+    expect(html({...empty,transitStatus:'unavailable'})).toContain(hotelArrivalCopy.tr.lookupError)
   })
   it('keeps taxi results when transit fails and identifies the current planning fallback',async()=>{
     vi.useFakeTimers();vi.setSystemTime(new Date('2026-11-22T10:00:00Z'))

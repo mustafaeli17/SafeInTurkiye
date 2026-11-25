@@ -12,7 +12,7 @@ export default async function handler(req:ReservationHttpRequest,res:Reservation
   let key=validBusinessKey(input.key)?input.key:businessKeyFromSource(String(input.source??''));
   // Older CMS requests retained their canonical source URL, rather than an ID.
   if(!key&&typeof input.source==='string'){
-   const url=new URL(input.source),match=url.pathname.match(/^\/(hotels|restaurants|activities)\/([a-z0-9-]+)$/);
+   const url=new URL(input.source),match=url.pathname.match(/^\/(?:tr\/)?(hotels|restaurants|activities)\/([a-z0-9-]+)\/?$/);
    if(['safeinturkiye.com','www.safeinturkiye.com'].includes(url.hostname)&&match){
     const rows=await reservationDb(`published_editorial_businesses?select=id&kind=eq.${match[1]}&slug=eq.${encodeURIComponent(match[2])}&limit=1`);
     if(rows[0])key=match[1]+'/'+rows[0].id;

@@ -37,6 +37,14 @@ it.each(['timeout','failure','mismatch'])('handles %s without raw error or false
  vi.stubGlobal('fetch',provider('admin',mode));const result=await call();expect(result.code).toBe(503);expect(result.data).toEqual({error:'UNAVAILABLE'});
 });
 it('supports existing CMS IDs',async()=>{vi.stubGlobal('fetch',provider());const result=await call({key:'restaurants/00000000-0000-0000-0000-000000000123'});expect(result.data.name).toBe('CMS business');expect(result.data.phone).toBe('+902121234567');});
+it.each(['/restaurants/old-venue','/tr/restaurants/old-venue/'])('recovers the published business from a legacy reservation link %s',async path=>{
+ const usual=provider(), id='00000000-0000-0000-0000-000000000123';
+ const fetcher=vi.fn(async(url:string)=>url.includes('select=id&kind=eq.restaurants&slug=eq.old-venue')?Response.json([{id}]):usual(url));
+ vi.stubGlobal('fetch',fetcher);
+ const result=await call({source:'https://www.safeinturkiye.com'+path});
+ expect(result.code).toBe(200);expect(result.data.name).toBe('CMS business');
+ expect(fetcher.mock.calls.some(([url])=>url.includes('id=eq.'+id))).toBe(true);
+});
 it('does not follow arbitrary source URLs or guess a Google identity from a name or cid',async()=>{
  const fetcher=provider();vi.stubGlobal('fetch',fetcher);expect((await call({source:'https://evil.test/?query_place_id=ChIJtest123'})).code).toBe(404);
  expect(businessKeyFromSource('https://www.google.com/maps?query_place_id=ChIJtest123')).toBe('google/ChIJtest123');

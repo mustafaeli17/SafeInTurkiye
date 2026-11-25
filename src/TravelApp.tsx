@@ -1,4 +1,5 @@
 import PageLoading from './components/PageLoading';
+import PageNotice from './components/PageNotice';
 import { useEffect, useState, lazy, Suspense } from 'react';
 import App from './App';
 import {sectionFromPath} from './lib/sectionNavigation';
@@ -20,6 +21,7 @@ export default function TravelApp() {
     if(destination)navigateTo(destination,{replace:true,scroll:false,state:window.history.state});
   },[location]);
   const [remote,setRemote]=useState<{path:string;entry?:DirectoryEntry;error?:boolean}|null>(null);
+  const [requestVersion,setRequestVersion]=useState(0);
   const cmsPattern=/^(?:\/tr)?\/(hotels|restaurants|activities)\/([a-z0-9-]+)\/?$/;
   const legacyPattern=/^\/(hotels|restaurants|activities)\/[a-z0-9-]+--([a-f0-9-]{36})\/?$/;
   const match=path.match(foundationEnabled?cmsPattern:legacyPattern);
@@ -39,7 +41,7 @@ export default function TravelApp() {
       }catch { if(!cancelled)setRemote({path,error:true}); }
     })();
     return()=>{cancelled=true;};
-  },[path]);
+  },[path,requestVersion]);
   const localized=language!=='en';
   const entryPath=path;
   const candidate=match ? (remote?.path===path?remote.entry:undefined) : directoryEntry(entryPath);
@@ -50,6 +52,9 @@ export default function TravelApp() {
   if(['/privacy','/terms','/about','/contact'].includes(path))return <SiteInformation page={path.slice(1) as 'privacy'|'terms'|'about'|'contact'} initialLanguage={language}/>;
   if(section||city||path==='/')return <App initialLanguage={language}/>;
   if(match && remote?.path!==path)return <PageLoading lang={language}/>;
-  if(path!=='/'&&!entry)return <main className="max-w-xl mx-auto p-8 space-y-4"><h1 className="text-xl font-bold">{language==='tr'?'İçerik şu anda görüntülenemiyor':'This page is currently unavailable'}</h1><p>{language==='tr'?'Kayıt yayından kaldırılmış veya bağlantı geçici olarak kesilmiş olabilir.':'The entry may no longer be published, or the connection may be temporarily unavailable.'}</p><button className="text-blue-700 underline" onClick={back}>{language==='tr'?'Ana sayfaya dön':'Back to home'}</button></main>;
+  if(path!=='/'&&!entry)return <PageNotice lang={language} onRetry={match && remote?.error?()=>{
+    setRemote(null);
+    setRequestVersion(version=>version+1);
+  }:undefined}/>;
   return entry ? <Suspense fallback={<PageLoading lang={language}/>}><DirectoryDetail key={entry.id} entry={entry} lang={language} onBack={back}/></Suspense> : <App/>;
 }

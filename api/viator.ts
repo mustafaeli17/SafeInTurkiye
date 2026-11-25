@@ -16,7 +16,7 @@ const destinations: Record<string, string[]> = {
 // https://docs.viator.com/partner-api/technical/#section/Localization
 const languages: Record<string, string> = { en: 'en', tr: 'en', de: 'de', fr: 'fr', ar: 'en', ru: 'en', zh: 'en', es: 'es' }
 const limits = new Map<string, { count: number; until: number }>()
-let taxonomy: { base: string; expires: number; items: Destination[] } | undefined
+let taxonomy: { base: string; expires: number; items: Destination[]; turkeyId:number } | undefined
 const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ı/g, 'i')
 function safeUrl(value: unknown, photo = false): string | undefined {
   if (typeof value !== 'string') return
@@ -72,14 +72,16 @@ export default async function handler(req: Request, res: Response) {
     if (!taxonomy || taxonomy.base !== base || taxonomy.expires <= now) {
       const data = await request('/destinations')
       if (!Array.isArray(data.destinations)) throw new Error('PROVIDER_UNAVAILABLE')
-      taxonomy = { base, expires: now + 24 * 3600000, items: data.destinations }
+      const items:Destination[] = data.destinations.filter((d:Destination|null)=>d && typeof d.name==='string' && Number.isSafeInteger(d.destinationId) && d.destinationId>0)
+      const turkey = items.find(d => ['turkey','turkiye'].includes(normalize(d.name)))
+      if (!turkey || !items.some(d => d.parentDestinationId === turkey.destinationId)) throw new Error('PROVIDER_UNAVAILABLE')
+      taxonomy = { base, expires: now + 24 * 3600000, items, turkeyId:turkey.destinationId }
     }
-    const items = taxonomy.items
-    const turkey = items.find(d => ['turkey','turkiye'].includes(normalize(d.name)))
+    const {items,turkeyId} = taxonomy
     const inTurkey = (d: Destination) => {
       let parent: Destination | undefined = d
       for (let n = 0; n < 12 && parent; n++) {
-        if (parent.destinationId === turkey?.destinationId) return true
+        if (parent.destinationId === turkeyId) return true
         parent = items.find(p => p.destinationId === parent?.parentDestinationId)
       }
       return false

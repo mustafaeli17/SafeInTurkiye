@@ -1,4 +1,5 @@
 import { requireSupabase } from '../lib/supabase'
+import { turkiyeCalendarDate } from '../lib/turkiyeCalendarDate'
 import { safeWebsite } from '../services/nearbyPlaces'
 
 export interface TaxiTariffRecord {
@@ -32,7 +33,7 @@ export interface TaxiTariffRow {
 // A newer official effective date must still be verified by an editor.
 export const TARIFF_RECHECK_DAYS = 30;
 export function eligibleTariffs(rows:TaxiTariffRow[],city:string,now=Date.now()):TaxiTariffRow[]{
- const today=new Date(now).toISOString().slice(0,10);
+ const today=turkiyeCalendarDate(now);
  const seen=new Set<string>();
  return [...rows].sort((a,b)=>b.effective_from.localeCompare(a.effective_from)).filter(row=>{
   const rowCity=Array.isArray(row.cities)?row.cities[0]?.name:row.cities?.name;
@@ -48,7 +49,7 @@ export function eligibleTariffs(rows:TaxiTariffRow[],city:string,now=Date.now())
 }
 
 export async function getCurrentTaxiTariffs(city: string, signal?:AbortSignal): Promise<TaxiTariffRecord[]> {
-  const today = new Date().toISOString().slice(0, 10)
+  const today = turkiyeCalendarDate()
   const { data, error } = await requireSupabase()
     .from('taxi_tariffs')
     .select('vehicle_class, opening_fare, per_km, minimum_fare, waiting_fare, effective_from, effective_to, last_verified_at, data_sources(name,url,verification_status), cities!inner(name)')
